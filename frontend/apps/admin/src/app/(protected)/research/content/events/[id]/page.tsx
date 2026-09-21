@@ -6,7 +6,7 @@ import { ContentRecordDetailPage } from "../../_components/content-record-detail
 export default function ResearchEventDetailPage() {
   return (
     <ContentRecordDetailPage
-      title="Research Event"
+      title="Event"
       description="View research event schedule, scoped research binding, media attachments, and audit history."
       backHref="/research/content/events"
       entityType="event"

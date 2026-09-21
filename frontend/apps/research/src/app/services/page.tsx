@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { ResearchGenericRecord } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
 import { ResearchPageHero, ResearchPageHeroStats } from "../../components/research-page-hero";
 import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
@@ -12,7 +12,7 @@ import { ResearchListPagination } from "../../components/research-list-paginatio
 
 export const revalidate = 300;
 
-export const metadata: Metadata = { title: "Research Services", description: "Research support services available through Kisii University." };
+export const metadata: Metadata = { title: "Services", description: "Research support services available through Kisii University." };
 
 type ServiceParams = { q?: string; type?: string; category?: string; center?: string; active?: string; status?: string; year?: string; month?: string; sort?: string; page?: string };
 const serviceTypes = ["support", "consultation", "ethics", "data", "proposal", "training", "commercialization", "partnership"];
@@ -75,7 +75,7 @@ function ServicesMasthead({ resultCount, publishedCount, centersCount, categorie
     { label: "Categories", value: categoriesCount },
   ];
 
-  return <ResearchPageHero eyebrow="Research Support" title="Support services for researchers, students, collaborators, and public requests" description="Compare service scope, access route, turnaround, fees, and the center or office responsible for delivery." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Services" }]} actions={[{ label: "Contact support", href: "/connect" }, { label: "Browse tools", href: "/resources-tools", variant: "secondary" }]} imageSrc="/institutional-research-images/KSUGreenLandscapingWithoutWMJuly2026-9665.jpg" imageAlt="Kisii University research support"><ResearchPageHeroStats facts={stats} /></ResearchPageHero>;
+  return <ResearchPageHero eyebrow="Research Support" title="Support services for researchers, students, collaborators, and public requests" description="Compare service scope, access route, turnaround, fees, and the center or office responsible for delivery." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Services" }]} actions={[{ label: "Contact support", href: "/connect" }, { label: "Browse tools", href: "/resources-tools", variant: "secondary" }]} imageSrc="/images/research/headers/innovation-week-8263.jpg" imageAlt="Kisii University research support"><ResearchPageHeroStats facts={stats} /></ResearchPageHero>;
 }
 
 function ServiceFilters({ params, categories, centers, years, months }: { params: ServiceParams; categories: string[]; centers: ResearchGenericRecord[]; years: string[]; months: Array<{ value: string; label: string }> }) {

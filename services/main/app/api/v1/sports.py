@@ -7,18 +7,23 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import SportsFacility
 from ...schemas import SportsFacilityCreate, SportsFacilityUpdate
+from ...schemas.student_life import SportsFacilitySnapshot
 from ...services import SportsFacilityService
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[SportsFacilitySnapshot]],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("page", "per_page", "campus_id", "facility_type", "is_active", "fields", "include"))
 async def list_sports_facilities(
     db: DbSession,
@@ -42,7 +47,11 @@ async def list_sports_facilities(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{slug}")
+@router.get(
+    "/{slug}",
+    response_model=SuccessResponse[SportsFacilitySnapshot],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_sports_facility(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(SportsFacility, fields)
@@ -52,13 +61,24 @@ async def get_sports_facility(slug: str, db: DbSession, fields: FieldSelection =
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("student_life.manage_sports"))])
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[SportsFacilitySnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("student_life.manage_sports"))],
+)
 async def create_sports_facility(data: SportsFacilityCreate, db: DbSession, _: CurrentUser):
     item = await SportsFacilityService.create(db, **data.model_dump())
     return success(data=item, message="Sports facility created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("student_life.manage_sports"))])
+@router.patch(
+    "/{item_id}",
+    response_model=SuccessResponse[SportsFacilitySnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("student_life.manage_sports"))],
+)
 async def update_sports_facility(item_id: uuid.UUID, data: SportsFacilityUpdate, db: DbSession, _: CurrentUser):
     item = await SportsFacilityService.get_by_id(db, item_id)
     if item is None:

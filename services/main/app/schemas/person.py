@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import ConfigDict, EmailStr, Field, field_validator
 
-from .base import BaseReadSchema, BaseSchema, PhoneStr, UrlStr
+from .base import BaseReadSchema, BaseSchema, PhoneStr, UrlStr, optional_snapshot
 
 
 def _normalize_email(value: str) -> str:
@@ -217,7 +217,7 @@ class PersonRead(BaseReadSchema):
     middle_name: str | None = None
     last_name: str
     full_name: str
-    email: EmailStr
+    email: EmailStr | None = None
     external_source: str | None = None
     external_source_id: str | None = None
     external_avatar_url: str | None = None
@@ -246,6 +246,7 @@ class PersonRead(BaseReadSchema):
     teaching_areas: list[str] | None = None
     publications_count: int = 0
     publication_records: list[dict[str, Any]] | None = None
+    publications: list[dict[str, Any]] | None = None
     research_grants_won: list[dict[str, Any]] | None = None
     h_index: int | None = None
     office_location: str | None = None
@@ -267,6 +268,7 @@ class PersonRead(BaseReadSchema):
     cv_file_id: uuid.UUID | None = None
     cv_file: dict[str, Any] | None = None
     cv_file_url: str | None = None
+    work_experience: list[dict[str, Any]] | None = None
     department: dict[str, Any] | None = None
     assignments: list[dict[str, Any]] | None = None
     programme_tutorships: list[dict[str, Any]] | None = None
@@ -276,3 +278,6 @@ class PersonRead(BaseReadSchema):
     is_researcher: bool
     is_featured: bool = False
     show_on_directory: bool = True
+
+
+PersonSnapshot = optional_snapshot("PersonSnapshot", PersonRead)

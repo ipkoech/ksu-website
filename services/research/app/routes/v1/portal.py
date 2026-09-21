@@ -9,15 +9,25 @@ rules in the browser.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from ksu_common.schemas.responses import success
 
-from ...core.auth import get_current_user, require_scope
+from ...core.auth import get_current_user
 from ...schemas.base import JsonObject, SuccessEnvelope
 from ...services.research_domains import DOMAIN_DEFINITIONS
 from ...services.research_portal_context import build_research_portal_context
 
 router = APIRouter(prefix="/research-portal", tags=["Research Portal"])
+
+
+async def require_portal_access(user=Depends(get_current_user)):
+    context = build_research_portal_context(user)
+    if not (context.is_global or context.domains or any(
+        value for key, value in context.capabilities.items()
+        if key.startswith(("research.", "publications.", "funding.", "innovation."))
+    )):
+        raise HTTPException(403, "Research workspace assignment required")
+    return user
 
 
 def _serialize(context) -> dict:
@@ -45,7 +55,7 @@ def _serialize(context) -> dict:
 @router.get(
     "/context",
     response_model=SuccessEnvelope[JsonObject],
-    dependencies=[Depends(require_scope("research.view"))],
+    dependencies=[Depends(require_portal_access)],
 )
 async def get_research_portal_context(user=Depends(get_current_user)):
     """Return the caller's capabilities, navigation, and domain workspace."""
@@ -56,7 +66,7 @@ async def get_research_portal_context(user=Depends(get_current_user)):
 @router.get(
     "/capabilities",
     response_model=SuccessEnvelope[JsonObject],
-    dependencies=[Depends(require_scope("research.view"))],
+    dependencies=[Depends(require_portal_access)],
 )
 async def get_research_portal_capabilities(user=Depends(get_current_user)):
     """Return just the capability map, for cheap re-checks after a role change."""

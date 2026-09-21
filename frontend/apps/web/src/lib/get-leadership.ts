@@ -1,7 +1,9 @@
-import { leadershipApi } from "@ksu/api-client";
-import type { Media, Person, StaffAssignment } from "@ksu/api-client";
+import "server-only";
+import { leadershipApi } from "@ksu/api-client/server";
+import type { Media, Person, StaffAssignment } from "@ksu/api-client/server";
 import type { Leader } from "@ksu/ui/components";
 import { publicFileUrl, publicMediaUrl, resolvePublicMediaUrl } from "@/lib/public-media";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
 
 const leaderInclude =
   "person(id,slug,title,first_name,middle_name,last_name,full_name,bio,leadership_message,photo_id,photo_url,photo(id,url,public_url,cdn_url,thumbnail_url,alt_text,title))";
@@ -77,7 +79,7 @@ export async function getViceChancellor(): Promise<Leader | null> {
     return toLeader(response.data, "Vice Chancellor", "Vice Chancellor");
   } catch (error) {
     console.error("Failed to fetch Vice Chancellor:", error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -91,7 +93,7 @@ export async function getDean(schoolId: string): Promise<Leader | null> {
     return toLeader(response.data, "Dean", "Dean");
   } catch (error) {
     console.error(`Failed to fetch Dean for school ${schoolId}:`, error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -105,7 +107,7 @@ export async function getHOD(departmentId: string): Promise<Leader | null> {
     return toLeader(response.data, "Head of Department", "Head of Department");
   } catch (error) {
     console.error(`Failed to fetch HOD for department ${departmentId}:`, error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -119,7 +121,7 @@ export async function getDirector(divisionId: string): Promise<Leader | null> {
     return toLeader(response.data, "Director", "Director");
   } catch (error) {
     console.error(`Failed to fetch Director for division ${divisionId}:`, error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -140,6 +142,6 @@ export async function getLeaderByRole(
     return toLeader(response.data, role, response.data?.title || response.data?.role || "");
   } catch (error) {
     console.error(`Failed to fetch leader (${role}):`, error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }

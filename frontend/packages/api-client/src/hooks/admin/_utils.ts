@@ -1,10 +1,6 @@
-import { ApiClientError } from "../../client";
-import { refreshStoredAccessToken } from "../../auth-tokens";
-import { getMainApiBaseUrl } from "../../service-urls";
+import { mainApi } from "../../client";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-
-const MAIN_API_BASE_URL = getMainApiBaseUrl();
 
 function toBackendPath(path: string) {
   if (path.startsWith("/api/admin")) {
@@ -31,37 +27,23 @@ export async function adminRequest<T>(
   options?: {
     params?: Record<string, unknown>;
     body?: unknown;
-  }
+    signal?: AbortSignal;
+  },
 ): Promise<T> {
-  const request = () =>
-    fetch(`${MAIN_API_BASE_URL}${withQuery(toBackendPath(path), options?.params)}`, {
-      method,
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: options?.body ? JSON.stringify(options.body) : undefined,
-    });
-
-  let response = await request();
-
-  if (response.status === 401 && (await refreshStoredAccessToken(MAIN_API_BASE_URL))) {
-    response = await request();
-  }
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "Request failed" }));
-    throw new ApiClientError(error.detail || error.message || "Request failed", response.status, error.errors);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json();
+  return mainApi.request<T>(
+    method,
+    withQuery(toBackendPath(path), options?.params),
+    {
+      body: options?.body,
+      signal: options?.signal,
+      auth: "session",
+    },
+  );
 }
 
 export const unwrapAdminData = <T>(payload: T | { data?: T }) =>
-  payload && typeof payload === "object" && "data" in (payload as Record<string, unknown>)
+  payload &&
+  typeof payload === "object" &&
+  "data" in (payload as Record<string, unknown>)
     ? ((payload as { data?: T }).data as T)
     : (payload as T);

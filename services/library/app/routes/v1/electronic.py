@@ -2,22 +2,23 @@
 
 from __future__ import annotations
 
+from ...core.auth import require_library_transfer
+from ...services.ownership import lock_owner, validate_transfer_destination
+
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.auth import TokenPayload
-from ksu_contracts.rbac import has_scope
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
 from ksu_common.cache import cached_public, cache_response
-from ...services.cache import invalidate_library_caches
 from ksu_common.audit import audit_action
 from ksu_common.rate_limit import rate_limit
 
-from ...core.auth import get_optional_user, require_library_scope, requires_scope
+from ...core.auth import has_library_permission, get_optional_user, require_library_scope, requires_scope
 from ...core.database import get_db
 from ...models import ElectronicResource
 from ...schemas import (
@@ -33,6 +34,9 @@ from ...schemas import (
     SavedPublicationCreate,
     SavedPublicationOut,
     SavedPublicationUpdate,
+    ElectronicResourceSnapshot,
+    PublicationResult,
+    CitationOut,
 )
 from ...services.electronic import (
     create_guide,
@@ -55,7 +59,15 @@ from ...services.electronic import (
     update_resource,
     update_saved,
 )
+from ...services.media import require_public_media
 from ._rate_limits import public_catalog_rate_limit
+
+
+async def _validate_media_reference(media_id: uuid.UUID | None) -> None:
+    try:
+        await require_public_media(media_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Referenced media is unavailable or not public") from exc
 
 # ── Electronic resources router ───────────────────────────────────────────────
 
@@ -65,10 +77,11 @@ resources_router = APIRouter(
 
 
 async def invalidate_public_library_cache() -> None:
-    await invalidate_library_caches()
+    """Compatibility shim; cache invalidation runs after commit in app middleware."""
+    return None
 
 
-@resources_router.get("/az")
+@resources_router.get("/az", response_model=SuccessResponse[dict[str, list[ElectronicResourceOut]]])
 @public_catalog_rate_limit
 @cached_public(timeout=3600, vary_on=())
 async def list_resources_az(request: Request, db: AsyncSession = Depends(get_db)):
@@ -81,7 +94,7 @@ async def list_resources_az(request: Request, db: AsyncSession = Depends(get_db)
     return success(data=data)
 
 
-@resources_router.get("/slug/{slug}")
+@resources_router.get("/slug/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[ElectronicResourceSnapshot])
 @public_catalog_rate_limit
 async def get_resource_by_slug_route(
     request: Request,
@@ -91,11 +104,11 @@ async def get_resource_by_slug_route(
     fields: FieldSelection = Depends(FieldsQuery(always_include={"id"})),
 ):
     """Get electronic resource by slug with guides."""
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     resource = await get_resource_by_slug(db, slug, public_only=not is_writer)
     if is_writer:
         require_library_scope(user, "library.read", resource.library_id)
-    guides = await list_guides(db, resource.id)
+    guides = await list_guides(db, resource.id, public_only=not is_writer)
     detail = ElectronicResourceDetail.model_validate(resource)
     detail.guides = [ElectronicResourceGuideOut.model_validate(g) for g in guides]
 
@@ -103,7 +116,7 @@ async def get_resource_by_slug_route(
     return success(data=selector.apply(detail))
 
 
-@resources_router.get("/{resource_id}")
+@resources_router.get("/{resource_id}", response_model_exclude_unset=True, response_model=SuccessResponse[ElectronicResourceSnapshot])
 @public_catalog_rate_limit
 async def get_resource_detail(
     request: Request,
@@ -113,11 +126,11 @@ async def get_resource_detail(
     fields: FieldSelection = Depends(FieldsQuery(always_include={"id"})),
 ):
     """Get electronic resource by ID with guides."""
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     resource = await get_resource(db, resource_id, public_only=not is_writer)
     if is_writer:
         require_library_scope(user, "library.read", resource.library_id)
-    guides = await list_guides(db, resource.id)
+    guides = await list_guides(db, resource.id, public_only=not is_writer)
     detail = ElectronicResourceDetail.model_validate(resource)
     detail.guides = [ElectronicResourceGuideOut.model_validate(g) for g in guides]
 
@@ -125,7 +138,7 @@ async def get_resource_detail(
     return success(data=selector.apply(detail))
 
 
-@resources_router.get("/")
+@resources_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[ElectronicResourceSnapshot]])
 @public_catalog_rate_limit
 async def list_resources_route(
     request: Request,
@@ -143,7 +156,7 @@ async def list_resources_route(
     fields: FieldSelection = Depends(FieldsQuery(always_include={"id"})),
 ):
     """List electronic resources with filtering."""
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     if is_writer:
         require_library_scope(user, "library.read", library_id)
     selector = FieldSelector(ElectronicResource, fields, always_include={"id"})
@@ -167,7 +180,7 @@ async def list_resources_route(
     )
 
 
-@resources_router.post("/", status_code=201)
+@resources_router.post("/", response_model=SuccessResponse[ElectronicResourceOut], status_code=201)
 @audit_action(
     "electronic_resource.create", target_type="ElectronicResource", include_body=True
 )
@@ -187,7 +200,7 @@ async def create_resource_route(
     )
 
 
-@resources_router.patch("/{resource_id}")
+@resources_router.patch("/{resource_id}", response_model=SuccessResponse[ElectronicResourceOut])
 @audit_action(
     "electronic_resource.update",
     target_type="ElectronicResource",
@@ -201,10 +214,13 @@ async def update_resource_route(
     user: TokenPayload = Depends(requires_scope("library.write")),
 ):
     """Update an electronic resource."""
-    current_library_id = await get_resource_library_id(db, resource_id)
+    existing = await lock_owner(db, await get_resource(db, resource_id, public_only=False))
+    current_library_id = existing.library_id
     require_library_scope(user, "library.write", current_library_id)
     if "library_id" in body.model_fields_set:
         require_library_scope(user, "library.write", body.library_id)
+        require_library_transfer(user, current_library_id, body.library_id)
+        await validate_transfer_destination(db, current_library_id, body.library_id)
     resource = await update_resource(db, resource_id, body)
     await invalidate_public_library_cache()
     return success(data=ElectronicResourceOut.model_validate(resource).model_dump())
@@ -223,8 +239,8 @@ async def delete_resource_route(
     user: TokenPayload = Depends(requires_scope("library.admin")),
 ):
     """Delete an electronic resource."""
-    library_id = await get_resource_library_id(db, resource_id)
-    require_library_scope(user, "library.admin", library_id)
+    existing = await lock_owner(db, await get_resource(db, resource_id, public_only=False))
+    require_library_scope(user, "library.admin", existing.library_id)
     await delete_resource(db, resource_id)
     await invalidate_public_library_cache()
 
@@ -237,7 +253,7 @@ guides_router = APIRouter(
 )
 
 
-@guides_router.get("/")
+@guides_router.get("/", response_model=SuccessResponse[list[ElectronicResourceGuideOut]])
 @public_catalog_rate_limit
 @cached_public(timeout=300, vary_on=())
 async def list_guides_route(
@@ -252,7 +268,7 @@ async def list_guides_route(
     )
 
 
-@guides_router.post("/", status_code=201)
+@guides_router.post("/", response_model=SuccessResponse[ElectronicResourceGuideOut], status_code=201)
 @audit_action(
     "electronic_guide.create", target_type="ElectronicResourceGuide", include_body=True
 )
@@ -266,6 +282,7 @@ async def create_guide_route(
     """Create a guide for an electronic resource."""
     library_id = await get_resource_library_id(db, resource_id)
     require_library_scope(user, "library.write", library_id)
+    await _validate_media_reference(body.media_id)
     guide = await create_guide(db, resource_id, body)
     await invalidate_public_library_cache()
     return success(
@@ -274,7 +291,7 @@ async def create_guide_route(
     )
 
 
-@guides_router.patch("/{guide_id}")
+@guides_router.patch("/{guide_id}", response_model=SuccessResponse[ElectronicResourceGuideOut])
 @audit_action(
     "electronic_guide.update",
     target_type="ElectronicResourceGuide",
@@ -289,8 +306,9 @@ async def update_guide_route(
     user: TokenPayload = Depends(requires_scope("library.write")),
 ):
     """Update an electronic resource guide."""
-    library_id = await get_guide_library_id(db, guide_id)
+    library_id = await get_guide_library_id(db, guide_id, resource_id=resource_id)
     require_library_scope(user, "library.write", library_id)
+    await _validate_media_reference(body.media_id)
     guide = await update_guide(db, guide_id, body)
     await invalidate_public_library_cache()
     return success(data=ElectronicResourceGuideOut.model_validate(guide).model_dump())
@@ -310,7 +328,7 @@ async def delete_guide_route(
     user: TokenPayload = Depends(requires_scope("library.admin")),
 ):
     """Delete an electronic resource guide."""
-    library_id = await get_guide_library_id(db, guide_id)
+    library_id = await get_guide_library_id(db, guide_id, resource_id=resource_id)
     require_library_scope(user, "library.admin", library_id)
     await delete_guide(db, guide_id)
     await invalidate_public_library_cache()
@@ -323,7 +341,7 @@ publications_router = APIRouter(
 )
 
 
-@publications_router.get("/search")
+@publications_router.get("/search", response_model=SuccessResponse[list[PublicationResult]])
 @public_catalog_rate_limit
 @cached_public(
     timeout=60, vary_on=("q", "author", "year", "source", "page", "per_page")
@@ -349,7 +367,7 @@ async def search_publications_route(
     )
 
 
-@publications_router.post("/cite")
+@publications_router.post("/cite", response_model=SuccessResponse[CitationOut])
 @rate_limit(requests=60, window=60, by_user=False)
 async def cite_publication(request: Request, body: CitationRequest):
     """Format a publication citation in various styles (APA, MLA, Chicago, etc.)."""
@@ -357,7 +375,7 @@ async def cite_publication(request: Request, body: CitationRequest):
     return success(data=citation.model_dump())
 
 
-@publications_router.get("/saved")
+@publications_router.get("/saved", response_model=SuccessResponse[list[SavedPublicationOut]])
 @cache_response(timeout=60, vary_on=("page", "per_page", "include_total"))
 async def list_saved_publications(
     request: Request,
@@ -382,7 +400,7 @@ async def list_saved_publications(
     )
 
 
-@publications_router.post("/saved", status_code=201)
+@publications_router.post("/saved", response_model=SuccessResponse[SavedPublicationOut], status_code=201)
 @audit_action("publication.save", target_type="SavedPublication", include_body=True)
 async def save_publication_route(
     request: Request,
@@ -398,7 +416,7 @@ async def save_publication_route(
     )
 
 
-@publications_router.patch("/saved/{saved_id}")
+@publications_router.patch("/saved/{saved_id}", response_model=SuccessResponse[SavedPublicationOut])
 @audit_action(
     "publication.update_saved",
     target_type="SavedPublication",

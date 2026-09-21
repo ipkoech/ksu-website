@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import Field, field_validator
 
-from .base import BaseReadSchema, BaseSchema, UrlStr
+from .base import BaseReadSchema, BaseSchema, UrlStr, optional_snapshot
 
 
 class SettingCreate(BaseSchema):
@@ -139,6 +139,21 @@ class WebhookDeliveryRead(BaseReadSchema):
     error: str | None = None
     attempted_at: datetime
     next_attempt_at: datetime | None = None
+
+
+SettingSnapshot = optional_snapshot("SettingSnapshot", SettingRead)
+ApiKeySnapshot = optional_snapshot("ApiKeySnapshot", ApiKeyRead)
+WebhookSnapshot = optional_snapshot("WebhookSnapshot", WebhookRead)
+
+
+class ApiKeyCreateEnvelope(BaseSchema):
+    api_key: str
+    record: ApiKeySnapshot
+
+
+class WebhookCreateEnvelope(BaseSchema):
+    record: WebhookSnapshot
+    signing_secret: str
 
 
 __all__ = [

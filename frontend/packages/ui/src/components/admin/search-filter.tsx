@@ -2,7 +2,11 @@
 
 import * as React from "react";
 import { Search, X } from "lucide-react";
-import { Badge, Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { useDebouncedSearch } from "./use-debounced-search";
 
 export interface SearchFilterProps {
   searchValue: string;
@@ -27,15 +31,12 @@ export function SearchFilter({
   onClearAll,
 }: SearchFilterProps) {
   const [localSearch, setLocalSearch] = React.useState(searchValue);
+  const { schedule, cancel } = useDebouncedSearch(onSearchChange);
 
   React.useEffect(() => {
     setLocalSearch(searchValue);
-  }, [searchValue]);
-
-  React.useEffect(() => {
-    const timeout = window.setTimeout(() => onSearchChange(localSearch), 300);
-    return () => window.clearTimeout(timeout);
-  }, [localSearch, onSearchChange]);
+    cancel();
+  }, [searchValue, cancel]);
 
   const activeFilters = filters.filter((filter) => filter.value);
 
@@ -44,7 +45,7 @@ export function SearchFilter({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={localSearch} onChange={(event) => setLocalSearch(event.target.value)} placeholder={searchPlaceholder} className="pl-9" />
+          <Input value={localSearch} onChange={(event) => { setLocalSearch(event.target.value); schedule(event.target.value); }} aria-label={searchPlaceholder} placeholder={searchPlaceholder} className="pl-9" />
         </div>
         <div className="flex flex-wrap gap-2">
           {filters.map((filter) => (
@@ -53,7 +54,7 @@ export function SearchFilter({
               value={filter.value ?? "__all__"}
               onValueChange={(value) => onFilterChange?.(filter.key, value === "__all__" ? null : value)}
             >
-              <SelectTrigger className="min-w-[180px]">
+              <SelectTrigger aria-label={filter.label} className="min-w-[180px]">
                 <SelectValue placeholder={filter.label} />
               </SelectTrigger>
               <SelectContent>
@@ -82,7 +83,7 @@ export function SearchFilter({
             );
           })}
           {onClearAll ? (
-            <Button type="button" variant="ghost" size="sm" onClick={onClearAll}>
+            <Button type="button" variant="ghost" size="sm" onClick={() => { cancel(); setLocalSearch(""); onClearAll(); }}>
               Clear all
             </Button>
           ) : null}

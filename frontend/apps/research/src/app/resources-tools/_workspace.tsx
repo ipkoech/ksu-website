@@ -15,7 +15,7 @@ import {
   SlidersHorizontal,
   Wrench,
 } from "lucide-react";
-import type { ResearchGenericRecord } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import {
   Badge,
   FilledBadge,
@@ -42,6 +42,10 @@ import {
   getRecordSummary,
   getRecordTitle,
 } from "../../lib/research-page-model";
+import {
+  ResourcesListDisplay,
+  type ResourceRowDto,
+} from "../../components/resources-list-display";
 
 export type ResourceWorkspaceParams = {
   q?: string;
@@ -289,7 +293,7 @@ export function ResourcesWorkspace({
     },
     {
       id: "services",
-      label: "Research Services",
+      label: "Services",
       count: dataset.allServices.length,
       icon: Wrench,
       href: "/resources-tools/services",
@@ -309,10 +313,24 @@ export function ResourcesWorkspace({
       href: "/resources-tools/downloads",
     },
   ];
+  const resourceRows: ResourceRowDto[] = dataset.resources.slice(0, 6).map((resource, index) => ({
+    id: String(resource.id ?? resource.slug ?? index),
+    title: getRecordTitle(resource, "Research resource"),
+    summary: getRecordSummary(resource) || compactText(resource.description),
+    href: resource.slug ? `/resources-tools/${resource.slug}` : "/resources-tools",
+    type: formatLabel(resource.resource_type ?? "resource"),
+    access: formatLabel(resource.access_type ?? "internal"),
+    status: formatLabel(resource.status ?? "published"),
+    center: centerNames.get(resource.center_id) || "Not published",
+    location: formatLocation(resource),
+    accessHref: compactText(resource.booking_url) || compactText(resource.access_url) || null,
+    accessLabel: compactText(resource.booking_url) ? "Book" : "Access",
+  }));
 
   return (
     <div className="w-full max-w-none border-t border-border bg-white">
       <WorkspaceHero
+        title={visibleSections.length === 1 ? (sideItems.find(item => item.id === activeItem)?.label ?? "Resources & Tools") : "Resources & Tools"}
         latestUpdate={latestUpdate}
         params={params}
         categories={categories}
@@ -330,7 +348,7 @@ export function ResourcesWorkspace({
               </div>
             ) : null}
             <div className="mt-5 space-y-5">
-              {visibleSections.includes("resources") ? <ResourceLibraryPanel resources={dataset.resources} centerNames={centerNames} /> : null}
+              {visibleSections.includes("resources") ? <ResourcesListDisplay resources={resourceRows} /> : null}
               {visibleSections.includes("policies") ? <PoliciesPanel policies={dataset.policies} grantGuidelines={dataset.grantGuidelines} /> : null}
               {visibleSections.includes("forms") ? <FormsPanel forms={dataset.forms} templates={dataset.templates} /> : null}
               {visibleSections.includes("services") ? <ServicesPanel services={dataset.services} /> : null}
@@ -345,11 +363,13 @@ export function ResourcesWorkspace({
 }
 
 function WorkspaceHero({
+  title,
   latestUpdate,
   params,
   categories,
   centers,
 }: {
+  title: string;
   latestUpdate: string;
   params: ResourceWorkspaceParams;
   categories: string[];
@@ -359,7 +379,7 @@ function WorkspaceHero({
     <>
       <ResearchPortfolioHero
         eyebrow="Published resource workspace"
-        title="Resources & Tools"
+        title={title}
         body="Access backend-published policies, forms, services, outputs and public downloads from one research support workspace."
         primary={{ label: "Open resource library", href: "/resources-tools/library" }}
         secondary={{ label: "View downloads", href: "/resources-tools/downloads" }}
@@ -367,11 +387,7 @@ function WorkspaceHero({
       />
       <section className="border-b border-border bg-white px-4 py-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-          <nav className="flex flex-wrap items-center gap-2 font-medium" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-muted-foreground/60">/</span>
-            <span className="text-foreground">Resources & Tools</span>
-          </nav>
+
           <div className="flex items-center gap-2">
             <span>{latestUpdate ? `Data as of ${latestUpdate}` : "Backend records loaded"}</span>
             <RefreshCw aria-hidden className="h-3.5 w-3.5 text-primary" />
@@ -483,36 +499,6 @@ function WorkspaceSideNav({
   );
 }
 
-function ResourceLibraryPanel({
-  resources,
-  centerNames,
-}: {
-  resources: ResearchGenericRecord[];
-  centerNames: Map<unknown, string>;
-}) {
-  return (
-    <WorkspacePanel id="resources" title="Resource Library" href="/resources-tools" action="View all resources">
-      <DesktopTable
-        columns={["Resource", "Type", "Access", "Status", "Managing Center", "Location", "Actions"]}
-        empty="No resource records match the current filters."
-      >
-        {resources.slice(0, 6).map((resource) => (
-          <tr key={resource.id} className="border-b border-border last:border-b-0">
-            <NameCell title={getRecordTitle(resource, "Research resource")} body={getRecordSummary(resource) || compactText(resource.description)} icon={BookOpen} />
-            <td><Badge>{formatLabel(resource.resource_type ?? "resource")}</Badge></td>
-            <td><AccessBadge value={resource.access_type ?? "internal"} /></td>
-            <td><StatusBadge value={resource.status} /></td>
-            <td className="max-w-[180px] text-sm text-muted-foreground">{centerNames.get(resource.center_id) || "Not published"}</td>
-            <td className="text-sm text-muted-foreground">{formatLocation(resource)}</td>
-            <td><RowActions detailHref={resource.slug ? `/resources-tools/${resource.slug}` : "/resources-tools"} primaryHref={compactText(resource.booking_url) || compactText(resource.access_url)} primaryLabel={compactText(resource.booking_url) ? "Book" : "Access"} /></td>
-          </tr>
-        ))}
-      </DesktopTable>
-      <MobileList records={resources.slice(0, 5)} hrefBase="/resources-tools" actionLabel="Open details" />
-    </WorkspacePanel>
-  );
-}
-
 function PoliciesPanel({
   policies,
   grantGuidelines,
@@ -565,7 +551,7 @@ function FormsPanel({
 
 function ServicesPanel({ services }: { services: ResearchGenericRecord[] }) {
   return (
-    <WorkspacePanel id="services" title="Research Services" href="/services" action="View all services">
+    <WorkspacePanel id="services" title="Services" href="/services" action="View all services">
       <CompactCardGrid records={services.slice(0, 6)} hrefBase="/services" empty="No service records match the current filters." />
     </WorkspacePanel>
   );
@@ -817,14 +803,6 @@ function StatusBadge({ value }: { value?: unknown }) {
   return (
     <span className={`inline-flex items-center rounded-md border px-3 py-1 text-xs font-semibold ${positive ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-border bg-surface-subtle text-muted-foreground"}`}>
       {text}
-    </span>
-  );
-}
-
-function AccessBadge({ value }: { value?: unknown }) {
-  return (
-    <span className="inline-flex items-center rounded-2xl ring-1 ring-secondary/30 bg-secondary/10 px-3 py-1 text-xs font-semibold text-secondary">
-      {formatLabel(toCompactString(value) || "internal")}
     </span>
   );
 }

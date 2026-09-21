@@ -9,12 +9,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import DbSession
 from ...models import StaffAssignment, Person
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ._person_media import with_person_photo_urls
+from ...schemas.staff import StaffAssignmentSnapshot
 
 router = APIRouter()
 
@@ -55,7 +56,11 @@ async def get_leader_by_role(
     return result.scalars().first()
 
 
-@router.get("/vice-chancellor")
+@router.get(
+    "/vice-chancellor",
+    response_model=SuccessResponse[StaffAssignmentSnapshot | None],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("fields", "include"))
 async def get_vice_chancellor(
     db: DbSession,
@@ -77,7 +82,11 @@ async def get_vice_chancellor(
     return success(data=with_person_photo_urls(selector.apply(assignment), assignment))
 
 
-@router.get("/chancellor")
+@router.get(
+    "/chancellor",
+    response_model=SuccessResponse[StaffAssignmentSnapshot | None],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("fields", "include"))
 async def get_chancellor(
     db: DbSession,
@@ -99,7 +108,11 @@ async def get_chancellor(
     return success(data=with_person_photo_urls(selector.apply(assignment), assignment))
 
 
-@router.get("/dean/{school_id}")
+@router.get(
+    "/dean/{school_id}",
+    response_model=SuccessResponse[StaffAssignmentSnapshot | None],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("school_id", "fields", "include"))
 async def get_dean(
     school_id: uuid.UUID,
@@ -122,7 +135,11 @@ async def get_dean(
     return success(data=with_person_photo_urls(selector.apply(assignment), assignment))
 
 
-@router.get("/hod/{department_id}")
+@router.get(
+    "/hod/{department_id}",
+    response_model=SuccessResponse[StaffAssignmentSnapshot | None],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("department_id", "fields", "include"))
 async def get_hod(
     department_id: uuid.UUID,
@@ -145,7 +162,11 @@ async def get_hod(
     return success(data=with_person_photo_urls(selector.apply(assignment), assignment))
 
 
-@router.get("/director/{division_id}")
+@router.get(
+    "/director/{division_id}",
+    response_model=SuccessResponse[StaffAssignmentSnapshot | None],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("division_id", "fields", "include"))
 async def get_director(
     division_id: uuid.UUID,
@@ -178,7 +199,11 @@ async def get_director(
     return success(data=with_person_photo_urls(selector.apply(assignment), assignment))
 
 
-@router.get("/")
+@router.get(
+    "/",
+    response_model=SuccessResponse[StaffAssignmentSnapshot | None],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("role", "entity_type", "entity_id", "fields", "include"))
 async def get_leader(
     db: DbSession,
@@ -203,7 +228,11 @@ async def get_leader(
     return success(data=with_person_photo_urls(selector.apply(assignment), assignment))
 
 
-@router.get("/list")
+@router.get(
+    "/list",
+    response_model=SuccessResponse[list[StaffAssignmentSnapshot]],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("entity_type", "entity_id", "fields", "include"))
 async def list_leaders(
     db: DbSession,

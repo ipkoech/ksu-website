@@ -8,7 +8,7 @@ from datetime import date, datetime
 
 from pydantic import Field
 
-from .base import BaseReadSchema, BaseSchema, SlugStr
+from .base import BaseReadSchema, BaseSchema, SlugStr, optional_snapshot
 
 
 class PolicyCreate(BaseSchema):
@@ -129,6 +129,10 @@ class DocumentRead(BaseReadSchema):
     updated_by_id: uuid.UUID | None = None
     updated_by: dict[str, Any] | None = None
     display_order: int
+
+
+PolicySnapshot = optional_snapshot("PolicySnapshot", PolicyRead)
+DocumentSnapshot = optional_snapshot("DocumentSnapshot", DocumentRead)
 
 
 __all__ = [

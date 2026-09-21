@@ -73,6 +73,8 @@ function administrationUnitRedirectPath(
   return `${baseHref}/${child}${grandchild ? `/${grandchild}` : ""}`;
 }
 
+export const revalidate = 300;
+
 export default async function AdministrationRoutePage({
   params,
 }: {

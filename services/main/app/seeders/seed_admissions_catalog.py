@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -14,7 +12,6 @@ from app.models import (
     AdmissionPageSection,
     AdmissionPathway,
     AdmissionRequirement,
-    Intake,
     Programme,
     ProgrammeFeeStructure,
 )
@@ -27,73 +24,68 @@ PATHWAYS = [
     {
         "title": "KUCCPS",
         "applicant_type": "kuccps",
-        "summary": "Government-sponsored applicants placed through KUCCPS.",
-        "eligibility_notes": "Confirm placement details, programme requirements and reporting instructions before registration.",
+        "summary": (
+            "The Kenya Universities and Colleges Central Placement Service (KUCCPS) is the state corporation "
+            "that coordinates the placement of Government-Sponsored Students to Kenyan universities and colleges."
+        ),
+        "eligibility_notes": (
+            "Only candidates who apply for placement will be considered; candidates must meet the minimum admission "
+            "requirement approved by the respective regulating authority; placement shall be on merit; affirmative "
+            "action criteria approved by the Placement Service shall be applied for marginalized and disadvantaged "
+            "applicants."
+        ),
         "cta_label": "Open admission centre",
-        "cta_url": "https://digital.kisiiuniversity.ac.ke/students/admissions/center",
+        "cta_url": "http://digital.kisiiuniversity.ac.ke/students/admissions/center",
     },
     {
         "title": "Self-sponsored",
         "applicant_type": "self_sponsored",
-        "summary": "Applicants applying directly through the Kisii University online application system.",
-        "eligibility_notes": "Choose a programme, confirm entry requirements and submit before the advertised deadline.",
+        "summary": (
+            "Applications for admission to study at the University as self sponsored students are online. The online "
+            "application system has a list of all the courses on offer at the University, open Intakes, application "
+            "deadlines, reporting dates and program requirements."
+        ),
+        "eligibility_notes": (
+            "First time applicants are encouraged to explore the list of available academic programmes and the set "
+            "requirements to ensure that they qualify to apply for their programme of choice."
+        ),
         "cta_label": "Apply online",
         "cta_url": "https://digital.kisiiuniversity.ac.ke/new_student_landing_page",
     },
     {
         "title": "International",
         "applicant_type": "international",
-        "summary": "Applicants with international qualifications or joining from outside Kenya.",
-        "eligibility_notes": "Prepare certified records, passport details and equivalence documentation where required.",
-        "cta_label": "Contact admissions",
-        "cta_url": "/contact",
-    },
-    {
-        "title": "Transfer",
-        "applicant_type": "transfer",
-        "summary": "Applicants seeking inter-university or programme transfer guidance.",
-        "eligibility_notes": "Provide certified academic history and confirm current transfer rules with admissions.",
-        "cta_label": "Ask admissions",
-        "cta_url": "/contact",
+        "summary": (
+            "Kisii University College was founded in 1965 as a Primary Teachers Training College on a 61 acre land "
+            "that was donated by the County Council of Gusii."
+        ),
+        "eligibility_notes": None,
+        "cta_label": "International students page",
+        "cta_url": "https://kisiiuniversity.ac.ke/admission/international-students",
     },
     {
         "title": "Postgraduate",
         "applicant_type": "postgraduate",
-        "summary": "Postgraduate diploma, masters and doctoral applicants.",
-        "eligibility_notes": "Prepare degree certificates, transcripts, referees and research concept documents where required.",
+        "summary": (
+            "The Academic Affairs Office co-ordinates graduate programmes at Kisii University; the division "
+            "coordinates syllabi and regulations; admission of graduate students; coordination of supervision of "
+            "graduate programmes; and processing of graduate theses, projects and dissertations."
+        ),
+        "eligibility_notes": None,
         "cta_label": "Apply online",
         "cta_url": "https://digital.kisiiuniversity.ac.ke/new_student_landing_page",
     },
     {
         "title": "Diploma / Certificate",
         "applicant_type": "diploma_certificate",
-        "summary": "Certificate, bridging and diploma applicants joining academic and professional pathways.",
-        "eligibility_notes": "Confirm minimum grade and programme-specific requirements before applying.",
-        "cta_label": "Apply online",
-        "cta_url": "https://digital.kisiiuniversity.ac.ke/new_student_landing_page",
+        "summary": "Application forms for Diploma Programmes and Certificate/Bridging Application Forms.",
+        "eligibility_notes": None,
+        "cta_label": "Diploma application page",
+        "cta_url": "https://kisiiuniversity.ac.ke/admission/diploma-application",
     },
 ]
 
-COMMON_STEPS = [
-    {"title": "Choose a programme", "body": "Compare level, duration, department and career fit."},
-    {"title": "Check requirements", "body": "Confirm the route and programme-specific entry rules."},
-    {"title": "Apply officially", "body": "Submit through the approved university system."},
-]
-
-COMMON_DOCUMENTS = [
-    {"title": "Academic certificates"},
-    {"title": "National ID / passport / birth certificate"},
-    {"title": "Passport-size photo"},
-    {"title": "Supporting documents required by the applicant route"},
-]
-
-FAQS = [
-    ("How do I apply to Kisii University?", "Choose a programme, confirm requirements, then submit through the official online application portal."),
-    ("Where do I download my admission letter?", "Use the external Kisii University admission centre when admission letters are released."),
-    ("Can international applicants apply?", "Yes. International applicants should prepare certified academic records, passport details and any equivalence evidence required."),
-    ("Where are programme fees shown?", "Programme fees are managed on programme detail pages and should be verified against approved fee-structure documents."),
-    ("Can I change programme after admission?", "Programme changes depend on current university rules, capacity and Senate-approved requirements. Contact admissions for guidance."),
-]
+FAQS: list[tuple[str, str]] = []
 
 
 async def _one_or_none(db: AsyncSession, model, **filters):
@@ -112,8 +104,8 @@ async def seed_admissions_catalog(db: AsyncSession, ctx: SeedContext) -> None:
         payload = {
             **spec,
             "slug": slug,
-            "application_steps": COMMON_STEPS,
-            "required_documents": COMMON_DOCUMENTS,
+            "application_steps": None,
+            "required_documents": None,
             "is_published": True,
             "display_order": index * 10,
         }
@@ -124,6 +116,12 @@ async def seed_admissions_catalog(db: AsyncSession, ctx: SeedContext) -> None:
             for key, value in payload.items():
                 setattr(pathway, key, value)
         pathway_by_type[pathway.applicant_type] = pathway
+
+    active_applicant_types = {str(spec["applicant_type"]) for spec in PATHWAYS}
+    existing_pathways = (await db.execute(select(AdmissionPathway))).scalars().all()
+    for pathway in existing_pathways:
+        if pathway.applicant_type not in active_applicant_types:
+            pathway.is_published = False
 
     programmes = list(
         (
@@ -138,15 +136,6 @@ async def seed_admissions_catalog(db: AsyncSession, ctx: SeedContext) -> None:
         .scalars()
         .all()
     )
-    intake = (
-        await db.execute(
-            select(Intake)
-            .where(Intake.is_active.is_(True))
-            .order_by(Intake.application_start.desc())
-            .limit(1)
-        )
-    ).scalar_one_or_none()
-
     for programme in programmes:
         applicant_type = (
             "postgraduate"
@@ -172,11 +161,11 @@ async def seed_admissions_catalog(db: AsyncSession, ctx: SeedContext) -> None:
         requirement.title = requirement_title
         requirement.level = programme.level
         requirement.school_id = getattr(programme.department, "school_id", None)
-        requirement.intake_id = intake.id if intake else None
+        requirement.intake_id = None
         requirement.pathway_id = pathway_by_type.get(applicant_type).id if pathway_by_type.get(applicant_type) else None
-        requirement.minimum_grade = "Programme-specific minimum requirement"
-        requirement.notes = programme.entry_requirements or "Confirm the current approved requirement with admissions."
-        requirement.effective_from = date(2026, 1, 1)
+        requirement.minimum_grade = None
+        requirement.notes = programme.entry_requirements
+        requirement.effective_from = None
         requirement.is_active = True
         requirement.display_order = programme.display_order
 
@@ -186,23 +175,66 @@ async def seed_admissions_catalog(db: AsyncSession, ctx: SeedContext) -> None:
             programme_id=programme.id,
             applicant_type=applicant_type,
         )
+        fee_spec = programme.fees_structure if isinstance(programme.fees_structure, dict) else None
+        if not fee_spec:
+            if fee is not None:
+                fee.is_active = False
+            continue
         if fee is None:
             fee = ProgrammeFeeStructure(
-                title=f"{programme.name} annual fee estimate",
+                title=f"{programme.name} fee structure",
                 programme_id=programme.id,
                 applicant_type=applicant_type,
             )
             db.add(fee)
-        fee.title = f"{programme.name} annual fee estimate"
+        fee.title = f"{programme.name} fee structure"
         fee.fee_category = "tuition"
         fee.currency = "KES"
-        fee.tuition_amount = 120000
-        fee.statutory_amount = 18500
-        fee.other_amount = 11500
-        fee.total_amount = 150000
-        fee.notes = "Seeded planning estimate. Confirm approved fees before payment."
-        fee.intake_id = intake.id if intake else None
-        fee.effective_from = date(2026, 1, 1)
+        items = fee_spec.get("items") if isinstance(fee_spec.get("items"), list) else []
+        amount = fee_spec.get("amount")
+        fee.tuition_amount = int(amount) if isinstance(amount, (int, float)) else next(
+            (
+                int(item["amount"])
+                for item in items
+                if isinstance(item, dict)
+                and isinstance(item.get("amount"), (int, float))
+                and "tuition" in str(item.get("item") or "").lower()
+            ),
+            None,
+        )
+        fee.statutory_amount = next(
+            (
+                int(item["amount"])
+                for item in items
+                if isinstance(item, dict)
+                and isinstance(item.get("amount"), (int, float))
+                and "statutory" in str(item.get("item") or "").lower()
+            ),
+            None,
+        )
+        fee.other_amount = next(
+            (
+                int(item["amount"])
+                for item in items
+                if isinstance(item, dict)
+                and isinstance(item.get("amount"), (int, float))
+                and "other" in str(item.get("item") or "").lower()
+            ),
+            None,
+        )
+        known_amounts = [
+            int(item["amount"])
+            for item in items
+            if isinstance(item, dict) and isinstance(item.get("amount"), (int, float))
+        ]
+        fee.total_amount = int(amount) if isinstance(amount, (int, float)) else sum(known_amounts) if len(known_amounts) == len(items) else None
+        fee.notes = " | ".join(
+            str(item.get("notes"))
+            for item in items
+            if isinstance(item, dict) and item.get("notes")
+        ) or None
+        fee.intake_id = None
+        fee.effective_from = None
         fee.is_active = True
         fee.display_order = programme.display_order
 
@@ -256,13 +288,18 @@ async def seed_admissions_catalog(db: AsyncSession, ctx: SeedContext) -> None:
             for key, value in payload.items():
                 setattr(faq, key, value)
 
-    sections = [
-        ("admissions", "hero", "Admissions at Kisii University", "Start with the right pathway.", "hero"),
-        ("admissions", "pathways", "Choose your applicant pathway", "Compare KUCCPS, self-sponsored, international, transfer, postgraduate and diploma/certificate routes.", "pathway_tabs"),
-        ("requirements", "matrix", "Entry requirements at a glance", "Filter requirements by programme, level and applicant type.", "requirements_matrix"),
-        ("fees", "programme-fees", "Fees belong to programme detail", "Use programme detail pages for approved programme/intake/category fee records.", "fees_summary"),
-        ("documents", "downloads", "Admissions documents", "Access forms, brochures, joining instructions and admission-centre links.", "document_grid"),
-    ]
+    for faq in (await db.execute(select(AdmissionFaq))).scalars().all():
+        faq.is_published = False
+
+    # The live FAQ page currently states that no FAQ has been added.  Likewise,
+    # the landing-section copy previously here was application scaffolding, not
+    # text published by Kisii University, so keep those old sections disabled.
+    sections: list[tuple[str, str, str, str | None, str]] = []
+    legacy_section_keys = {"hero", "pathways", "matrix", "programme-fees", "downloads"}
+    for section in (await db.execute(select(AdmissionPageSection))).scalars().all():
+        if section.section_key in legacy_section_keys:
+            section.is_enabled = False
+
     for index, (page_key, section_key, title, body, layout_variant) in enumerate(sections, start=1):
         section = await _one_or_none(
             db,

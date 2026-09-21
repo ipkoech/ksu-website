@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -26,6 +27,8 @@ from .assistant_provider import (
     get_assistant_provider,
 )
 from .assistant_retrieval import retrieve_approved_sources
+
+PROVIDER_DEADLINE_SECONDS = 30
 
 
 def _now() -> datetime:
@@ -106,13 +109,13 @@ async def _call_provider(
     escalation_guidance: str | None,
 ):
     try:
-        return await provider.answer(
+        return await asyncio.wait_for(provider.answer(
             message=message,
             instructions=instructions,
             sources=sources,
             history=history,
             escalation_guidance=escalation_guidance,
-        ), provider.name
+        ), timeout=PROVIDER_DEADLINE_SECONDS), provider.name
     except Exception:
         fallback = DeterministicLibraryAssistantProvider()
         return await fallback.answer(
@@ -135,14 +138,16 @@ async def answer_question(
     conversation: LibraryConversation | None = None
     guest_session = None
     if continuation_token:
-        conversation = await get_conversation_by_continuation(db, continuation_token)
+        conversation = await get_conversation_by_continuation(db, continuation_token, for_update=True)
         if request.conversation_id and request.conversation_id != conversation.id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Conversation access denied")
+        if conversation.status in {"resolved", "closed"}:
+            raise HTTPException(status_code=409, detail="This conversation must be reopened before continuing")
         context_id = conversation.context_id
     else:
         if not guest_token:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Start a guest assistant session")
-        guest_session = await get_guest_session(db, guest_token)
+        guest_session = await get_guest_session(db, guest_token, for_update=True)
         if guest_session.answer_consumed_at is not None:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Verify your email to continue this conversation")
         context_id = request.context_id

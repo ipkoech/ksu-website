@@ -1,3 +1,4 @@
+import "server-only";
 import {
   accommodationsApi,
   artsCultureApi,
@@ -18,7 +19,12 @@ import {
   type Story,
   type StudentGovernance,
   type Testimonial,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
+import {
+  normalizePublicListResponse,
+  normalizePublicRecordResponse,
+} from "@/lib/web-response-shapes";
 
 type ListEnvelope<T> = { data?: T[] };
 type RecordEnvelope<T> = { data?: T | null };
@@ -160,10 +166,12 @@ export interface LifeAroundStudiesEditorial {
 async function safeList<T>(promise: Promise<ListEnvelope<T>>): Promise<T[]> {
   try {
     const result = await promise;
-    return result.data ?? [];
+    const normalized = normalizePublicListResponse<T>(result);
+    if (!normalized) throw new Error("Invalid campus-life list response");
+    return normalized.data;
   } catch (error) {
     console.error("Failed to fetch campus life list:", error);
-    return [];
+    return uncachedPublicFallback([]);
   }
 }
 
@@ -172,14 +180,20 @@ async function safeListWithCount<T>(
 ): Promise<{ data: T[]; total: number }> {
   try {
     const result = await promise;
-    const meta = result.meta as { total?: number } | undefined;
+    const normalized = normalizePublicListResponse<T>(result);
+    if (!normalized) throw new Error("Invalid campus-life counted list response");
+    const meta =
+      result && typeof result === "object" && !Array.isArray(result) && "meta" in result
+        ? (result as { meta?: { total?: unknown } }).meta
+        : undefined;
+    const total = typeof meta?.total === "number" ? meta.total : normalized.data.length;
     return {
-      data: result.data ?? [],
-      total: meta?.total ?? result.data?.length ?? 0,
+      data: normalized.data,
+      total,
     };
   } catch (error) {
     console.error("Failed to fetch campus life list:", error);
-    return { data: [], total: 0 };
+    return uncachedPublicFallback({ data: [], total: 0 });
   }
 }
 
@@ -188,10 +202,12 @@ async function safeRecord<T>(
 ): Promise<T | null> {
   try {
     const result = await promise;
-    return result.data ?? null;
+    const normalized = normalizePublicRecordResponse<T>(result);
+    if (normalized === undefined) throw new Error("Invalid campus-life record response");
+    return normalized;
   } catch (error) {
     console.error("Failed to fetch campus life record:", error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -331,10 +347,14 @@ export async function getCampusLifeData(
     const [editorialResult, rosterResult, storiesResult] = await Promise.all([
       mainApi
         .get<{ data?: LifeAroundStudiesEditorial }>("/api/v1/campus-life/homepage")
-        .then((response) => response.data ?? null)
+        .then((response) => {
+          const normalized = normalizePublicRecordResponse<LifeAroundStudiesEditorial>(response);
+          if (normalized === undefined) throw new Error("Invalid Life Around Studies response");
+          return normalized;
+        })
         .catch((error) => {
           console.warn("Failed to fetch Life Around Studies composition:", error);
-          return null;
+          return uncachedPublicFallback(null);
         }),
       safeList(
         clubsApi.list({ per_page: ROSTER_PER_PAGE, fields: clubListFields }),

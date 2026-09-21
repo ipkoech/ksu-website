@@ -230,3 +230,17 @@ class LibraryDetail(LibraryOut):
     hours: list[LibraryHoursOut] = []
     external_links: list[LibraryExternalLinkOut] = []
     files: list[LibraryFileOut] = []
+
+
+class LibraryTodayStatus(BaseModel):
+    library_id: uuid.UUID | str
+    library_name: str
+    library_slug: str
+    day_type: str
+    is_open: bool
+    is_closed: bool
+    opens_at: str | None = None
+    closes_at: str | None = None
+    note: str | None = None
+    checked_at: datetime
+    timezone: str

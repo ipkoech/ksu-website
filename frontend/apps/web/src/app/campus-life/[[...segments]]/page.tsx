@@ -2,6 +2,8 @@ import { pageFromSearchParams } from "@ksu/ui/components";
 import { CampusLifeContent } from "./campus-life-content";
 import { getCampusLifeData } from "@/lib/get-campus-life";
 
+export const dynamic = "force-dynamic";
+
 export default async function CampusLifeRoutePage({
   params,
   searchParams,

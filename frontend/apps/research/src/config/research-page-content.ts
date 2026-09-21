@@ -19,13 +19,13 @@ import {
 } from "lucide-react";
 
 export const researchNewsFallbackImages = [
-  "/images/research/research-hero-imagegen.webp",
-  "/images/research/research-projects-hero.webp",
-  "/images/research/research-events-hero.webp",
-  "/images/research/research-demo-imagegen.webp",
-  "/images/research/research-innovation-hero.webp",
-  "/images/research/sustainability-hero-imagegen.webp",
-  "/images/research/university-farm-hero-imagegen.webp",
+  "/images/research/verified/innovation-week-05.jpeg",
+  "/images/research/verified/multidisciplinary-conference-2026.jpg",
+  "/images/research/verified/multidisciplinary-conference-2026.jpg",
+  "/images/research/verified/riana-outreach-01.jpeg",
+  "/images/research/verified/innovation-week-03.jpeg",
+  "/images/research/verified/environment-03.jpeg",
+  "/images/research/verified/environment-01.jpeg",
 ];
 
 export const researchNewsTabs = [

@@ -68,6 +68,7 @@ class Settings(BaseSettings):
     GEMINI_TIMEOUT_SECONDS: float = 30.0
 
     PUBLIC_APP_URL: str = "http://localhost:3000"
+    NOTIFICATION_ENCRYPTION_KEY: str | None = Field(default=None, repr=False)
     GUEST_SESSION_TTL_MINUTES: int = 30
     EMAIL_VERIFICATION_TTL_MINUTES: int = 15
     EMAIL_VERIFICATION_MAX_ATTEMPTS: int = 5

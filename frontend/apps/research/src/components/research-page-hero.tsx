@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ArrowRight, ChevronRight } from "lucide-react";
 
 import { ResearchImage } from "./research-image";
+import { getResearchHeaderImage } from "../config/research-header-images";
 
 export type ResearchPageHeroAction = {
   label: string;
@@ -15,13 +16,30 @@ export type ResearchPageHeroStat = {
   value: ReactNode;
 };
 
+export function ResearchPageSummary({ actions = [], facts = [], children }: {
+  actions?: ResearchPageHeroAction[];
+  facts?: ResearchPageHeroStat[];
+  children?: ReactNode;
+}) {
+  if (!actions.length && !facts.length && !children) return null;
+  return (
+    <section aria-label="Page overview" className="border-b border-border bg-background px-4 py-4 text-foreground sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto max-w-[1680px] space-y-4">
+        {actions.length ? <div className="flex flex-wrap gap-3">{actions.map(action => <HeroAction key={action.href} action={action} inverse={false} />)}</div> : null}
+        {facts.length ? <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">{facts.map(fact => <div key={fact.label} className="rounded-md border border-border bg-surface-subtle px-3 py-2"><dt className="text-xs text-muted-foreground">{fact.label}</dt><dd className="mt-1 text-lg font-semibold">{fact.value}</dd></div>)}</dl> : null}
+        {children}
+      </div>
+    </section>
+  );
+}
+
 export function ResearchPageHeroStats({ facts }: { facts: ResearchPageHeroStat[] }) {
   return (
     <dl className="grid max-w-3xl gap-2 sm:grid-cols-3">
       {facts.map((fact) => (
         <div
           key={fact.label}
-          className="rounded-md border border-primary/15 bg-white/90 px-3 py-2 text-foreground shadow-sm backdrop-blur-sm md:border-white/20 md:bg-white/10 md:text-white"
+          className="rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white shadow-sm backdrop-blur-sm"
         >
           <dt className="text-[0.68rem] font-bold uppercase tracking-wider opacity-75">{fact.label}</dt>
           <dd className="mt-1 font-display text-lg font-semibold">{fact.value}</dd>
@@ -37,9 +55,11 @@ export function ResearchPageHero({
   description,
   breadcrumbs = [],
   actions = [],
-  imageSrc = "/institutional-research-images/KSUGreenLandscapingWithoutWMJuly2026-3942.jpg",
+  imageSrc = "/images/research/headers/innovation-week-8197.jpg",
   imageAlt = "Kisii University research and innovation",
   imagePosition = "center",
+  varyImage = true,
+  clean = true,
   size = "standard",
   children,
 }: {
@@ -51,28 +71,29 @@ export function ResearchPageHero({
   imageSrc?: string;
   imageAlt?: string;
   imagePosition?: string;
+  varyImage?: boolean;
+  clean?: boolean;
   size?: "standard" | "immersive";
   children?: ReactNode;
 }) {
+  const photo = varyImage && imageSrc.startsWith("/images/research/headers/")
+    ? getResearchHeaderImage(breadcrumbs.map(item => item.label).join("/") || (typeof title === "string" ? title : eyebrow))
+    : { src: imageSrc, alt: imageAlt };
   return (
     <>
-      <header className="border-b border-border bg-[linear-gradient(135deg,hsl(var(--primary)/0.10),hsl(var(--surface-subtle))_52%,hsl(var(--secondary)/0.06))] px-4 py-5 md:hidden">
-        <HeroContent eyebrow={eyebrow} title={title} description={description} breadcrumbs={breadcrumbs} actions={actions}>
-          {children}
-        </HeroContent>
-      </header>
-
-      <header className={`relative isolate hidden overflow-hidden bg-brand-overlay md:block ${size === "immersive" ? "min-h-[390px] lg:min-h-[470px]" : "min-h-[272px] lg:min-h-[323px]"}`}>
-        <ResearchImage src={imageSrc} alt={imageAlt} fill priority sizes="100vw" className="object-cover" style={{ objectPosition: imagePosition }} />
+      <header data-research-page-hero className={`relative isolate overflow-hidden bg-brand-overlay ${size === "immersive" ? "min-h-[238px] md:min-h-[273px] lg:min-h-[329px]" : "min-h-[190px] lg:min-h-[226px]"}`}>
+        <ResearchImage src={photo.src} alt={photo.alt} fill priority sizes="100vw" className="object-cover" style={{ objectPosition: imagePosition }} />
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,hsl(var(--brand-overlay)/0.96)_0%,hsl(var(--primary)/0.78)_46%,hsl(var(--primary)/0.24)_100%)] mix-blend-multiply" />
         <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-4/5 bg-[linear-gradient(180deg,transparent_0%,rgba(3,17,40,0.30)_40%,rgba(3,17,40,0.82)_100%)]" />
         <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-[linear-gradient(90deg,hsl(var(--secondary))_0%,hsl(var(--secondary))_16%,hsl(var(--primary))_16%,hsl(var(--primary))_100%)]" />
-        <div className={`relative mx-auto flex w-full max-w-[1680px] flex-col justify-end px-4 pb-8 pt-12 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12 ${size === "immersive" ? "min-h-[390px] lg:min-h-[470px] lg:pb-12" : "min-h-[272px] lg:min-h-[323px]"}`}>
-          <HeroContent eyebrow={eyebrow} title={title} description={description} breadcrumbs={breadcrumbs} actions={actions} inverse>
-            {children}
-          </HeroContent>
+        <div className={`relative mx-auto flex w-full max-w-[1680px] flex-col justify-end px-4 pb-[22px] pt-[34px] text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12 ${size === "immersive" ? "min-h-[238px] md:min-h-[273px] lg:min-h-[329px] lg:pb-[34px]" : "min-h-[190px] lg:min-h-[226px]"}`}>
+          {clean ? <h1 className="max-w-4xl text-balance font-display text-3xl font-normal leading-tight text-white sm:text-4xl lg:text-[2.9rem]">{title}</h1> : <HeroContent eyebrow={eyebrow} title={title} description={description} breadcrumbs={breadcrumbs} actions={actions} inverse>{children}</HeroContent>}
         </div>
       </header>
+      {clean && (description || actions.length || children) ? <ResearchPageSummary actions={actions}>
+        {description ? <p className="max-w-3xl text-sm leading-7 text-muted-foreground">{description}</p> : null}
+        {children ? <div className="rounded-md bg-brand-overlay p-4 text-white">{children}</div> : null}
+      </ResearchPageSummary> : null}
     </>
   );
 }

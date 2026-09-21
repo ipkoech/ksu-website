@@ -65,7 +65,7 @@ export function YouTubeFacade({
         alt=""
         fill
         sizes={sizes}
-        className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:group-hover:scale-[1.03]"
+        className="object-cover transition-transform duration-700 ease-in-out motion-safe:group-hover:scale-[1.03]"
       />
       <span
         className="absolute inset-0 bg-[linear-gradient(to_top,hsl(var(--brand-overlay)/0.85)_0%,hsl(var(--brand-overlay)/0.25)_45%,transparent_75%)]"

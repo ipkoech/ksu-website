@@ -22,6 +22,7 @@ import { toast } from "@ksu/ui";
 import Link from "next/link";
 import { useState } from "react";
 import { TableSearch } from "@/components/shared/table-search";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const getProgrammeColumns = ({
     canDelete,
@@ -129,6 +130,7 @@ export default function ProgrammesPage() {
     const handleDelete = (id: string) => {
         confirmDelete("programme", async () => {
             await deleteProgramme.mutateAsync(id);
+            void revalidatePublicContent("main", "academic-programmes");
             toast.success("Programme deleted successfully");
         });
     };

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import re
+import uuid
+from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import ConfigDict, Field, field_validator
@@ -88,3 +90,29 @@ class SchoolContentImportRow(_SchoolContentPayload):
 
 class SchoolContentAction(BaseSchema):
     comments: str | None = Field(None, max_length=5000)
+
+
+class SchoolContentRecordSnapshot(BaseSchema):
+    """Common bounded fields for heterogeneous school-owned content records."""
+
+    id: uuid.UUID | None = None
+    title: str | None = None
+    slug: str | None = None
+    summary: str | None = None
+    status: str | None = None
+    workflow_status: str | None = None
+    scope_type: str | None = None
+    scope_id: uuid.UUID | None = None
+    owner_scope_type: str | None = None
+    owner_scope_id: uuid.UUID | None = None
+    is_public: bool | None = None
+    is_published: bool | None = None
+    published_at: datetime | None = None
+    submitted_at: datetime | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class SchoolContentListItem(BaseSchema):
+    content_type: str
+    record: SchoolContentRecordSnapshot

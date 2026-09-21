@@ -1,3 +1,4 @@
+import "server-only";
 import {
   announcementsApi,
   blogsApi,
@@ -18,8 +19,13 @@ import {
   type PublicEntityContentType,
   type PublicEntityType,
   type School,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
 import { publicFileUrl, resolvePublicMediaUrl } from "@/lib/public-media";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
+import {
+  normalizePublicListResponse,
+  normalizePublicRecordResponse,
+} from "@/lib/web-response-shapes";
 
 export type ContentKind =
   | "news"
@@ -349,10 +355,13 @@ async function safeList<T>(
   request: Promise<ListResponse<T>>,
 ): Promise<ListResponse<T>> {
   try {
-    return await request;
+    const response = await request;
+    const normalized = normalizePublicListResponse<T>(response);
+    if (!normalized) throw new Error("Invalid public content list response");
+    return normalized;
   } catch (error) {
     console.error("Failed to load content records:", error);
-    return { data: [] };
+    return uncachedPublicFallback({ data: [] });
   }
 }
 
@@ -361,10 +370,12 @@ async function safeRecord<T>(
 ): Promise<T | null> {
   try {
     const response = await request;
-    return response.data ?? null;
+    const normalized = normalizePublicRecordResponse<T>(response);
+    if (normalized === undefined) throw new Error("Invalid public content record response");
+    return normalized;
   } catch (error) {
     console.error("Failed to load content record:", error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -1149,7 +1160,7 @@ async function fetchEditorialMedia(
       })
       .filter((item) => item.url);
   } catch {
-    return [];
+    return uncachedPublicFallback([]);
   }
 }
 

@@ -1,5 +1,11 @@
-import { mainApi } from "@ksu/api-client";
+import "server-only";
+import { mainApi } from "@ksu/api-client/server";
 import type { EntityHeaderProps } from "@ksu/ui/layout/public";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
+import {
+  normalizePublicListResponse,
+  normalizePublicRecordResponse,
+} from "@/lib/web-response-shapes";
 
 type EntityHeaderConfig = Omit<EntityHeaderProps, "className">;
 
@@ -68,9 +74,11 @@ async function getItem<T>(
 ): Promise<T | null> {
   try {
     const response = await mainApi.get<ApiItemResponse<T>>(path, params);
-    return response.data ?? null;
+    const normalized = normalizePublicRecordResponse<T>(response);
+    if (normalized === undefined) throw new Error("Malformed entity header record");
+    return normalized;
   } catch {
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -80,9 +88,11 @@ async function getList<T>(
 ): Promise<ApiListResponse<T>> {
   try {
     const response = await mainApi.get<ApiListResponse<T>>(path, params);
-    return response;
+    const normalized = normalizePublicListResponse<T>(response);
+    if (!normalized) throw new Error("Malformed entity header collection");
+    return normalized;
   } catch {
-    return { data: [] };
+    return uncachedPublicFallback({ data: [] });
   }
 }
 

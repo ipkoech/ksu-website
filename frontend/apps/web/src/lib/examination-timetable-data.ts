@@ -1,10 +1,15 @@
+import "server-only";
 import {
   academicCalendarsApi,
   documentsApi,
   mainApi,
   programmesApi,
   type AcademicCalendar,
-} from "@ksu/api-client";
+  type Document,
+  type Programme,
+} from "@ksu/api-client/server";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
+import { normalizePublicListResponse } from "@/lib/web-response-shapes";
 
 export type TimetableProgramme = {
   id: string;
@@ -55,6 +60,7 @@ export type ExaminationTimetableData = {
 type TimetableEnvelope = {
   data?: Array<{ timetable?: PublishedTimetable; sittings?: ExaminationSitting[] }>;
 };
+type TimetableRecord = NonNullable<TimetableEnvelope["data"]>[number];
 
 export async function getExaminationTimetableData(filters: {
   programme_id?: string;
@@ -73,16 +79,21 @@ export async function getExaminationTimetableData(filters: {
         fields: "id,title,slug,document_type",
       }),
     ]);
+  if ([calendarResponse, programmesResponse, documentsResponse].some((result) => result.status === "rejected")) {
+    uncachedPublicFallback(null);
+  }
 
   const calendars =
     calendarResponse.status === "fulfilled"
-      ? (calendarResponse.value.data ?? [])
+      ? normalizePublicListResponse<AcademicCalendar>(calendarResponse.value)?.data ??
+        uncachedPublicFallback([])
       : [];
   const calendar =
     calendars.find((item) => item.status === "current") ?? calendars[0] ?? null;
   const programmes =
     programmesResponse.status === "fulfilled"
-      ? (programmesResponse.value.data ?? []).map((item) => ({
+      ? (normalizePublicListResponse<Programme>(programmesResponse.value)?.data ??
+          uncachedPublicFallback([])).map((item) => ({
           id: item.id,
           name: item.name,
           code: item.code,
@@ -90,7 +101,8 @@ export async function getExaminationTimetableData(filters: {
       : [];
   const documents =
     documentsResponse.status === "fulfilled"
-      ? documentsResponse.value.data ?? []
+      ? normalizePublicListResponse<Document>(documentsResponse.value)?.data ??
+        uncachedPublicFallback([])
       : [];
   const fallback =
     documents.find((item) => item.title.toLowerCase().includes("timetable")) ??
@@ -106,9 +118,11 @@ export async function getExaminationTimetableData(filters: {
         programme_id: selectedProgrammeId,
       },
     );
-    records = response.data ?? [];
+    const normalized = normalizePublicListResponse<TimetableRecord>(response);
+    if (!normalized) throw new Error("Invalid examination timetable response");
+    records = normalized.data;
   } catch {
-    records = [];
+    records = uncachedPublicFallback([]);
   }
 
   const record = records[0];

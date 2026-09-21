@@ -62,6 +62,12 @@ class PartnerUpdate(BaseSchema):
     display_order: int | None = None
 
 
+class InternalCenterPartnersRequest(BaseSchema):
+    """Bounded batch of centers for sibling-service relationship syncs."""
+
+    center_ids: list[uuid.UUID] = Field(min_length=1, max_length=100)
+
+
 class PartnerRead(PartnerBase, BaseReadSchema, StatusMixin):
     pass
 

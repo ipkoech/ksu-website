@@ -15,7 +15,7 @@ from app.models.vice_chancellor import (
     VC_VIDEO_PROVIDERS,
 )
 
-from .base import BaseReadSchema, BaseSchema, SlugStr
+from .base import BaseReadSchema, BaseSchema, SlugStr, optional_snapshot
 from .content import RichContentRead, ScopedContentRead
 
 
@@ -65,6 +65,9 @@ class VcHubRead(ScopedContentRead):
     section_visibility: dict[str, bool]
 
 
+VcHubSnapshot = optional_snapshot("VcHubSnapshot", VcHubRead)
+
+
 class VcPortraitCreate(_StrictSchema):
     media_id: uuid.UUID
     alt_text: str | None = Field(default=None, max_length=255)
@@ -81,6 +84,19 @@ class VcPortraitRead(BaseReadSchema):
     media_id: uuid.UUID
     alt_text: str | None = None
     display_order: int
+
+
+class VcPortraitResponse(BaseSchema):
+    id: uuid.UUID
+    hub_id: uuid.UUID
+    media_id: uuid.UUID
+    alt_text: str | None = None
+    display_order: int
+    is_active: bool = False
+    media: dict[str, Any] | None = None
+
+
+VcPortraitSnapshot = optional_snapshot("VcPortraitSnapshot", VcPortraitResponse)
 
 
 class VcVideoCreate(_StrictSchema):
@@ -145,6 +161,9 @@ class VcVideoRead(ScopedContentRead):
     recorded_at: datetime | None = None
     category: str | None = None
     is_featured: bool
+
+
+VcVideoSnapshot = optional_snapshot("VcVideoSnapshot", VcVideoRead)
 
 
 class VcSpeechCreate(_StrictSchema):
@@ -213,6 +232,9 @@ class VcSpeechRead(RichContentRead):
     is_featured: bool
 
 
+VcSpeechSnapshot = optional_snapshot("VcSpeechSnapshot", VcSpeechRead)
+
+
 class VcSpeechVideoCreate(_StrictSchema):
     video_id: uuid.UUID
     role: str = "related"
@@ -230,6 +252,15 @@ class VcSpeechVideoRead(BaseReadSchema):
     video_id: uuid.UUID
     role: str
     display_order: int
+
+
+class VcSpeechVideoResponse(BaseSchema):
+    id: uuid.UUID
+    speech_id: uuid.UUID
+    video_id: uuid.UUID
+    role: str
+    display_order: int
+    video: VcVideoSnapshot | None = None
 
 
 class VcGalleryAlbumCreate(_StrictSchema):
@@ -273,11 +304,21 @@ class VcGalleryAlbumRead(ScopedContentRead):
     keywords: dict[str, Any] | None = None
 
 
+VcGalleryAlbumSnapshot = optional_snapshot("VcGalleryAlbumSnapshot", VcGalleryAlbumRead)
+
+
 class VcGalleryMediaCreate(_StrictSchema):
     media_id: uuid.UUID
     display_order: int = 100
     caption: str | None = None
     alt_text: str | None = Field(default=None, max_length=255)
+
+
+class VcGalleryMediaResponse(BaseSchema):
+    id: uuid.UUID
+    media_id: uuid.UUID
+    display_order: int
+    media: dict[str, Any] | None = None
 
 
 class VcHubPlacementCreate(_StrictSchema):
@@ -346,6 +387,95 @@ class VcHubPlacementRead(BaseReadSchema):
     visible_from: datetime | None = None
     visible_to: datetime | None = None
     is_enabled: bool
+
+
+VcHubPlacementSnapshot = optional_snapshot("VcHubPlacementSnapshot", VcHubPlacementRead)
+
+
+class VcRecordPage(BaseSchema):
+    items: list[Any]
+    meta: dict[str, int]
+
+
+class VcVideoPage(BaseSchema):
+    items: list[VcVideoSnapshot]
+    meta: dict[str, int]
+
+
+class VcSpeechPage(BaseSchema):
+    items: list[VcSpeechSnapshot]
+    meta: dict[str, int]
+
+
+class VcGalleryPage(BaseSchema):
+    items: list[VcGalleryAlbumSnapshot]
+    meta: dict[str, int]
+
+
+class VcYouTubePreviewResponse(BaseSchema):
+    video_id: str
+    canonical_url: str
+    embed_url: str
+    thumbnail_url: str
+    title: str
+    author_name: str | None = None
+
+
+class VcCredentialsMetadata(BaseSchema):
+    created: bool
+    metadata_warning: str | None = None
+
+
+class VcPublicHubResponse(BaseSchema):
+    id: str
+    eyebrow: str | None = None
+    title: str
+    introduction: str | None = None
+    welcome_title: str | None = None
+    welcome_message: str | None = None
+    hero_media: dict[str, Any] | None = None
+    welcome_video: dict[str, Any] | None = None
+    professional_profile_url: str | None = None
+    section_order: list[str]
+    section_visibility: dict[str, bool]
+    sections: dict[str, list[dict[str, Any]]]
+
+
+class VcPublicSpeechResponse(BaseSchema):
+    id: str
+    title: str
+    slug: str
+    summary: str | None = None
+    plain_text: str | None = None
+    rich_text: str | None = None
+    speech_type: str
+    delivered_at: datetime | None = None
+    venue: str | None = None
+    occasion: str | None = None
+    audience: str | None = None
+    cover: dict[str, Any] | None = None
+    videos: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class VcPublicGalleryResponse(BaseSchema):
+    id: str
+    title: str
+    slug: str
+    summary: str | None = None
+    event_date: date | None = None
+    location: str | None = None
+    cover: dict[str, Any] | None = None
+    media: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class VcWorkflowTransitionResponse(BaseSchema):
+    id: uuid.UUID
+    status: str | None = None
+    workflow_status: str | None = None
+    is_published: bool | None = None
+    published_at: datetime | None = None
+    unpublished_at: datetime | None = None
+    archived_at: datetime | None = None
 
 
 class VcReorderItem(_StrictSchema):

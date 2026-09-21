@@ -7,7 +7,7 @@ import { SettingsOperationalDetail } from "../../_components/settings-operationa
 export default function ResearchSliderDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Slider"
+      title="Slider"
       description="View research-scoped media copy, media bindings, and CTA metadata."
       resource={{
         list: (params) => slidersApi.listAdminSliders({ page: 1, per_page: 100, scope_type: "research", ...params }),

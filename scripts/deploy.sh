@@ -71,7 +71,7 @@ Cloud options:
   --no-allow-unauth    Require authenticated access to deployed HTTP services.
   --include-workers    Deploy Celery worker services. Off by default to control cost.
   --skip-frontends     Deploy backend services only.
-  --run-migrations     Run Alembic migrations for main, research, and library.
+  --run-migrations     Run Alembic migrations for deployed backend services.
   --skip-build         Reuse images that already exist in Artifact Registry.
   --dry-run            Print the gcloud/docker commands without executing them.
 
@@ -239,7 +239,14 @@ deploy_local() {
     python3 scripts/validate_database_capacity.py "${capacity_args[@]}"
   fi
 
-  local services=(postgres redis redis-cache main research library heri celery-main celery-library celery-heri)
+  local services=(
+    postgres redis redis-cache
+    main research library heri
+    celery-main celery-main-audit celery-main-integrations beat-main
+    celery-research celery-research-audit beat-research
+    celery-library celery-library-audit beat-library
+    celery-heri celery-heri-audit beat-heri
+  )
   if [[ "${with_gateway}" -eq 1 ]]; then
     services+=(gateway)
   fi
@@ -319,6 +326,11 @@ PULL_IMAGES=$(shell_quote "${pull_images}")
 CLEANUP_IMAGES=$(shell_quote "${cleanup_images}")
 DEPLOY_SCOPE=$(shell_quote "${deploy_scope}")
 REQUESTED_EDGE_HTTP_PORT=$(shell_quote "${edge_http_port}")
+
+FRONTEND_GATEWAY_SERVICE="gateway"
+if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+  FRONTEND_GATEWAY_SERVICE="research-gateway"
+fi
 
 section() {
   printf '\n[%s] === %s ===\n' "\$(date -u +%Y-%m-%dT%H:%M:%SZ)" "\$*"
@@ -453,9 +465,6 @@ if [[ "\${MODE}" = "status" || "\${MODE}" = "logs" ]]; then
   fi
 
   compose_files=(-f docker-compose.yml -f docker-compose.vm.yml)
-  if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
-    compose_files+=(-f docker-compose.research-vm.yml)
-  fi
   external_data=0
   if [[ -f .deploy/docker-compose.external-data.yml ]]; then
     compose_files+=(-f .deploy/docker-compose.external-data.yml)
@@ -463,12 +472,12 @@ if [[ "\${MODE}" = "status" || "\${MODE}" = "logs" ]]; then
   fi
 
   if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
-    default_services=(main research library celery-main celery-main-integrations beat-main celery-research celery-library beat-library admin-prod research-web-prod research-gateway research-edge)
+    default_services=(main research library celery-main celery-main-audit celery-main-integrations beat-main celery-research celery-research-audit beat-research celery-library celery-library-audit beat-library admin-prod research-web-prod research-gateway research-edge)
     if [[ "\${external_data}" -eq 0 ]]; then
       default_services=(postgres redis redis-cache "\${default_services[@]}")
     fi
   else
-    default_services=(main research library heri celery-main celery-main-integrations beat-main celery-research celery-library beat-library celery-heri web-prod admin-prod research-web-prod library-web-prod heri-web-prod gateway edge)
+    default_services=(main research library heri celery-main celery-main-audit celery-main-integrations beat-main celery-research celery-research-audit beat-research celery-library celery-library-audit beat-library celery-heri celery-heri-audit beat-heri web-prod admin-prod research-web-prod library-web-prod heri-web-prod gateway edge)
     if [[ "\${external_data}" -eq 0 ]]; then
       default_services+=(postgres redis redis-cache)
     fi
@@ -607,12 +616,12 @@ NEXT_PUBLIC_LIBRARY_FRONTEND_URL=\${LIBRARY_URL}
 NEXT_PUBLIC_APP_URL=\${ADMIN_URL}
 CORS_ORIGINS=["http://\${PUBLIC_HOST}","https://\${PUBLIC_HOST}","http://\${RESEARCH_HOST}","https://\${RESEARCH_HOST}"]
 VM_FRONTEND_BUILD_API_URL=http://\${EDGE_PROXY_TARGET}
-VM_FRONTEND_BUILD_MAIN_API_URL=http://127.0.0.1:\${MAIN_SERVICE_PORT:-8000}
-VM_FRONTEND_BUILD_RESEARCH_API_URL=http://127.0.0.1:\${RESEARCH_SERVICE_PORT:-8001}
-VM_FRONTEND_BUILD_LIBRARY_API_URL=http://127.0.0.1:\${LIBRARY_SERVICE_PORT:-8002}
-KSU_MAIN_API_URL=http://main:8000
-KSU_RESEARCH_API_URL=http://research:8001
-KSU_LIBRARY_API_URL=http://library:8002
+VM_FRONTEND_BUILD_MAIN_API_URL=http://\${FRONTEND_GATEWAY_SERVICE}
+VM_FRONTEND_BUILD_RESEARCH_API_URL=http://\${FRONTEND_GATEWAY_SERVICE}
+VM_FRONTEND_BUILD_LIBRARY_API_URL=http://\${FRONTEND_GATEWAY_SERVICE}
+KSU_MAIN_API_URL=http://\${FRONTEND_GATEWAY_SERVICE}
+KSU_RESEARCH_API_URL=http://\${FRONTEND_GATEWAY_SERVICE}
+KSU_LIBRARY_API_URL=http://\${FRONTEND_GATEWAY_SERVICE}
 EOF
 
 # Preserve deployment-only secrets (JWT keys, API keys, etc.) when the
@@ -629,7 +638,7 @@ if [[ "\${ENV_NAME}" != "dev" ]]; then
 fi
 
 required_env_files=(services/main/.env services/research/.env services/library/.env)
-if [[ -f services/heri_africa/Dockerfile ]]; then
+if [[ -f services/Dockerfile ]]; then
   required_env_files+=(services/heri_africa/.env)
 fi
 
@@ -704,9 +713,6 @@ if [[ -f .deploy/docker-compose.external-data.yml ]]; then
 fi
 
 compose_files=(-f docker-compose.yml -f docker-compose.vm.yml)
-if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
-  compose_files+=(-f docker-compose.research-vm.yml)
-fi
 external_data=0
 if [[ -f .deploy/docker-compose.external-data.yml ]]; then
   compose_files+=(-f .deploy/docker-compose.external-data.yml)
@@ -722,10 +728,14 @@ backup_database() {
     echo "error: postgres container is not running; refusing to deploy without a backup" >&2
     return 1
   fi
+  local require_offsite_backup="\${REQUIRE_OFFSITE_BACKUP:-false}"
+  if [[ "\${ENV_NAME}" == "production" ]]; then
+    require_offsite_backup=true
+  fi
   BACKUP_DIR="\${BACKUP_DIR}" \
   BACKUP_RETENTION_DAYS="\${BACKUP_RETENTION_DAYS:-14}" \
   BACKUP_OFFSITE_DIR="\${BACKUP_OFFSITE_DIR:-}" \
-  REQUIRE_OFFSITE_BACKUP="\${REQUIRE_OFFSITE_BACKUP:-false}" \
+  REQUIRE_OFFSITE_BACKUP="\${require_offsite_backup}" \
   APP_ENV="\${ENV_NAME}" \
   POSTGRES_CONTAINER="\${postgres_container}" \
   POSTGRES_USER="\${POSTGRES_USER:-ksu_service_user}" \
@@ -748,10 +758,10 @@ fi
 
 if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
   backend_services=(main research library)
-  worker_services=(celery-main celery-main-integrations beat-main celery-research celery-library beat-library)
+  worker_services=(celery-main celery-main-audit celery-main-integrations beat-main celery-research celery-research-audit beat-research celery-library celery-library-audit beat-library)
 else
   backend_services=(main research library heri)
-  worker_services=(celery-main celery-main-integrations beat-main celery-research celery-library beat-library celery-heri)
+  worker_services=(celery-main celery-main-audit celery-main-integrations beat-main celery-research celery-research-audit beat-research celery-library celery-library-audit beat-library celery-heri celery-heri-audit beat-heri)
 fi
 core_services=("\${backend_services[@]}" "\${worker_services[@]}")
 observability_services=()
@@ -1376,9 +1386,9 @@ deploy_vm() {
 
   if [[ "${mode}" = "logs" && -z "${inspect_services}" ]]; then
     if [[ "${deploy_scope}" = "research" ]]; then
-      inspect_services="main research library celery-main celery-research celery-library admin-prod research-web-prod research-gateway research-edge"
+      inspect_services="main research library celery-main celery-main-audit celery-research celery-research-audit beat-research celery-library celery-library-audit admin-prod research-web-prod research-gateway research-edge"
     else
-      inspect_services="main research library heri celery-main celery-research celery-library celery-heri web-prod admin-prod research-web-prod library-web-prod heri-web-prod edge gateway"
+      inspect_services="main research library heri celery-main celery-main-audit celery-research celery-research-audit beat-research celery-library celery-library-audit celery-heri celery-heri-audit beat-heri web-prod admin-prod research-web-prod library-web-prod heri-web-prod edge gateway"
     fi
   fi
 
@@ -1445,17 +1455,17 @@ deploy_vm() {
 
 cloud_services() {
   cat <<'SERVICES'
-main:services/main/Dockerfile:8000:main
-research:services/research/Dockerfile:8001:research
-library:services/library/Dockerfile:8002:library
+main:services/Dockerfile:8000:main
+research:services/Dockerfile:8001:research
+library:services/Dockerfile:8002:library
 SERVICES
 }
 
 cloud_worker_services() {
   cat <<'SERVICES'
-main-worker:services/main/Dockerfile:./scripts/start-celery-worker.sh:main
-main-integrations-worker:services/main/Dockerfile:./scripts/start-celery-worker.sh:main
-library-worker:services/library/Dockerfile:./scripts/start-celery-worker.sh:library
+main-worker:services/Dockerfile:./scripts/start-celery-worker.sh:main
+main-integrations-worker:services/Dockerfile:./scripts/start-celery-worker.sh:main
+library-worker:services/Dockerfile:./scripts/start-celery-worker.sh:library
 SERVICES
 }
 
@@ -1618,7 +1628,9 @@ deploy_cloud() {
       local image
       image="$(image_uri "${project}" "${region}" "${repo}" "${env_name}" "${service}" "${tag}")"
       echo "Building ${service}: ${image}"
-      run_cmd docker build -f "${dockerfile}" -t "${image}" services
+      run_cmd docker build -f "${dockerfile}" -t "${image}" \
+        --build-arg "SERVICE=${_config_group}" \
+        --build-arg "SERVICE_PORT=${_port}" services
       run_cmd docker push "${image}"
     done < <(cloud_services)
 
@@ -1627,7 +1639,8 @@ deploy_cloud() {
         local image
         image="$(image_uri "${project}" "${region}" "${repo}" "${env_name}" "${service}" "${tag}")"
         echo "Building ${service}: ${image}"
-        run_cmd docker build -f "${dockerfile}" -t "${image}" services
+        run_cmd docker build -f "${dockerfile}" -t "${image}" \
+          --build-arg "SERVICE=${_config_group}" services
         run_cmd docker push "${image}"
       done < <(cloud_worker_services)
     fi

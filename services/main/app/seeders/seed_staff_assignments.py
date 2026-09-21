@@ -218,7 +218,6 @@ async def seed_staff_assignments(db: AsyncSession, ctx: SeedContext) -> None:
         ("dvc_apf", "Deputy Vice Chancellor (AP&F)"),
         ("registrar_admin", "Ag. Registrar (AHRCS)"),
         ("registrar_academic", "Ag. Registrar (AA)"),
-        ("registrar_reirm", "Registrar (REIRM)"),
         ("finance_officer", "Finance Officer"),
     )
     for idx, (key, official_title) in enumerate(management_specs, start=2):

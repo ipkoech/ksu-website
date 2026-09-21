@@ -6,9 +6,11 @@ import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
+import logging
 
-from sqlalchemy import select, update
+from sqlalchemy import case, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import noload
 
 from ksu_common.rate_limit import RateLimiter
 
@@ -16,11 +18,14 @@ from ..helpers.jwt import create_token, decode_token, refresh_token as issue_ref
 from ..helpers.password import hash_password, verify_password
 from ..core.config import get_settings
 from ..models import Session, User
+from ..core.database import AsyncSessionLocal
 from ..security.scopes import user_scoped_grants
-from ..tasks.email import queue_password_reset_email, queue_verification_email
+from ..tasks.email import queue_password_reset_email, queue_verification_email  # noqa: F401
+from .domain_events import enqueue_email_event
 from .user import UserService
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 _LOGIN_RATE_LIMITER = RateLimiter(requests=5, window=60, prefix="main:auth-login")
 _LOGIN_GLOBAL_RATE_LIMITER = RateLimiter(requests=60, window=60, prefix="main:auth-login-global")
@@ -69,8 +74,6 @@ def _active_permissions(user: User) -> list[str]:
 def _active_scope_grants(user: User) -> list[dict[str, object]]:
     grants: list[dict[str, object]] = []
     for grant in user_scoped_grants(user):
-        if grant.scope_type in {"global", "university"}:
-            continue
         grants.append(
             {
                 "permissions": sorted(grant.permissions),
@@ -80,6 +83,11 @@ def _active_scope_grants(user: User) -> list[dict[str, object]]:
             }
         )
     return grants
+
+
+def _token_digest(token: str) -> str:
+    """Return the non-reversible database representation of a one-time token."""
+    return sha256(token.encode("utf-8")).hexdigest()
 
 
 class AuthService:
@@ -92,6 +100,7 @@ class AuthService:
         password: str,
         *,
         ip_address: str | None = None,
+        mfa_code: str | None = None,
     ) -> tuple[User, str, str]:
         await _LOGIN_GLOBAL_RATE_LIMITER.check("all", "POST:/auth/login/global")
         await _LOGIN_RATE_LIMITER.check(email.strip().lower(), "POST:/auth/login")
@@ -109,12 +118,26 @@ class AuthService:
         if user.is_locked:
             raise PermissionError("User account is locked")
         if not verify_password(password, user.password_hash):
-            await AuthService._record_failed_login(db, user)
+            # The accounting write intentionally uses its own transaction so
+            # the request rollback cannot erase it. Release this read session
+            # first; otherwise a burst of failed logins can hold every pool
+            # connection while waiting for an accounting connection.
+            failed_user_id = user.id
+            await db.rollback()
+            await AuthService._record_failed_login(db, failed_user_id)
             raise PermissionError("Invalid credentials")
 
         roles = _active_roles(user)
         permissions = _active_permissions(user)
         scope_grants = _active_scope_grants(user)
+        mfa_verified_at = None
+        if user.mfa_enabled:
+            from .mfa import verify_factor
+            from fastapi import HTTPException
+
+            if not mfa_code:
+                raise HTTPException(401, "MFA code required")
+            mfa_verified_at = await verify_factor(db, user.id, mfa_code)
         access_token, refresh_token, jti = create_token(
             str(user.id),
             roles,
@@ -124,8 +147,9 @@ class AuthService:
         session = Session(
             user_id=user.id,
             jti=jti,
+            mfa_verified_at=mfa_verified_at,
             token_type="refresh",
-            expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=settings.JWT_REFRESH_TTL_DAYS),
             is_active=True,
         )
         user.last_login_at = datetime.now(timezone.utc)
@@ -136,37 +160,82 @@ class AuthService:
         return user, access_token, refresh_token
 
     @staticmethod
-    async def _record_failed_login(db: AsyncSession, user: User) -> None:
-        user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
-        if user.failed_login_attempts >= settings.AUTH_LOGIN_MAX_ATTEMPTS:
-            user.locked_until = datetime.now(timezone.utc) + timedelta(
-                minutes=settings.AUTH_LOGIN_LOCKOUT_MINUTES
+    async def _record_failed_login(db: AsyncSession, user: User | uuid.UUID) -> None:
+        """Commit lockout accounting independently of the failed request.
+
+        The request transaction intentionally rolls back on PermissionError;
+        using it here made every failed password invisible. A row-level atomic
+        update prevents concurrent attempts from losing increments. ``db`` is
+        retained in the signature for compatibility, but is not mutated.
+        """
+        del db
+        user_id = getattr(user, "id", user)
+        now = datetime.now(timezone.utc)
+        attempts = User.failed_login_attempts + 1
+        locked_until = case(
+            (attempts >= settings.AUTH_LOGIN_MAX_ATTEMPTS,
+             now + timedelta(minutes=settings.AUTH_LOGIN_LOCKOUT_MINUTES)),
+            else_=User.locked_until,
+        )
+        async with AsyncSessionLocal.begin() as accounting_db:
+            updated = await accounting_db.execute(
+                update(User)
+                .where(User.id == user_id, User.is_active.is_(True))
+                .values(failed_login_attempts=attempts, locked_until=locked_until)
+                .returning(User.failed_login_attempts, User.locked_until)
             )
-        await db.flush()
+            if updated.first() is None:
+                logger.info("failed login accounting skipped for unavailable account", extra={
+                    "event": "failed_login_account_missing",
+                })
 
     @staticmethod
     async def refresh_token(db: AsyncSession, refresh_token: str) -> tuple[str, str]:
-        payload = decode_token(refresh_token)
-        if payload.get("type") != "refresh":
+        try:
+            payload = decode_token(refresh_token)
+            token_type = payload.get("type")
+            subject = uuid.UUID(str(payload["sub"]))
+            raw_jti = payload["jti"]
+            old_jti = raw_jti if isinstance(raw_jti, str) else ""
+        except (KeyError, TypeError, ValueError):
+            raise PermissionError("Invalid refresh token") from None
+        if token_type != "refresh" or not old_jti:
             raise PermissionError("Invalid refresh token")
-        user = await UserService.get_by_id(db, uuid.UUID(payload["sub"]))
+        user = await UserService.get_by_id(db, subject)
         if user is None or not user.is_active:
             raise PermissionError("User not found or inactive")
-        result = await db.execute(select(Session).where(Session.jti == payload["jti"], Session.user_id == user.id))
+        # Serialize refresh attempts for one session. The second concurrent or
+        # replayed request observes the revoked row after the first commits.
+        result = await db.execute(
+            select(Session)
+            .where(Session.jti == old_jti, Session.user_id == user.id)
+            .with_for_update()
+        )
         session = result.scalar_one_or_none()
         if session is None or not session.is_valid():
             raise PermissionError("Session is invalid")
         roles = _active_roles(user)
         permissions = _active_permissions(user)
         scope_grants = _active_scope_grants(user)
+        new_jti = str(uuid.uuid4())
         access_token, new_refresh_token = issue_refreshed_tokens(
             str(user.id),
             roles,
-            session.jti,
+            new_jti,
             permissions=permissions,
             scope_grants=scope_grants,
         )
-        session.touch()
+        session.revoke("refresh_rotation")
+        db.add(
+            Session(
+                user_id=user.id,
+                jti=new_jti,
+                mfa_verified_at=session.mfa_verified_at,
+                token_type="refresh",
+                expires_at=datetime.now(timezone.utc) + timedelta(days=settings.JWT_REFRESH_TTL_DAYS),
+                is_active=True,
+            )
+        )
         await db.flush()
         return access_token, new_refresh_token
 
@@ -207,10 +276,15 @@ class AuthService:
         if user is None:
             return
         token = secrets.token_urlsafe(32)
-        user.password_reset_token = token
+        user.password_reset_token = _token_digest(token)
         user.password_reset_expires = datetime.now(timezone.utc) + timedelta(hours=settings.PASSWORD_RESET_TOKEN_TTL_HOURS)
         await db.flush()
-        queue_password_reset_email.delay(user.email, token, frontend_service)
+        enqueue_email_event(
+            db,
+            event_type="auth.password_reset_email",
+            user_id=user.id,
+            payload={"args": [user.email, token, frontend_service]},
+        )
 
     @staticmethod
     async def reset_password(db: AsyncSession, token: str, new_password: str) -> None:
@@ -218,12 +292,21 @@ class AuthService:
             "all",
             "POST:/auth/reset-password/global",
         )
-        token_hash = sha256(token.encode()).hexdigest()[:24]
+        token_hash = _token_digest(token)[:24]
         await _PASSWORD_RESET_TOKEN_RATE_LIMITER.check(
             token_hash,
             "POST:/auth/reset-password",
         )
-        result = await db.execute(select(User).where(User.password_reset_token == token))
+        token_digest = _token_digest(token)
+        # The plaintext comparison is a bounded compatibility path for
+        # tokens issued before digest storage was introduced. New tokens are
+        # always matched by their digest and are consumed under a row lock.
+        result = await db.execute(
+            select(User)
+            .options(noload("*"))
+            .where(User.password_reset_token.in_((token_digest, token)))
+            .with_for_update()
+        )
         user = result.scalar_one_or_none()
         if user is None or user.password_reset_expires is None or user.password_reset_expires < datetime.now(timezone.utc):
             raise ValueError("Invalid or expired reset token")
@@ -236,7 +319,13 @@ class AuthService:
 
     @staticmethod
     async def verify_email(db: AsyncSession, token: str) -> User:
-        result = await db.execute(select(User).where(User.email_verification_token == token))
+        token_digest = _token_digest(token)
+        result = await db.execute(
+            select(User)
+            .options(noload("*"))
+            .where(User.email_verification_token.in_((token_digest, token)))
+            .with_for_update()
+        )
         user = result.scalar_one_or_none()
         if user is None:
             raise ValueError("Invalid verification token")
@@ -258,9 +347,14 @@ class AuthService:
     @staticmethod
     async def create_verification_token(db: AsyncSession, user: User) -> str:
         token = secrets.token_urlsafe(32)
-        user.email_verification_token = token
+        user.email_verification_token = _token_digest(token)
         await db.flush()
-        queue_verification_email.delay(user.email, token)
+        enqueue_email_event(
+            db,
+            event_type="auth.verification_email",
+            user_id=user.id,
+            payload={"args": [user.email, token]},
+        )
         return token
 
     @staticmethod

@@ -1,11 +1,13 @@
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { LibraryAssistantLauncher } from "./library-assistant-launcher";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/electronic",
 }));
+
+afterEach(() => cleanup());
 
 describe("LibraryAssistantLauncher", () => {
   it("links into the assistant with safe page context", () => {

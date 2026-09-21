@@ -22,6 +22,7 @@ import { toast } from "@ksu/ui";
 import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 interface ConfirmState {
     title: string;
@@ -188,6 +189,7 @@ export default function PersonsPage() {
             variant: "destructive",
             onConfirm: async () => {
                 await deletePerson.mutateAsync(person.id);
+                void revalidatePublicContent("main", "people");
                 toast.success("Person deleted successfully");
             },
         });
@@ -201,6 +203,7 @@ export default function PersonsPage() {
             confirmLabel: "Activate",
             onConfirm: async () => {
                 await activatePerson.mutateAsync(person.id);
+                void revalidatePublicContent("main", "people");
                 toast.success("Person activated");
             },
         });
@@ -215,6 +218,7 @@ export default function PersonsPage() {
             variant: "destructive",
             onConfirm: async () => {
                 await deactivatePerson.mutateAsync(person.id);
+                void revalidatePublicContent("main", "people");
                 toast.success("Person deactivated");
             },
         });

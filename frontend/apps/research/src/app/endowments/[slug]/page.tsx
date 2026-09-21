@@ -1,17 +1,14 @@
 import { notFound } from "next/navigation";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import {
   compactText,
   formatDate,
-  generateSlugParams,
   getEndowmentBySlug,
 } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 import {
-  CompactFactGrid,
   FundingIllustratedHero,
   FundingSidebar,
   formatMoney,
@@ -19,17 +16,18 @@ import {
 } from "../../../components/funding-ui";
 
 import { researchRecordMetadata } from "../../../lib/research-metadata";
+import {
+  EndowmentFactsDisplay,
+  type EndowmentFactDto,
+} from "../../../components/endowment-facts-display";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getEndowmentBySlug(slug);
   return researchRecordMetadata(data, { fallbackTitle: "Endowment fund", pathname: "/endowments/" + slug });
-}
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.endowments.list);
 }
 
 export default async function EndowmentDetailPage({
@@ -49,6 +47,13 @@ export default async function EndowmentDetailPage({
     { title: "How funds are used", fields: ["use_guidelines", "distribution_policy", "annual_distribution_notes"] },
     { title: "Donor story", fields: ["donor_message", "donor_background", "recognition_notes"] },
   ]);
+  const fundCurrency = compactText(fund.currency) || "KES";
+  const facts: EndowmentFactDto[] = [
+    { label: "Principal amount", value: formatMoney(fund.principal_amount, fundCurrency), icon: "money" },
+    { label: "Current value", value: formatMoney(fund.current_value, fundCurrency), icon: "current" },
+    { label: "Target value", value: formatMoney(fund.target_value, fundCurrency), icon: "target" },
+    { label: "Annual distribution", value: formatMoney(fund.annual_distribution, fundCurrency), icon: "distribution" },
+  ];
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
@@ -85,14 +90,7 @@ export default async function EndowmentDetailPage({
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
-            <CompactFactGrid
-              facts={[
-                { label: "Principal amount", value: formatMoney(fund.principal_amount, compactText(fund.currency) || "KES"), icon: fundingIcons.money },
-                { label: "Current value", value: formatMoney(fund.current_value, compactText(fund.currency) || "KES"), icon: fundingIcons.money },
-                { label: "Target value", value: formatMoney(fund.target_value, compactText(fund.currency) || "KES"), icon: fundingIcons.award },
-                { label: "Annual distribution", value: formatMoney(fund.annual_distribution, compactText(fund.currency) || "KES"), icon: fundingIcons.check },
-              ]}
-            />
+            <EndowmentFactsDisplay facts={facts} />
             <EndowmentStory sections={storySections} />
           </div>
           <FundingSidebar

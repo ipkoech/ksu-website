@@ -1,0 +1,63 @@
+{
+  "captured_at": "2026-09-06",
+  "database": {
+    "engine": "PostgreSQL",
+    "version": "18.6",
+    "host": "127.0.0.1",
+    "port": 55432,
+    "database": "ksu_refactor_ci",
+    "migrations": [
+      "main:20260905_0930",
+      "research:20260906_0013",
+      "library:20260906_0011",
+      "heri_africa:0010_audit_relay"
+    ]
+  },
+  "redis": {
+    "version": "8.0.5",
+    "host": "127.0.0.1",
+    "port": 16379,
+    "database": 15
+  },
+  "suites": {
+    "common": {
+      "passed": 198,
+      "skipped": 0
+    },
+    "contracts": {
+      "passed": 31,
+      "skipped": 0
+    },
+    "main": {
+      "passed": 95,
+      "skipped": 0
+    },
+    "research": {
+      "passed": 77,
+      "skipped": 0
+    },
+    "library": {
+      "passed": 14,
+      "skipped": 0
+    },
+    "heri_africa": {
+      "passed": 11,
+      "skipped": 0
+    }
+  },
+  "total": {
+    "passed": 426,
+    "skipped": 0
+  },
+  "query_plan_inspectors": {
+    "audit": "passed",
+    "relay": "passed",
+    "artifacts": [
+      ".tmp/audit-query-plan-final-20260906.json",
+      ".tmp/audit-relay-plan-final-20260906.json"
+    ]
+  },
+  "ownership_verifier": "passed",
+  "writes_production_data": false,
+  "limitations": "Disposable local infrastructure; no populated production-like endpoint dataset or process-loss lease recovery test."
+}

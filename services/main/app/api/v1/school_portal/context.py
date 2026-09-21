@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ....schemas.school_portal import (
     SchoolPortalCapabilitiesResponse,
@@ -71,13 +71,13 @@ def context_response(context: SchoolPortalContext) -> SchoolPortalContextRespons
     )
 
 
-@router.get("/context")
+@router.get("/context", response_model=SuccessResponse[SchoolPortalContextResponse])
 async def get_context(context: CurrentSchoolContext):
     """Return the one school and capabilities derived from server-side grants."""
     return success(data=context_response(context).model_dump(mode="json"))
 
 
-@router.get("/capabilities")
+@router.get("/capabilities", response_model=SuccessResponse[SchoolPortalCapabilitiesResponse])
 async def get_capabilities(context: CurrentSchoolContext):
     """Return the current school's permission and navigation capability map."""
     response = context_response(context)

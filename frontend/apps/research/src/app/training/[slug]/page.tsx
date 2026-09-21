@@ -1,24 +1,20 @@
 import { notFound } from "next/navigation";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordPanel } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { ResearchStoryAccordion } from "../../../components/research-rich-text";
-import { compactText, formatDate, formatLabel, generateSlugParams, getTrainingBySlug } from "../../../lib/research-public-data";
+import { compactText, formatDate, formatLabel, getTrainingBySlug } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
 import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getTrainingBySlug(slug);
   return researchRecordMetadata(data, { fallbackTitle: "Training programme", pathname: "/training/" + slug });
-}
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.training.list);
 }
 
 export default async function TrainingDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -55,7 +51,7 @@ export default async function TrainingDetailPage({ params }: { params: Promise<{
           ...(compactText(training.meeting_link) ? [{ label: "Open meeting", href: compactText(training.meeting_link) }] : []),
           ...(compactText(training.brochure_url) ? [{ label: "Download brochure", href: compactText(training.brochure_url), variant: "secondary" as const }] : []),
         ]}
-        imageSrc="/images/research/research-projects-hero.svg"
+        imageSrc="/images/research/verified/multidisciplinary-conference-2026.jpg"
         imageAlt="Research training schedule, registration, and learning details"
       />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}

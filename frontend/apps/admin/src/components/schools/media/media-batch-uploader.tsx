@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import {
   schoolPortalApi,
@@ -54,6 +54,7 @@ import {
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
 import { getMediaLabel, getMediaUrl, isImageMedia } from "@/components/media/media-utils";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import {
   SchoolMetricGrid,
   SchoolWorkspace,
@@ -90,7 +91,22 @@ export function MediaBatchUploader() {
     credit: "",
     tags: "",
     is_public: false,
+    verification_state: "pending",
+    reviewer_notes: "",
+    expiry_date: "",
+    replacement_requested: false,
   });
+  const itemsRef = useRef<PendingFile[]>([]);
+
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  useEffect(() => {
+    return () => {
+      itemsRef.current.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+    };
+  }, []);
   const library = useMedia({
     page: 1,
     per_page: 80,
@@ -118,6 +134,10 @@ export function MediaBatchUploader() {
       credit: media.credit || "",
       tags: media.tags?.join(", ") || "",
       is_public: media.is_public ?? false,
+      verification_state: String(media.metadata?.verification_state ?? "pending"),
+      reviewer_notes: String(media.metadata?.reviewer_notes ?? ""),
+      expiry_date: String(media.metadata?.expiry_date ?? ""),
+      replacement_requested: media.metadata?.replacement_requested === true,
     });
   };
   const saveMedia = useMutation({
@@ -129,9 +149,11 @@ export function MediaBatchUploader() {
       credit: mediaDraft.credit.trim() || null,
       tags: mediaDraft.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
       is_public: mediaDraft.is_public,
+      metadata: { ...(selected?.metadata ?? {}), verification_state: mediaDraft.verification_state, reviewer_notes: mediaDraft.reviewer_notes.trim() || null, expiry_date: mediaDraft.expiry_date || null, replacement_requested: mediaDraft.replacement_requested },
     }),
     onSuccess: async () => {
       await library.refetch();
+      void revalidatePublicContent("main", "media");
       setSelected(null);
     },
   });
@@ -139,6 +161,7 @@ export function MediaBatchUploader() {
     mutationFn: () => schoolPortalApi.media.remove(selected!.id),
     onSuccess: async () => {
       await library.refetch();
+      void revalidatePublicContent("main", "media");
       setSelected(null);
     },
   });
@@ -171,7 +194,7 @@ export function MediaBatchUploader() {
       return next.map((item, order) => ({ ...item, display_order: order }));
     });
   };
-  const uploadOne = async (item: PendingFile) => {
+  const uploadOne = async (item: PendingFile): Promise<boolean> => {
     patch(item.key, { status: "uploading", progress: 20, error: undefined });
     try {
       const batch = (
@@ -211,19 +234,24 @@ export function MediaBatchUploader() {
         status: latest.status === "processing" ? "processing" : failed ? "failed" : "completed",
         error: latest.files[0]?.error ?? undefined,
       });
+      return true;
     } catch (caught) {
       patch(item.key, {
         status: "failed",
         progress: 100,
         error: caught instanceof Error ? caught.message : "Upload failed",
       });
+      return false;
     }
   };
   const uploadAll = async () => {
     setUploading(true);
     const pending = items.filter((item) => item.status === "pending");
-    await Promise.allSettled(pending.map(uploadOne));
+    const outcomes = await Promise.allSettled(pending.map(uploadOne));
     await library.refetch();
+    if (outcomes.some((outcome) => outcome.status === "fulfilled" && outcome.value)) {
+      void revalidatePublicContent("main", "media");
+    }
     setUploading(false);
   };
   const retry = async (item: PendingFile) => {
@@ -234,6 +262,7 @@ export function MediaBatchUploader() {
         await schoolPortalApi.media.retryFile(item.batch.id, failedFile.id);
         const batch = (await schoolPortalApi.media.getBatch(item.batch.id)).data;
         patch(item.key, { batch, status: batch.failed_files ? "failed" : "completed", progress: 100 });
+        if (batch.failed_files === 0) void revalidatePublicContent("main", "media");
       } catch (caught) {
         patch(item.key, { status: "failed", error: caught instanceof Error ? caught.message : "Retry failed" });
       }
@@ -245,14 +274,14 @@ export function MediaBatchUploader() {
   return (
     <SchoolWorkspace>
       <SchoolWorkspaceHeader
-        eyebrow="School media"
-        title="Media library"
-        description="Prepare images and documents with meaningful titles, descriptions and roles before adding them to your school library."
+        eyebrow="School evidence"
+        title="Documents & evidence"
+        description="Manage the documents and media evidence attached to this school, with upload progress and review-ready metadata."
         schoolName={school.name}
         icon={Images}
       />
       <SchoolMetricGrid items={[
-        { label: "Library assets", value: library.data?.meta.total ?? libraryItems.length, detail: "Owned by this school", icon: Images },
+        { label: "Evidence received", value: library.data?.meta.total ?? libraryItems.length, detail: "Files in the school scope", icon: Images },
         { label: "Selected files", value: items.length, detail: items.length ? "Ready in this batch" : "Choose files to begin", icon: TimerReset, tone: "warning" },
         { label: "Completed", value: items.filter((item) => item.status === "completed").length, detail: "Added to school media", icon: UploadCloud, tone: "success" },
         { label: "Needs attention", value: items.filter((item) => item.status === "failed").length, detail: "Retry failed uploads", icon: XCircle, tone: "danger" },
@@ -414,6 +443,12 @@ export function MediaBatchUploader() {
               <div className="flex items-center justify-between rounded-xl border p-4">
                 <div><Label htmlFor="media-public">Public asset</Label><p className="mt-1 text-xs text-muted-foreground">Allow approved public pages to display this media.</p></div>
                 <Switch id="media-public" checked={mediaDraft.is_public} onCheckedChange={(is_public) => setMediaDraft((current) => ({ ...current, is_public }))} />
+              </div>
+              <div className="grid gap-4 rounded-xl border bg-muted/20 p-4 sm:grid-cols-2">
+                <div className="space-y-1.5"><Label htmlFor="evidence-state">Verification state</Label><Select value={mediaDraft.verification_state} onValueChange={(verification_state) => setMediaDraft((current) => ({ ...current, verification_state }))}><SelectTrigger id="evidence-state"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pending">Pending verification</SelectItem><SelectItem value="verified">Verified</SelectItem><SelectItem value="rejected">Rejected</SelectItem><SelectItem value="replacement_requested">Replacement requested</SelectItem></SelectContent></Select></div>
+                <div className="space-y-1.5"><Label htmlFor="evidence-expiry">Expiry date</Label><Input id="evidence-expiry" type="date" value={mediaDraft.expiry_date} onChange={(event) => setMediaDraft((current) => ({ ...current, expiry_date: event.target.value }))} /></div>
+                <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="evidence-notes">Reviewer notes</Label><Textarea id="evidence-notes" rows={3} value={mediaDraft.reviewer_notes} onChange={(event) => setMediaDraft((current) => ({ ...current, reviewer_notes: event.target.value }))} placeholder="Record verification notes or requested changes." /></div>
+                <label className="flex items-center gap-2 text-sm sm:col-span-2"><Switch checked={mediaDraft.replacement_requested} onCheckedChange={(replacement_requested) => setMediaDraft((current) => ({ ...current, replacement_requested }))} />Request replacement from the school</label>
               </div>
             </div>
           ) : null}

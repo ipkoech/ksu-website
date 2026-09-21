@@ -11,6 +11,7 @@ import { TableSearch } from "@/components/shared/table-search";
 import { useState } from "react";
 import { Button } from "@ksu/ui/components";
 import Link from "next/link";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 export default function NewsPage() {
   const [search, setSearch] = useState("");
@@ -25,7 +26,11 @@ export default function NewsPage() {
   const columns = getNewsColumns({
     canEdit: canEdit("content"),
     canDelete: canDelete("content"),
-    onDelete: (id) => confirmDelete("news article", () => deleteNews(id)),
+    onDelete: (id) =>
+      confirmDelete("news article", async () => {
+        await deleteNews(id);
+        void revalidatePublicContent("main", "news");
+      }),
   });
 
   return (

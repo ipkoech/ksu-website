@@ -24,6 +24,7 @@ import {
   type PageSection,
   type PageSectionWorkflowAction,
 } from "@/lib/api/page-cms";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import {
   composerCapabilities,
   composerHref,
@@ -284,6 +285,7 @@ export default function ComposerClientPage() {
         items: orderedSections.map(({ id, display_order, revision }) => ({ id, display_order, revision })),
       });
       setSections(response.data ?? []);
+      void revalidatePublicContent("main", "page-cms");
       setIsOrderDirty(false);
     } catch (requestError) {
       if (isReloadRequiredConflict(requestError)) setConflict(true);
@@ -304,6 +306,7 @@ export default function ComposerClientPage() {
         existingSectionKeys: sections.map((section) => section.section_key),
       }));
       setSections((current) => [...current, response.data].sort((left, right) => left.display_order - right.display_order));
+      void revalidatePublicContent("main", "page-cms");
       replaceLocation({ sectionId: response.data.id });
     } catch (requestError) {
       if (isReloadRequiredConflict(requestError)) setConflict(true);
@@ -359,6 +362,7 @@ export default function ComposerClientPage() {
     try {
       const response = await pageSectionsApi.workflow(selectedSection.id, action);
       setSections((current) => current.map((section) => section.id === response.data.id ? response.data : section));
+      void revalidatePublicContent("main", "page-cms");
     } catch (requestError) {
       if (isReloadRequiredConflict(requestError)) setConflict(true);
       else setError(`Unable to ${action.replace(/_/g, " ")} this section.`);
@@ -374,6 +378,7 @@ export default function ComposerClientPage() {
     try {
       const response = await pageSectionsApi.update(selectedSection.id, payload);
       setSections((current) => current.map((section) => section.id === response.data.id ? response.data : section));
+      void revalidatePublicContent("main", "page-cms");
       setIsFormDirty(false);
       await refreshPreviewAndValidation();
     } catch (requestError) {

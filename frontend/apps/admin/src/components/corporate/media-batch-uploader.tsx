@@ -1,7 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useId, useMemo, useRef, useState, type DragEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+} from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   corporatePortalApi,
@@ -40,6 +47,7 @@ import {
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
 import { cn } from "@ksu/ui/lib/utils";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 type PendingFile = {
   key: string;
@@ -126,6 +134,17 @@ export function MediaBatchUploaderDialog({
   const [items, setItems] = useState<PendingFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const itemsRef = useRef<PendingFile[]>([]);
+
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  useEffect(() => {
+    return () => {
+      itemsRef.current.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+    };
+  }, []);
 
   const completedCount = useMemo(
     () => items.filter((item) => item.status === "completed").length,
@@ -347,7 +366,10 @@ export function MediaBatchUploaderDialog({
     setUploading(false);
     setServerProgress(null);
     toastBatchResult(batch);
-    if (batch && batch.failed_files === 0) onComplete?.();
+    if (batch && batch.failed_files === 0) {
+      void revalidatePublicContent("main", "media");
+      onComplete?.();
+    }
   };
 
   const retryFailed = async () => {
@@ -391,6 +413,10 @@ export function MediaBatchUploaderDialog({
     setUploading(false);
     setServerProgress(null);
     toastBatchResult(freshBatch ?? lastBatch);
+    const settledBatch = freshBatch ?? lastBatch;
+    if (settledBatch && settledBatch.completed_files > 0) {
+      void revalidatePublicContent("main", "media");
+    }
   };
 
   const removeItem = (key: string) => {

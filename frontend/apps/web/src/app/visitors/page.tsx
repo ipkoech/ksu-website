@@ -17,6 +17,8 @@ export const metadata = {
     "Visitor information, useful routes, and quick links to explore Kisii University.",
 };
 
+export const revalidate = 300;
+
 const visitorRoutes = [
   {
     label: "About Kisii University",

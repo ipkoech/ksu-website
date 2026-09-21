@@ -1,4 +1,5 @@
-import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
+import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client/server";
+import { unstable_noStore as noStore } from "next/cache";
 
 export async function GET(
   _request: Request,
@@ -56,9 +57,13 @@ export async function GET(
       },
     });
   } catch {
+    noStore();
     return new Response("Error generating BibTeX", {
       status: 500,
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
+      },
     });
   }
 }

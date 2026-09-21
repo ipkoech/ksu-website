@@ -379,7 +379,6 @@ function administrationSections(kind: string, label?: string): PublicPageSection
       columns: 3,
       cards: [
         pageCard("Our Service Charter", "/about/service-charter", "Open the public service charter access point.", "clipboard", "Open charter"),
-        pageCard("Quality Assurance", "/about/quality-assurance", "Review quality, standards, and accountability references.", "shield", "View quality"),
         pageCard("Governance", "/about/governance", "Review public oversight and governance bodies.", "landmark", "View governance"),
       ],
     },

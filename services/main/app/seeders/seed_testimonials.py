@@ -11,6 +11,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Programme, School, Testimonial
@@ -22,7 +23,7 @@ SEED_OWNER = "testimonials-v1"
 # school_key matches SeedContext.schools keys from seed_schools;
 # school_code is the fallback lookup when the context is not populated.
 # programme_name must match the exact catalogue name from programme_catalogue.py.
-TESTIMONIAL_SPECS: list[dict[str, Any]] = [
+_UNVERIFIED_TESTIMONIAL_SPECS: list[dict[str, Any]] = [
     {
         "name": "Faith Kemunto Nyabuto",
         "role": "Third-year student, Bachelor of Laws",
@@ -186,6 +187,14 @@ TESTIMONIAL_SPECS: list[dict[str, Any]] = [
     },
 ]
 
+# The former fixture contained fictional voices and is retained only so a
+# subsequent seed run can hide those exact records. No testimonials are
+# currently published without a verifiable source and consent record.
+TESTIMONIAL_SPECS: list[dict[str, Any]] = []
+_UNVERIFIED_TESTIMONIAL_NAMES = {
+    str(spec["name"]) for spec in _UNVERIFIED_TESTIMONIAL_SPECS
+}
+
 
 async def _resolve_school(
     db: AsyncSession, ctx: SeedContext, spec: dict[str, Any]
@@ -207,7 +216,7 @@ async def _resolve_programme(db: AsyncSession, spec: dict[str, Any]) -> Programm
 
 
 async def seed_testimonials(db: AsyncSession, ctx: SeedContext) -> None:
-    """Upsert seed-owned approved+public testimonials keyed by (name, type)."""
+    """Keep testimonials empty until a verifiable source or consent exists."""
     for spec in TESTIMONIAL_SPECS:
         school = await _resolve_school(db, ctx, spec)
         programme = await _resolve_programme(db, spec)
@@ -242,6 +251,13 @@ async def seed_testimonials(db: AsyncSession, ctx: SeedContext) -> None:
             for field_name, value in payload.items():
                 setattr(item, field_name, value)
         await db.flush()
+
+    for item in (
+        await db.execute(select(Testimonial).where(Testimonial.name.in_(_UNVERIFIED_TESTIMONIAL_NAMES)))
+    ).scalars().all():
+        item.is_public = False
+        item.is_approved = False
+    await db.flush()
 
 
 __all__ = ["TESTIMONIAL_SPECS", "seed_testimonials"]

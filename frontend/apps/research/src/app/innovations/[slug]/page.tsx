@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import {
   ResearchDetailHero,
   ResearchDetailSidebar,
@@ -13,7 +12,6 @@ import {
   compactText,
   formatDate,
   formatLabel,
-  generateSlugParams,
   getCenters,
   getInnovationBySlug,
   getProjects,
@@ -28,15 +26,12 @@ import {
 import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getInnovationBySlug(slug);
   return researchRecordMetadata(data, { fallbackTitle: "Innovation", pathname: "/innovations/" + slug });
-}
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.innovations.list);
 }
 
 export default async function InnovationDetailPage({
@@ -99,7 +94,7 @@ export default async function InnovationDetailPage({
           ...(contactEmail ? [{ label: "Contact innovation lead", href: `mailto:${contactEmail}` }] : []),
           ...(demoUrl ? [{ label: "Open demo", href: demoUrl, variant: "secondary" as const }] : []),
         ]}
-        imageSrc={compactText(innovation.cover_image_url) || "/images/research/research-innovation-hero.svg"}
+        imageSrc={compactText(innovation.cover_image_url) || "/images/research/verified/innovation-week-03.jpeg"}
         imageAlt="Innovation profile with readiness, intellectual property, and adoption context"
       />
 
@@ -131,6 +126,7 @@ export default async function InnovationDetailPage({
               { label: "IP status", value: formatLabel(innovation.ip_status) },
               { label: "Commercialization", value: formatLabel(innovation.commercialization_status) },
               { label: "Patent", value: compactText(innovation.patent_number) },
+              { label: "Copyright registration", value: compactText(innovation.copyright_number) },
               { label: "Invention date", value: formatDate(innovation.invention_date) },
               { label: "Commercial value", value: formatMoney(innovation.commercial_value, innovation.currency) },
             ]}

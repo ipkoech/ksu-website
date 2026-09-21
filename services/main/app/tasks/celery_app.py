@@ -47,14 +47,26 @@ celery_app = create_celery_app(
             "main.content.publish_due": {"queue": "main.maintenance"},
             "main.content.expire_due": {"queue": "main.maintenance"},
             "main.audit.persist": {"queue": "main.audit"},
-            "main.audit.prune": {"queue": "main.maintenance"},
+            "main.audit.drain": {"queue": "main.audit"},
+            "main.audit.observe": {"queue": "main.audit"},
+            "main.audit.prune": {"queue": "main.audit"},
             "main.outbox.prune": {"queue": "main.maintenance"},
             "main.analytics.prune": {"queue": "main.maintenance"},
             "main.idempotency.prune": {"queue": "main.maintenance"},
             "main.digital_sync.lecturers": {"queue": "main.integrations"},
             "main.digital_sync.programmes": {"queue": "main.integrations"},
+            "main.digital_sync.run_job": {"queue": "main.integrations"},
         },
         beat_schedule={
+            "observe-pending-audits": {
+                "task": "main.audit.observe", "schedule": 30.0,
+                "options": {"expires": 30},
+            },
+            "drain-pending-audits": {
+                "task": "main.audit.drain",
+                "schedule": 1.0,
+                "options": {"expires": 1},
+            },
             "expire-notifications-every-15-minutes": {
                 "task": "main.notifications.expire",
                 "schedule": crontab(minute="*/15"),
@@ -86,6 +98,11 @@ celery_app = create_celery_app(
             "dispatch-pending-webhooks": {
                 "task": "main.webhooks.dispatch_pending",
                 "schedule": 10.0,
+            },
+            "dispatch-pending-integration-jobs": {
+                "task": "main.digital_sync.dispatch_pending",
+                "schedule": 30.0,
+                "options": {"expires": 30},
             },
             "prune-audit-logs-daily": {
                 "task": "main.audit.prune",

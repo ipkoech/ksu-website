@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...core.database import get_db
 from ...models.content import FooterLink, HeroSlide, NavigationItem, NewsArticle, SiteSettings
 from ...models.chair import ChairProfile
-from ...schemas.public import NewsDetail, NewsSummary, SiteResponse
+from ...schemas.public import HeroSlideResponse, NewsDetail, NewsSummary, SiteResponse
 from ...schemas.chair import ChairProfileResponse
 from ...schemas.site import FooterLinkResponse, NavigationItemResponse
 from ...services.public import PublicService
@@ -19,7 +19,7 @@ router = APIRouter(tags=["HERI Public"])
 @public_content_rate_limit
 @cached_public(timeout=300)
 async def chair(request: Request, db: AsyncSession = Depends(get_db)) -> ChairProfileResponse:
-    profile = (await db.execute(select(ChairProfile).where(ChairProfile.is_active.is_(True)).order_by(ChairProfile.created_at.asc()))).scalars().first()
+    profile = (await db.execute(select(ChairProfile).where(ChairProfile.is_active.is_(True), ChairProfile.deleted_at.is_(None)).order_by(ChairProfile.created_at.asc()))).scalars().first()
     if profile is None:
         return ChairProfileResponse(id="00000000-0000-0000-0000-000000000000", name="HERI Africa Language Education Research Chair", acronym="HERI Africa", host_institution="Kisii University", initiative_name="HERI Africa", about="", tagline=None, vision="", mission="", mandate="", objectives="", values=None, why_it_matters="", logo_url=None, cover_image_url=None, seo={})
     return ChairProfileResponse.model_validate(profile)
@@ -29,7 +29,7 @@ async def chair(request: Request, db: AsyncSession = Depends(get_db)) -> ChairPr
 @public_content_rate_limit
 @cached_public(timeout=300)
 async def site(request: Request, db: AsyncSession = Depends(get_db)) -> SiteResponse:
-    settings = (await db.execute(select(SiteSettings).order_by(SiteSettings.created_at.asc()))).scalars().first()
+    settings = (await db.execute(select(SiteSettings).where(SiteSettings.deleted_at.is_(None)).order_by(SiteSettings.created_at.asc()))).scalars().first()
     if settings is None:
         return SiteResponse(name="HERI Africa", tagline=None, contact={}, social_links={}, seo_defaults={})
     return SiteResponse.model_validate(settings)
@@ -39,15 +39,15 @@ async def site(request: Request, db: AsyncSession = Depends(get_db)) -> SiteResp
 @public_content_rate_limit
 @cached_public(timeout=300)
 async def navigation(request: Request, db: AsyncSession = Depends(get_db)):
-    records = (await db.execute(select(NavigationItem).where(NavigationItem.is_visible.is_(True)).order_by(NavigationItem.position.asc()))).scalars().all()
+    records = (await db.execute(select(NavigationItem).where(NavigationItem.is_visible.is_(True), NavigationItem.deleted_at.is_(None)).order_by(NavigationItem.position.asc()))).scalars().all()
     return [NavigationItemResponse.model_validate(item) for item in records]
 
 
-@router.get("/hero-slides")
+@router.get("/hero-slides", response_model=list[HeroSlideResponse])
 @public_content_rate_limit
 @cached_public(timeout=300)
 async def hero_slides(request: Request, db: AsyncSession = Depends(get_db)):
-    records = (await db.execute(select(HeroSlide).where(HeroSlide.is_active.is_(True)).order_by(HeroSlide.position.asc(), HeroSlide.created_at.asc()))).scalars().all()
+    records = (await db.execute(select(HeroSlide).where(HeroSlide.is_active.is_(True), HeroSlide.deleted_at.is_(None)).order_by(HeroSlide.position.asc(), HeroSlide.created_at.asc()))).scalars().all()
     return records
 
 
@@ -55,7 +55,7 @@ async def hero_slides(request: Request, db: AsyncSession = Depends(get_db)):
 @public_content_rate_limit
 @cached_public(timeout=300)
 async def footer(request: Request, db: AsyncSession = Depends(get_db)):
-    records = (await db.execute(select(FooterLink).where(FooterLink.is_visible.is_(True)).order_by(FooterLink.column.asc(), FooterLink.position.asc()))).scalars().all()
+    records = (await db.execute(select(FooterLink).where(FooterLink.is_visible.is_(True), FooterLink.deleted_at.is_(None)).order_by(FooterLink.column.asc(), FooterLink.position.asc()))).scalars().all()
     return [FooterLinkResponse.model_validate(item) for item in records]
 
 

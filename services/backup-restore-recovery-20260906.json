@@ -1,0 +1,43 @@
+{
+  "backup": {
+    "database": "ksu_refactor_ci",
+    "engine": "PostgreSQL",
+    "format": "postgres-custom-v1",
+    "host": "127.0.0.1",
+    "port": 55432,
+    "production_data": false,
+    "sha256": "e7fb050a8e2c70a7fad790fc52bbc25512c0845cd5372778e2a14fbebab45afd",
+    "size_bytes": 2647680,
+    "timestamp": "20260906T150357Z",
+    "version": "18.6"
+  },
+  "captured_at": "2026-09-06",
+  "commands": {
+    "backup": "scripts/backup_database.sh",
+    "head_override": "RECOVERY_EXPECTED_HEADS=main=20260906_0010,research=20260906_0014,library=20260906_0011,heri=0011_public_news_listing_index",
+    "restore": "scripts/test_database_restore.sh"
+  },
+  "limitations": [
+    "Disposable local PostgreSQL only; no production database or external storage was touched.",
+    "This verifies logical backup/restore and current-head checks, not continuous WAL archiving or point-in-time recovery.",
+    "The backup dump remains in ignored .tmp/recovery-drill storage and is not a deliverable artifact."
+  ],
+  "restore": {
+    "checks": [
+      "checksum validation",
+      "custom-format pg_restore into an empty database",
+      "service schema/table presence",
+      "current migration heads",
+      "least-privilege service ownership"
+    ],
+    "database": "ksu_recovery_20260906",
+    "duration_seconds": 21,
+    "expected_heads": {
+      "heri": "0011_public_news_listing_index",
+      "library": "20260906_0011",
+      "main": "20260906_0010",
+      "research": "20260906_0014"
+    },
+    "result": "passed"
+  }
+}

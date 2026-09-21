@@ -29,7 +29,15 @@ LIBRARY_DB_PASSWORD="${LIBRARY_DB_PASSWORD:?LIBRARY_DB_PASSWORD is required}" \
 HERI_DB_PASSWORD="${HERI_DB_PASSWORD:?HERI_DB_PASSWORD is required}" \
 scripts/init-database-ownership.sh >/dev/null
 
-DATABASE_ADMIN_URL="${RECOVERY_ADMIN_URL:?RECOVERY_ADMIN_URL is required}" scripts/verify_database_recovery.py
+recovery_head_args=()
+if [[ -n "${RECOVERY_EXPECTED_HEADS:-}" ]]; then
+  IFS=',' read -r -a recovery_heads <<<"${RECOVERY_EXPECTED_HEADS}"
+  for recovery_head in "${recovery_heads[@]}"; do
+    [[ -n "${recovery_head}" ]] || continue
+    recovery_head_args+=(--expected-head "${recovery_head}")
+  done
+fi
+DATABASE_ADMIN_URL="${RECOVERY_ADMIN_URL:?RECOVERY_ADMIN_URL is required}" scripts/verify_database_recovery.py "${recovery_head_args[@]}"
 DATABASE_ADMIN_URL="${RECOVERY_ADMIN_URL}" scripts/verify_database_ownership.py
 drill_finished_epoch="$(date +%s)"
 drill_finished_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"

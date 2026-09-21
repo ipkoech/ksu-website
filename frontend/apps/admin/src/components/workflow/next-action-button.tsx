@@ -9,6 +9,10 @@ import {
 } from "@ksu/api-client";
 import { toast } from "@ksu/ui";
 import { Button, ConfirmDialog } from "@ksu/ui/components";
+import {
+  revalidatePublicContent,
+  type PublicFrontendService,
+} from "@/lib/api/public-revalidation";
 
 interface NextActionDefinition {
   action: ContentWorkflowAction;
@@ -64,6 +68,7 @@ interface NextActionButtonProps {
   /** Opens the record editor — used for "Edit & resubmit" on changes_requested. */
   onEdit?: () => void;
   onCompleted?: () => void;
+  revalidateService?: PublicFrontendService;
 }
 
 /**
@@ -79,6 +84,7 @@ export function NextActionButton({
   canPublish,
   onEdit,
   onCompleted,
+  revalidateService,
 }: NextActionButtonProps) {
   const [confirming, setConfirming] = useState(false);
   const status = record.workflow_status ?? "";
@@ -91,6 +97,9 @@ export function NextActionButton({
       toast.success(definition?.successMessage(recordTitle) ?? "Done");
       setConfirming(false);
       onCompleted?.();
+      if (revalidateService) {
+        void revalidatePublicContent(revalidateService, contentType);
+      }
     },
     onError: () => toast.error("The action could not be completed. Try again in a moment."),
   });

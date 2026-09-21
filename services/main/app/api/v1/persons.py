@@ -7,14 +7,14 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import selectinload
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._person_media import with_person_photo_urls
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession
 from ...models import Person
 from ...security.scopes import can_access_scope
-from ...schemas import PersonCreate, PersonUpdate
+from ...schemas import PersonCreate, PersonSnapshot, PersonUpdate
 from ...services import MediaService, PersonService
 
 router = APIRouter()
@@ -91,7 +91,7 @@ async def _validate_person_cv_media(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[PersonSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "search", "department_id", "school_id", "academic_rank", "employment_type", "is_researcher", "status", "fields", "include"))
 async def list_persons(
     db: DbSession,
@@ -123,7 +123,7 @@ async def list_persons(
     return success(data=with_person_photo_urls(selector.apply(result.items), result.items), meta=result.meta)
 
 
-@router.get("/admin")
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[PersonSnapshot]])
 async def list_admin_persons(
     db: DbSession,
     user: CurrentUser,
@@ -168,7 +168,7 @@ async def list_admin_persons(
     return success(data=with_person_photo_urls(selector.apply(items), items), meta=meta)
 
 
-@router.get("/{person_id}")
+@router.get("/{person_id}", response_model_exclude_unset=True, response_model=SuccessResponse[PersonSnapshot])
 @cached_public(timeout=300, vary_on=("person_id", "fields", "include"))
 async def get_person(person_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Person, fields)
@@ -182,7 +182,7 @@ async def get_person(person_id: uuid.UUID, db: DbSession, fields: FieldSelection
     return success(data=with_person_photo_urls(selector.apply(person), person))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[PersonSnapshot])
 async def create_person(data: PersonCreate, db: DbSession, user: CurrentUser):
     scope_type, scope_id = _person_scope(data)
     await _require_person_scope(db, user, PERSON_MANAGE_PERMISSIONS, scope_type, scope_id)
@@ -191,7 +191,7 @@ async def create_person(data: PersonCreate, db: DbSession, user: CurrentUser):
     return success(data=with_person_photo_urls(build_selector(Person, FieldSelection(fields=())).apply(created), created), message="Person created")
 
 
-@router.patch("/{person_id}")
+@router.patch("/{person_id}", response_model_exclude_unset=True, response_model=SuccessResponse[PersonSnapshot])
 async def update_person(person_id: uuid.UUID, data: PersonUpdate, db: DbSession, user: CurrentUser):
     person = await PersonService.get_by_id(db, person_id)
     if person is None:
@@ -209,7 +209,7 @@ async def update_person(person_id: uuid.UUID, data: PersonUpdate, db: DbSession,
     return success(data=with_person_photo_urls(build_selector(Person, FieldSelection(fields=())).apply(updated), updated), message="Person updated")
 
 
-@router.patch("/{person_id}/activate")
+@router.patch("/{person_id}/activate", response_model_exclude_unset=True, response_model=SuccessResponse[PersonSnapshot])
 async def activate_person(person_id: uuid.UUID, db: DbSession, user: CurrentUser):
     person = await PersonService.get_by_id(db, person_id)
     if person is None:
@@ -220,7 +220,7 @@ async def activate_person(person_id: uuid.UUID, db: DbSession, user: CurrentUser
     return success(data=with_person_photo_urls(build_selector(Person, FieldSelection(fields=())).apply(updated), updated), message="Person activated")
 
 
-@router.patch("/{person_id}/deactivate")
+@router.patch("/{person_id}/deactivate", response_model_exclude_unset=True, response_model=SuccessResponse[PersonSnapshot])
 async def deactivate_person(person_id: uuid.UUID, db: DbSession, user: CurrentUser):
     person = await PersonService.get_by_id(db, person_id)
     if person is None:
@@ -231,7 +231,7 @@ async def deactivate_person(person_id: uuid.UUID, db: DbSession, user: CurrentUs
     return success(data=with_person_photo_urls(build_selector(Person, FieldSelection(fields=())).apply(updated), updated), message="Person deactivated")
 
 
-@router.post("/{person_id}/photo")
+@router.post("/{person_id}/photo", response_model_exclude_unset=True, response_model=SuccessResponse[PersonSnapshot])
 async def upload_person_photo(
     person_id: uuid.UUID,
     db: DbSession,
@@ -263,7 +263,7 @@ async def upload_person_photo(
     return success(data=with_person_photo_urls(build_selector(Person, FieldSelection(fields=())).apply(updated), updated), message="Profile photo updated")
 
 
-@router.delete("/{person_id}/photo")
+@router.delete("/{person_id}/photo", response_model_exclude_unset=True, response_model=SuccessResponse[PersonSnapshot])
 async def remove_person_photo(person_id: uuid.UUID, db: DbSession, user: CurrentUser):
     person = await PersonService.get_by_id(db, person_id)
     if person is None:
@@ -274,7 +274,7 @@ async def remove_person_photo(person_id: uuid.UUID, db: DbSession, user: Current
     return success(data=with_person_photo_urls(build_selector(Person, FieldSelection(fields=())).apply(updated), updated), message="Profile photo removed")
 
 
-@router.post("/{person_id}/cv")
+@router.post("/{person_id}/cv", response_model_exclude_unset=True, response_model=SuccessResponse[PersonSnapshot])
 async def upload_person_cv(
     person_id: uuid.UUID,
     db: DbSession,
@@ -307,7 +307,7 @@ async def upload_person_cv(
     )
 
 
-@router.delete("/{person_id}/cv")
+@router.delete("/{person_id}/cv", response_model_exclude_unset=True, response_model=SuccessResponse[PersonSnapshot])
 async def remove_person_cv(person_id: uuid.UUID, db: DbSession, user: CurrentUser):
     person = await PersonService.get_by_id(db, person_id)
     if person is None:

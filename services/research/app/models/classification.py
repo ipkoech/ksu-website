@@ -117,6 +117,7 @@ class FocusArea(Base):
     """
 
     __tablename__ = "focus_areas"
+    editorial_state: Mapped[str] = mapped_column(sa.String(16), nullable=False, server_default="draft")
 
     name: Mapped[str] = mapped_column(sa.String(255), nullable=False)
     slug: Mapped[str] = mapped_column(sa.String(128), nullable=False, index=True)

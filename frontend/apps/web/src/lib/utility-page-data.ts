@@ -1,19 +1,16 @@
+import "server-only";
 import {
-  announcementsApi,
   contactDirectoryApi,
   documentsApi,
-  eventsApi,
   faqsApi,
-  type Announcement,
   type Campus,
   type Document,
-  type Event,
   type FAQ,
   type PublicContactDirectory,
   type PublicContactDirectoryEntry,
   type PublicContactFAQ,
   type PublicUniversityContactSummary,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
 import type {
   PublicCard,
   PublicIconName,
@@ -22,6 +19,11 @@ import type {
 } from "@/components/public/section-page";
 import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
 import { publicFileUrl } from "@/lib/public-media";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
+import {
+  normalizePublicListResponse,
+  normalizePublicRecordResponse,
+} from "@/lib/web-response-shapes";
 
 type ListEnvelope<T> = { data?: T[] };
 
@@ -174,7 +176,7 @@ function shortText(
   return text.length > max ? `${text.slice(0, max - 3)}...` : text;
 }
 
-function formatDate(value?: string | null) {
+function _formatDate(value?: string | null) {
   if (!value) return "Current notice";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
@@ -189,10 +191,12 @@ function formatDate(value?: string | null) {
 async function safeList<T>(request: Promise<ListEnvelope<T>>): Promise<T[]> {
   try {
     const response = await request;
-    return Array.isArray(response.data) ? response.data : [];
+    const normalized = normalizePublicListResponse<T>(response);
+    if (!normalized) throw new Error("Malformed utility collection");
+    return normalized.data;
   } catch (error) {
     console.error("Failed to fetch utility page data:", error);
-    return [];
+    return uncachedPublicFallback([]);
   }
 }
 
@@ -296,10 +300,12 @@ async function getPublicContactDirectory(
       page: filters.page,
       per_page: 12,
     });
-    return response.data ?? null;
+    const normalized = normalizePublicRecordResponse<PublicContactDirectory>(response);
+    if (normalized === undefined) throw new Error("Malformed contact directory response");
+    return normalized;
   } catch (error) {
     console.error("Failed to fetch public contact directory:", error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -387,32 +393,6 @@ function documentCard(document: Document): PublicCard {
     shortText(document.description, "Public document."),
     "file",
     document.category ?? document.document_type ?? "Download",
-  );
-}
-
-function announcementCard(item: Announcement): PublicCard {
-  return pageCard(
-    item.title,
-    `/media/announcements/${item.slug}`,
-    shortText(
-      item.summary ?? item.plain_text ?? item.rich_text ?? item.content,
-      "Official notice.",
-    ),
-    "megaphone",
-    formatDate(item.published_at),
-  );
-}
-
-function eventCard(item: Event): PublicCard {
-  return pageCard(
-    item.title,
-    `/media/events/${item.slug}`,
-    shortText(
-      item.summary ?? item.plain_text ?? item.rich_text ?? item.content,
-      "Conference or event record.",
-    ),
-    "calendar",
-    formatDate(item.start_date),
   );
 }
 

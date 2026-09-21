@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { pageFromSearchParams } from "@ksu/ui/components";
 import { ProgramTableControls } from "../programs/program-table-controls";
 import { ResearchListPagination } from "../../components/research-list-pagination";
@@ -8,32 +7,23 @@ import {
   ResearchPortfolioShell,
 } from "../../components/research-portfolio";
 import {
-  Badge,
-  FilledBadge,
   ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
-import {
-  compactText,
-  formatLabel,
-  getCenters,
-  getCentersFiltered,
-  getFacilities,
-} from "../../lib/research-public-data";
+import { getCenters, getCentersFiltered, getFacilities } from "../../lib/research-public-data";
 import {
   filterRecordsByMonth,
   getListPageSize,
   getRecordMonths,
-  getRecordSummary,
-  getRecordTitle,
   getRecordYears,
 } from "../../lib/research-page-model";
-import type { ResearchGenericRecord } from "@ksu/api-client";
+import { CenterFacilitiesDisplay, CentersDisplay } from "../../components/research-record-displays";
+import { toResearchRecordDisplayDto } from "../../lib/research-formatters";
 
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Research Centers",
+  title: "Centers",
   description: "Research centers, institutes, hubs, and specialist units at Kisii University.",
 };
 
@@ -102,11 +92,13 @@ export default async function CentersPage({
   const totalPages = Math.ceil(
     (params.month ? visibleCenters.length : centers.total) / centers.perPage,
   );
+  const centerDisplayRecords = visibleCenters.map((center) => toResearchRecordDisplayDto(center));
+  const facilityDisplayRecords = facilities.data.map((facility) => toResearchRecordDisplayDto(facility));
   return (
     <main id="research-main" className="min-h-screen bg-white text-foreground">
       <ResearchPortfolioHero
         eyebrow="Institutional research anchors"
-        title="Research Centers"
+        title="Centers"
         body="Centers, institutes, hubs, laboratories, and specialist units that coordinate research delivery, infrastructure, and public collaboration."
         primary={{ label: "Explore centers", href: "#center-directory" }}
         secondary={{ label: "View facilities", href: "/facilities" }}
@@ -140,26 +132,7 @@ export default async function CentersPage({
             </div>
           ))}
 
-        {visibleCenters.length > 0 ? (
-          <>
-            <div className="mt-6 overflow-hidden rounded-lg border border-border bg-white shadow-sm">
-              <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-border bg-surface-subtle px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:grid">
-                <span>Center</span>
-                <span>Type</span>
-                <span>Status</span>
-              </div>
-              <div className="divide-y divide-border">
-                {visibleCenters.map((center) => (
-                  <CenterRow key={center.id} center={center} />
-                ))}
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="mt-7">
-            <StatusMessage>No published research centers match the current filters.</StatusMessage>
-          </div>
-        )}
+        <CentersDisplay centers={centerDisplayRecords} />
       </ResearchPortfolioShell>
 
       <ResearchSection
@@ -167,15 +140,8 @@ export default async function CentersPage({
         title="Facilities connected to center work"
         body="Published farm and facility records are shown from the backend as practical research infrastructure."
       >
-        {facilities.data.length > 0 ? (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {facilities.data.slice(0, 8).map((facility) => (
-              <FacilityTile key={facility.id} facility={facility} />
-            ))}
-          </div>
-        ) : (
-          <StatusMessage>No public facilities are currently published.</StatusMessage>
-        )}
+        {facilities.error ? <StatusMessage tone="error">{facilities.error}</StatusMessage> : null}
+        {facilityDisplayRecords.length > 0 ? <CenterFacilitiesDisplay facilities={facilityDisplayRecords} /> : <StatusMessage>No public facilities are currently published.</StatusMessage>}
       </ResearchSection>
     </main>
   );
@@ -208,56 +174,6 @@ function CenterFilters({
       sortValue={params.sort}
       sortOptions={sortOptions}
     />
-  );
-}
-
-function CenterRow({ center }: { center: ResearchGenericRecord }) {
-  const href = center.slug ? `/centers/${center.slug}` : "/centers";
-  const title = getRecordTitle(center, "Research center");
-  const status = center.status ? formatLabel(center.status) : center.is_active === false ? "Inactive" : "Active";
-
-  return (
-    <Link
-      href={href}
-      className="group grid gap-2 px-4 py-3 transition hover:bg-surface-subtle/80 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
-    >
-      <div className="min-w-0">
-        <h2 className="truncate text-sm font-semibold leading-6 text-foreground transition group-hover:text-primary">
-          {title}
-        </h2>
-        {center.code ? (
-          <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{compactText(center.code)}</p>
-        ) : null}
-      </div>
-      <div className="text-xs font-medium text-muted-foreground md:text-sm">
-        {formatLabel(compactText(center.center_type) || "research center")}
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge>{status}</Badge>
-        {center.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
-      </div>
-    </Link>
-  );
-}
-
-function FacilityTile({ facility }: { facility: ResearchGenericRecord }) {
-  return (
-    <Link
-      href={facility.slug ? `/farm/${facility.slug}` : "/farm"}
-      className="rounded-lg border border-border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
-    >
-      <Badge>{formatLabel(compactText(facility.farm_type) || "facility")}</Badge>
-      <h3 className="mt-3 text-base font-semibold leading-6 text-foreground">
-        {getRecordTitle(facility, "Research facility")}
-      </h3>
-      <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
-        {compactText(facility.about) ||
-          compactText(facility.activities) ||
-          compactText(facility.facilities) ||
-          getRecordSummary(facility) ||
-          "Facility details will appear when published."}
-      </p>
-    </Link>
   );
 }
 

@@ -40,6 +40,7 @@ yarn-error.log*
 pnpm-debug.log*
 *.mp4
 !frontend/apps/web/public/videos/hero-video.mp4
+!frontend/public/videos/hero-video.mp4
 
 # Python dependencies, caches, and outputs
 __pycache__/
@@ -105,3 +106,18 @@ ADMIN_PORTAL_*.md
 frontend/apps/library/.chrome-visual-profile/
 frontend/apps/library/visual-audit/
 media-src/
+
+# Historical contract snapshots and browser request captures.
+/contracts/backend-before-*/
+/contracts/frontend-before-*/
+/contracts/frontend-after-*/
+/frontend/contracts/frontend-before-*/
+/frontend/contracts/frontend-after-20260905/
+/frontend/contracts/frontend-after-20260906/
+/frontend/contracts/frontend-after-server-boundary-20260905/
+/frontend/contracts/**/*.jsonl
+
+# Local browser contract captures and audit-output exports.
+/frontend/contracts/
+/frontend/public/design-references/
+/output/

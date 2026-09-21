@@ -10,10 +10,11 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Department, Media, Person, StaffAssignment
+from app.models import Department, Media, Person, PersonWorkExperience, StaffAssignment
 from app.schemas.base import slugify
 
 from ._shared import LEADERSHIP_PEOPLE, SeedContext, get_or_create_person
+from .live_site_page_updates_20260914 import LIVE_SITE_UNAVAILABLE_SOURCE_URLS_20260914
 from .live_staff_profile_snapshot import LIVE_STAFF_PROFILE_PAGES
 from .live_staff_profile_updates_20260810 import LIVE_STAFF_PROFILE_UPDATES
 
@@ -180,6 +181,7 @@ def _profile_spec(page: dict[str, Any]) -> dict[str, Any]:
     official_role = _role_from_body(body, display_name)
 
     research_text = _between(body, "Research Interests", ("Education Background", "Work Experience", "Publications"))
+    biography_text = _between(body, "Biography", ("Research Interests", "Education Background", "Work Experience", "Publications", "Research Grants", "Skills"))
     education_text = _between(body, "Education Background", ("Work Experience", "Publications", "Research Grants"))
     work_text = _between(body, "Work Experience", ("Publications", "Research Grants", "Skills"))
     publications_text = _between(body, "Publications", ("Research Grants", "Skills"))
@@ -190,9 +192,9 @@ def _profile_spec(page: dict[str, Any]) -> dict[str, Any]:
     education_background = None
     if education_text and education_text.lower().strip(".") != "no education records":
         education_background = [{"raw": education_text, "source": "official_profile"}]
-    professional_memberships = None
+    work_experience_text = None
     if work_text and work_text.lower().strip(".") != "no work experience":
-        professional_memberships = [{"type": "work_experience", "raw": work_text, "source": "official_profile"}]
+        work_experience_text = work_text
 
     photo_url = next(
         (
@@ -212,11 +214,12 @@ def _profile_spec(page: dict[str, Any]) -> dict[str, Any]:
         "title": title,
         "full_name": full_name,
         "official_role": official_role,
-        "bio": official_role,
+        "bio": biography_text,
         "full_bio": body,
         "qualifications": qualifications,
         "education_background": education_background,
-        "professional_memberships": professional_memberships,
+        "professional_memberships": None,
+        "work_experience_text": work_experience_text,
         "research_interests": _clean_list_value(research_text, ("No research interests provided",)),
         "teaching_areas": _clean_list_value(skills_text, ("No skills listed",)),
         "publications_count": _publications_count(publications_text),
@@ -241,6 +244,7 @@ def _profile_spec(page: dict[str, Any]) -> dict[str, Any]:
 _PROFILE_PAGES_BY_SOURCE = {
     str(page["source_url"]): page
     for page in [*LIVE_STAFF_PROFILE_PAGES, *LIVE_STAFF_PROFILE_UPDATES]
+    if str(page["source_url"]) not in LIVE_SITE_UNAVAILABLE_SOURCE_URLS_20260914
 }
 
 LIVE_STAFF_PROFILE_SPECS = [
@@ -310,6 +314,8 @@ async def seed_staff_profiles(db: AsyncSession, ctx: SeedContext) -> None:
             )
         department = _department_from_role(spec["official_role"], ctx.departments)
         photo = await _upsert_profile_photo(db, spec)
+        if not leadership_key:
+            person.bio = spec["bio"]
         person.department_id = department.id if department else person.department_id
         if photo is not None:
             person.photo_id = photo.id
@@ -321,6 +327,35 @@ async def seed_staff_profiles(db: AsyncSession, ctx: SeedContext) -> None:
         person.publications_count = spec["publications_count"]
         person.publication_records = spec["publication_records"]
         person.research_grants_won = spec["research_grants_won"]
+        work_source_id = f"{slugify(spec['source_path'])}:work"
+        work_item = (
+            await db.execute(
+                select(PersonWorkExperience).where(
+                    PersonWorkExperience.person_id == person.id,
+                    PersonWorkExperience.external_source == "kisii_main_website",
+                    PersonWorkExperience.external_source_id == work_source_id,
+                    PersonWorkExperience.deleted_at.is_(None),
+                )
+            )
+        ).scalar_one_or_none()
+        if spec.get("work_experience_text"):
+            work_payload = {
+                "person_id": person.id,
+                "external_source": "kisii_main_website",
+                "external_source_id": work_source_id,
+                "organization": "Kisii University official staff profile",
+                "designation": spec.get("official_role"),
+                "assignment": spec["work_experience_text"],
+                "source_status": "official_profile",
+            }
+            if work_item is None:
+                db.add(PersonWorkExperience(**work_payload))
+            else:
+                for field_name, value in work_payload.items():
+                    if field_name != "person_id":
+                        setattr(work_item, field_name, value)
+        elif work_item is not None:
+            await db.delete(work_item)
         person.show_on_directory = spec["show_on_directory"]
         person.is_public = True
         await db.flush()

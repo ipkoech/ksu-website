@@ -1,5 +1,4 @@
 import {
-  CompactRecord,
   LibraryContentBand,
   LibraryHero,
   LibrarySectionHeading,
@@ -15,13 +14,14 @@ import {
   getLibraryPoliciesData,
   shortText,
 } from "../../lib/library-public-data";
+import { LibraryRecordsDisplay, type LibraryRecordDto } from "../../components/library-records-display";
 
 export const metadata = {
   title: "Library Policies",
   description: "Accessibility, copyright, privacy, acceptable use, and conduct policies.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const policyTypes = [
   "accessibility",
@@ -42,6 +42,16 @@ export default async function LibraryPoliciesPage({ searchParams }: PoliciesPage
   const { policies, policyType, errors } = await getLibraryPoliciesData({
     policyType: params.type,
   });
+  const policyRecords: LibraryRecordDto[] = policies.data.map((policy) => ({
+    id: policy.id,
+    icon: "shield",
+    eyebrow: formatLabel(policy.policy_type),
+    title: policy.title,
+    body: shortText(policy.content, "Policy content is being updated."),
+    meta: [formatLabel(policy.status), policy.is_public ? "Public" : ""].filter(Boolean),
+    href: `/policies/${policy.slug}`,
+    action: "Read policy",
+  }));
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
@@ -119,20 +129,7 @@ export default async function LibraryPoliciesPage({ searchParams }: PoliciesPage
             {policies.data.length === 0 ? (
               <StatusMessage>No public policies are available for this filter yet.</StatusMessage>
             ) : (
-              <div className="grid gap-4 lg:grid-cols-2">
-                {policies.data.map((policy) => (
-                  <CompactRecord
-                    key={policy.id}
-                    icon="shield"
-                    eyebrow={formatLabel(policy.policy_type)}
-                    title={policy.title}
-                    body={shortText(policy.content, "Policy content is being updated.")}
-                    meta={[formatLabel(policy.status), policy.is_public ? "Public" : null]}
-                    href={`/policies/${policy.slug}`}
-                    action="Read policy"
-                  />
-                ))}
-              </div>
+              <LibraryRecordsDisplay records={policyRecords} marker="library-policies" />
             )}
           </div>
           <SidePanel title="Policy types" eyebrow="Scope">

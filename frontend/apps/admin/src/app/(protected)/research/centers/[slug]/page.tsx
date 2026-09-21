@@ -8,7 +8,7 @@ import { BindableRecordsCard, RelatedRecordsCard, RelatedRecordsGrid } from "../
 export default function ResearchCenterDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Center"
+      title="Center"
       description="View center profile, mandate, contact information, and public content fields."
       resource={researchServiceApi.centers}
       backHref="/research/centers"
@@ -19,6 +19,7 @@ export default function ResearchCenterDetailPage() {
         <ResearchCoreDetailActions
           record={record}
           resource={researchServiceApi.centers}
+          resourceKey="centers"
           resourceLabel="Center"
           listHref="/research/centers"
         />
@@ -92,7 +93,7 @@ function CenterRelations({ center }: { center: ResearchGenericRecord }) {
                 metaFields={["code", "status"]}
               />
               <RelatedRecordsCard
-                title="Research Farms"
+                title="Farms"
                 queryKey={["research", "centers", center.id, "farms"]}
                 queryFn={() => researchServiceApi.centerRelations.farms.list(String(center.id))}
                 emptyLabel="No farms were returned for this center."

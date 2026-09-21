@@ -15,6 +15,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from ksu_common.task_queue import run_worker_async
+from ksu_common.audit_outbox import limit_audit_transaction, prune_audit_batch
 from sqlalchemy import delete, select
 
 from ..core.config import get_settings
@@ -35,7 +36,7 @@ DELETE_BATCH_SIZE = 5_000
 MAX_BATCHES_PER_RUN = 20
 
 
-@celery_app.task(name="main.audit.prune")
+@celery_app.task(name="main.audit.prune", soft_time_limit=120, time_limit=150)
 def prune_audit_logs() -> int:
     return run_worker_async(_prune_audit_logs())
 
@@ -49,16 +50,14 @@ async def _prune_audit_logs() -> int:
     removed = 0
     async with AsyncSessionLocal() as db:
         for _ in range(MAX_BATCHES_PER_RUN):
-            ids = (
-                await db.execute(
-                    select(AuditLog.id).where(AuditLog.happened_at < cutoff).limit(DELETE_BATCH_SIZE)
-                )
-            ).scalars().all()
-            if not ids:
+            if not await limit_audit_transaction(db, owner_key="main.audit.prune"):
+                await db.rollback()
                 break
-            await db.execute(delete(AuditLog).where(AuditLog.id.in_(ids)))
+            count = await prune_audit_batch(db, AuditLog, cutoff, limit=DELETE_BATCH_SIZE)
             await db.commit()
-            removed += len(ids)
+            removed += count
+            if not count:
+                break
 
     if removed:
         logger.info("pruned %d audit_logs rows older than %s", removed, cutoff.isoformat())

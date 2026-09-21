@@ -9,6 +9,7 @@ import { MediaPicker } from "@/components/media";
 import { SchoolPicker } from "@/components/relationships";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { hasChangedPayload, pickChangedPayloadWithRecord, type PayloadFieldMap } from "@/lib/changed-fields";
 import {
   Button,
@@ -171,6 +172,7 @@ export default function AdmissionInfoEditorPage() {
     try {
       if (isNew) {
         await createAdmissionInfo.mutateAsync(payload);
+        void revalidatePublicContent("main", "admissions");
         toast.success("Admission information created successfully");
       } else {
         const patch = pickChangedPayloadWithRecord(payload, form.formState.dirtyFields as Record<string, unknown>, admissionInfoPayloadFieldMap, item);
@@ -179,6 +181,7 @@ export default function AdmissionInfoEditorPage() {
           return;
         }
         await updateAdmissionInfo.mutateAsync({ id: item!.id, data: patch });
+        void revalidatePublicContent("main", "admissions");
         toast.success("Admission information updated successfully");
       }
       router.push("/admissions/info");

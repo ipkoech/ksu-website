@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request, status
 
 from ksu_common import rate_limit
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...core.config import get_settings
 from ...deps import DbSession
@@ -16,7 +16,11 @@ router = APIRouter()
 settings = get_settings()
 
 
-@router.post("/events", status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/events",
+    response_model=SuccessResponse[dict[str, int]],
+    status_code=status.HTTP_202_ACCEPTED,
+)
 @rate_limit(
     requests=settings.ANALYTICS_RATE_LIMIT_COUNT,
     window=settings.ANALYTICS_RATE_LIMIT_WINDOW_SECONDS,

@@ -13,6 +13,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Form, FormControl, Fo
 import { toast } from "@ksu/ui";
 import { useCreateSliderGroup, useSliderGroup, useUpdateSliderGroup } from "@ksu/api-client";
 import type { SliderGroup } from "@ksu/api-client";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const schema = z.object({
   name: z.string().min(1, "Name is required").max(255),
@@ -133,6 +134,7 @@ export default function SliderGroupEditorPage() {
         await updateGroup.mutateAsync({ id: group!.id, data: patch });
         toast.success("Slider group updated successfully");
       }
+      void revalidatePublicContent("main", "sliders");
       router.push("/content/sliders");
     } catch {
       toast.error(isNew ? "Failed to create slider group" : "Failed to update slider group");

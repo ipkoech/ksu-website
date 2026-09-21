@@ -6,12 +6,13 @@ import uuid
 
 from fastapi import APIRouter, HTTPException, Query, status
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession
 from ...models import DepartmentService as DepartmentServiceModel
 from ...schemas import DepartmentServiceCreate, DepartmentServiceUpdate
+from ...schemas.academic import DepartmentServiceSnapshot
 from ...security.scopes import can_access_scope
 from ...services import DepartmentServiceCatalogService
 
@@ -45,7 +46,7 @@ async def _require_department_access(db: DbSession, user: CurrentUser, permissio
         )
 
 
-@router.get("/admin")
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[DepartmentServiceSnapshot]])
 async def list_admin_department_services(
     db: DbSession,
     user: CurrentUser,
@@ -75,7 +76,7 @@ async def list_admin_department_services(
     return success(data=selector.apply(items), meta=meta)
 
 
-@router.get("/{service_id}")
+@router.get("/{service_id}", response_model_exclude_unset=True, response_model=SuccessResponse[DepartmentServiceSnapshot])
 async def get_department_service(service_id: uuid.UUID, db: DbSession, user: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(DepartmentServiceModel, fields)
     item = await DepartmentServiceCatalogService.get_by_id(db, service_id, load_options=selector.load_options)
@@ -85,14 +86,14 @@ async def get_department_service(service_id: uuid.UUID, db: DbSession, user: Cur
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", response_model_exclude_unset=True, response_model=SuccessResponse[DepartmentServiceSnapshot], status_code=status.HTTP_201_CREATED)
 async def create_department_service(data: DepartmentServiceCreate, db: DbSession, user: CurrentUser):
     await _require_department_access(db, user, DEPARTMENT_SERVICE_MANAGE_PERMISSIONS, data.department_id)
     item = await DepartmentServiceCatalogService.create(db, **data.model_dump())
     return success(data=item, message="Department service created")
 
 
-@router.patch("/{service_id}")
+@router.patch("/{service_id}", response_model_exclude_unset=True, response_model=SuccessResponse[DepartmentServiceSnapshot])
 async def update_department_service(service_id: uuid.UUID, data: DepartmentServiceUpdate, db: DbSession, user: CurrentUser):
     item = await DepartmentServiceCatalogService.get_by_id(db, service_id)
     if item is None:

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useState,
   useEffect,
   useRef,
@@ -24,6 +25,7 @@ import { Button } from "../../ui/button";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -172,20 +174,24 @@ export function PublicHeader({
   return (
     <>
       <header
+        data-server-data-display="web-site-chrome"
         className={cn(
-          "sticky top-0 z-50 transition-all duration-300 motion-reduce:transition-none",
+          "sticky top-0 z-50 overflow-x-clip transition-all duration-300 motion-reduce:transition-none",
           isTransparent
             ? "bg-transparent"
             : "border-b border-primary/10 bg-white/95 shadow-[0_12px_36px_-32px_rgba(30,64,175,0.55)] backdrop-blur-md",
           className,
         )}
       >
-        <nav className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="flex h-[128px] items-center justify-between lg:h-[118px]">
+        <nav
+          aria-label="Main navigation"
+          className="mx-auto w-full max-w-[1680px] px-4 sm:px-6 lg:px-8"
+        >
+          <div className="flex min-h-20 items-center justify-between gap-4 py-3 lg:min-h-24">
             {/* Logo */}
             <Link
               href="/"
-              className="z-10 flex min-h-11 shrink-0 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="z-10 flex min-h-11 min-w-0 items-center gap-2 sm:gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               aria-label="Kisii University home"
             >
               <Image
@@ -193,13 +199,13 @@ export function PublicHeader({
                 alt="Kisii University"
                 width={56}
                 height={56}
-                className="h-[58px] w-auto sm:h-[67px] lg:h-[58px]"
+                className="h-12 w-auto shrink-0 sm:h-14"
                 priority
               />
               <span className="min-w-0">
                 <span
                   className={cn(
-                    "block font-[family-name:var(--font-display)] text-xl font-bold uppercase leading-none text-primary transition-colors motion-reduce:transition-none sm:text-3xl lg:text-2xl",
+                    "block font-[family-name:var(--font-display)] text-lg font-normal uppercase leading-tight text-primary transition-colors motion-reduce:transition-none sm:text-2xl",
                     isTransparent ? "text-white" : "text-primary",
                   )}
                 >
@@ -207,7 +213,7 @@ export function PublicHeader({
                 </span>
                 <span
                   className={cn(
-                    "mt-1 block text-sm font-semibold leading-none transition-colors motion-reduce:transition-none sm:text-base lg:text-sm",
+                    "mt-1 block text-[0.6875rem] font-normal leading-tight transition-colors motion-reduce:transition-none sm:text-xs",
                     isTransparent ? "text-white/80" : "text-muted-foreground",
                   )}
                 >
@@ -217,7 +223,7 @@ export function PublicHeader({
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden xl:flex items-center gap-0.5">
+            <div className="hidden xl:flex items-center gap-1 2xl:gap-2">
               {navigation.map((item, index) => (
                 <MegaMenuDropdown
                   key={item.label}
@@ -239,44 +245,13 @@ export function PublicHeader({
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2">
-              <Button
-                asChild
-                size="sm"
-                className={cn(
-                  "hidden h-11 rounded-full px-5 text-sm font-semibold xl:flex",
-                  isTransparent
-                    ? "bg-white text-primary hover:bg-[hsl(var(--primary-soft))]"
-                    : "bg-primary text-white shadow-sm shadow-primary/20 hover:bg-primary/90",
-                )}
-              >
-                <Link href="/admissions/how-to-apply">APPLY NOW</Link>
-              </Button>
-
-              <Button
-                asChild
-                size="sm"
-                className={cn(
-                  "hidden h-11 rounded-full border border-secondary bg-secondary px-5 text-sm font-semibold text-white shadow-sm shadow-secondary/20 hover:bg-secondary/90 2xl:flex",
-                  isTransparent &&
-                    "border-white/80 bg-white/10 text-white hover:bg-white/20",
-                )}
-              >
-                <Link
-                  href={supportHref}
-                  target={supportHref.startsWith("http") ? "_blank" : undefined}
-                  rel={supportHref.startsWith("http") ? "noopener noreferrer" : undefined}
-                >
-                  SUPPORT KSU
-                </Link>
-              </Button>
-
+            <div className="flex shrink-0 items-center xl:hidden">
               {/* Mobile Menu Trigger */}
               <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
                 <SheetTrigger asChild>
                   <button
                     className={cn(
-                      "h-11 w-11 rounded-full p-2 transition-colors motion-reduce:transition-none xl:hidden",
+                      "h-11 w-11 rounded-lg border border-current/15 p-2 transition-colors motion-reduce:transition-none xl:hidden",
                       isTransparent
                         ? "text-white hover:bg-white/10"
                         : "text-primary hover:bg-primary/10",
@@ -300,6 +275,9 @@ export function PublicHeader({
                       />
                       <span>Kisii University</span>
                     </SheetTitle>
+                    <SheetDescription className="sr-only">
+                      Navigate Kisii University public pages.
+                    </SheetDescription>
                   </SheetHeader>
                   <MobileNav
                     navigation={navigation}
@@ -332,50 +310,44 @@ export function buildNavigation(
     href: "/about",
     children: [
       {
-        label: "ABOUT KSU",
+        label: "OVERVIEW",
         href: "/about",
-        description: "Our identity, beliefs, mandate, and journey",
-      },
-      {
-        label: "UNIVERSITY COUNCIL",
-        href: "/about/university-council",
-        description: "The University’s supreme governing body",
-      },
-      {
-        label: "UNIVERSITY MANAGEMENT",
-        href: "/about/university-management",
-        description: "Executive leadership and administration",
-      },
-      {
-        label: "MEET OUR VC",
-        href: "/about/vice-chancellor",
-        description: "The Vice-Chancellor's welcome, record and addresses",
+        group: "ABOUT KSU",
       },
       {
         label: "UNIVERSITY SERVICE CHARTER",
         href: "/about/service-charter",
-        description: "Our public service commitments",
+        group: "ABOUT KSU",
       },
       {
         label: "STRATEGIC PLAN",
         href: "/about/strategic-plan",
-        description: "Priorities guiding the University’s future",
+        group: "ABOUT KSU",
       },
       {
         label: "KSU NUMBERS & FACTS",
         href: "/about/numbers-and-facts",
-        description: "Verified institutional facts by reporting year",
+        group: "ABOUT KSU",
       },
       {
-        label: "HERI AFRICA",
-        href: serviceLinks.heriHref || "https://heri-africa.kisiiuniversity.ac.ke",
-        external: true,
-        group: "QUICK LINKS",
+        label: "UNIVERSITY COUNCIL",
+        href: "/about/university-council",
+        group: "LEADERSHIP & GOVERNANCE",
       },
       {
-        label: "NYANGWETA FARM",
-        href: "#",
-        group: "QUICK LINKS",
+        label: "UNIVERSITY MANAGEMENT",
+        href: "/about/university-management",
+        group: "LEADERSHIP & GOVERNANCE",
+      },
+      {
+        label: "MEET OUR VC",
+        href: "/about/vice-chancellor",
+        group: "LEADERSHIP & GOVERNANCE",
+      },
+      {
+        label: "ADMINISTRATION",
+        href: "/administration",
+        group: "LEADERSHIP & GOVERNANCE",
       },
     ],
   };
@@ -420,7 +392,6 @@ export function buildNavigation(
       {
         label: "ALL PROGRAMMES",
         href: "/academics/programmes",
-        description: "Browse academic programmes by level and school",
       },
       {
         label: "ADMISSIONS",
@@ -439,11 +410,10 @@ export function buildNavigation(
         })),
       },
       {
-        label: "ACADEMIC DIVISION",
+        label: "ACADEMIC INFORMATION",
         href: "/academics",
         children: [
-          { label: "ORGANIZATION", href: "/administration/organization" },
-          { label: "CALENDAR", href: "/academics/calendar" },
+          { label: "ACADEMIC CALENDAR", href: "/academics/calendar" },
           { label: "EXAMINATIONS", href: "/academics/examinations" },
         ],
       },
@@ -454,42 +424,15 @@ export function buildNavigation(
   const campusLifeItem: NavItem = {
     label: "CAMPUS LIFE",
     href: "/campus-life",
-    children: [
-      {
-        label: "STUDENT LIFE",
-        href: "/campus-life/student-life",
-        description: "Experience university life",
-      },
-      {
-        label: "CLUBS & SOCIETIES",
-        href: "/campus-life/clubs",
-        description: "Student organizations",
-      },
-      {
-        label: "SPORTS",
-        href: "/campus-life/sports",
-        description: "Athletics and recreation",
-      },
-      {
-        label: "ACCOMMODATION",
-        href: "/campus-life/accommodation",
-        description: "On-campus housing",
-      },
-      {
-        label: "SUPPORT SERVICES",
-        href: "/campus-life/support",
-        description: "Student welfare",
-      },
-    ],
   };
 
   const mediaDeskItem: NavItem = {
-    label: "NEWS & EVENTS",
+    label: "MEDIA DESK",
     href: "/media",
   };
 
   const contactItem: NavItem = {
-    label: "CONTACT",
+    label: "CONTACT US",
     href: "/contact",
   };
 
@@ -532,6 +475,7 @@ function MegaMenuDropdown({
   onDismiss: () => void;
 }) {
   const triggerRef = useRef<HTMLDivElement | null>(null);
+  const menuFocusTimerRef = useRef<number | null>(null);
   const [dropdownFrame, setDropdownFrame] = useState<{
     left: number;
     top: number;
@@ -556,52 +500,91 @@ function MegaMenuDropdown({
       : []),
   ];
   const isStructuredMegaMenu = item.label === "ABOUT US";
+  const displaySections: GroupedMenuSection[] =
+    item.label === "PROGRAMMES"
+      ? children.map((section) => {
+          const sectionItems = section.children?.length
+            ? section.children
+            : [section];
+
+          if (section.label !== "SCHOOLS" || sectionItems.length === 0) {
+            return { title: section.label, items: sectionItems };
+          }
+
+          return {
+            title: section.label,
+            items: [
+              ...sectionItems
+                .filter((school) => school.label !== "VIEW ALL SCHOOLS")
+                .slice(0, 5),
+              {
+                label: "VIEW ALL SCHOOLS",
+                href: section.href,
+              },
+            ],
+          };
+        })
+      : rightSections;
   const isMegaMenu =
     isStructuredMegaMenu ||
     rightSections.length > 0 ||
     looseDynamicItems.length > 0;
   const menuId = `${item.label.toLowerCase().replace(/\s+/g, "-")}-menu`;
 
-  const getDropdownFrame = (anchorElement?: HTMLElement | null) => {
-    if (typeof window === "undefined") {
-      return null;
-    }
-
-    const triggerElement = anchorElement ?? triggerRef.current;
-    const rect = triggerElement?.getBoundingClientRect();
-    if (!triggerElement || !rect) {
-      return null;
-    }
-
-    const headerRect = triggerElement
-      .closest("header")
-      ?.getBoundingClientRect();
-    const gutter = 16;
-    const availableWidth = Math.max(260, window.innerWidth - gutter * 2);
-    const targetWidth =
-      item.label === "ABOUT US" || item.label === "PROGRAMMES" ? 520 : 288;
-    const width = Math.min(targetWidth, availableWidth);
-    const maxLeft = Math.max(gutter, window.innerWidth - width - gutter);
-    const preferredLeft =
-      align === "start"
-        ? rect.left
-        : align === "end"
-          ? rect.right - width
-          : rect.left + rect.width / 2 - width / 2;
-
-    return {
-      left: Math.min(Math.max(preferredLeft, gutter), maxLeft),
-      top: (headerRect?.bottom ?? rect.bottom) + 2,
-      width,
+  useEffect(() => {
+    return () => {
+      if (menuFocusTimerRef.current !== null) {
+        window.clearTimeout(menuFocusTimerRef.current);
+      }
     };
-  };
+  }, []);
 
-  const updateDropdownFrame = (anchorElement?: HTMLElement | null) => {
-    const nextDropdownFrame = getDropdownFrame(anchorElement);
-    if (nextDropdownFrame) {
-      setDropdownFrame(nextDropdownFrame);
-    }
-  };
+  const getDropdownFrame = useCallback(
+    (anchorElement?: HTMLElement | null) => {
+      if (typeof window === "undefined") {
+        return null;
+      }
+
+      const triggerElement = anchorElement ?? triggerRef.current;
+      const rect = triggerElement?.getBoundingClientRect();
+      if (!triggerElement || !rect) {
+        return null;
+      }
+
+      const headerRect = triggerElement
+        .closest("header")
+        ?.getBoundingClientRect();
+      const gutter = 16;
+      const availableWidth = Math.max(260, window.innerWidth - gutter * 2);
+      const targetWidth =
+        item.label === "ABOUT US" || item.label === "PROGRAMMES" ? 520 : 288;
+      const width = Math.min(targetWidth, availableWidth);
+      const maxLeft = Math.max(gutter, window.innerWidth - width - gutter);
+      const preferredLeft =
+        align === "start"
+          ? rect.left
+          : align === "end"
+            ? rect.right - width
+            : rect.left + rect.width / 2 - width / 2;
+
+      return {
+        left: Math.min(Math.max(preferredLeft, gutter), maxLeft),
+        top: (headerRect?.bottom ?? rect.bottom) + 2,
+        width,
+      };
+    },
+    [align, item.label],
+  );
+
+  const updateDropdownFrame = useCallback(
+    (anchorElement?: HTMLElement | null) => {
+      const nextDropdownFrame = getDropdownFrame(anchorElement);
+      if (nextDropdownFrame) {
+        setDropdownFrame(nextDropdownFrame);
+      }
+    },
+    [getDropdownFrame],
+  );
 
   const handleOpen = (event: ReactMouseEvent<HTMLElement>) => {
     updateDropdownFrame(event.currentTarget);
@@ -609,6 +592,11 @@ function MegaMenuDropdown({
   };
 
   const handleKeyboardOpen = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (menuFocusTimerRef.current !== null) {
+      window.clearTimeout(menuFocusTimerRef.current);
+      menuFocusTimerRef.current = null;
+    }
+
     if (event.key === "Escape") {
       event.preventDefault();
       onDismiss();
@@ -630,7 +618,8 @@ function MegaMenuDropdown({
       event.preventDefault();
       updateDropdownFrame(event.currentTarget);
       onOpen();
-      window.setTimeout(() => {
+      menuFocusTimerRef.current = window.setTimeout(() => {
+        menuFocusTimerRef.current = null;
         document.querySelector<HTMLAnchorElement>(`#${menuId} a`)?.focus();
       }, 0);
     }
@@ -654,7 +643,7 @@ function MegaMenuDropdown({
       window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("scroll", handleViewportChange, true);
     };
-  }, [align, hasChildren, isMegaMenu, isOpen, item.label]);
+  }, [hasChildren, isMegaMenu, isOpen, updateDropdownFrame]);
 
   const activeDropdownFrame = isOpen
     ? (dropdownFrame ?? getDropdownFrame())
@@ -668,7 +657,7 @@ function MegaMenuDropdown({
         target={item.external ? "_blank" : undefined}
         rel={item.external ? "noopener noreferrer" : undefined}
         className={cn(
-          "flex min-h-11 items-center gap-1 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors motion-reduce:transition-none",
+          "flex min-h-11 items-center gap-1 whitespace-nowrap rounded-md px-3 py-2 text-sm font-normal transition-colors motion-reduce:transition-none",
           isTransparent
             ? "text-white/90 hover:bg-white/10 hover:text-white"
             : "text-foreground/85 hover:bg-primary/10 hover:text-primary",
@@ -689,7 +678,7 @@ function MegaMenuDropdown({
     >
       <div
         className={cn(
-          "flex min-h-11 items-center overflow-hidden rounded-full text-sm font-semibold transition-colors motion-reduce:transition-none",
+          "flex min-h-11 items-center overflow-hidden whitespace-nowrap rounded-md text-sm font-normal transition-colors motion-reduce:transition-none",
           isTransparent
             ? "text-white/90 hover:bg-white/10 hover:text-white"
             : "text-foreground/85 hover:bg-primary/10 hover:text-primary",
@@ -701,7 +690,7 @@ function MegaMenuDropdown({
       >
         <Link
           href={item.href}
-          className="flex min-h-11 items-center px-3.5 py-2"
+          className="flex min-h-11 items-center pl-3 pr-1 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
           target={item.external ? "_blank" : undefined}
           rel={item.external ? "noopener noreferrer" : undefined}
           onFocus={(event) => {
@@ -728,7 +717,7 @@ function MegaMenuDropdown({
             updateDropdownFrame(event.currentTarget);
           }}
           onKeyDown={handleKeyboardOpen}
-          className="flex min-h-11 items-center px-2.5 py-2 transition motion-reduce:transition-none hover:bg-primary/10"
+          className="flex min-h-11 min-w-11 items-center justify-center px-2 py-2 transition motion-reduce:transition-none hover:bg-primary/10"
         >
           <ChevronDown
             className={cn(
@@ -747,7 +736,7 @@ function MegaMenuDropdown({
               aria-label={`${item.label} navigation`}
               role="menu"
               className={cn(
-                "fixed z-50 rounded-lg border border-primary/10 bg-white shadow-[0_24px_80px_-48px_rgba(30,64,175,0.6)]",
+                "fixed z-50 max-h-[calc(100vh-7rem)] max-w-[calc(100vw-2rem)] overflow-y-auto overflow-x-hidden rounded-xl border border-primary/15 bg-white shadow-[0_24px_80px_-48px_rgba(30,64,175,0.6)]",
                 isMegaMenu ? "p-4" : "py-2",
               )}
               onMouseEnter={onOpen}
@@ -764,22 +753,12 @@ function MegaMenuDropdown({
                 width: activeDropdownFrame.width,
               }}
             >
-              {isMegaMenu ? (
-                <div className="grid gap-5 lg:grid-cols-[minmax(13rem,16rem)_minmax(0,1fr)]">
-                  <div>
-                    {quickLinks.length ? (
-                      <MenuSection title="QUICK LINKS">
-                        {quickLinks.map((child) => (
-                          <MenuCardLink key={child.href} item={child} />
-                        ))}
-                      </MenuSection>
-                    ) : null}
+              {isStructuredMegaMenu || item.label === "PROGRAMMES" ? (
+                <>
+                  <div className="grid gap-5">
+                    <GroupedMenuGrid sections={displaySections} variant="two-column" />
                   </div>
-
-                  <div className="min-w-0 border-t border-primary/10 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                    <GroupedMenuGrid sections={rightSections} />
-                  </div>
-                </div>
+                </>
               ) : (
                 <CompactNestedMenu
                   items={children}
@@ -853,15 +832,24 @@ function CompactNestedMenu({
               onMouseEnter={() => onActivate(hasChildren ? item.href : null)}
               onFocus={() => onActivate(hasChildren ? item.href : null)}
               className={cn(
-                "flex min-h-11 items-center justify-between gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                "group flex min-h-10 min-w-0 items-center justify-between gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium leading-5 transition-colors",
                 activeSubmenu === item.href
-                  ? "bg-primary/5 text-primary"
-                  : "text-foreground hover:bg-primary/5 hover:text-primary",
+                  ? "border-primary/15 bg-[hsl(var(--primary-soft))] text-primary shadow-sm"
+                  : "text-foreground hover:border-primary/10 hover:bg-primary/5 hover:text-primary",
               )}
             >
-              <span>{item.label}</span>
+              <span className="flex min-w-0 items-center gap-2">
+                <span className={cn(
+                  "h-1.5 w-1.5 shrink-0 rounded-full bg-border transition-colors",
+                  activeSubmenu === item.href && "bg-secondary",
+                )} />
+                <span className="min-w-0 break-words">{formatMenuLabel(item.label)}</span>
+              </span>
               {hasChildren ? (
-                <ChevronDown className="h-4 w-4 -rotate-90 text-muted-foreground" aria-hidden />
+                <ChevronDown
+                  className="h-4 w-4 -rotate-90 text-muted-foreground"
+                  aria-hidden
+                />
               ) : item.external ? (
                 <ExternalLink className="h-3.5 w-3.5" aria-hidden />
               ) : null}
@@ -879,9 +867,10 @@ function CompactNestedMenu({
               target={child.external ? "_blank" : undefined}
               rel={child.external ? "noopener noreferrer" : undefined}
               role="menuitem"
-              className="flex min-h-11 items-center rounded-md px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/5 hover:text-primary"
+              className="group flex min-h-10 min-w-0 items-center justify-between gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium leading-5 text-foreground transition-colors hover:border-primary/10 hover:bg-primary/5 hover:text-primary"
             >
-              {child.label}
+              <span className="min-w-0 break-words">{formatMenuLabel(child.label)}</span>
+              <ChevronDown className="h-4 w-4 -rotate-90 text-muted-foreground transition-colors group-hover:text-primary" aria-hidden />
             </Link>
           ))}
         </div>
@@ -900,7 +889,7 @@ function MenuCardLink({ item }: { item: NavItem }) {
       className="-mx-3 block min-h-12 rounded-lg px-3 py-2 transition-colors motion-reduce:transition-none hover:bg-[hsl(var(--primary-soft))] group"
     >
       <div className="flex items-center gap-2 text-sm font-medium text-foreground transition-colors group-hover:text-primary">
-        <span className="min-w-0 flex-1">{item.label}</span>
+        <span className="min-w-0 flex-1">{formatMenuLabel(item.label)}</span>
         {item.external ? (
           <ExternalLink className="h-3.5 w-3.5" aria-hidden />
         ) : null}
@@ -912,6 +901,15 @@ function MenuCardLink({ item }: { item: NavItem }) {
       )}
     </Link>
   );
+}
+
+function formatMenuLabel(label: string) {
+  return label
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    .replace(/\bKsu\b/g, "KSU")
+    .replace(/\bVc\b/g, "VC")
+    .replace(/\bFaqs\b/g, "FAQs");
 }
 
 interface GroupedMenuSection {
@@ -955,15 +953,26 @@ function GroupedMenuGrid({
 
   if (variant === "two-column") {
     return (
-      <div className="grid gap-6 md:grid-cols-2">
-        {sections.map((section) => (
-          <MenuLinkGrid
-            key={section.title}
-            title={section.title}
-            items={section.items}
-            headingStyle="bold"
-          />
-        ))}
+      <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:divide-x md:divide-primary/10">
+        <div className="min-w-0 md:pr-6">
+          {sections[0] ? (
+            <MenuLinkGrid
+              title={sections[0].title}
+              items={sections[0].items}
+              headingStyle="bold"
+            />
+          ) : null}
+        </div>
+        <div className="min-w-0 space-y-5 md:pl-6">
+          {sections.slice(1).map((section) => (
+            <MenuLinkGrid
+              key={section.title}
+              title={section.title}
+              items={section.items}
+              headingStyle="bold"
+            />
+          ))}
+        </div>
       </div>
     );
   }
@@ -1028,14 +1037,14 @@ function MenuLinkGrid({
         className={cn(
           "mb-3",
           headingStyle === "bold"
-            ? "text-base font-bold text-foreground"
+            ? "mb-3 border-b border-primary/15 pb-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary"
             : "text-xs font-semibold uppercase tracking-wider text-muted-foreground",
         )}
       >
         {title}
       </h3>
       <div
-        className="grid gap-1.5"
+        className="grid gap-1"
         style={{
           gridTemplateColumns: `repeat(auto-fit, minmax(min(${minColumnWidth}, 100%), 1fr))`,
         }}
@@ -1047,12 +1056,35 @@ function MenuLinkGrid({
             target={child.external ? "_blank" : undefined}
             rel={child.external ? "noopener noreferrer" : undefined}
             role="menuitem"
-            className="block min-h-11 rounded-lg px-2.5 py-2 text-sm leading-5 text-foreground/80 transition-colors motion-reduce:transition-none hover:bg-[hsl(var(--primary-soft))] hover:text-primary"
+            className="block min-h-10 min-w-0 rounded-lg px-2.5 py-2 text-sm leading-5 text-foreground/80 transition-colors motion-reduce:transition-none hover:bg-[hsl(var(--primary-soft))] hover:text-primary"
           >
-            <span className="break-words">{child.label}</span>
+            <span className="block break-words">{formatMenuLabel(child.label)}</span>
           </Link>
         ))}
       </div>
+    </div>
+  );
+}
+
+function FlatMenuGrid({ items }: { items: NavItem[] }) {
+  return (
+    <div className="grid gap-x-6 sm:grid-cols-2 sm:divide-x sm:divide-primary/10">
+      {[items.slice(0, Math.ceil(items.length / 2)), items.slice(Math.ceil(items.length / 2))].map((column, index) => (
+        <div key={index} className={cn("min-w-0", index === 1 && "sm:pl-6")}>
+          {column.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              target={item.external ? "_blank" : undefined}
+              rel={item.external ? "noopener noreferrer" : undefined}
+              role="menuitem"
+              className="flex min-h-10 min-w-0 items-center px-3 py-2 text-sm leading-5 text-foreground transition-colors hover:bg-[hsl(var(--primary-soft))] hover:text-primary"
+            >
+              <span className="block min-w-0 break-words">{formatMenuLabel(item.label)}</span>
+            </Link>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
@@ -1202,16 +1234,13 @@ function MobileNav({
 
       {/* CTA */}
       <div className="space-y-3 border-t p-4">
-        <Button asChild className="w-full">
-          <Link href="/admissions/how-to-apply" onClick={onClose}>
-            APPLY NOW
-          </Link>
-        </Button>
         <Button asChild variant="secondary" className="w-full">
           <Link
             href={supportHref}
             target={supportHref.startsWith("http") ? "_blank" : undefined}
-            rel={supportHref.startsWith("http") ? "noopener noreferrer" : undefined}
+            rel={
+              supportHref.startsWith("http") ? "noopener noreferrer" : undefined
+            }
             onClick={onClose}
           >
             SUPPORT KSU
@@ -1256,7 +1285,7 @@ function MobileNavItem({
         style={{ paddingLeft: indent }}
       >
         <span className="min-w-0">
-          <span className="block font-medium">{item.label}</span>
+          <span className="block font-normal">{formatMenuLabel(item.label)}</span>
           {item.description ? (
             <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
               {item.description}
@@ -1321,7 +1350,7 @@ function MobileNavLink({
       className="flex min-h-11 items-center justify-between py-3 pr-4 text-sm text-foreground/80 hover:bg-[hsl(var(--primary-soft))] hover:text-primary"
       style={{ paddingLeft: `${1 + depth}rem` }}
     >
-      <span className="min-w-0 flex-1">{item.label}</span>
+      <span className="min-w-0 flex-1">{formatMenuLabel(item.label)}</span>
       {item.external && (
         <ExternalLink className="h-4 w-4 text-muted-foreground" aria-hidden />
       )}

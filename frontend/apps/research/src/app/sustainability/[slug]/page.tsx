@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import {
   ResearchDetailHero,
   ResearchDetailSidebar,
@@ -11,7 +10,6 @@ import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import {
   compactText,
   formatDate,
-  generateSlugParams,
   getRelatedOutputs,
   getSustainabilityActivities,
   getSustainabilityBySlug,
@@ -22,15 +20,12 @@ import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../..
 import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getSustainabilityBySlug(slug);
   return researchRecordMetadata(data, { fallbackTitle: "Sustainability initiative", pathname: "/sustainability/" + slug });
-}
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.sustainability.list);
 }
 
 export default async function SustainabilityDetailPage({
@@ -79,7 +74,7 @@ export default async function SustainabilityDetailPage({
           ...(compactText(initiative.website) ? [{ label: "Open website", href: compactText(initiative.website) }] : []),
           ...(compactText(initiative.contact_email) ? [{ label: "Contact initiative", href: `mailto:${compactText(initiative.contact_email)}`, variant: "secondary" as const }] : []),
         ]}
-        imageSrc="/images/research/sustainability-hero-imagegen.webp"
+        imageSrc="/images/research/verified/environment-03.jpeg"
         imageAlt="Sustainability initiative activities, partnerships, and public impact"
       />
 

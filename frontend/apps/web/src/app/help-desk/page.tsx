@@ -19,6 +19,8 @@ export const metadata = {
   description: "Customer care and service support at Kisii University.",
 };
 
+export const revalidate = 300;
+
 export default function HelpDeskPage() {
   return (
     <PageShell>

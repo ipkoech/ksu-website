@@ -11,6 +11,10 @@ depends_on = None
 
 
 def upgrade() -> None:
+    inspector = sa.inspect(op.get_bind())
+    existing_columns = {
+        column["name"] for column in inspector.get_columns("partners", schema="heri")
+    }
     columns = (
         sa.Column("research_partner_id", sa.Uuid(), nullable=True),
         sa.Column("research_center_id", sa.Uuid(), nullable=True),
@@ -27,10 +31,18 @@ def upgrade() -> None:
         sa.Column("display_order", sa.Integer(), server_default="100", nullable=False),
     )
     for column in columns:
-        op.add_column("partners", column, schema="heri")
-    op.create_index("ix_heri_partners_research_partner_id", "partners", ["research_partner_id"], schema="heri")
-    op.create_index("ix_heri_partners_research_center_id", "partners", ["research_center_id"], schema="heri")
-    op.create_index("ix_heri_partners_relationship_status", "partners", ["relationship_status"], schema="heri")
+        if column.name not in existing_columns:
+            op.add_column("partners", column, schema="heri")
+    existing_indexes = {
+        index["name"] for index in inspector.get_indexes("partners", schema="heri")
+    }
+    for name, column in (
+        ("ix_heri_partners_research_partner_id", "research_partner_id"),
+        ("ix_heri_partners_research_center_id", "research_center_id"),
+        ("ix_heri_partners_relationship_status", "relationship_status"),
+    ):
+        if name not in existing_indexes:
+            op.create_index(name, "partners", [column], schema="heri")
 
 
 def downgrade() -> None:

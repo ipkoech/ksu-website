@@ -5,7 +5,6 @@ import {
   LibraryHero,
   LibrarySection,
   LibraryShell,
-  RecordListItem,
   StatusMessage,
 } from "../../components/library-ui";
 import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
@@ -20,6 +19,7 @@ import {
   type LibraryContentData,
   type LibraryUpdateType,
 } from "../../lib/library-public-data";
+import { LibraryUpdatesDisplay, type LibraryUpdateRecordDto } from "./updates-display";
 
 export const metadata = {
   title: "Updates",
@@ -27,7 +27,7 @@ export const metadata = {
     "Kisii University Library news, events, and articles: service notices, trainings, and research guidance.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const UPDATE_TABS: { type: LibraryUpdateType; label: string }[] = [
   { type: "news", label: "News" },
@@ -62,6 +62,15 @@ export default async function LibraryUpdatesPage({
     ? Math.ceil(records.meta.total / records.meta.per_page)
     : 1;
   const activeLabel = UPDATE_TABS.find((tab) => tab.type === type)?.label ?? "News";
+  const updateRecords: LibraryUpdateRecordDto[] = records.data.map((item) => ({
+    id: item.id,
+    eyebrow: ("category" in item ? item.category : null) ?? activeLabel,
+    title: item.title,
+    body: shortText(item.summary ?? ("excerpt" in item ? item.excerpt : null) ?? item.plain_text ?? item.rich_text ?? item.content),
+    meta: updateMeta(type, item).filter((value): value is string => Boolean(value)),
+    href: `/updates/${type}/${item.slug}`,
+    action: type === "events" ? "View event" : "Read more",
+  }));
 
   return (
     <LibraryShell>
@@ -136,25 +145,7 @@ export default async function LibraryUpdatesPage({
             </StatusMessage>
           ) : (
             <>
-              <div className="grid gap-5 lg:grid-cols-2">
-                {records.data.map((item) => (
-                  <RecordListItem
-                    key={item.id}
-                    eyebrow={("category" in item ? item.category : null) ?? activeLabel}
-                    title={item.title}
-                    body={shortText(
-                      item.summary ??
-                        ("excerpt" in item ? item.excerpt : null) ??
-                        item.plain_text ??
-                        item.rich_text ??
-                        item.content,
-                    )}
-                    meta={updateMeta(type, item)}
-                    href={`/updates/${type}/${item.slug}`}
-                    action={type === "events" ? "View event" : "Read more"}
-                  />
-                ))}
-              </div>
+              <LibraryUpdatesDisplay records={updateRecords} />
               <ListPagination
                 page={page}
                 totalPages={totalPages}

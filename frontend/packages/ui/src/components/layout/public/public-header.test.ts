@@ -8,9 +8,7 @@ describe("main public site navigation", () => {
         schools: [
           { id: "school-1", name: "School of Computing", slug: "computing" },
         ],
-        clubs: [
-          { id: "club-1", name: "Debate Club", slug: "debate" },
-        ],
+        clubs: [{ id: "club-1", name: "Debate Club", slug: "debate" }],
       },
       {
         heriHref: "http://localhost:3004",
@@ -25,8 +23,8 @@ describe("main public site navigation", () => {
       "RESEARCH",
       "LIBRARY",
       "CAMPUS LIFE",
-      "NEWS & EVENTS",
-      "CONTACT",
+      "MEDIA DESK",
+      "CONTACT US",
     ]);
 
     const about = navigation[0];
@@ -34,12 +32,18 @@ describe("main public site navigation", () => {
       "ABOUT KSU",
       "UNIVERSITY COUNCIL",
       "UNIVERSITY MANAGEMENT",
+      "MEET OUR VC",
       "UNIVERSITY SERVICE CHARTER",
       "STRATEGIC PLAN",
       "KSU NUMBERS & FACTS",
       "HERI AFRICA",
       "NYANGWETA FARM",
     ]);
+    expect(
+      about.children?.find((item) => item.label === "MEET OUR VC"),
+    ).toMatchObject({
+      href: "/about/vice-chancellor",
+    });
     expect(about.children?.at(-2)).toMatchObject({
       href: "http://localhost:3004",
       external: true,
@@ -57,7 +61,9 @@ describe("main public site navigation", () => {
       "SCHOOLS",
       "ACADEMIC DIVISION",
     ]);
-    expect(programmes.children?.[1].children?.map((item) => item.label)).toEqual([
+    expect(
+      programmes.children?.[1].children?.map((item) => item.label),
+    ).toEqual([
       "UNDERGRADUATE",
       "POSTGRADUATE",
       "INTERNATIONAL STUDENTS",
@@ -69,21 +75,17 @@ describe("main public site navigation", () => {
       label: "COMPUTING",
       href: "/academics/schools/computing",
     });
-    expect(programmes.children?.[3].children?.map((item) => item.label)).toEqual([
-      "ORGANIZATION",
-      "CALENDAR",
-      "EXAMINATIONS",
-    ]);
+    expect(
+      programmes.children?.[3].children?.map((item) => item.label),
+    ).toEqual(["ORGANIZATION", "CALENDAR", "EXAMINATIONS"]);
 
-    expect(navigation[4].children?.map((item) => item.label)).toEqual([
-      "STUDENT LIFE",
-      "CLUBS & SOCIETIES",
-      "SPORTS",
-      "ACCOMMODATION",
-      "SUPPORT SERVICES",
-    ]);
+    expect(navigation[4]).toMatchObject({
+      label: "CAMPUS LIFE",
+      href: "/campus-life",
+    });
+    expect(navigation[4].children).toBeUndefined();
     expect(navigation[5]).toMatchObject({
-      label: "NEWS & EVENTS",
+      label: "MEDIA DESK",
       href: "/media",
     });
     expect(navigation[5].children).toBeUndefined();

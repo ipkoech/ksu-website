@@ -65,14 +65,10 @@ def create_access_token(
         "nbf": now,
         "exp": now + timedelta(minutes=settings.JWT_ACCESS_TTL_MINUTES),
     }
-    permission_claims = _claim_values(permissions)
-    scope_claims = _claim_values(scopes)
-    if permission_claims:
-        payload["permissions"] = permission_claims
-    if scope_claims:
-        payload["scopes"] = scope_claims
-    if scope_grants:
-        payload["scope_grants"] = list(scope_grants)
+    # Authorization is resolved from the active user/session in the API.
+    # Keeping the full permission and grant sets in the browser cookie can
+    # exceed the 4096-byte cookie limit for broad administrator accounts.
+    # The arguments remain accepted for compatibility with token callers.
     token = _encode(payload)
     return token, jti
 
@@ -91,7 +87,7 @@ def create_refresh_token(user_id: str, jti: str) -> str:
     return _encode(payload)
 
 
-def create_socket_token(user_id: str, *, ttl_seconds: int) -> str:
+def create_socket_token(user_id: str, *, ttl_seconds: int, session_jti: str | None = None) -> str:
     """Create a short-lived token restricted to WebSocket admission."""
     now = datetime.now(timezone.utc)
     return _encode(
@@ -99,6 +95,7 @@ def create_socket_token(user_id: str, *, ttl_seconds: int) -> str:
             "sub": user_id,
             "jti": str(uuid4()),
             "type": "socket",
+            "session_jti": session_jti,
             "iat": now,
             "nbf": now,
             "exp": now + timedelta(seconds=ttl_seconds),
@@ -147,7 +144,7 @@ def refresh_token(
     scopes: Iterable[str] | None = None,
     scope_grants: Iterable[Mapping[str, object]] | None = None,
 ) -> tuple[str, str]:
-    """Issue a fresh access/refresh pair reusing the session jti."""
+    """Issue a fresh access/refresh pair for the supplied session jti."""
     now = datetime.now(timezone.utc)
     access_payload = {
         "sub": user_id,

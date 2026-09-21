@@ -7,7 +7,7 @@ import threading
 import uuid
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, field
-from time import perf_counter
+from time import perf_counter, time
 from typing import Any
 
 from .observability import (
@@ -95,7 +95,14 @@ class _WorkerAsyncRuntime:
             coroutine.close()
             raise RuntimeError("Celery async runtime is not available")
         future = asyncio.run_coroutine_threadsafe(coroutine, loop)
-        return future.result()
+        try:
+            return future.result()
+        except BaseException:
+            # Celery's soft time limit interrupts this synchronous thread. Stop
+            # its async work too, otherwise it can keep writing after the task
+            # was reported failed or was retried by another worker.
+            future.cancel()
+            raise
 
     def close(self) -> None:
         loop = self._loop
@@ -223,6 +230,7 @@ def _task_failure(
     tags = _task_tags(task_name, "failure")
     tags["exception"] = type(exception).__name__[:64] if exception is not None else "unknown"
     metrics.increment("celery.task.failure", tags=tags)
+    metrics.gauge("celery.task.last_failure_at", time(), tags={"task": task_name})
 
 
 def _task_rejected(

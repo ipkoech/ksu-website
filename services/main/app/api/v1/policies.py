@@ -7,12 +7,13 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession, user_has_scope
 from ...models import Policy
 from ...schemas import PolicyCreate, PolicyUpdate
+from ...schemas.document import PolicySnapshot
 from ...services import PolicyService
 
 router = APIRouter()
@@ -31,7 +32,11 @@ def require_policy_view(user: CurrentUser) -> None:
         raise HTTPException(status_code=403, detail="Not authorized to view policy records")
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[PolicySnapshot]],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("page", "per_page", "q", "category", "division_id", "department_id", "fields", "include"))
 async def list_policies(
     db: DbSession,
@@ -57,7 +62,11 @@ async def list_policies(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin")
+@router.get(
+    "/admin",
+    response_model=SuccessResponse[list[PolicySnapshot]],
+    response_model_exclude_unset=True,
+)
 async def list_admin_policies(
     db: DbSession,
     user: CurrentUser,
@@ -94,7 +103,11 @@ async def list_admin_policies(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{slug}")
+@router.get(
+    "/{slug}",
+    response_model=SuccessResponse[PolicySnapshot],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_policy(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Policy, fields)
@@ -104,13 +117,24 @@ async def get_policy(slug: str, db: DbSession, fields: FieldSelection = FieldsDe
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_policy_manage)])
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[PolicySnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_policy_manage)],
+)
 async def create_policy(data: PolicyCreate, db: DbSession, _: CurrentUser):
     item = await PolicyService.create(db, **data.model_dump())
     return success(data=item, message="Policy created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_policy_manage)])
+@router.patch(
+    "/{item_id}",
+    response_model=SuccessResponse[PolicySnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_policy_manage)],
+)
 async def update_policy(item_id: uuid.UUID, data: PolicyUpdate, db: DbSession, _: CurrentUser):
     item = await PolicyService.get_by_id(db, item_id)
     if item is None:

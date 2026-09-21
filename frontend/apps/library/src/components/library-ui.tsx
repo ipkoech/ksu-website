@@ -243,7 +243,7 @@ export function PrimaryLink({
   return (
     <Link
       href={href}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-secondary px-5 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary/30"
+      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[hsl(var(--secondary-deep))] px-5 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary/30"
     >
       {children}
       <ArrowRight aria-hidden className="h-4 w-4" />
@@ -317,7 +317,7 @@ export function LibraryBadge({
   const toneClass = {
     neutral: "border-border bg-surface-subtle text-muted-foreground",
     primary: "border-primary/15 bg-primary/10 text-primary",
-    secondary: "border-secondary/20 bg-secondary text-white",
+    secondary: "border-secondary/20 bg-[hsl(var(--secondary-deep))] text-white",
     muted: "border-border bg-surface-muted text-muted-foreground",
   }[tone];
 

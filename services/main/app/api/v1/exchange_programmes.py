@@ -7,18 +7,23 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import ExchangeProgramme
 from ...schemas import ExchangeProgrammeCreate, ExchangeProgrammeUpdate
+from ...schemas.exchange import ExchangeProgrammeSnapshot
 from ...services import ExchangeProgrammeService
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[ExchangeProgrammeSnapshot]],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("page", "per_page", "q", "programme_type", "school_id", "accepting_only", "fields", "include"))
 async def list_exchange_programmes(
     db: DbSession,
@@ -44,7 +49,11 @@ async def list_exchange_programmes(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{slug}")
+@router.get(
+    "/{slug}",
+    response_model=SuccessResponse[ExchangeProgrammeSnapshot],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_exchange_programme(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(ExchangeProgramme, fields)
@@ -54,13 +63,24 @@ async def get_exchange_programme(slug: str, db: DbSession, fields: FieldSelectio
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("exchange_programmes.manage"))])
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[ExchangeProgrammeSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("exchange_programmes.manage"))],
+)
 async def create_exchange_programme(data: ExchangeProgrammeCreate, db: DbSession, _: CurrentUser):
     item = await ExchangeProgrammeService.create(db, **data.model_dump())
     return success(data=item, message="Exchange programme created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("exchange_programmes.manage"))])
+@router.patch(
+    "/{item_id}",
+    response_model=SuccessResponse[ExchangeProgrammeSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("exchange_programmes.manage"))],
+)
 async def update_exchange_programme(item_id: uuid.UUID, data: ExchangeProgrammeUpdate, db: DbSession, _: CurrentUser):
     item = await ExchangeProgrammeService.get_by_id(db, item_id)
     if item is None:

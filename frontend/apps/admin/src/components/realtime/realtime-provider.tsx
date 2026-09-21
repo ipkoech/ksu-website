@@ -22,6 +22,7 @@ type RealtimeContextValue = {
   notifications: RealtimeNotification[];
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
+  retry: () => void;
 };
 
 const RealtimeContext = createContext<RealtimeContextValue>({
@@ -29,38 +30,45 @@ const RealtimeContext = createContext<RealtimeContextValue>({
   notifications: [],
   markNotificationRead: () => undefined,
   markAllNotificationsRead: () => undefined,
+  retry: () => undefined,
 });
 
 export function RealtimeProvider({
   enabled,
+  sessionKey,
   children,
 }: {
   enabled: boolean;
+  /** Stable authenticated user identity; changes force a clean realtime session. */
+  sessionKey?: string | null;
   children: ReactNode;
 }) {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<RealtimeStatus>("idle");
   const [notifications, setNotifications] = useState<RealtimeNotification[]>([]);
-  const client = useMemo(() => new RealtimeClient(), []);
+  const client = useMemo(
+    () =>
+      new RealtimeClient({
+        cursorStorageKey: sessionKey
+          ? `ksu:realtime:last-event-id:${encodeURIComponent(sessionKey)}`
+          : "ksu:realtime:last-event-id:anonymous",
+      }),
+    [sessionKey],
+  );
   const seenNotificationIds = useMemo(() => new Set<string>(), []);
 
   useEffect(() => {
     const replaceNotifications = (items: RealtimeNotification[]) => {
-      const unique = items.filter((item) => {
-        if (seenNotificationIds.has(item.id)) return false;
-        seenNotificationIds.add(item.id);
-        return true;
-      });
-      setNotifications((current) => {
-        const byId = new Map(
-          [...unique, ...current].map((item) => [item.id, item]),
-        );
-        return Array.from(byId.values()).sort(
-          (left, right) =>
-            new Date(right.created_at).getTime() -
-            new Date(left.created_at).getTime(),
-        );
-      });
+      const next = Array.from(
+        new Map(items.map((item) => [item.id, item])).values(),
+      ).sort(
+        (left, right) =>
+          new Date(right.created_at).getTime() -
+          new Date(left.created_at).getTime(),
+      );
+      seenNotificationIds.clear();
+      next.forEach((item) => seenNotificationIds.add(item.id));
+      setNotifications(next);
     };
 
     const invalidateSchoolEvent = (eventType: string, schoolId: string) => {
@@ -94,6 +102,7 @@ export function RealtimeProvider({
     const unsubscribeStatus = client.subscribeStatus(setStatus);
     const unsubscribeEvents = client.subscribe((event) => {
       if (event.type === "connected") {
+        if (sessionKey && event.user_id !== sessionKey) return;
         replaceNotifications(event.notifications);
         queryClient.invalidateQueries({ queryKey: ["current-user", "notifications"] });
       }
@@ -122,12 +131,15 @@ export function RealtimeProvider({
       unsubscribeEvents();
       unsubscribeStatus();
     };
-  }, [client, queryClient, seenNotificationIds]);
+  }, [client, queryClient, seenNotificationIds, sessionKey]);
 
   useEffect(() => {
+    // Clear account-scoped state before disconnecting the old socket. This
+    // prevents account A's notifications from being visible to account B.
+    seenNotificationIds.clear();
+    setNotifications([]);
+    client.disconnect();
     if (!enabled) {
-      client.disconnect();
-      setNotifications([]);
       return;
     }
 
@@ -136,7 +148,7 @@ export function RealtimeProvider({
       clearTimeout(connectTimer);
       client.disconnect();
     };
-  }, [client, enabled]);
+  }, [client, enabled, seenNotificationIds, sessionKey]);
 
   const value = useMemo(
     () => ({
@@ -158,8 +170,9 @@ export function RealtimeProvider({
             read_at: item.read_at ?? new Date().toISOString(),
           })),
         ),
+      retry: () => { client.disconnect(); void client.connect(); },
     }),
-    [status, notifications],
+    [client, status, notifications],
   );
 
   return <RealtimeContext.Provider value={value}>{children}</RealtimeContext.Provider>;

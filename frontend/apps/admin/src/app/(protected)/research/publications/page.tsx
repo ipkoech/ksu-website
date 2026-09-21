@@ -172,6 +172,7 @@ export default function ResearchPublicationsPage() {
       title="Publications"
       description="Create and maintain publication records from the research service."
       resourceKey="publications"
+      revalidateResearchCache
       backHref="/research"
       queryKey={["research", "publications"]}
       summarySlot={

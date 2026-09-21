@@ -1,0 +1,102 @@
+{
+  "captured_at": "2026-09-06",
+  "database": "PostgreSQL 18.6 disposable local cluster",
+  "transaction": "rollback-only synthetic probes; no production writes",
+  "rows_per_table": 10000,
+  "workloads": {
+    "main_school_list": {
+      "query": "deleted_at IS NULL AND is_active IS TRUE AND is_public IS TRUE ORDER BY display_order ASC, name ASC LIMIT 100",
+      "before": {
+        "plan_nodes": [
+          "Limit",
+          "Sort (top-N heapsort)",
+          "Seq Scan"
+        ],
+        "actual_total_time_ms": 8.964,
+        "index": null
+      },
+      "after": {
+        "plan_nodes": [
+          "Limit",
+          "Index Scan"
+        ],
+        "actual_total_time_ms": 0.079,
+        "index": "ix_schools_public_listing"
+      },
+      "migration": "services/main/migrations/versions/20260906_0010_add_school_public_listing_index.py"
+    },
+    "research_project_list": {
+      "query": "deleted_at IS NULL AND is_public IS TRUE AND is_active IS TRUE AND status IN (public statuses) ORDER BY display_order ASC, created_at DESC LIMIT 100",
+      "before": {
+        "plan_nodes": [
+          "Limit",
+          "Sort (top-N heapsort)",
+          "Seq Scan"
+        ],
+        "actual_total_time_ms": 18.015,
+        "index": null
+      },
+      "after": {
+        "plan_nodes": [
+          "Limit",
+          "Index Scan"
+        ],
+        "actual_total_time_ms": 0.08,
+        "index": "ix_research_projects_public_listing"
+      },
+      "migration": "services/research/migrations/versions/20260906_0014_add_public_project_listing_index.py"
+    },
+    "library_resource_list": {
+      "query": "active public resource rows for one library ORDER BY title LIMIT 100",
+      "before": {
+        "plan_nodes": [
+          "Limit",
+          "Nested Loop",
+          "Index Scan",
+          "Materialize",
+          "Seq Scan"
+        ],
+        "actual_total_time_ms": 0.319,
+        "index": "ix_library_library_resources_title"
+      },
+      "after": {
+        "plan_nodes": [
+          "Limit",
+          "Nested Loop",
+          "Index Scan",
+          "Materialize",
+          "Seq Scan"
+        ],
+        "actual_total_time_ms": 0.221,
+        "index": "ix_library_library_resources_title"
+      },
+      "migration": null
+    },
+    "heri_news_list": {
+      "query": "deleted_at IS NULL AND (status='PUBLISHED' OR scheduled published rows) ORDER BY created_at DESC LIMIT 100",
+      "before": {
+        "plan_nodes": [
+          "Limit",
+          "Sort (top-N heapsort)",
+          "Seq Scan"
+        ],
+        "actual_total_time_ms": 9.198,
+        "index": null
+      },
+      "after": {
+        "plan_nodes": [
+          "Limit",
+          "Index Scan"
+        ],
+        "actual_total_time_ms": 0.074,
+        "index": "ix_heri_news_articles_public_listing"
+      },
+      "migration": "services/heri_africa/migrations/versions/0011_public_news_listing_index.py"
+    }
+  },
+  "limitations": [
+    "Synthetic rows and single local EXPLAIN ANALYZE runs; timings are directional and are not production throughput claims.",
+    "Concurrent load, cache state, endpoint serialization, connection starvation and populated frontend consumers still require staging verification.",
+    "Library already used a title index, so no new migration was added for that workload."
+  ]
+}

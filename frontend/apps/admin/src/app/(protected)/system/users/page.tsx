@@ -56,7 +56,7 @@ export default function UsersPage() {
       <div className="space-y-4 p-6">
         <SearchFilter
           searchValue={search}
-          onSearchChange={setSearch}
+          onSearchChange={(value) => { setSearch(value); setPage(1); }}
           searchPlaceholder="Search by name or email"
           filters={[
             {
@@ -84,6 +84,7 @@ export default function UsersPage() {
             setStatus(null);
             setRole(null);
             setSearch("");
+            setPage(1);
           }}
         />
 
@@ -131,7 +132,8 @@ export default function UsersPage() {
             setPage(nextPage);
             setLimit(nextLimit);
           }}
-          onSearch={setSearch}
+          searchValue={search}
+          onSearch={(value) => { setSearch(value); setPage(1); }}
           isLoading={users.isLoading}
           onRowClick={(row) => router.push(`/system/users/${row.id}`)}
           bulkActions={[

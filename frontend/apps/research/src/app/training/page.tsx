@@ -23,7 +23,7 @@ import {
   getRecordTitle,
   getRecordYears,
 } from "../../lib/research-page-model";
-import type { ResearchGenericRecord } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import { pageFromSearchParams } from "@ksu/ui/components";
 import { ResearchListPagination } from "../../components/research-list-pagination";
 import { getListPageSize } from "../../lib/research-page-model";
@@ -172,7 +172,7 @@ function TrainingMasthead({
   ];
 
   return (
-    <ResearchPageHero eyebrow="Learning" title="Research training, workshops, seminars, and bootcamps" description="Find research methods, writing, ethics, grant writing, data, innovation, and leadership capacity-building programmes." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Training" }]} actions={[{ label: "View events", href: "/events" }, { label: "Explore mentorship", href: "/mentorship", variant: "secondary" }]} imageSrc="/institutional-research-images/KSUInnovationWeek2025,April7,2026-8034.jpg" imageAlt="Kisii University research training">
+    <ResearchPageHero eyebrow="Learning" title="Training, workshops, seminars, and bootcamps" description="Find research methods, writing, ethics, grant writing, data, innovation, and leadership capacity-building programmes." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Training" }]} actions={[{ label: "View events", href: "/events" }, { label: "Explore mentorship", href: "/mentorship", variant: "secondary" }]} imageSrc="/images/research/headers/innovation-week-8020.jpg" imageAlt="Kisii University research training">
       <ResearchPageHeroStats facts={stats} />
     </ResearchPageHero>
   );

@@ -101,15 +101,13 @@ def test_a_project_uses_both_of_its_columns():
     assert wf.workflow_state("projects", record) == wf.PUBLISHED
 
 
-def test_pending_collapses_to_draft_where_no_status_column_exists():
-    """A documented limitation of gating without a schema change.
-
-    ``research_farms`` has no ``status`` column, so "awaiting review" and
-    "draft" are the same stored state.
-    """
-    record = _Record(is_public=True)
+def test_pending_is_persisted_separately_for_boolean_visibility_models():
+    record = _Record(is_public=True, editorial_state="published")
     wf.apply_workflow_state("farms", record, wf.PENDING)
-    assert wf.workflow_state("farms", record) == wf.DRAFT
+    assert wf.workflow_state("farms", record) == wf.PENDING
+    assert record.is_public is False
+    wf.apply_workflow_state("farms", record, wf.REJECTED)
+    assert wf.workflow_state("farms", record) == wf.REJECTED
 
 
 def test_new_records_are_held_for_review():
@@ -125,12 +123,11 @@ def test_holding_a_farm_hides_it_even_without_a_status_column():
     assert payload.is_public is False
 
 
-def test_only_publications_can_record_review_provenance():
-    """Everything else must report that no audit trail is available."""
-    assert wf.workflow_audit_supported("publications")
-    for resource_key in wf.VISIBILITY_ADAPTERS:
-        if resource_key != "publications":
-            assert not wf.workflow_audit_supported(resource_key)
+def test_canonical_commands_expose_persisted_review_provenance():
+    for resource_key in ("publications", "farms", "projects", "partners", "stories",
+                         "sustainability", "focus-areas", "impact-metrics"):
+        assert wf.workflow_audit_supported(resource_key)
+    assert not wf.workflow_audit_supported("unknown")
 
 
 def test_an_unknown_state_is_rejected():

@@ -11,6 +11,11 @@ export interface PartnersMarqueeProps {
   className?: string;
 }
 
+export interface PartnerLogoRailProps {
+  partners: HomePartner[];
+  compact?: boolean;
+}
+
 /**
  * The partnership rail.
  *
@@ -24,8 +29,6 @@ export interface PartnersMarqueeProps {
  * there and hidden from assistive technology everywhere.
  */
 export function PartnersMarquee({ partners, className }: PartnersMarqueeProps) {
-  const reducedMotion = useReducedMotionPref();
-
   if (partners.length === 0) return null;
 
   return (
@@ -47,52 +50,104 @@ export function PartnersMarquee({ partners, className }: PartnersMarqueeProps) {
         </p>
       </div>
 
-      {reducedMotion ? (
-        <ul className="ksu-shell mt-10 flex flex-wrap items-center justify-center gap-x-14 gap-y-8">
-          {partners.map((partner) => (
-            <li key={partner.id}>
-              <PartnerLogo partner={partner} />
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <div
-          className="ksu-partner-rail relative mt-10 overflow-hidden"
-          style={{
-            // Keeps the travel speed roughly constant as partners are added.
-            ["--rail-duration" as string]: `${Math.max(28, partners.length * 6)}s`,
-            // Soft fades at both edges instead of a hard clip.
-            maskImage:
-              "linear-gradient(to right, transparent, #000 6rem, #000 calc(100% - 6rem), transparent)",
-            WebkitMaskImage:
-              "linear-gradient(to right, transparent, #000 6rem, #000 calc(100% - 6rem), transparent)",
-          }}
-        >
-          <ul className="ksu-partner-rail-track flex w-max items-center gap-16 pl-16">
-            {partners.map((partner) => (
-              <li key={partner.id}>
-                <PartnerLogo partner={partner} />
-              </li>
-            ))}
-            {/* Second pass: purely visual, so the loop has no seam. */}
-            {partners.map((partner) => (
-              <li key={`${partner.id}-loop`} aria-hidden>
-                <PartnerLogo partner={partner} decorative />
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <PartnerLogoRail partners={partners} />
     </section>
+  );
+}
+
+/**
+ * An embeddable logo rail for composed homepage sections. It intentionally
+ * owns only the moving row, so a section such as Research can introduce its
+ * partners without creating a second, disconnected homepage beat.
+ */
+export function PartnerLogoRail({
+  partners,
+  compact = false,
+}: PartnerLogoRailProps) {
+  const reducedMotion = useReducedMotionPref();
+
+  if (partners.length === 0) return null;
+
+  const logoClassName = compact
+    ? "h-10 w-32 bg-transparent"
+    : "h-[3.025rem] w-40 bg-transparent";
+
+  return reducedMotion ? (
+    <ul
+      className={cn(
+        "flex flex-wrap items-center justify-center",
+        compact
+          ? "gap-x-8 gap-y-5"
+          : "ksu-shell mt-10 gap-x-14 gap-y-8",
+      )}
+    >
+      {partners.map((partner) => (
+        <li key={partner.id}>
+          <PartnerLogo
+            partner={partner}
+            className={logoClassName}
+            eager={!compact}
+          />
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <div
+      className={cn(
+        "ksu-partner-rail relative overflow-hidden",
+        compact ? "mt-4" : "mt-10",
+      )}
+      style={{
+        // Keeps the travel speed roughly constant as partners are added.
+        ["--rail-duration" as string]: `${Math.max(28, partners.length * 6)}s`,
+        // Soft fades at both edges instead of a hard clip.
+        maskImage:
+          "linear-gradient(to right, transparent, #000 6rem, #000 calc(100% - 6rem), transparent)",
+        WebkitMaskImage:
+          "linear-gradient(to right, transparent, #000 6rem, #000 calc(100% - 6rem), transparent)",
+      }}
+    >
+      <ul
+        className={cn(
+          "ksu-partner-rail-track flex w-max items-center pl-16",
+          compact ? "gap-10" : "gap-16",
+        )}
+      >
+        {partners.map((partner) => (
+          <li key={partner.id}>
+            <PartnerLogo
+              partner={partner}
+              className={logoClassName}
+              eager={!compact}
+            />
+          </li>
+        ))}
+        {/* Second pass: purely visual, so the loop has no seam. */}
+        {partners.map((partner) => (
+          <li key={`${partner.id}-loop`} aria-hidden>
+            <PartnerLogo
+              partner={partner}
+              decorative
+              className={logoClassName}
+              eager={false}
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
 function PartnerLogo({
   partner,
   decorative = false,
+  className,
+  eager = true,
 }: {
   partner: HomePartner;
   decorative?: boolean;
+  className?: string;
+  eager?: boolean;
 }) {
   const logo = (
     <PublicImage
@@ -102,14 +157,14 @@ function PartnerLogo({
       /* Height is the previous 44px plus 10%. Logos render in their own
          colours: these are institutions the university is proud to name, and
          a grey wash made a wall of unreadable smudges out of them. */
-      className="h-[3.025rem] w-40 bg-transparent"
+      className={className ?? "h-[3.025rem] w-40 bg-transparent"}
       imageClassName="object-contain"
       sizes="160px"
       /* The rail translates its items well past the viewport edge, so a lazy
          logo out at the right never intersects and never loads — it would
          scroll into view blank. They are ~10-40KB each, so loading the set
          up front is cheaper than the pop-in. */
-      eager
+      eager={eager}
       /* The seeded marks are self-hosted, but `logo_url` is an editable field
          and an editor can point it at any host. next/image rejects a hostname
          outside `images.remotePatterns` by throwing — which took the whole

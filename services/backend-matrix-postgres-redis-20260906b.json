@@ -1,0 +1,95 @@
+{
+  "additional_checks": {
+    "audit_query_plan_inspector": {
+      "artifact": ".tmp/audit-query-plan-postgres-latest.json",
+      "passed": true
+    },
+    "audit_relay_plan_inspector": {
+      "artifact": ".tmp/audit-relay-plan-postgres-latest.json",
+      "passed": true
+    },
+    "celery_beat_smoke": {
+      "passed": true,
+      "services": 4
+    },
+    "celery_queue_smoke": {
+      "passed": true,
+      "roles": 8
+    },
+    "process_loss_lease_test": {
+      "passed": true,
+      "tests": 1
+    },
+    "redis_cache_rate_limit_worker_tests": {
+      "passed": 7,
+      "skipped": 0
+    }
+  },
+  "captured_at": "2026-09-06",
+  "checkpoint": "post-process-loss-test-current-heads",
+  "commands": [
+    "python scripts/run_backend_tests.py --parallel --max-workers 2 common main research library heri_africa",
+    "python scripts/run_backend_tests.py contracts",
+    "python -m pytest services/common/tests/test_cache_redis.py services/common/tests/test_rate_limit_redis.py services/common/tests/test_audit_worker_redis.py -q",
+    "python scripts/celery_queue_smoke.py",
+    "python scripts/celery_beat_smoke.py",
+    "python scripts/inspect_audit_query_plan.py .tmp/audit-query-plan-postgres-latest.json",
+    "python scripts/inspect_audit_relay_plan.py .tmp/audit-relay-plan-postgres-latest.json"
+  ],
+  "database": {
+    "database": "ksu_refactor_ci",
+    "engine": "PostgreSQL",
+    "host": "127.0.0.1",
+    "migrations": [
+      "main:20260906_0010",
+      "research:20260906_0014",
+      "library:20260906_0011",
+      "heri_africa:0011_public_news_listing_index"
+    ],
+    "port": 55432,
+    "version": "18.6"
+  },
+  "limitations": [
+    "Disposable local PostgreSQL and Redis only; no deployed topology.",
+    "No full populated frontend consumer matrix or realistic production load.",
+    "Prometheus scrape, external Alertmanager delivery, and independent WAL/PITR remain staging/operations gates."
+  ],
+  "redis": {
+    "database": 15,
+    "host": "127.0.0.1",
+    "loopback_only": true,
+    "port": 16379,
+    "version": "8.0.5"
+  },
+  "suites": {
+    "common": {
+      "passed": 199,
+      "skipped": 0
+    },
+    "contracts": {
+      "passed": 31,
+      "skipped": 0
+    },
+    "heri_africa": {
+      "passed": 11,
+      "skipped": 0
+    },
+    "library": {
+      "passed": 14,
+      "skipped": 0
+    },
+    "main": {
+      "passed": 97,
+      "skipped": 0
+    },
+    "research": {
+      "passed": 77,
+      "skipped": 0
+    }
+  },
+  "total": {
+    "passed": 429,
+    "skipped": 0
+  },
+  "writes_production_data": false
+}

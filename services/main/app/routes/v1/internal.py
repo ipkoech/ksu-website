@@ -6,22 +6,25 @@ Protected by INTERNAL_API_KEY header — not exposed through the public gateway.
 from __future__ import annotations
 
 import uuid
+from hashlib import sha256
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
+from fastapi.responses import JSONResponse
+from ksu_common.audit import insert_audit_batch
+from ksu_common.rate_limit import rate_limit
 from ksu_common.internal_client import internal_key_guard
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ...api.v1._fields import FieldsDep, FieldSelection, build_selector
 from ...core.config import get_settings
 from ...core.database import get_db
+from ...deps import get_current_active_user, get_token_payload
 from ...helpers.email import send_email
-from ...models import AuditLog, Event, Media, Person, StaffAssignment
+from ...models import AuditLog, Document, Event, Media, Person, StaffAssignment
 from ...schemas.audit import AuditLogRead
 from ...services import (
     DepartmentService,
@@ -64,6 +67,19 @@ class InternalMediaResolvePayload(BaseModel):
     ids: list[uuid.UUID] = Field(min_length=1, max_length=100)
 
 
+class InternalMediaSource(BaseModel):
+    source_url: str = Field(..., min_length=1, max_length=1024)
+    filename: str = Field(..., min_length=1, max_length=255)
+
+
+class InternalMediaSourceResolvePayload(BaseModel):
+    sources: list[InternalMediaSource] = Field(min_length=1, max_length=100)
+
+
+class InternalDocumentResolvePayload(BaseModel):
+    ids: list[uuid.UUID] = Field(min_length=1, max_length=100)
+
+
 class InternalPersonResolvePayload(BaseModel):
     ids: list[uuid.UUID] = Field(min_length=1, max_length=100)
 
@@ -98,6 +114,177 @@ class InternalMediaResolveResponse(BaseModel):
     data: list[InternalMediaSnapshot]
 
 
+class InternalMediaSourceMatch(BaseModel):
+    source_url: str
+    filename: str
+    media_id: uuid.UUID
+
+
+class InternalMediaSourceResolveResponse(BaseModel):
+    status: str
+    data: list[InternalMediaSourceMatch]
+
+
+class InternalDocumentResolveResponse(BaseModel):
+    status: str
+    data: list[uuid.UUID]
+
+
+class InternalEmailResponse(BaseModel):
+    provider_id: str | None = None
+
+
+class InternalNotificationBroadcastResponse(BaseModel):
+    recipient_count: int
+    notification_ids: list[uuid.UUID]
+
+
+class InternalPersonSnapshot(BaseModel):
+    id: uuid.UUID
+    display_name: str
+    first_name: str | None = None
+    last_name: str | None = None
+    email: str | None = None
+    department_id: uuid.UUID | None = None
+    photo_id: uuid.UUID | None = None
+    is_active: bool
+
+
+class InternalStaffPersonSnapshot(BaseModel):
+    id: uuid.UUID
+    display_name: str
+    email: str | None = None
+    photo_id: uuid.UUID | None = None
+
+
+class InternalStaffAssignmentSnapshot(BaseModel):
+    id: uuid.UUID
+    person_id: uuid.UUID
+    entity_type: str | None = None
+    entity_id: uuid.UUID | None = None
+    role: str | None = None
+    title: str | None = None
+    status: str | None = None
+    is_public: bool
+    display_order: int
+    person: InternalStaffPersonSnapshot | None = None
+
+
+class InternalDepartmentSnapshot(BaseModel):
+    id: uuid.UUID
+    name: str
+    slug: str
+    code: str | None = None
+    department_type: str | None = None
+    school_id: uuid.UUID | None = None
+    is_active: bool
+
+
+class InternalDepartmentCheckResponse(BaseModel):
+    school_id: uuid.UUID
+    department_id: uuid.UUID
+    exists: bool
+
+
+class InternalPublicMediaSnapshot(BaseModel):
+    id: uuid.UUID
+    filename: str
+    original_filename: str | None = None
+    mime_type: str
+    file_size: int
+    title: str | None = None
+    alt_text: str | None = None
+    description: str | None = None
+    caption: str | None = None
+    media_type: str
+    thumbnail_url: str | None = None
+    url: str
+    is_public: bool
+
+
+class InternalPersonResolveSnapshot(BaseModel):
+    id: uuid.UUID
+    slug: str
+    name: str
+    display_name: str
+    full_name: str
+    title: str | None = None
+    academic_rank: str | None = None
+    institutional_role: str | None = None
+    specialization: str | None = None
+    photo_url: str | None = None
+
+
+class InternalPersonResolveResponse(BaseModel):
+    status: str
+    data: list[InternalPersonResolveSnapshot]
+
+
+class InternalReferenceCheckResponse(BaseModel):
+    kind: str
+    id: uuid.UUID
+    exists: bool
+
+
+class InternalEventSnapshot(BaseModel):
+    """Selectable public event columns exposed to sibling services."""
+
+    id: uuid.UUID | None = None
+    title: str | None = None
+    slug: str | None = None
+    summary: str | None = None
+    plain_text: str | None = None
+    rich_text: str | None = None
+    structured_content: dict[str, Any] | None = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    location: str | None = None
+    is_virtual: bool | None = None
+    meeting_link: str | None = None
+    is_featured: bool | None = None
+    featured_media_id: uuid.UUID | None = None
+    author_user_id: uuid.UUID | None = None
+    related_links: list[dict[str, Any]] | None = None
+    scope_type: str | None = None
+    scope_id: uuid.UUID | None = None
+    is_main: bool | None = None
+    is_public: bool | None = None
+    is_published: bool | None = None
+    published_at: datetime | None = None
+    valid_from: datetime | None = None
+    valid_to: datetime | None = None
+    archived_at: datetime | None = None
+    status: str | None = None
+    display_order: int | None = None
+    workflow_status: str | None = None
+    owner_portal: str | None = None
+    owner_scope_type: str | None = None
+    owner_scope_id: uuid.UUID | None = None
+    submitted_by_id: uuid.UUID | None = None
+    submitted_at: datetime | None = None
+    reviewed_by_id: uuid.UUID | None = None
+    reviewed_at: datetime | None = None
+    approved_by_id: uuid.UUID | None = None
+    approved_at: datetime | None = None
+    published_by_id: uuid.UUID | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    unpublished_by_id: uuid.UUID | None = None
+    unpublished_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
+    updated_by_id: uuid.UUID | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class InternalEventListResponse(BaseModel):
+    status: str
+    message: str
+    data: list[InternalEventSnapshot]
+    meta: dict[str, int]
+
+
 class InternalAuditPayload(BaseModel):
     id: uuid.UUID
     service_name: str = Field(max_length=64)
@@ -118,15 +305,43 @@ class InternalAuditPayload(BaseModel):
     changes: dict | None = None
     happened_at: datetime
 
+    @field_validator("service_name", "action", "resource_type", "resource_id", "request_method",
+                     "request_path", "route_name", "status", "session_jti", "ip_address",
+                     "user_agent", "error_message")
+    @classmethod
+    def validate_storage_text(cls, value):
+        if value is not None and any(character == "\x00" or "\ud800" <= character <= "\udfff" for character in value):
+            raise ValueError("audit text contains unsupported characters")
+        return value
+
 
 @router.post("/audit", dependencies=[Depends(verify_internal_key)], status_code=status.HTTP_202_ACCEPTED, response_model=dict[str, str])
-async def ingest_internal_audit(payload: InternalAuditPayload, db: AsyncSession = Depends(get_db)):
+async def ingest_internal_audit(request: Request, payload: InternalAuditPayload, db: AsyncSession = Depends(get_db)):
     """Idempotently persist a sibling service's audit event in Main's schema."""
-    values = payload.model_dump()
-    statement = insert(AuditLog).values(**values).on_conflict_do_nothing(index_elements=[AuditLog.id])
-    await db.execute(statement)
-    await db.commit()
+    await insert_audit_batch(db, [payload.model_dump()], AuditLog)
+    request.scope["ksu.audit_ingested"] = True
     return {"status": "accepted", "id": str(payload.id)}
+
+
+class InternalAuditBatch(BaseModel):
+    events: list[InternalAuditPayload] = Field(min_length=1, max_length=100)
+
+
+class InternalAuditBatchResult(BaseModel):
+    status: str
+    received: int
+    inserted: int
+
+
+@router.post("/audit/batch", dependencies=[Depends(verify_internal_key)],
+             status_code=status.HTTP_202_ACCEPTED, response_model=InternalAuditBatchResult)
+@rate_limit(requests=60, window=60, prefix="main:internal-audit-batch", max_body_bytes=256 * 1024)
+async def ingest_internal_audit_batch(
+    request: Request, payload: InternalAuditBatch, db: AsyncSession = Depends(get_db),
+):
+    inserted = await insert_audit_batch(db, [event.model_dump() for event in payload.events], AuditLog)
+    request.scope["ksu.audit_ingested"] = True
+    return InternalAuditBatchResult(status="accepted", received=len(payload.events), inserted=inserted)
 
 
 @router.get("/audit", dependencies=[Depends(verify_internal_key)], response_model=InternalAuditListResponse)
@@ -162,16 +377,50 @@ async def list_internal_audit(
     }
 
 
-@router.get("/events", dependencies=[Depends(verify_internal_key)])
+class IdentitySnapshot(BaseModel):
+    sub: str
+    jti: str
+    person_id: uuid.UUID | None = None
+    scope_grants: list[dict[str, Any]]
+    mfa_enabled: bool = False
+    mfa_verified_at: float | None = None
+
+
+@router.post("/auth/introspect", response_model=IdentitySnapshot,
+             dependencies=[Depends(verify_internal_key)])
+async def introspect_identity(
+    user=Depends(get_current_active_user),
+    token=Depends(get_token_payload),
+    db: AsyncSession = Depends(get_db),
+):
+    """Validate the real user session and return current database assignments."""
+    from ...services.auth import _active_scope_grants
+
+    person_id = await db.scalar(select(Person.id).where(
+        Person.user_id == user.id, Person.deleted_at.is_(None), Person.is_active.is_(True),
+    ))
+    return IdentitySnapshot(sub=str(user.id), jti=token.jti, person_id=person_id,
+                            mfa_enabled=token.raw.get("mfa_enabled") is True,
+                            mfa_verified_at=token.raw.get("mfa_verified_at"),
+                            scope_grants=_active_scope_grants(user))
+
+
+@router.get(
+    "/events",
+    dependencies=[Depends(verify_internal_key)],
+    response_model=InternalEventListResponse,
+)
 async def list_internal_events(
     scope_type: str | None = Query(default=None, max_length=64),
     scope_id: uuid.UUID | None = None,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
-    fields: FieldSelection = FieldsDep,
+    fields: Any = None,
     db: AsyncSession = Depends(get_db),
 ):
     """Return public scoped events to authenticated sibling services."""
+    from ...api.v1._fields import FieldSelection, build_selector
+    fields = fields or FieldSelection()
     selector = build_selector(Event, fields)
     result = await EventService.list(
         db,
@@ -185,18 +434,44 @@ async def list_internal_events(
     return {"status": "success", "message": "ok", "data": selector.apply(result.items), "meta": result.meta}
 
 
-@router.post("/email/send", dependencies=[Depends(verify_internal_key)])
-async def send_internal_email(payload: InternalEmailPayload):
+@router.post("/email/send", dependencies=[Depends(verify_internal_key)], response_model=InternalEmailResponse)
+async def send_internal_email(
+    payload: InternalEmailPayload, request: Request,
+    db: AsyncSession = Depends(get_db),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key", min_length=8, max_length=255),
+):
+    from ...services.idempotency import acquire_json_command, complete_json_command
+
+    claim = None
+    if idempotency_key is not None:
+        principal = sha256(request.headers.get("X-Internal-Key", "").encode()).hexdigest()
+        claim = await acquire_json_command(
+            db, command_name="internal.email.send", scope=f"service:{principal}",
+            idempotency_key=idempotency_key, request_payload=payload.model_dump(mode="json"),
+            in_progress_body={"detail": "Email handoff is in progress"},
+            key_reuse_body={"detail": "Idempotency key was used with a different email"},
+        )
+        if isinstance(claim, JSONResponse):
+            return claim
+        if claim.kind == "replay":
+            return claim.record.response_body
     provider_id = await send_email(
         to_email=payload.to_email,
         subject=payload.subject,
         text_body=payload.text_body,
         html_body=payload.html_body,
     )
-    return {"provider_id": provider_id}
+    body = {"provider_id": provider_id}
+    if claim is not None:
+        return complete_json_command(claim.record, status_code=200, response_body=body)
+    return body
 
 
-@router.post("/notifications/broadcast", dependencies=[Depends(verify_internal_key)])
+@router.post(
+    "/notifications/broadcast",
+    dependencies=[Depends(verify_internal_key)],
+    response_model=InternalNotificationBroadcastResponse,
+)
 async def broadcast_internal_notification(
     payload: InternalNotificationBroadcastPayload,
     db: AsyncSession = Depends(get_db),
@@ -216,7 +491,11 @@ async def broadcast_internal_notification(
     return result
 
 
-@router.get("/persons/{person_id}", dependencies=[Depends(verify_internal_key)])
+@router.get(
+    "/persons/{person_id}",
+    dependencies=[Depends(verify_internal_key)],
+    response_model=InternalPersonSnapshot,
+)
 async def get_person_snapshot(person_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Return a minimal person snapshot for sibling services (Research, Library)."""
     person = await PersonService.get_by_id(db, person_id)
@@ -234,7 +513,11 @@ async def get_person_snapshot(person_id: uuid.UUID, db: AsyncSession = Depends(g
     }
 
 
-@router.get("/staff-assignments/{assignment_id}", dependencies=[Depends(verify_internal_key)])
+@router.get(
+    "/staff-assignments/{assignment_id}",
+    dependencies=[Depends(verify_internal_key)],
+    response_model=InternalStaffAssignmentSnapshot,
+)
 async def get_staff_assignment_snapshot(assignment_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     assignment = await StaffService.get_by_id(
         db,
@@ -263,7 +546,11 @@ async def get_staff_assignment_snapshot(assignment_id: uuid.UUID, db: AsyncSessi
     }
 
 
-@router.get("/departments/{department_id}", dependencies=[Depends(verify_internal_key)])
+@router.get(
+    "/departments/{department_id}",
+    dependencies=[Depends(verify_internal_key)],
+    response_model=InternalDepartmentSnapshot,
+)
 async def get_department_snapshot(department_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     department = await DepartmentService.get_by_id(db, department_id, is_active=None)
     if department is None:
@@ -282,6 +569,7 @@ async def get_department_snapshot(department_id: uuid.UUID, db: AsyncSession = D
 @router.get(
     "/schools/{school_id}/departments/{department_id}",
     dependencies=[Depends(verify_internal_key)],
+    response_model=InternalDepartmentCheckResponse,
 )
 async def check_department_school(
     school_id: uuid.UUID,
@@ -302,7 +590,11 @@ async def check_department_school(
     }
 
 
-@router.get("/media/{media_id}", dependencies=[Depends(verify_internal_key)])
+@router.get(
+    "/media/{media_id}",
+    dependencies=[Depends(verify_internal_key)],
+    response_model=InternalPublicMediaSnapshot,
+)
 async def get_public_media_snapshot(media_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Return browser-safe fields for public media referenced by sibling services."""
     media = await Media.get_by_id(db, media_id)
@@ -363,7 +655,71 @@ async def resolve_public_media(
     return {"status": "success", "data": data}
 
 
-@router.post("/persons/resolve", dependencies=[Depends(verify_internal_key)])
+@router.post(
+    "/media/resolve-by-source",
+    dependencies=[Depends(verify_internal_key)],
+    response_model=InternalMediaSourceResolveResponse,
+)
+async def resolve_public_media_by_source(
+    payload: InternalMediaSourceResolvePayload,
+    db: AsyncSession = Depends(get_db),
+):
+    """Resolve public media IDs by the stable source metadata used by seeders."""
+    data = []
+    for source in payload.sources:
+        media = await db.scalar(
+            select(Media)
+            .where(
+                Media.public_url == source.source_url,
+                Media.deleted_at.is_(None),
+                Media.is_public.is_(True),
+            )
+            .order_by(Media.created_at, Media.id)
+        )
+        if media is None:
+            media = await db.scalar(
+                select(Media)
+                .where(
+                    Media.original_filename == source.filename,
+                    Media.deleted_at.is_(None),
+                    Media.is_public.is_(True),
+                )
+                .order_by(Media.created_at, Media.id)
+            )
+        if media is not None:
+            data.append(
+                {
+                    "source_url": source.source_url,
+                    "filename": source.filename,
+                    "media_id": media.id,
+                }
+            )
+    return {"status": "success", "data": data}
+
+
+@router.post(
+    "/documents/resolve",
+    dependencies=[Depends(verify_internal_key)],
+    response_model=InternalDocumentResolveResponse,
+)
+async def resolve_public_documents(
+    payload: InternalDocumentResolvePayload,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Document).where(
+        Document.id.in_(set(payload.ids)), Document.deleted_at.is_(None),
+        Document.is_active.is_(True), Document.is_public.is_(True),
+        Document.is_published.is_(True),
+    ))
+    found = {item.id for item in result.scalars().all()}
+    return {"status": "success", "data": [str(identifier) for identifier in payload.ids if identifier in found]}
+
+
+@router.post(
+    "/persons/resolve",
+    dependencies=[Depends(verify_internal_key)],
+    response_model=InternalPersonResolveResponse,
+)
 async def resolve_public_persons(
     payload: InternalPersonResolvePayload,
     db: AsyncSession = Depends(get_db),
@@ -403,7 +759,11 @@ async def resolve_public_persons(
     return {"status": "success", "data": data}
 
 
-@router.get("/references/{kind}/{item_id}", dependencies=[Depends(verify_internal_key)])
+@router.get(
+    "/references/{kind}/{item_id}",
+    dependencies=[Depends(verify_internal_key)],
+    response_model=InternalReferenceCheckResponse,
+)
 async def check_reference(kind: str, item_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Validate shared main-owned references for sibling services."""
     normalized = kind.replace("_", "-")

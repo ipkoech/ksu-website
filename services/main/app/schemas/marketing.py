@@ -6,9 +6,9 @@ import uuid
 from typing import Any
 from datetime import datetime
 
-from pydantic import Field
+from pydantic import Field, RootModel
 
-from .base import BaseReadSchema, BaseSchema, SlugStr, UrlStr
+from .base import BaseReadSchema, BaseSchema, SlugStr, UrlStr, optional_snapshot
 
 
 class NewsletterCreate(BaseSchema):
@@ -63,6 +63,9 @@ class NewsletterRead(BaseReadSchema):
     is_public: bool
 
 
+NewsletterSnapshot = optional_snapshot("NewsletterSnapshot", NewsletterRead)
+
+
 class NewsletterScheduleRequest(BaseSchema):
     """Body for POST /newsletters/{id}/schedule."""
 
@@ -85,6 +88,9 @@ class NewsletterSubscriberRead(BaseReadSchema):
     categories: list[str] | None = None
     is_verified: bool
     status: str
+
+
+NewsletterSubscriberSnapshot = optional_snapshot("NewsletterSubscriberSnapshot", NewsletterSubscriberRead)
 
 
 class TestimonialCreate(BaseSchema):
@@ -148,6 +154,9 @@ class TestimonialRead(BaseReadSchema):
     is_public: bool
 
 
+TestimonialSnapshot = optional_snapshot("TestimonialSnapshot", TestimonialRead)
+
+
 class SocialMediaPostCreate(BaseSchema):
     source_type: str = Field(min_length=1, max_length=32)
     source_id: uuid.UUID | None = None
@@ -191,6 +200,9 @@ class SocialMediaPostRead(BaseReadSchema):
     created_by_id: uuid.UUID
 
 
+SocialMediaPostSnapshot = optional_snapshot("SocialMediaPostSnapshot", SocialMediaPostRead)
+
+
 class SocialPlatformAccountCreate(BaseSchema):
     provider: str = Field(min_length=1, max_length=32)
     name: str = Field(min_length=1, max_length=255)
@@ -222,6 +234,9 @@ class SocialPlatformAccountRead(BaseReadSchema):
     created_by_id: uuid.UUID
 
 
+SocialPlatformAccountSnapshot = optional_snapshot("SocialPlatformAccountSnapshot", SocialPlatformAccountRead)
+
+
 class SocialMediaDeliveryRead(BaseReadSchema):
     social_post_id: uuid.UUID
     platform: str
@@ -237,6 +252,23 @@ class SocialMediaDeliveryRead(BaseReadSchema):
     account: dict[str, Any] | None = None
     social_post: dict[str, Any] | None = None
     response_payload: dict | None = None
+
+
+SocialMediaDeliverySnapshot = optional_snapshot("SocialMediaDeliverySnapshot", SocialMediaDeliveryRead)
+
+
+class SocialValidationIssue(BaseSchema):
+    code: str
+    message: str
+
+
+class SocialValidationSummary(RootModel[dict[str, list[SocialValidationIssue]]]):
+    pass
+
+
+class SocialCredentialsValidation(BaseSchema):
+    valid: bool
+    error: str | None = None
 
 
 __all__ = [

@@ -42,6 +42,16 @@ async def team_detail(request: Request, slug: str, db: AsyncSession = Depends(ge
 @public_content_rate_limit
 @cached_public(timeout=300, vary_on=("limit", "center_id", "center_slug"))
 async def partners(request: Request, limit: int = Query(50, ge=1, le=100), center_id: str | None = Query(None), center_slug: str | None = Query(None), db: AsyncSession = Depends(get_db)):
+    return await _list_partners(db=db, limit=limit, center_id=center_id, center_slug=center_slug)
+
+
+async def _list_partners(
+    *,
+    db: AsyncSession,
+    limit: int,
+    center_id: str | None = None,
+    center_slug: str | None = None,
+) -> list[PartnerSummary]:
     query = PublicService.public_query(Partner).order_by(Partner.display_order.asc(), Partner.name.asc()).limit(limit)
     if center_id:
         query = query.where(Partner.research_center_id == center_id)
@@ -55,7 +65,7 @@ async def partners(request: Request, limit: int = Query(50, ge=1, le=100), cente
 @public_content_rate_limit
 @cached_public(timeout=300, vary_on=("center_id", "limit"))
 async def center_partners(request: Request, center_id: str, limit: int = Query(50, ge=1, le=100), db: AsyncSession = Depends(get_db)):
-    return await partners(request=request, limit=limit, center_id=center_id, db=db)
+    return await _list_partners(db=db, limit=limit, center_id=center_id)
 
 
 @router.get("/research/projects", response_model=list[ResearchSummary])

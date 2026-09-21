@@ -4,7 +4,7 @@ import Link from "next/link";
 export default function NotFound() {
   return (
     <main id="research-main" className="relative isolate grid min-h-[68vh] place-items-center overflow-hidden bg-[#002f6c] px-4 py-20 text-white">
-      <Image src="/images/research/research-projects-hero.webp" alt="" fill priority sizes="100vw" className="object-cover opacity-30" />
+      <Image src="/images/research/verified/multidisciplinary-conference-2026.jpg" alt="" fill priority sizes="100vw" className="object-cover opacity-30" />
       <div className="absolute inset-0 bg-gradient-to-br from-[#002f6c]/95 via-[#003d7c]/90 to-[#005baa]/75" />
       <section className="relative max-w-2xl text-center">
         <p className="font-semibold uppercase tracking-[0.24em] text-[#f9a34a]">404 · Research portal</p>

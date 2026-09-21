@@ -3,12 +3,15 @@
 import uuid
 
 from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile, status
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ....deps import DbSession
 from ....schemas.school_portal import SchoolPortalMediaMetadataUpdate
 from ....schemas.school_portal_content import SchoolContentCreate
 from ....schemas.upload_batch import SchoolContentMetadataImport
+from ....schemas.upload_batch import UploadBatchRead
+from ....schemas.media import MediaRead
+from ....schemas.base import optional_snapshot, BaseSchema
 from ....services.domain_events import enqueue_domain_event
 from ....services.media import MediaService
 from ....services.school_portal_content import create_school_content
@@ -16,6 +19,20 @@ from ....services.school_portal_context import CurrentSchoolContext
 from ....services.upload_batch import UploadBatchService
 
 router = APIRouter()
+MediaSnapshot = optional_snapshot("SchoolMediaSnapshot", MediaRead)
+
+
+class SchoolContentImportRowRead(BaseSchema):
+    row_number: int
+    client_reference: str
+    content_type: str
+    status: str
+    errors: list[str] = []
+    data: dict = {}
+
+
+class SchoolContentImportResponse(BaseSchema):
+    rows: list[SchoolContentImportRowRead]
 
 
 def _require(context, permission: str) -> None:
@@ -23,7 +40,7 @@ def _require(context, permission: str) -> None:
         raise HTTPException(status_code=403, detail=f"{permission} permission is required")
 
 
-@router.patch("/media/{media_id}")
+@router.patch("/media/{media_id}", response_model=SuccessResponse[MediaSnapshot], response_model_exclude_unset=True)
 async def update_school_media_metadata(
     media_id: uuid.UUID,
     data: SchoolPortalMediaMetadataUpdate,
@@ -84,7 +101,7 @@ async def delete_school_media(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.post("/media/batches", status_code=status.HTTP_201_CREATED)
+@router.post("/media/batches", status_code=status.HTTP_201_CREATED, response_model=SuccessResponse[UploadBatchRead])
 async def create_media_batch(
     db: DbSession,
     context: CurrentSchoolContext,
@@ -106,7 +123,7 @@ async def create_media_batch(
     return success(data=batch)
 
 
-@router.get("/media/batches/{batch_id}")
+@router.get("/media/batches/{batch_id}", response_model=SuccessResponse[UploadBatchRead])
 async def get_media_batch(
     batch_id: uuid.UUID,
     db: DbSession,
@@ -122,7 +139,7 @@ async def get_media_batch(
     )
 
 
-@router.post("/media/batches/{batch_id}/files/{file_id}/retry")
+@router.post("/media/batches/{batch_id}/files/{file_id}/retry", response_model=SuccessResponse[UploadBatchRead])
 async def retry_media_file(
     batch_id: uuid.UUID,
     file_id: uuid.UUID,
@@ -168,7 +185,7 @@ async def _media_reference_map(db, context, batch_id: uuid.UUID | None):
     }
 
 
-@router.post("/media/content-imports/preview")
+@router.post("/media/content-imports/preview", response_model=SuccessResponse[SchoolContentImportResponse])
 async def preview_content_metadata_import(
     data: SchoolContentMetadataImport,
     db: DbSession,
@@ -179,7 +196,7 @@ async def preview_content_metadata_import(
     return success(data={"rows": _metadata_preview(data, media_by_reference)})
 
 
-@router.post("/media/content-imports")
+@router.post("/media/content-imports", response_model=SuccessResponse[SchoolContentImportResponse])
 async def commit_content_metadata_import(
     data: SchoolContentMetadataImport,
     db: DbSession,

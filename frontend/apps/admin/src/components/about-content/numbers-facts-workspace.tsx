@@ -47,6 +47,7 @@ import {
   type FactItemPayload,
 } from "@/lib/api/about-content";
 import { AboutWorkflowActions } from "./about-workflow-actions";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const EDITIONS_KEY = ["about-content", "fact-editions"] as const;
 const INSTITUTIONAL_FACTS_KEY = ["about-content", "fact-groups", "institutional"] as const;
@@ -154,11 +155,17 @@ export function NumbersFactsWorkspace() {
   const institutionalFactGroups = useMemo(() => [...(institutionalFactsQuery.data?.data ?? [])].sort((a, b) => a.display_order - b.display_order), [institutionalFactsQuery.data?.data]);
   const annualGroups = useMemo(() => [...(annualQuery.data?.data ?? [])].sort((a, b) => a.display_order - b.display_order), [annualQuery.data?.data]);
 
-  const refreshEditions = async () => queryClient.invalidateQueries({ queryKey: EDITIONS_KEY });
-  const refreshGroups = async () => Promise.all([
-    queryClient.invalidateQueries({ queryKey: INSTITUTIONAL_FACTS_KEY }),
-    queryClient.invalidateQueries({ queryKey: ANNUAL_KEY }),
-  ]);
+  const refreshEditions = async () => {
+    await queryClient.invalidateQueries({ queryKey: EDITIONS_KEY });
+    void revalidatePublicContent("main", "numbers-facts");
+  };
+  const refreshGroups = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: INSTITUTIONAL_FACTS_KEY }),
+      queryClient.invalidateQueries({ queryKey: ANNUAL_KEY }),
+    ]);
+    void revalidatePublicContent("main", "numbers-facts");
+  };
 
   return (
     <PageTransition>
@@ -259,7 +266,7 @@ export function NumbersFactsWorkspace() {
       <EditionEditorDialog record={editionEditor} onOpenChange={(open) => !open && setEditionEditor(null)} onSaved={async () => { setEditionEditor(null); await refreshEditions(); }} />
       <CloneEditionDialog source={cloneSource} onOpenChange={(open) => !open && setCloneSource(null)} onCloned={async (id) => { setCloneSource(null); setSelectedEditionId(id); await refreshEditions(); }} />
       <GroupEditorDialog state={groupEditor} editionId={selectedEditionId} onOpenChange={(open) => !open && setGroupEditor(null)} onSaved={async () => { setGroupEditor(null); await refreshGroups(); }} />
-      <ItemEditorDialog state={itemEditor} onOpenChange={(open) => !open && setItemEditor(null)} onSaved={async (groupId) => { setItemEditor(null); await queryClient.invalidateQueries({ queryKey: ["about-content", "fact-items", groupId] }); }} />
+      <ItemEditorDialog state={itemEditor} onOpenChange={(open) => !open && setItemEditor(null)} onSaved={async (groupId) => { setItemEditor(null); await queryClient.invalidateQueries({ queryKey: ["about-content", "fact-items", groupId] }); void revalidatePublicContent("main", "numbers-facts"); }} />
     </PageTransition>
   );
 }

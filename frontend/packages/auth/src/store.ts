@@ -1,3 +1,5 @@
+"use client";
+
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { User, Service, AuthState } from "./types";
@@ -25,12 +27,14 @@ export const useAuthStore = create<AuthStore>()(
       ...initialState,
 
       setUser: (user) =>
-        set({
+        set((state) => ({
           user,
           isAuthenticated: !!user,
           isLoading: false,
           error: null,
-        }),
+          activeService: user?.services.some(access => access.service === state.activeService)
+            ? state.activeService : null,
+        })),
 
       setActiveService: (service) =>
         set({ activeService: service }),

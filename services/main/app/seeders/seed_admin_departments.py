@@ -804,6 +804,11 @@ async def seed_admin_departments(db: AsyncSession, ctx: SeedContext) -> None:
     for spec in ADMIN_SERVICE_SPECS:
         department = ctx.departments[spec["department_code"]]
         payload = {key: value for key, value in spec.items() if key != "department_code"}
+        # The live pages expose service names, descriptions and contacts, but
+        # do not publish a universal requirements/process template for every
+        # service. Keep those fields empty instead of carrying inferred copy.
+        payload["requirements"] = None
+        payload["process"] = None
         await upsert_department_service(
             db,
             department,

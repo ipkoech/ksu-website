@@ -6,6 +6,7 @@ import { Save } from "lucide-react";
 import { toast } from "@ksu/ui";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Textarea } from "@ksu/ui/components";
 import { MediaPicker } from "@/components/media";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { councilGovernanceProfile, type CouncilPageContent, type GovernanceWorkspaceProfile } from "@/lib/api/organization";
 
 const baseDefaults: Partial<CouncilPageContent> = {
@@ -59,6 +60,7 @@ export function CouncilPageContentEditor({ profile = councilGovernanceProfile }:
     mutationFn: () =>
       profile.api.updatePageContent(contentPayload(values)),
     onSuccess: async () => {
+      void revalidatePublicContent("main", "governance");
       toast.success(`${profile.badgeLabel} page content saved`);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["governance", profile.key, "page-content"] }),

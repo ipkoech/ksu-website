@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from .content_workflow import authorize_content_workflow_action
@@ -28,6 +28,13 @@ from ...schemas import (
     ClubUpdate,
 )
 from ...schemas.content_workflow import ContentWorkflowActionRequest
+from ...schemas.student_life import (
+    ClubActivitySnapshot,
+    ClubLeaderRead,
+    ClubMediaRead,
+    ClubSnapshot,
+)
+from ...schemas.content import AnnouncementSnapshot, BlogSnapshot
 from ...security.scopes import can_access_scope
 from ...services import AnnouncementService, BlogService, ClubService, ContentWorkflowService, MediaService
 
@@ -209,7 +216,7 @@ async def _club_workflow_transition(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[ClubSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "q", "club_type", "school_id", "department_id", "is_active", "fields", "include"))
 async def list_clubs(
     db: DbSession,
@@ -231,7 +238,7 @@ async def list_clubs(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/managed")
+@router.get("/managed", response_model_exclude_unset=True, response_model=SuccessResponse[list[ClubSnapshot]])
 async def list_managed_clubs(
     db: DbSession,
     user: CurrentUser,
@@ -257,7 +264,7 @@ async def list_managed_clubs(
     return success(data=selector.apply(authorized), meta=meta)
 
 
-@router.get("/review")
+@router.get("/review", response_model_exclude_unset=True, response_model=SuccessResponse[list[ClubSnapshot]])
 async def list_clubs_for_review(
     db: DbSession,
     user: CurrentUser,
@@ -282,7 +289,7 @@ async def list_clubs_for_review(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{slug}")
+@router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[ClubSnapshot])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_club(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Club, fields)
@@ -292,7 +299,7 @@ async def get_club(slug: str, db: DbSession, fields: FieldSelection = FieldsDep)
     return success(data=selector.apply(item))
 
 
-@router.get("/{slug}/activities")
+@router.get("/{slug}/activities", response_model_exclude_unset=True, response_model=SuccessResponse[list[ClubActivitySnapshot]])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_club_activities(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     item = await ClubService.get_by_slug(db, slug)
@@ -303,13 +310,13 @@ async def get_club_activities(slug: str, db: DbSession, fields: FieldSelection =
     return success(data=selector.apply(items))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("student_life.manage_clubs"))])
+@router.post("", response_model_exclude_unset=True, response_model=SuccessResponse[ClubSnapshot], status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("student_life.manage_clubs"))])
 async def create_club(data: ClubCreate, db: DbSession, _: CurrentUser):
     item = await ClubService.create(db, **data.model_dump())
     return success(data=item, message="Club created")
 
 
-@router.patch("/{club_id}")
+@router.patch("/{club_id}", response_model_exclude_unset=True, response_model=SuccessResponse[ClubSnapshot])
 async def update_club(club_id: uuid.UUID, data: ClubUpdate, db: DbSession, user: CurrentUser):
     payload_keys = set(data.model_dump(exclude_unset=True))
     permissions = permissions_for_user(user)
@@ -329,14 +336,14 @@ async def update_club(club_id: uuid.UUID, data: ClubUpdate, db: DbSession, user:
     return success(data=item, message="Club updated")
 
 
-@router.get("/id/{club_id}/activities")
+@router.get("/id/{club_id}/activities", response_model_exclude_unset=True, response_model=SuccessResponse[list[ClubActivitySnapshot]])
 async def list_managed_club_activities(club_id: uuid.UUID, db: DbSession, user: CurrentUser):
     await _club_or_404(db, club_id)
     await require_club_scope(db, user, club_id, CLUB_VIEW_PERMISSIONS, resource_name="club event")
     return success(data=await ClubService.list_activities(db, club_id, public_only=False))
 
 
-@router.post("/id/{club_id}/activities", status_code=status.HTTP_201_CREATED)
+@router.post("/id/{club_id}/activities", response_model_exclude_unset=True, response_model=SuccessResponse[ClubActivitySnapshot], status_code=status.HTTP_201_CREATED)
 async def create_club_activity(club_id: uuid.UUID, data: ClubActivityCreate, db: DbSession, user: CurrentUser):
     await _club_or_404(db, club_id)
     await require_club_scope(db, user, club_id, CLUB_EVENT_PERMISSIONS, resource_name="club event")
@@ -346,7 +353,7 @@ async def create_club_activity(club_id: uuid.UUID, data: ClubActivityCreate, db:
     return success(data=item, message="Club event created as draft")
 
 
-@router.patch("/activities/{activity_id}")
+@router.patch("/activities/{activity_id}", response_model_exclude_unset=True, response_model=SuccessResponse[ClubActivitySnapshot])
 async def update_club_activity(activity_id: uuid.UUID, data: ClubActivityUpdate, db: DbSession, user: CurrentUser):
     item = await ClubService.get_activity(db, activity_id)
     if item is None:
@@ -363,7 +370,7 @@ async def update_club_activity(activity_id: uuid.UUID, data: ClubActivityUpdate,
     return success(data=item, message="Club event updated")
 
 
-@router.post("/activities/{activity_id}/workflow/{action}")
+@router.post("/activities/{activity_id}/workflow/{action}", response_model_exclude_unset=True, response_model=SuccessResponse[ClubActivitySnapshot])
 async def transition_club_activity(
     activity_id: uuid.UUID,
     action: str,
@@ -391,7 +398,11 @@ async def delete_club_activity(activity_id: uuid.UUID, db: DbSession, user: Curr
     await ClubService.delete_activity(db, item)
 
 
-@router.get("/id/{club_id}/stories")
+@router.get(
+    "/id/{club_id}/stories",
+    response_model=SuccessResponse[list[BlogSnapshot]],
+    response_model_exclude_unset=True,
+)
 async def list_club_stories(club_id: uuid.UUID, db: DbSession, user: CurrentUser):
     await _club_or_404(db, club_id)
     await require_club_scope(db, user, club_id, CLUB_VIEW_PERMISSIONS, resource_name="club story")
@@ -399,7 +410,12 @@ async def list_club_stories(club_id: uuid.UUID, db: DbSession, user: CurrentUser
     return success(data=result.items, meta=result.meta)
 
 
-@router.post("/id/{club_id}/stories", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/id/{club_id}/stories",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[BlogSnapshot],
+    response_model_exclude_unset=True,
+)
 async def create_club_story(club_id: uuid.UUID, data: BlogCreate, db: DbSession, user: CurrentUser):
     await _club_or_404(db, club_id)
     await require_club_scope(db, user, club_id, CLUB_STORY_PERMISSIONS, resource_name="club story")
@@ -407,7 +423,11 @@ async def create_club_story(club_id: uuid.UUID, data: BlogCreate, db: DbSession,
     return success(data=item, message="Club story created as draft")
 
 
-@router.patch("/stories/{story_id}")
+@router.patch(
+    "/stories/{story_id}",
+    response_model=SuccessResponse[BlogSnapshot],
+    response_model_exclude_unset=True,
+)
 async def update_club_story(story_id: uuid.UUID, data: BlogUpdate, db: DbSession, user: CurrentUser):
     item = await BlogService.get_by_id(db, story_id)
     if item is None or item.scope_type != "club" or item.scope_id is None:
@@ -424,7 +444,11 @@ async def update_club_story(story_id: uuid.UUID, data: BlogUpdate, db: DbSession
     return success(data=item, message="Club story updated")
 
 
-@router.post("/stories/{story_id}/workflow/{action}")
+@router.post(
+    "/stories/{story_id}/workflow/{action}",
+    response_model=SuccessResponse[BlogSnapshot],
+    response_model_exclude_unset=True,
+)
 async def transition_club_story(
     story_id: uuid.UUID,
     action: str,
@@ -452,7 +476,11 @@ async def delete_club_story(story_id: uuid.UUID, db: DbSession, user: CurrentUse
     await BlogService.delete(db, item)
 
 
-@router.get("/id/{club_id}/announcements")
+@router.get(
+    "/id/{club_id}/announcements",
+    response_model=SuccessResponse[list[AnnouncementSnapshot]],
+    response_model_exclude_unset=True,
+)
 async def list_club_announcements(club_id: uuid.UUID, db: DbSession, user: CurrentUser):
     await _club_or_404(db, club_id)
     await require_club_scope(db, user, club_id, CLUB_VIEW_PERMISSIONS, resource_name="club announcement")
@@ -460,7 +488,12 @@ async def list_club_announcements(club_id: uuid.UUID, db: DbSession, user: Curre
     return success(data=result.items, meta=result.meta)
 
 
-@router.post("/id/{club_id}/announcements", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/id/{club_id}/announcements",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[AnnouncementSnapshot],
+    response_model_exclude_unset=True,
+)
 async def create_club_announcement(club_id: uuid.UUID, data: AnnouncementCreate, db: DbSession, user: CurrentUser):
     await _club_or_404(db, club_id)
     await require_club_scope(db, user, club_id, CLUB_STORY_PERMISSIONS, resource_name="club announcement")
@@ -468,7 +501,11 @@ async def create_club_announcement(club_id: uuid.UUID, data: AnnouncementCreate,
     return success(data=item, message="Club announcement created as draft")
 
 
-@router.patch("/announcements/{announcement_id}")
+@router.patch(
+    "/announcements/{announcement_id}",
+    response_model=SuccessResponse[AnnouncementSnapshot],
+    response_model_exclude_unset=True,
+)
 async def update_club_announcement(announcement_id: uuid.UUID, data: AnnouncementUpdate, db: DbSession, user: CurrentUser):
     item = await AnnouncementService.get_by_id(db, announcement_id)
     if item is None or item.scope_type != "club" or item.scope_id is None:
@@ -485,7 +522,11 @@ async def update_club_announcement(announcement_id: uuid.UUID, data: Announcemen
     return success(data=item, message="Club announcement updated")
 
 
-@router.post("/announcements/{announcement_id}/workflow/{action}")
+@router.post(
+    "/announcements/{announcement_id}/workflow/{action}",
+    response_model=SuccessResponse[AnnouncementSnapshot],
+    response_model_exclude_unset=True,
+)
 async def transition_club_announcement(
     announcement_id: uuid.UUID,
     action: str,
@@ -513,7 +554,11 @@ async def delete_club_announcement(announcement_id: uuid.UUID, db: DbSession, us
     await AnnouncementService.delete(db, item)
 
 
-@router.get("/id/{club_id}/leaders")
+@router.get(
+    "/id/{club_id}/leaders",
+    response_model=SuccessResponse[list[ClubLeaderRead]],
+    response_model_exclude_unset=True,
+)
 async def list_club_leaders(club_id: uuid.UUID, db: DbSession, user: CurrentUser):
     await _club_or_404(db, club_id)
     await require_club_scope(db, user, club_id, CLUB_VIEW_PERMISSIONS, resource_name="club leader")
@@ -531,7 +576,11 @@ async def list_club_leaders(club_id: uuid.UUID, db: DbSession, user: CurrentUser
     ])
 
 
-@router.get("/id/{club_id}/media")
+@router.get(
+    "/id/{club_id}/media",
+    response_model=SuccessResponse[list[ClubMediaRead]],
+    response_model_exclude_unset=True,
+)
 async def list_club_media(club_id: uuid.UUID, db: DbSession, user: CurrentUser):
     await _club_or_404(db, club_id)
     await require_club_scope(db, user, club_id, CLUB_VIEW_PERMISSIONS, resource_name="club media")
@@ -539,7 +588,12 @@ async def list_club_media(club_id: uuid.UUID, db: DbSession, user: CurrentUser):
     return success(data=[MediaService.serialize_link(link) for link in links])
 
 
-@router.post("/id/{club_id}/media", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/id/{club_id}/media",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[ClubMediaRead],
+    response_model_exclude_unset=True,
+)
 async def attach_club_media(club_id: uuid.UUID, data: ClubMediaCreate, db: DbSession, user: CurrentUser):
     await _club_or_404(db, club_id)
     await require_club_scope(db, user, club_id, CLUB_MANAGE_PERMISSIONS, resource_name="club media")
@@ -578,7 +632,11 @@ async def attach_club_media(club_id: uuid.UUID, data: ClubMediaCreate, db: DbSes
     return success(data=MediaService.serialize_link(link), message="Club media attached")
 
 
-@router.patch("/id/{club_id}/media/{link_id}")
+@router.patch(
+    "/id/{club_id}/media/{link_id}",
+    response_model=SuccessResponse[ClubMediaRead],
+    response_model_exclude_unset=True,
+)
 async def update_club_media(link_id: uuid.UUID, club_id: uuid.UUID, data: ClubMediaUpdate, db: DbSession, user: CurrentUser):
     await _club_or_404(db, club_id)
     await require_club_scope(db, user, club_id, CLUB_MANAGE_PERMISSIONS, resource_name="club media")
@@ -598,7 +656,11 @@ async def update_club_media(link_id: uuid.UUID, club_id: uuid.UUID, data: ClubMe
     return success(data=MediaService.serialize_link(link), message="Club media updated")
 
 
-@router.post("/id/{club_id}/media/{link_id}/workflow/{action}")
+@router.post(
+    "/id/{club_id}/media/{link_id}/workflow/{action}",
+    response_model=SuccessResponse[ClubMediaRead],
+    response_model_exclude_unset=True,
+)
 async def transition_club_media(
     link_id: uuid.UUID,
     club_id: uuid.UUID,
@@ -640,7 +702,11 @@ async def transition_club_media(
     return success(data=MediaService.serialize_link(link), message="Club media workflow updated")
 
 
-@router.patch("/id/{club_id}/media/{link_id}/publication")
+@router.patch(
+    "/id/{club_id}/media/{link_id}/publication",
+    response_model=SuccessResponse[ClubMediaRead],
+    response_model_exclude_unset=True,
+)
 async def set_club_media_publication(
     link_id: uuid.UUID,
     club_id: uuid.UUID,

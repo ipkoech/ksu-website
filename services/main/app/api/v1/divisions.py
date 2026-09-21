@@ -7,13 +7,14 @@ import uuid
 from fastapi import APIRouter, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession
 from ...models import Division
 from ...security.scopes import can_access_scope
 from ...schemas import DivisionCreate, DivisionUpdate
+from ...schemas.organization import DivisionSnapshot
 from ...services import DivisionService
 
 router = APIRouter()
@@ -51,7 +52,7 @@ async def _require_division_scope(
         )
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[DivisionSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "is_active", "fields", "include"))
 async def list_divisions(
     db: DbSession,
@@ -65,7 +66,7 @@ async def list_divisions(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin")
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[DivisionSnapshot]])
 async def list_admin_divisions(
     db: DbSession,
     user: CurrentUser,
@@ -91,7 +92,7 @@ async def list_admin_divisions(
     return success(data=selector.apply(items), meta=meta)
 
 
-@router.get("/{slug}")
+@router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[DivisionSnapshot])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_division(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Division, fields)
@@ -101,7 +102,7 @@ async def get_division(slug: str, db: DbSession, fields: FieldSelection = Fields
     return success(data=selector.apply(division))
 
 
-@router.get("/id/{division_id}")
+@router.get("/id/{division_id}", response_model_exclude_unset=True, response_model=SuccessResponse[DivisionSnapshot])
 async def get_division_by_id(division_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(Division, fields)
     division = await DivisionService.get_by_id(db, division_id, load_options=selector.load_options)
@@ -110,7 +111,7 @@ async def get_division_by_id(division_id: uuid.UUID, db: DbSession, _: CurrentUs
     return success(data=selector.apply(division))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", response_model_exclude_unset=True, response_model=SuccessResponse[DivisionSnapshot], status_code=status.HTTP_201_CREATED)
 async def create_division(data: DivisionCreate, db: DbSession, user: CurrentUser):
     if not await can_access_scope(db, user, "administration.manage_units", "university", None):
         raise HTTPException(
@@ -121,7 +122,7 @@ async def create_division(data: DivisionCreate, db: DbSession, user: CurrentUser
     return success(data=division, message="Division created")
 
 
-@router.patch("/id/{division_id}")
+@router.patch("/id/{division_id}", response_model_exclude_unset=True, response_model=SuccessResponse[DivisionSnapshot])
 async def update_division(division_id: uuid.UUID, data: DivisionUpdate, db: DbSession, user: CurrentUser):
     division = await DivisionService.get_by_id(db, division_id)
     if division is None:

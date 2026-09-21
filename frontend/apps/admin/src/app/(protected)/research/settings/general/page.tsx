@@ -47,7 +47,7 @@ const settingColumns: EditableRecordColumn<ResearchGenericRecord>[] = [
 export default function ResearchGeneralSettingsPage() {
   return (
     <ResearchResourcePage
-      title="Research Administration Settings"
+      title="Administration Settings"
       description="Manage public-facing and operational configuration values for the research administration unit."
       queryKey={["research", "donation-settings"]}
       resource={researchServiceApi.donationSettings}

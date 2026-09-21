@@ -5,6 +5,8 @@ import { getPublicInstitutionalPage } from "@/lib/public-about-data";
 
 export const metadata = { title: "Strategic Plan" };
 
+export const revalidate = 300;
+
 export default async function StrategicPlanPage() {
   const page = await getPublicInstitutionalPage("strategic-plan");
   if (!page) notFound();

@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Query
 from ksu_common.internal_client import get_integration_pool, internal_key_guard
 
 from ...core.config import get_settings
+from ...schemas import AuditProxyResponse
 
 router = APIRouter(prefix="/audit", tags=["Audit"])
 settings = get_settings()
@@ -20,7 +21,7 @@ require_internal_api_key = internal_key_guard(
 )
 
 
-@router.get("", dependencies=[Depends(require_internal_api_key)])
+@router.get("", response_model=AuditProxyResponse, dependencies=[Depends(require_internal_api_key)])
 async def list_audit_logs(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),

@@ -7,18 +7,19 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import Campus
 from ...schemas import CampusCreate, CampusUpdate
+from ...schemas.academic import CampusSnapshot
 from ...services import CampusService
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[CampusSnapshot]])
 @cached_public(timeout=300, vary_on=("is_active", "fields", "include"))
 async def list_campuses(db: DbSession, is_active: bool | None = True, fields: FieldSelection = FieldsDep):
     selector = build_selector(Campus, fields)
@@ -26,7 +27,7 @@ async def list_campuses(db: DbSession, is_active: bool | None = True, fields: Fi
     return success(data=selector.apply(items))
 
 
-@router.get("/{slug}")
+@router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[CampusSnapshot])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_campus(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Campus, fields)
@@ -36,13 +37,13 @@ async def get_campus(slug: str, db: DbSession, fields: FieldSelection = FieldsDe
     return success(data=selector.apply(campus))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("academic.manage_campuses"))])
+@router.post("", response_model_exclude_unset=True, response_model=SuccessResponse[CampusSnapshot], status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("academic.manage_campuses"))])
 async def create_campus(data: CampusCreate, db: DbSession, _: CurrentUser):
     campus = await CampusService.create(db, **data.model_dump())
     return success(data=campus, message="Campus created")
 
 
-@router.patch("/{campus_id}", dependencies=[Depends(require_scope("academic.manage_campuses"))])
+@router.patch("/{campus_id}", response_model_exclude_unset=True, response_model=SuccessResponse[CampusSnapshot], dependencies=[Depends(require_scope("academic.manage_campuses"))])
 async def update_campus(campus_id: uuid.UUID, data: CampusUpdate, db: DbSession, _: CurrentUser):
     campus = await CampusService.get_by_id(db, campus_id)
     if campus is None:

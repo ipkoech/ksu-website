@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...core.database import get_db
 from ...models.analytics import AnalyticsEvent
 from ...schemas.analytics import AnalyticsEventPayload
+from ...schemas.operations import AnalyticsAcceptedResponse
 
 router = APIRouter(tags=["HERI Analytics"])
 _ANALYTICS_SESSION_LIMITER = RateLimiter(requests=120, window=60, prefix="heri:analytics:session")
@@ -33,7 +34,7 @@ async def _event_is_duplicate(payload: AnalyticsEventPayload, request: Request, 
     return any((event.properties or {}).get("idempotency_key") == identity for event in result.scalars().all())
 
 
-@router.post("/analytics/events", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/analytics/events", response_model=AnalyticsAcceptedResponse, status_code=status.HTTP_202_ACCEPTED)
 @rate_limit(requests=120, window=60, prefix="heri:analytics:ip", max_body_bytes=32 * 1024)
 async def track_event(payload: AnalyticsEventPayload, request: Request, db: AsyncSession = Depends(get_db)):
     session_identifier = payload.session_id or (request.client.host if request.client else "unknown")

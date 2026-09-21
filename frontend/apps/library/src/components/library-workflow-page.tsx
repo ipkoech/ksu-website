@@ -1,5 +1,4 @@
 import {
-  CompactRecord,
   LibraryContentBand,
   LibraryHero,
   LibrarySectionHeading,
@@ -8,6 +7,7 @@ import {
   SidePanel,
   StatusMessage,
 } from "./library-ui";
+import { LibraryRecordsDisplay, type LibraryRecordDto } from "./library-records-display";
 import {
   compactText,
   formatLabel,
@@ -37,6 +37,19 @@ export async function LibraryWorkflowPage({
   const { workflow, errors } = await getLibraryWorkflowDetail(workflowType);
   const record = workflow.data;
   const steps = record?.steps.filter((step) => step.is_active) ?? [];
+  const stepRecords: LibraryRecordDto[] = steps.map((step, index) => ({
+    id: step.id,
+    icon: "file",
+    eyebrow: `Step ${index + 1}`,
+    title: step.title,
+    body: shortText(step.instructions, "Instructions are being updated.", 260),
+    meta: [
+      safeExternalUrl(step.link_url) ? "External link" : null,
+      step.file_id ? "File available" : null,
+    ].filter((item): item is string => Boolean(item)),
+    href: safeExternalUrl(step.link_url),
+    action: "Open step link",
+  }));
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
@@ -99,23 +112,7 @@ export async function LibraryWorkflowPage({
                 No workflow steps have been published for this process yet.
               </StatusMessage>
             ) : (
-              <div className="grid gap-4">
-                {steps.map((step, index) => (
-                  <CompactRecord
-                    key={step.id}
-                    icon="file"
-                    eyebrow={`Step ${index + 1}`}
-                    title={step.title}
-                    body={shortText(step.instructions, "Instructions are being updated.", 260)}
-                    meta={[
-                      safeExternalUrl(step.link_url) ? "External link" : null,
-                      step.file_id ? "File available" : null,
-                    ]}
-                    href={safeExternalUrl(step.link_url) ?? undefined}
-                    action="Open step link"
-                  />
-                ))}
-              </div>
+              <LibraryRecordsDisplay records={stepRecords} marker="library-workflow-steps" />
             )}
           </div>
           <SidePanel title="Workflow details" eyebrow="Library support">
@@ -141,9 +138,9 @@ function Meta({
   const text = compactText(value);
   if (!text) return null;
   return (
-    <div>
+    <>
       <dt className="font-semibold text-slate-950">{label}</dt>
       <dd className="mt-1 leading-6">{text}</dd>
-    </div>
+    </>
   );
 }

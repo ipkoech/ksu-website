@@ -33,6 +33,17 @@ export interface PortalNavItem {
   children?: PortalNavItem[];
 }
 
+/** Backend-authorized configuration consumed by the shared authenticated shell. */
+export interface WorkspaceConfiguration {
+  identity: { key: PortalKey; title: string; shortTitle: string; baseHref: string };
+  scopes: Array<{ type: string; id?: string | null; label: string }>;
+  navigation: PortalNavItem[];
+  requiredPolicies: string[];
+  defaultRoute: string;
+  featureFlags: Record<string, boolean>;
+  realtime?: { enabled: boolean; channels?: string[] };
+}
+
 export interface PortalDashboardStat {
   title: string;
   description: string;

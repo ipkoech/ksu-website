@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import date
+from datetime import date, datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -94,6 +94,9 @@ async def seed_programmes(db: AsyncSession, ctx: SeedContext) -> None:
             application_start=date(2026, 2, 1),
             application_end=date(2026, 4, 15),
             late_application_end=date(2026, 4, 30),
+            application_opens_at=datetime(2026, 2, 1, tzinfo=timezone.utc),
+            application_closes_at=datetime(2026, 4, 15, 23, 59, 59, tzinfo=timezone.utc),
+            late_application_closes_at=datetime(2026, 4, 30, 23, 59, 59, tzinfo=timezone.utc),
             max_students=3000,
             is_active=True,
             is_open=False,
@@ -108,6 +111,9 @@ async def seed_programmes(db: AsyncSession, ctx: SeedContext) -> None:
             application_start=date(2026, 5, 1),
             application_end=date(2026, 8, 20),
             late_application_end=date(2026, 8, 31),
+            application_opens_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
+            application_closes_at=datetime(2026, 8, 20, 23, 59, 59, tzinfo=timezone.utc),
+            late_application_closes_at=datetime(2026, 8, 31, 23, 59, 59, tzinfo=timezone.utc),
             max_students=5000,
             is_active=True,
             is_open=False,
@@ -122,6 +128,9 @@ async def seed_programmes(db: AsyncSession, ctx: SeedContext) -> None:
             application_start=date(2026, 10, 1),
             application_end=date(2026, 12, 10),
             late_application_end=date(2026, 12, 20),
+            application_opens_at=datetime(2026, 10, 1, tzinfo=timezone.utc),
+            application_closes_at=datetime(2026, 12, 10, 23, 59, 59, tzinfo=timezone.utc),
+            late_application_closes_at=datetime(2026, 12, 20, 23, 59, 59, tzinfo=timezone.utc),
             max_students=2500,
             is_active=True,
             is_open=False,
@@ -145,24 +154,18 @@ async def seed_programmes(db: AsyncSession, ctx: SeedContext) -> None:
             duration=str(spec["duration"]),
             credits_required=spec.get("credits_required"),
             department_id=department.id,
-            about=spec.get("about") or (
-                f"{spec['name']} provides structured study in the subject area of {department.name}, "
-                "with coursework and assessment suited to the qualification level."
-            ),
+            about=spec.get("about"),
             objectives=spec.get("objectives"),
             career_prospects=spec.get("career_prospects"),
-            curriculum_overview=spec.get("curriculum_overview") or (
-                f"The curriculum covers foundational and advanced units in {department.name}, together with "
-                "applied learning, assessment, and research or project work where required."
-            ),
+            curriculum_overview=spec.get("curriculum_overview"),
             entry_requirements=str(spec["entry_requirements"]),
             cluster_subjects=spec.get("cluster_subjects"),
             fees_structure=spec.get("fees_structure"),
             intake_months=spec.get("intake_months"),
             min_students=spec.get("min_students"),
             max_students=spec.get("max_students"),
-            accreditation_status=spec.get("accreditation_status", "To be confirmed from current University and regulator records"),
-            accrediting_body=spec.get("accrediting_body", "Commission for University Education"),
+            accreditation_status=spec.get("accreditation_status"),
+            accrediting_body=spec.get("accrediting_body"),
             is_active=True,
             display_order=display_order,
         )

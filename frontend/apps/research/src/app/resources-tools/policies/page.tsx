@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/resources-tools/policies" },
 };
 
+export const revalidate = 300;
+
 export default function ResourcePoliciesPage({ searchParams }: { searchParams?: Promise<Record<string, string | undefined>> }) {
   return <ResourcesSectionPage searchParams={searchParams} activeItem="policies" visibleSections={["policies"]} />;
 }

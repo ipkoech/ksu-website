@@ -10,12 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.audit import audit_action
 from ksu_common.auth import TokenPayload
-from ...services.cache import invalidate_library_caches
 from ksu_common.field_selection import FieldSelection, FieldSelector, FieldsQuery
-from ksu_contracts.rbac import has_scope
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
-from ...core.auth import get_optional_user, requires_scope
+from ...core.auth import has_library_permission, get_optional_user, requires_scope
 from ...core.database import get_db
 from ...models import (
     LibraryGuide,
@@ -44,12 +42,19 @@ from ...schemas import (
     LibraryWorkflowStepOut,
     LibraryWorkflowStepUpdate,
     LibraryWorkflowUpdate,
+    LibraryGuideSnapshot,
+    LibraryGuideSectionSnapshot,
+    LibrarySpecialistSnapshot,
+    LibraryWorkflowSnapshot,
+    LibraryWorkflowStepSnapshot,
+    LibraryPolicyPageSnapshot,
 )
 from ...services import guides as svc
 
 
 async def invalidate_public_library_cache() -> None:
-    await invalidate_library_caches()
+    """Compatibility shim; cache invalidation runs after commit in app middleware."""
+    return None
 
 
 guides_router = APIRouter(prefix="/library/guides", tags=["Library Guides"])
@@ -58,7 +63,7 @@ guide_sections_router = APIRouter(
 )
 
 
-@guides_router.get("/")
+@guides_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryGuideSnapshot]])
 async def list_guides(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -73,7 +78,7 @@ async def list_guides(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     selector = FieldSelector(LibraryGuide, fields, always_include={"id"})
     result = await svc.list_guides(
         db,
@@ -91,7 +96,7 @@ async def list_guides(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@guides_router.get("/{slug}")
+@guides_router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[LibraryGuideSnapshot])
 async def get_guide(
     request: Request,
     slug: str,
@@ -99,7 +104,7 @@ async def get_guide(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     selector = FieldSelector(LibraryGuide, fields, always_include={"id"})
     guide = await svc.get_guide_by_slug(
         db,
@@ -110,7 +115,7 @@ async def get_guide(
     return success(data=selector.apply(guide))
 
 
-@guides_router.get("/records/{guide_id}")
+@guides_router.get("/records/{guide_id}", response_model_exclude_unset=True, response_model=SuccessResponse[LibraryGuideSnapshot])
 async def get_guide_record(
     request: Request,
     guide_id: uuid.UUID,
@@ -123,7 +128,7 @@ async def get_guide_record(
     return success(data=selector.apply(guide))
 
 
-@guides_router.post("/", status_code=201)
+@guides_router.post("/", response_model=SuccessResponse[LibraryGuideOut], status_code=201)
 @audit_action("guide.create", target_type="LibraryGuide", include_body=True)
 async def create_guide(
     request: Request,
@@ -139,7 +144,7 @@ async def create_guide(
     )
 
 
-@guides_router.patch("/{guide_id}")
+@guides_router.patch("/{guide_id}", response_model=SuccessResponse[LibraryGuideOut])
 @audit_action("guide.update", target_type="LibraryGuide", target_id_param="guide_id")
 async def update_guide(
     request: Request,
@@ -165,7 +170,7 @@ async def delete_guide(
     await invalidate_public_library_cache()
 
 
-@guide_sections_router.get("/")
+@guide_sections_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryGuideSectionSnapshot]])
 async def list_guide_sections(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -185,7 +190,7 @@ async def list_guide_sections(
     return success(data=selector.apply(sections))
 
 
-@guide_sections_router.post("/", status_code=201)
+@guide_sections_router.post("/", response_model=SuccessResponse[LibraryGuideSectionOut], status_code=201)
 @audit_action(
     "guide_section.create", target_type="LibraryGuideSection", include_body=True
 )
@@ -203,7 +208,7 @@ async def create_guide_section(
     )
 
 
-@guide_sections_router.patch("/{section_id}")
+@guide_sections_router.patch("/{section_id}", response_model=SuccessResponse[LibraryGuideSectionOut])
 @audit_action(
     "guide_section.update",
     target_type="LibraryGuideSection",
@@ -242,7 +247,7 @@ specialists_router = APIRouter(
 )
 
 
-@specialists_router.get("/")
+@specialists_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibrarySpecialistSnapshot]])
 async def list_specialists(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -253,7 +258,7 @@ async def list_specialists(
     school: Optional[str] = Query(None),
     department: Optional[str] = Query(None),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     selector = FieldSelector(LibrarySpecialist, fields, always_include={"id"})
     specialists = await svc.list_specialists(
         db,
@@ -266,7 +271,7 @@ async def list_specialists(
     return success(data=selector.apply(specialists))
 
 
-@specialists_router.post("/", status_code=201)
+@specialists_router.post("/", response_model=SuccessResponse[LibrarySpecialistOut], status_code=201)
 @audit_action("specialist.create", target_type="LibrarySpecialist", include_body=True)
 async def create_specialist(
     request: Request,
@@ -282,7 +287,7 @@ async def create_specialist(
     )
 
 
-@specialists_router.patch("/{specialist_id}")
+@specialists_router.patch("/{specialist_id}", response_model=SuccessResponse[LibrarySpecialistOut])
 @audit_action(
     "specialist.update",
     target_type="LibrarySpecialist",
@@ -322,7 +327,7 @@ workflow_steps_router = APIRouter(
 )
 
 
-@workflows_router.get("/")
+@workflows_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryWorkflowSnapshot]])
 async def list_workflows(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -335,7 +340,7 @@ async def list_workflows(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     selector = FieldSelector(LibraryWorkflow, fields, always_include={"id"})
     result = await svc.list_workflows(
         db,
@@ -351,7 +356,7 @@ async def list_workflows(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@workflows_router.get("/{slug}")
+@workflows_router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[LibraryWorkflowSnapshot])
 async def get_workflow(
     request: Request,
     slug: str,
@@ -359,7 +364,7 @@ async def get_workflow(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     selector = FieldSelector(LibraryWorkflow, fields, always_include={"id"})
     workflow = await svc.get_workflow_by_slug(
         db,
@@ -370,7 +375,7 @@ async def get_workflow(
     return success(data=selector.apply(workflow))
 
 
-@workflows_router.get("/records/{workflow_id}")
+@workflows_router.get("/records/{workflow_id}", response_model_exclude_unset=True, response_model=SuccessResponse[LibraryWorkflowSnapshot])
 async def get_workflow_record(
     request: Request,
     workflow_id: uuid.UUID,
@@ -383,7 +388,7 @@ async def get_workflow_record(
     return success(data=selector.apply(workflow))
 
 
-@workflows_router.post("/", status_code=201)
+@workflows_router.post("/", response_model=SuccessResponse[LibraryWorkflowOut], status_code=201)
 @audit_action("workflow.create", target_type="LibraryWorkflow", include_body=True)
 async def create_workflow(
     request: Request,
@@ -399,7 +404,7 @@ async def create_workflow(
     )
 
 
-@workflows_router.patch("/{workflow_id}")
+@workflows_router.patch("/{workflow_id}", response_model=SuccessResponse[LibraryWorkflowOut])
 @audit_action(
     "workflow.update", target_type="LibraryWorkflow", target_id_param="workflow_id"
 )
@@ -429,7 +434,7 @@ async def delete_workflow(
     await invalidate_public_library_cache()
 
 
-@workflow_steps_router.get("/")
+@workflow_steps_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryWorkflowStepSnapshot]])
 async def list_workflow_steps(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -447,7 +452,7 @@ async def list_workflow_steps(
     return success(data=selector.apply(steps))
 
 
-@workflow_steps_router.post("/", status_code=201)
+@workflow_steps_router.post("/", response_model=SuccessResponse[LibraryWorkflowStepOut], status_code=201)
 @audit_action(
     "workflow_step.create", target_type="LibraryWorkflowStep", include_body=True
 )
@@ -465,7 +470,7 @@ async def create_workflow_step(
     )
 
 
-@workflow_steps_router.patch("/{step_id}")
+@workflow_steps_router.patch("/{step_id}", response_model=SuccessResponse[LibraryWorkflowStepOut])
 @audit_action(
     "workflow_step.update",
     target_type="LibraryWorkflowStep",
@@ -502,7 +507,7 @@ async def delete_workflow_step(
 policies_router = APIRouter(prefix="/library/policies", tags=["Library Policies"])
 
 
-@policies_router.get("/")
+@policies_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryPolicyPageSnapshot]])
 async def list_policy_pages(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -515,7 +520,7 @@ async def list_policy_pages(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     selector = FieldSelector(LibraryPolicyPage, fields, always_include={"id"})
     result = await svc.list_policy_pages(
         db,
@@ -531,7 +536,7 @@ async def list_policy_pages(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@policies_router.get("/{slug}")
+@policies_router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[LibraryPolicyPageSnapshot])
 async def get_policy_page(
     request: Request,
     slug: str,
@@ -539,7 +544,7 @@ async def get_policy_page(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     selector = FieldSelector(LibraryPolicyPage, fields, always_include={"id"})
     policy_page = await svc.get_policy_page_by_slug(
         db,
@@ -550,7 +555,7 @@ async def get_policy_page(
     return success(data=selector.apply(policy_page))
 
 
-@policies_router.post("/", status_code=201)
+@policies_router.post("/", response_model=SuccessResponse[LibraryPolicyPageOut], status_code=201)
 @audit_action("policy.create", target_type="LibraryPolicyPage", include_body=True)
 async def create_policy_page(
     request: Request,
@@ -566,7 +571,7 @@ async def create_policy_page(
     )
 
 
-@policies_router.patch("/{policy_page_id}")
+@policies_router.patch("/{policy_page_id}", response_model=SuccessResponse[LibraryPolicyPageOut])
 @audit_action(
     "policy.update",
     target_type="LibraryPolicyPage",

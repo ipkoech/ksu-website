@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { Download, Landmark } from "lucide-react";
+import { Download, Info } from "lucide-react";
 import { CampusPageHeader } from "@ksu/ui/components";
 import type { UniversityCouncilPageData } from "@/lib/about-data";
-import { UniversityCouncilCard } from "./UniversityCouncilCard";
-import { AboutReveal } from "./about-reveal";
+import GovernanceChart from "./GovernanceChart";
 
 function text(value?: string | null, fallback = "") {
   const trimmed = value?.trim();
@@ -25,34 +24,6 @@ function safeCouncilCtaHref(value?: string | null) {
   }
 }
 
-function MemberGroup({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="bg-white px-5 py-8 sm:px-8 lg:px-10" aria-label={title}>
-      <AboutReveal
-        className="mx-auto w-full max-w-7xl"
-        variant={title === "Council Members" ? "up" : "scale"}
-      >
-        <div className="mb-4 text-center">
-          <h2 className="font-[family-name:var(--font-display)] text-2xl font-normal tracking-tight uppercase text-primary">
-            {title}
-          </h2>
-          <div className="mx-auto mt-2 h-0.5 w-10 bg-secondary" />
-          <p className="sr-only">{description}</p>
-        </div>
-        {children}
-      </AboutReveal>
-    </section>
-  );
-}
-
 export function UniversityCouncilPage({
   data,
 }: {
@@ -67,14 +38,12 @@ export function UniversityCouncilPage({
   const documentCtaHref = safeCouncilCtaHref(mandate?.document_cta?.href);
   // What the Council is for. Only worth its own passage when it actually says
   // something beyond the page description already carried by the header.
-  const remit = text(mandate?.description);
-  const showRemit = Boolean(remit) && remit !== description;
 
   return (
     <div className="bg-white">
       <CampusPageHeader
         image="main-admin"
-        variant="feature"
+        variant="compact"
         titleWeight="normal"
         eyebrow="Governance"
         title={
@@ -101,74 +70,33 @@ export function UniversityCouncilPage({
         }
       />
 
-      {showRemit ? (
-        <section
-          className="bg-white px-5 py-10 sm:px-8 lg:px-10"
-          aria-label="What the Council does"
-        >
-          <AboutReveal className="mx-auto grid w-full max-w-7xl gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-start">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-secondary">
-                <Landmark aria-hidden className="h-5 w-5" />
-              </span>
-              <h2 className="font-[family-name:var(--font-display)] text-2xl font-normal tracking-tight text-primary">
-                What the Council does
+      <section className="px-5 py-4 sm:px-8 lg:px-10">
+        <div className="mx-auto flex max-w-7xl justify-end">
+          <details className="group relative">
+            <summary
+              aria-label="About the University Council"
+              className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full bg-primary text-white shadow-sm transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 [&::-webkit-details-marker]:hidden"
+            >
+              <Info aria-hidden className="h-5 w-5" />
+            </summary>
+            <div className="absolute right-0 z-30 mt-3 w-[min(22rem,calc(100vw-2.5rem))] rounded-2xl border border-border bg-white p-5 text-left shadow-xl">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
+                {text(mandate?.label, "University Council")}
+              </p>
+              <h2 className="mt-2 font-[family-name:var(--font-display)] text-xl text-primary">
+                {text(mandate?.heading, "Council mandate")}
               </h2>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                {text(mandate?.description, description)}
+              </p>
+              <p className="mt-3 border-t border-border pt-3 text-xs leading-5 text-muted-foreground">
+                The Council provides institutional oversight, policy direction and strategic stewardship. The Chairperson leads the Council, members provide governance oversight, and the Secretary supports its official records and communication.
+              </p>
             </div>
-            <p className="max-w-4xl border-l-2 border-secondary pl-5 text-base leading-8 text-muted-foreground">
-              {remit}
-            </p>
-          </AboutReveal>
-        </section>
-      ) : null}
-
-      <MemberGroup
-        title="Chairperson"
-        description="The Council chairperson leads the governing body and provides strategic oversight."
-      >
-        {data.chairperson ? (
-          <UniversityCouncilCard member={data.chairperson} variant="featured" />
-        ) : (
-          <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            Chairperson profile is not currently published.
-          </p>
-        )}
-      </MemberGroup>
-
-      <MemberGroup
-        title="Council Members"
-        description="Council members are shown in the official order published by the University."
-      >
-        {data.members.length ? (
-          <div className="mx-auto flex max-w-[1160px] flex-wrap justify-center gap-4">
-            {data.members.map((member) => (
-              <div
-                key={member.slug || member.id || member.name}
-                className="w-full sm:w-[190px] lg:w-[200px]"
-              >
-                <UniversityCouncilCard member={member} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            Council member profiles are not currently published.
-          </p>
-        )}
-      </MemberGroup>
-
-      <MemberGroup
-        title="Secretary to Council"
-        description="The secretary supports Council governance records, meetings, and official communication."
-      >
-        {data.secretary ? (
-          <UniversityCouncilCard member={data.secretary} variant="secretary" />
-        ) : (
-          <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            Secretary to Council profile is not currently published.
-          </p>
-        )}
-      </MemberGroup>
+          </details>
+        </div>
+      </section>
+      <section className="px-5 pb-5 sm:px-8 lg:px-10"><GovernanceChart data={data} /></section>
     </div>
   );
 }

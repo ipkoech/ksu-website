@@ -67,11 +67,9 @@ async def list_resources(
     public_only: bool = True,
 ) -> PaginatedResult:
     """List electronic resources with filtering."""
-    query = ElectronicResource.active_query().where(
-        ElectronicResource.is_active.is_(True)
-    )
+    query = ElectronicResource.active_query()
     if public_only:
-        query = query.where(public_resource_parent_filter())
+        query = query.where(ElectronicResource.is_active.is_(True), public_resource_parent_filter())
     if library_id is not None:
         query = query.where(ElectronicResource.library_id == library_id)
     if section_letter is not None:
@@ -108,10 +106,9 @@ async def get_resource(
     """Get electronic resource entity by ID."""
     query = ElectronicResource.active_query().where(
         ElectronicResource.id == resource_id,
-        ElectronicResource.is_active.is_(True),
     )
     if public_only:
-        query = query.where(public_resource_parent_filter())
+        query = query.where(ElectronicResource.is_active.is_(True), public_resource_parent_filter())
     result = await db.execute(query)
     row = result.scalar_one_or_none()
     if row is None:
@@ -132,10 +129,9 @@ async def get_resource_by_slug(
     """Get electronic resource entity by slug."""
     query = ElectronicResource.active_query().where(
         ElectronicResource.slug == slug,
-        ElectronicResource.is_active.is_(True),
     )
     if public_only:
-        query = query.where(public_resource_parent_filter())
+        query = query.where(ElectronicResource.is_active.is_(True), public_resource_parent_filter())
     result = await db.execute(query)
     row = result.scalar_one_or_none()
     if row is None:
@@ -168,7 +164,7 @@ async def create_resource(
     """Create a new electronic resource."""
     resource = ElectronicResource(**data.model_dump())
     db.add(resource)
-    await db.commit()
+    await db.flush()
     await db.refresh(resource)
     return resource
 
@@ -180,7 +176,7 @@ async def update_resource(
     resource = await get_resource(db, resource_id, public_only=False)
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(resource, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(resource)
     return resource
 
@@ -189,62 +185,49 @@ async def delete_resource(db: AsyncSession, resource_id: uuid.UUID) -> None:
     """Soft-delete an electronic resource."""
     resource = await get_resource(db, resource_id, public_only=False)
     resource.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 # ── ElectronicResourceGuide ───────────────────────────────────────────────────
 
 
 async def list_guides(
-    db: AsyncSession, electronic_resource_id: uuid.UUID
+    db: AsyncSession, electronic_resource_id: uuid.UUID, *, public_only: bool = True,
 ) -> list[ElectronicResourceGuide]:
-    result = await db.execute(
-        select(ElectronicResourceGuide)
-        .join(
-            ElectronicResource,
-            ElectronicResource.id == ElectronicResourceGuide.electronic_resource_id,
-        )
-        .where(ElectronicResourceGuide.electronic_resource_id == electronic_resource_id)
-        .where(
-            ElectronicResourceGuide.deleted_at.is_(None),
-            ElectronicResourceGuide.is_active.is_(True),
-            ElectronicResource.is_active.is_(True),
-            ElectronicResource.deleted_at.is_(None),
-            public_resource_parent_filter(),
-        )
-        .order_by(
-            ElectronicResourceGuide.sort_order, ElectronicResourceGuide.created_at
-        )
+    query = select(ElectronicResourceGuide).join(
+        ElectronicResource,
+        ElectronicResource.id == ElectronicResourceGuide.electronic_resource_id,
+    ).where(
+        ElectronicResourceGuide.electronic_resource_id == electronic_resource_id,
+        ElectronicResourceGuide.deleted_at.is_(None),
+        ElectronicResource.deleted_at.is_(None),
     )
-    return list(result.scalars().all())
+    if public_only:
+        query = query.where(
+            ElectronicResourceGuide.is_active.is_(True),
+            ElectronicResource.is_active.is_(True), public_resource_parent_filter(),
+        )
+    query = query.order_by(ElectronicResourceGuide.sort_order, ElectronicResourceGuide.created_at, ElectronicResourceGuide.id)
+    return list((await db.execute(query)).scalars().all())
 
 
 async def get_guide_library_id(
-    db: AsyncSession, guide_id: uuid.UUID
+    db: AsyncSession, guide_id: uuid.UUID, *, resource_id: uuid.UUID | None = None,
 ) -> uuid.UUID | None:
-    result = await db.execute(
-        select(ElectronicResource.library_id)
-        .join(
-            ElectronicResourceGuide,
-            ElectronicResourceGuide.electronic_resource_id == ElectronicResource.id,
-        )
-        .where(
-            ElectronicResourceGuide.id == guide_id,
-            ElectronicResourceGuide.deleted_at.is_(None),
-            ElectronicResource.deleted_at.is_(None),
-        )
+    query = select(ElectronicResource.library_id).join(
+        ElectronicResourceGuide,
+        ElectronicResourceGuide.electronic_resource_id == ElectronicResource.id,
+    ).where(
+        ElectronicResourceGuide.id == guide_id,
+        ElectronicResourceGuide.deleted_at.is_(None),
+        ElectronicResource.deleted_at.is_(None),
     )
-    library_id = result.scalar_one_or_none()
-    if library_id is None:
-        guide_result = await db.execute(
-            select(ElectronicResourceGuide.id).where(
-                ElectronicResourceGuide.id == guide_id,
-                ElectronicResourceGuide.deleted_at.is_(None),
-            )
-        )
-        if guide_result.scalar_one_or_none() is None:
-            raise ValueError("Guide not found")
-    return library_id
+    if resource_id is not None:
+        query = query.where(ElectronicResource.id == resource_id)
+    row = (await db.execute(query.with_for_update(of=ElectronicResource))).one_or_none()
+    if row is None:
+        raise ValueError("Guide not found for this resource")
+    return row[0]
 
 
 async def create_guide(
@@ -257,7 +240,7 @@ async def create_guide(
         **data.model_dump(),
     )
     db.add(guide)
-    await db.commit()
+    await db.flush()
     await db.refresh(guide)
     return guide
 
@@ -275,7 +258,7 @@ async def update_guide(
         raise ValueError("Guide not found")
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(guide, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(guide)
     return guide
 
@@ -290,7 +273,7 @@ async def delete_guide(db: AsyncSession, guide_id: uuid.UUID) -> None:
     if guide is None:
         raise ValueError("Guide not found")
     guide.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 # ── Publication search ────────────────────────────────────────────────────────
@@ -493,9 +476,9 @@ async def _search_doaj(
                 doi=doi,
                 url=next(
                     (
-                        l.get("url")
-                        for l in bib.get("link", [])
-                        if l.get("type") == "fulltext"
+                        link.get("url")
+                        for link in bib.get("link", [])
+                        if link.get("type") == "fulltext"
                     ),
                     None,
                 ),
@@ -691,11 +674,11 @@ async def save_publication(
     db: AsyncSession, person_id: uuid.UUID, data: SavedPublicationCreate
 ) -> SavedPublication:
     pub = SavedPublication(person_id=person_id, **data.model_dump())
-    db.add(pub)
     try:
-        await db.commit()
+        async with db.begin_nested():
+            db.add(pub)
+            await db.flush()
     except IntegrityError:
-        await db.rollback()
         raise ValueError("Already saved")
     await db.refresh(pub)
     return pub
@@ -713,7 +696,7 @@ async def unsave_publication(
     if pub.person_id != person_id:
         raise PermissionError("Cannot delete another user's saved publication")
     await db.delete(pub)
-    await db.commit()
+    await db.flush()
 
 
 async def list_saved(
@@ -754,6 +737,6 @@ async def update_saved(
         raise PermissionError("Cannot update another user's saved publication")
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(pub, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(pub)
     return pub

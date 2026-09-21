@@ -144,6 +144,12 @@ export function ResearchContentResourcePage({
   const { hasScope } = usePermissions();
   const canManage = manageScopes.some((scope) => hasScope(scope));
   const guidance = getResearchGuidance("Research Content");
+  const revalidationResource =
+    typeof queryKey[2] === "string"
+      ? queryKey[2]
+      : typeof queryKey[1] === "string"
+        ? queryKey[1]
+        : undefined;
 
   return (
     <EditableServiceResourcePage<ContentRecord, Record<string, any>>
@@ -151,12 +157,14 @@ export function ResearchContentResourcePage({
       description={description}
       backHref="/research/content"
       queryKey={queryKey}
+      resourceKey={revalidationResource}
+      revalidateResearchCache={Boolean(revalidationResource)}
       hideHeader={hideHeader}
       fields={withResearchFieldHelp(fields)}
       listFilters={withDefaultSearchFilter(listFilters)}
       recordColumns={recordColumns}
       summarySlot={summarySlot}
-      toolbarSlot={<ResearchSectionGuide title="Research Content" className="sm:ml-auto" />}
+      toolbarSlot={<ResearchSectionGuide title="Content" className="sm:ml-auto" />}
       list={async (filters) => resource.list({ page: 1, per_page: 50, scope_type: "research", ...listParams, ...filters })}
       create={(payload) => resource.create({ ...payload, scope_type: "research" })}
       update={(id, payload) => resource.update(id, { ...payload, scope_type: "research" })}

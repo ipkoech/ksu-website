@@ -1,16 +1,17 @@
 import Link from "next/link";
+import { Fragment } from "react";
 import {
   ArrowRight,
   BookOpen,
   Clock3,
   Database,
-  ExternalLink,
   Library,
   MessageCircle,
   Search,
   Users,
 } from "lucide-react";
 import { LibrarySearchHero } from "../components/library-search-hero";
+import { LibraryOverviewData, type LibraryOverviewUpdate } from "../components/library-overview-data";
 import {
   LibraryActionLink,
   LibraryContentBand,
@@ -19,19 +20,15 @@ import {
 } from "../components/library-ui";
 import {
   CountUp,
-  ParallaxFigure,
   Reveal,
   StaggerGroup,
   StaggerItem,
 } from "../components/library-motion";
 import {
-  compactText,
-  formatLabel,
   getLibraryOverviewData,
-  safeExternalUrl,
 } from "../lib/library-public-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export default async function LibraryPage() {
   const {
@@ -47,11 +44,24 @@ export default async function LibraryPage() {
     errors,
   } = await getLibraryOverviewData();
   const primaryHours = todayHours.data[0];
-  const featuredResources = electronic.data.filter((item) => item.is_featured).slice(0, 5);
-  const updates = [
-    ...news.data.slice(0, 2).map((item) => ({ ...item, kind: "News", updateType: "news" })),
-    ...events.data.slice(0, 2).map((item) => ({ ...item, kind: "Event", updateType: "events" })),
-    ...articles.data.slice(0, 1).map((item) => ({ ...item, kind: "Article", updateType: "articles" })),
+  const featuredResources = electronic.data.filter((item) => item.is_featured).slice(0, 5).map((item) => ({
+    id: item.id,
+    name: item.name,
+    resource_type: item.resource_type,
+    description: item.description ?? null,
+    provider: item.provider ?? null,
+    access_url: item.access_url ?? null,
+  }));
+  const overviewBranches = branches.data.slice(0, 4).map((branch) => ({
+    id: branch.id,
+    name: branch.name,
+    address: branch.address ?? null,
+    location: branch.location ?? null,
+  }));
+  const updates: LibraryOverviewUpdate[] = [
+    ...news.data.slice(0, 2).map((item) => ({ id: item.id, title: item.title, slug: item.slug, summary: item.summary ?? null, plainText: item.plain_text ?? null, kind: "News", updateType: "news" })),
+    ...events.data.slice(0, 2).map((item) => ({ id: item.id, title: item.title, slug: item.slug, summary: item.summary ?? null, plainText: item.plain_text ?? null, kind: "Event", updateType: "events" })),
+    ...articles.data.slice(0, 1).map((item) => ({ id: item.id, title: item.title, slug: item.slug, summary: item.summary ?? null, plainText: item.plain_text ?? null, kind: "Article", updateType: "articles" })),
   ].slice(0, 3);
   const statItems = stats?.stats ?? [
     { key: "catalog", label: "Catalog records", value: catalog.meta?.total ?? catalog.data.length, description: "Books, journals, and more" },
@@ -106,13 +116,15 @@ export default async function LibraryPage() {
             </div>
             <dl className="grid grid-cols-2 gap-x-8">
               {statItems.map((item) => (
-                <div key={item.key} className="border-b border-border py-5">
-                  <dd className="text-3xl font-bold tabular-nums text-foreground sm:text-4xl">
+                <Fragment key={item.key}>
+                  <dt className="border-b border-border pt-5 text-sm font-semibold text-foreground">
+                    {item.label}
+                  </dt>
+                  <dd className="border-b border-border py-5 text-3xl font-bold tabular-nums text-foreground sm:text-4xl">
                     <CountUp value={item.value} />
                   </dd>
-                  <dt className="mt-1 text-sm font-semibold text-foreground">{item.label}</dt>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.description}</p>
-                </div>
+                  <dd className="col-span-2 border-b border-border pb-5 text-sm leading-6 text-muted-foreground">{item.description}</dd>
+                </Fragment>
               ))}
             </dl>
           </Reveal>
@@ -134,55 +146,7 @@ export default async function LibraryPage() {
         </StaggerGroup>
       </LibraryContentBand>
 
-      <LibraryContentBand>
-        <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
-          <ParallaxFigure
-            src="/images/library/shelves.jpg"
-            alt="Shelves of books inside the Kisii University Library"
-            className="aspect-[4/3] lg:aspect-auto lg:min-h-full"
-          />
-          <div>
-            <LibrarySectionHeading
-              title="Featured e-resources"
-              body="Start with the digital platforms and collections most useful for study, teaching, and research."
-            />
-            {featuredResources.length === 0 ? (
-              <StatusMessage>No featured electronic resources are available yet.</StatusMessage>
-            ) : (
-              <Reveal>
-                <div className="divide-y divide-border border-y border-border">
-                  {featuredResources.map((resource) => (
-                    <div key={resource.id} className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                          <h3 className="text-lg font-semibold text-foreground">{resource.name}</h3>
-                          <span className="text-xs font-semibold text-secondary">{formatLabel(resource.resource_type)}</span>
-                        </div>
-                        <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-                          {compactText(resource.description) || resource.provider || "Access details are maintained by the library team."}
-                        </p>
-                      </div>
-                      {safeExternalUrl(resource.access_url) ? (
-                        <a
-                          href={safeExternalUrl(resource.access_url)!}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-primary hover:text-secondary"
-                        >
-                          Open resource <ExternalLink aria-hidden className="h-4 w-4" />
-                        </a>
-                      ) : (
-                        <span className="shrink-0 text-sm text-muted-foreground">Access link pending</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-6"><LibraryActionLink href="/electronic">View all e-resources</LibraryActionLink></div>
-              </Reveal>
-            )}
-          </div>
-        </div>
-      </LibraryContentBand>
+      <LibraryOverviewData featuredResources={featuredResources} branches={overviewBranches} updates={updates} />
 
       <LibraryContentBand tone="soft">
         <LibrarySectionHeading
@@ -209,70 +173,6 @@ export default async function LibraryPage() {
         <div className="mt-8"><LibraryActionLink href="/services">Explore research support</LibraryActionLink></div>
       </LibraryContentBand>
 
-      <LibraryContentBand>
-        <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
-          <div>
-            <LibrarySectionHeading
-              title="Find a place to study and connect"
-              body="Explore KSU library branches, published opening hours, services, and contact points before your visit."
-            />
-            <Reveal>
-              <div className="divide-y divide-border border-y border-border">
-                {branches.data.slice(0, 4).map((branch) => (
-                  <div key={branch.id} className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground">{branch.name}</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">{branch.address ?? branch.location ?? "Location being updated"}</p>
-                    </div>
-                    <Link href="/contact#hours" className="group inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-primary hover:text-secondary">
-                      View hours
-                      <ArrowRight aria-hidden className="h-4 w-4 transition-transform motion-safe:group-hover:translate-x-1" />
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            </Reveal>
-          </div>
-          <ParallaxFigure
-            src="/images/library/reading-veranda.jpg"
-            alt="Students reading on the veranda of the Kisii University Library"
-            className="aspect-[4/3] lg:aspect-auto lg:min-h-full"
-          />
-        </div>
-      </LibraryContentBand>
-
-      <LibraryContentBand tone="soft">
-        <LibrarySectionHeading
-          title="What is happening at the Library"
-          body="Keep up with workshops, new resources, service updates, and support announcements."
-        />
-        {updates.length === 0 ? (
-          <StatusMessage>No library updates are available yet.</StatusMessage>
-        ) : (
-          <StaggerGroup className="grid gap-8 lg:grid-cols-3">
-            {updates.map((item) => (
-              <StaggerItem key={`${item.kind}-${item.id}`}>
-                <article className="border-t border-border pt-5">
-                  <p className="text-sm font-semibold text-secondary">{item.kind}</p>
-                  <h3 className="mt-2 text-xl font-semibold leading-7 text-foreground">{item.title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                    {compactText(item.summary ?? item.plain_text) || "Read the latest library update."}
-                  </p>
-                  <Link
-                    href={`/updates/${item.updateType}/${item.slug}`}
-                    className="group mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-secondary"
-                  >
-                    Read update
-                    <ArrowRight aria-hidden className="h-4 w-4 transition-transform motion-safe:group-hover:translate-x-1" />
-                  </Link>
-                </article>
-              </StaggerItem>
-            ))}
-          </StaggerGroup>
-        )}
-        <div className="mt-8"><LibraryActionLink href="/updates">View all updates</LibraryActionLink></div>
-      </LibraryContentBand>
-
       <section className="bg-primary px-4 py-16 text-white sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-[1280px] flex-col justify-between gap-8 sm:flex-row sm:items-end">
           <Reveal>
@@ -286,7 +186,7 @@ export default async function LibraryPage() {
           </Reveal>
           <Link
             href="/ask"
-            className="group inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-secondary px-5 py-3 text-sm font-semibold text-white transition hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary/30 active:scale-[0.98]"
+            className="group inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-[hsl(var(--secondary-deep))] px-5 py-3 text-sm font-semibold text-white transition hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary/30 active:scale-[0.98]"
           >
             Ask a librarian
             <ArrowRight aria-hidden className="h-4 w-4 transition-transform motion-safe:group-hover:translate-x-1" />

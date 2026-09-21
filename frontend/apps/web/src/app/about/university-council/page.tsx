@@ -3,6 +3,8 @@ import { PageShell } from "@/components/site-shell";
 import { UniversityCouncilPage } from "@/components/about/UniversityCouncilPage";
 import { getUniversityCouncilPage } from "@/lib/about-data";
 
+export const revalidate = 300;
+
 export default async function UniversityCouncilRoute() {
   const data = await getUniversityCouncilPage();
 

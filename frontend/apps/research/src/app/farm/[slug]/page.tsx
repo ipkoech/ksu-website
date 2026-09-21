@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import {
   ResearchDetailHero,
   ResearchDetailSidebar,
@@ -10,7 +9,6 @@ import { ResearchSection, StatusMessage } from "../../../components/research-ui"
 import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import {
   compactText,
-  generateSlugParams,
   getFarmActivities,
   getFarmBySlug,
   getFarmPartners,
@@ -21,15 +19,12 @@ import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../..
 import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getFarmBySlug(slug);
   return researchRecordMetadata(data, { fallbackTitle: "University farm", pathname: "/farm/" + slug });
-}
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.farms.list);
 }
 
 export default async function FarmDetailPage({
@@ -46,7 +41,7 @@ export default async function FarmDetailPage({
   const title = getRecordTitle(farm, "University farm");
   const storySections = getNarrativeSections(farm, [
     { title: "What The Farm Supports", fields: ["about", "summary", "description", "activities"] },
-    { title: "Research And Demonstrations", fields: ["facilities", "capacity_info", "equipment", "research_areas"] },
+    { title: "And Demonstrations", fields: ["facilities", "capacity_info", "equipment", "research_areas"] },
     { title: "Production And Extension", fields: ["products", "services", "community_impact", "extension"] },
     { title: "Operational Base", fields: ["location", "county", "manager_name", "contact_person"] },
   ]);
@@ -79,7 +74,7 @@ export default async function FarmDetailPage({
           ...(center?.slug ? [{ label: "View center", href: `/centers/${center.slug}` }] : []),
           ...(compactText(farm.email) ? [{ label: "Contact farm", href: `mailto:${compactText(farm.email)}`, variant: "secondary" as const }] : []),
         ]}
-        imageSrc="/images/research/research-farm-hero.svg"
+        imageSrc="/images/research/verified/environment-01.jpeg"
         imageAlt="University farm research, demonstration, and extension work"
       />
 

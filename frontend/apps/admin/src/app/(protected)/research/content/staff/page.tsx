@@ -1,5 +1,7 @@
 "use client";
 
+import { getResearchOfficeScope } from "./research-office-scope";
+import { NewOfficePerson } from "./new-office-person";
 import type { ReactNode } from "react";
 import { staffApi, type StaffAssignment } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
@@ -7,7 +9,6 @@ import { EditableServiceResourcePage, type EditableListFilter, type EditableReco
 import { DateValue, StatusBadge, titleOf } from "../../_components/research-workspace";
 import { ResearchSettingsWorkspaceHeader } from "../../settings/_components/settings-workspace";
 import {
-  getResearchGuidance,
   ResearchSectionGuide,
 } from "../../_components/research-guidance";
 import { withResearchFieldHelp } from "../../_components/research-resource-page";
@@ -76,17 +77,18 @@ function StaffMobileRecord(record: StaffRecord, actions: ReactNode) {
 export default function ResearchStaffPage() {
   const { hasScope } = usePermissions();
   const canManage = ["people.manage", "staff.manage", "content.manage", "research:write"].some((scope) => hasScope(scope));
-  const guidance = getResearchGuidance("Research Content");
 
   return (
     <EditableServiceResourcePage<StaffRecord, Record<string, any>>
-      title="Research Administration Staff"
-      description="Manage staff assignments attached to the research administrative unit."
+      title="Office Team"
+      primaryActionLabel="Add team member"
+      description="Choose a staff member and their office role. Active, public profiles appear on the research Team page."
       backHref="/research/content"
       queryKey={["research", "content", "staff"]}
       summarySlot={
         <div className="space-y-4">
           <ResearchSettingsWorkspaceHeader />
+          {canManage ? <NewOfficePerson /> : null}
         </div>
       }
       listFilters={staffFilters}
@@ -99,55 +101,46 @@ export default function ResearchStaffPage() {
         { label: "Recently updated", sort: "updated_at", order: "desc" },
         { label: "Display order", sort: "display_order", order: "asc" },
       ]}
-      toolbarSlot={<ResearchSectionGuide title="Research Content" className="sm:ml-auto" />}
+      toolbarSlot={<ResearchSectionGuide title="Content" className="sm:ml-auto" />}
       renderMobileRecord={StaffMobileRecord}
       fields={withResearchFieldHelp([
-        { name: "person_id", label: "Person", type: "entity", required: true, relation: { adapter: "person", filters: { status: "active" } } },
-        { name: "role", label: "Role", required: true, type: "select", options: [
+        { name: "person_id", label: "Staff member", type: "entity", required: true, relation: { adapter: "person", filters: { status: "active" } } },
+        { name: "role", label: "Office role", required: true, type: "select", options: [
           { label: "Director", value: "director" },
           { label: "Coordinator", value: "coordinator" },
           { label: "Research Officer", value: "research_officer" },
           { label: "Administrator", value: "administrator" },
           { label: "Member", value: "member" },
         ] },
-        { name: "title", label: "Display Title" },
-        { name: "hierarchy_level", label: "Hierarchy Level", type: "number" },
-        { name: "reports_to_id", label: "Reports To", type: "entity", relation: { adapter: "staffAssignment", filters: { entity_type: "research", status: "active" }, allowClear: true } },
-        { name: "is_primary", label: "Primary Assignment", type: "boolean" },
-        { name: "is_acting", label: "Acting", type: "boolean" },
-        { name: "is_public", label: "Public", type: "boolean" },
-        { name: "start_date", label: "Start Date", type: "date" },
-        { name: "end_date", label: "End Date", type: "date" },
-        { name: "term_years", label: "Term Years", type: "number" },
-        { name: "term_renewable", label: "Term Renewable", type: "boolean" },
-        { name: "show_term_dates", label: "Show Term Dates", type: "boolean" },
-        { name: "status", label: "Status", type: "select", options: [
+        { name: "title", label: "Office job title", helpText: "Optional: the title displayed beneath their name." },
+        { name: "is_public", label: "Show on the Team page", type: "boolean", defaultValue: true, helpText: "The person's profile must also be active, public, and visible in the university directory." },
+        { name: "status", label: "Status", type: "select", defaultValue: "active", options: [
           { label: "Active", value: "active" },
           { label: "Pending", value: "pending" },
           { label: "Ended", value: "ended" },
           { label: "Inactive", value: "inactive" },
         ] },
-        { name: "display_order", label: "Display Order", type: "number" },
+        { name: "display_order", label: "Display order", type: "number", defaultValue: 100 },
         { name: "notes", label: "Notes", type: "textarea" },
       ])}
-      list={(filters) => staffApi.listAssignments({ page: 1, per_page: 50, status: "all", entity_type: "research", ...filters })}
-      create={(payload) => staffApi.createAssignment({ hierarchy_level: 100, status: "active", display_order: 100, ...payload, entity_type: "research", entity_id: null } as any)}
-      update={(id, payload) => {
+      list={async (filters) => staffApi.listAssignments({ page: 1, per_page: 50, status: "all", ...filters, ...await getResearchOfficeScope() })}
+      create={async (payload) => staffApi.createAssignment({ hierarchy_level: 100, status: "active", is_public: true, display_order: 100, ...payload, ...await getResearchOfficeScope() } as any)}
+      update={async (id, payload) => {
         const { person_id: _personId, ...nextPayload } = payload;
-        return staffApi.updateAssignment(id, { ...nextPayload, entity_type: "research", entity_id: null } as any);
+        return staffApi.updateAssignment(id, { ...nextPayload, ...await getResearchOfficeScope() } as any);
       }}
       delete={(id) => staffApi.deleteAssignment(id)}
       getRecordTitle={(record) => record.person?.full_name ?? record.title ?? record.role}
       getRecordMeta={(record) => [record.role_display ?? record.role, record.status, record.entity_type].filter(Boolean).join(" · ")}
       getRecordWorkflowActions={staffWorkflowActions}
-      emptyMessage="No research staff assignments were returned by the staff service."
-      emptyState={guidance?.emptyState}
-      buildPayload={(values) => ({ hierarchy_level: 100, status: "active", display_order: 100, ...values, entity_type: "research", entity_id: null })}
+      emptyMessage="No office team members yet. Add a staff member and choose their role to get started."
+      buildPayload={(values) => values}
       getRecordDetailHref={(record) => `/research/content/staff/${record.id}`}
       canCreate={canManage}
       canEdit={canManage}
       canDelete={canManage}
       resourceKey="content"
+      revalidateResearchCache
     />
   );
 }

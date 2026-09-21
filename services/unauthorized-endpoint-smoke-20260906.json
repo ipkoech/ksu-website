@@ -1,0 +1,103 @@
+{
+  "captured_at": "2026-09-06",
+  "command": "python scripts/unauthorized_endpoint_smoke.py services/unauthorized-endpoint-smoke-20260906.json --max-workers 2",
+  "limitations": [
+    "This covers representative missing-identity and missing-internal-key requests only; it does not prove valid authenticated, forbidden-scope, missing-resource or ownership behavior.",
+    "The app subprocesses make no successful domain requests and no intentional database writes; rejected requests may still emit security-audit dispatch attempts when configured."
+  ],
+  "result": "passed",
+  "services": {
+    "heri_africa": {
+      "cases": [
+        {
+          "expected": [
+            401
+          ],
+          "method": "GET",
+          "ok": true,
+          "path": "/api/v1/heri/admin/dashboard",
+          "status": 401
+        }
+      ],
+      "passed": 1
+    },
+    "library": {
+      "cases": [
+        {
+          "expected": [
+            401
+          ],
+          "method": "GET",
+          "ok": true,
+          "path": "/api/v1/library/stats/admin",
+          "status": 401
+        },
+        {
+          "expected": [
+            403
+          ],
+          "method": "GET",
+          "ok": true,
+          "path": "/api/v1/audit",
+          "status": 403
+        }
+      ],
+      "passed": 2
+    },
+    "main": {
+      "cases": [
+        {
+          "expected": [
+            401
+          ],
+          "method": "GET",
+          "ok": true,
+          "path": "/api/v1/me/profile",
+          "status": 401
+        },
+        {
+          "expected": [
+            401
+          ],
+          "method": "GET",
+          "ok": true,
+          "path": "/api/v1/admin/system/settings",
+          "status": 401
+        },
+        {
+          "expected": [
+            403
+          ],
+          "method": "POST",
+          "ok": true,
+          "path": "/api/v1/internal/audit",
+          "status": 403
+        }
+      ],
+      "passed": 3
+    },
+    "research": {
+      "cases": [
+        {
+          "expected": [
+            401
+          ],
+          "method": "GET",
+          "ok": true,
+          "path": "/api/v1/analytics/dashboard",
+          "status": 401
+        },
+        {
+          "expected": [
+            403
+          ],
+          "method": "GET",
+          "ok": true,
+          "path": "/api/v1/audit",
+          "status": 403
+        }
+      ],
+      "passed": 2
+    }
+  }
+}

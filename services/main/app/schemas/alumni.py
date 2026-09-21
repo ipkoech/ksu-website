@@ -8,7 +8,7 @@ from datetime import date, datetime
 
 from pydantic import Field
 
-from .base import BaseReadSchema, BaseSchema, PhoneStr, SlugStr, UrlStr
+from .base import BaseReadSchema, BaseSchema, PhoneStr, SlugStr, UrlStr, optional_snapshot
 
 
 class AlumniCreate(BaseSchema):
@@ -170,6 +170,13 @@ class AlumniAssociationRead(BaseReadSchema):
     school: dict[str, Any] | None = None
     secretary: dict[str, Any] | None = None
     members: list[AlumniAssociationMemberRead] = Field(default_factory=list)
+
+
+AlumniSnapshot = optional_snapshot("AlumniSnapshot", AlumniRead)
+AlumniAssociationSnapshot = optional_snapshot("AlumniAssociationSnapshot", AlumniAssociationRead)
+AlumniAssociationMemberSnapshot = optional_snapshot(
+    "AlumniAssociationMemberSnapshot", AlumniAssociationMemberRead
+)
 
 
 __all__ = [

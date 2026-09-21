@@ -116,7 +116,8 @@ export function ServiceResourcePage({
   );
   const resourceQuery = useQuery({
     queryKey: [service, endpoint, params],
-    queryFn: () => api.get<ResourceResponse>(endpoint, params),
+    queryFn: ({ signal }) =>
+      api.get<ResourceResponse>(endpoint, params, { signal }),
   });
 
   const records = resourceQuery.data?.data ?? [];

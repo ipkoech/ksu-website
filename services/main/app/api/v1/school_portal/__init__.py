@@ -14,6 +14,8 @@ from .inquiries import router as inquiries_router
 from .publications import router as publications_router
 from .programmes import router as programmes_router
 from .team import router as team_router
+from .integrations import router as integrations_router
+from .work_queue import router as work_queue_router
 
 router = APIRouter()
 router.include_router(audit_router)
@@ -28,5 +30,7 @@ router.include_router(inquiries_router)
 router.include_router(publications_router)
 router.include_router(programmes_router)
 router.include_router(team_router)
+router.include_router(integrations_router)
+router.include_router(work_queue_router)
 
 __all__ = ["router"]

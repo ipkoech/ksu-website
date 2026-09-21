@@ -5,6 +5,9 @@ packages/*/node_modules/
 .next/
 *.next/
 .next*/
+**/.next-*
+apps/*/.next-*
+apps/*/.next-*/
 apps/*/.next/
 apps/*/.next*/
 packages/*/.next/
@@ -33,9 +36,22 @@ packages/*/tmp/
 **/tmp/
 .cache/
 **/.cache/
+.tmp/
+**/.tmp/
+playwright-report/
+**/test-results/
+contracts/frontend-before*/
+contracts/frontend-after*/
 *.log
 *.tsbuildinfo
 .env
 .env.*
+**/.env
+**/.env.*
 !.env.example
 !.env.*.example
+!**/.env.example
+!**/.env.*.example
+
+# Recreate shared asset links inside Linux instead of importing Windows junctions.
+apps/*/public

@@ -7,10 +7,11 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ....deps import CurrentUser, DbSession, require_scope, user_has_scope
 from ....models import AuditLog
+from ....schemas.audit import AuditLogRead
 from ....services import AuditService
 from .._fields import FieldSelection, FieldsDep, build_selector
 
@@ -25,7 +26,11 @@ def _authorize_audit_list_access(user, service_name: str | None) -> None:
     raise HTTPException(status_code=403, detail="Insufficient privileges")
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[AuditLogRead]],
+    response_model_exclude_unset=True,
+)
 async def list_audit_logs(
     db: DbSession,
     user: CurrentUser,
@@ -66,7 +71,12 @@ async def list_audit_logs(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{audit_id}", dependencies=[Depends(require_scope("audit.view"))])
+@router.get(
+    "/{audit_id}",
+    response_model=SuccessResponse[AuditLogRead],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("audit.view"))],
+)
 async def get_audit_log(audit_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(AuditLog, fields)
     item = await AuditService.get_by_id(db, audit_id)

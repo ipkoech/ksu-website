@@ -1,5 +1,4 @@
 import {
-  CompactRecord,
   LibraryContentBand,
   LibraryHero,
   LibrarySectionHeading,
@@ -15,13 +14,14 @@ import {
   getLibraryGuidesData,
   safeExternalUrl,
 } from "../../lib/library-public-data";
+import { LibraryRecordsDisplay, type LibraryRecordDto } from "../../components/library-records-display";
 
 export const metadata = {
   title: "Library Guides",
   description: "Subject, course, audience, and topic guides from Kisii University Library.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type GuidesPageProps = {
   searchParams?: Promise<{
@@ -43,6 +43,26 @@ export default async function LibraryGuidesPage({ searchParams }: GuidesPageProp
       courseCode: params.course,
       audience: params.audience,
     });
+  const guideRecords: LibraryRecordDto[] = guides.data.map((guide) => ({
+    id: guide.id,
+    icon: "book",
+    eyebrow: formatLabel(guide.guide_type),
+    title: guide.title,
+    body: compactText(guide.summary) || "Guide details are being updated.",
+    meta: [guide.subject, guide.course_code, guide.audience].filter((value): value is string => Boolean(value)),
+    href: `/guides/${guide.slug}`,
+    action: "Open guide",
+  }));
+  const specialistRecords: LibraryRecordDto[] = specialists.data.slice(0, 4).map((specialist) => ({
+    id: specialist.id,
+    icon: "users",
+    title: specialist.subjects.join(", ") || "Library specialist",
+    eyebrow: "Research help",
+    body: specialist.support_areas.join(", ") || "Support areas are being updated.",
+    meta: [specialist.schools.join(", "), specialist.departments.join(", ")].filter(Boolean),
+    href: safeExternalUrl(specialist.booking_url) ?? "/specialists",
+    action: safeExternalUrl(specialist.booking_url) ? "Book support" : "View specialists",
+  }));
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
@@ -113,20 +133,7 @@ export default async function LibraryGuidesPage({ searchParams }: GuidesPageProp
             {guides.data.length === 0 ? (
               <StatusMessage>No library guides are available for these filters yet.</StatusMessage>
             ) : (
-              <div className="grid gap-4 lg:grid-cols-2">
-                {guides.data.map((guide) => (
-                  <CompactRecord
-                    key={guide.id}
-                    icon="book"
-                    eyebrow={formatLabel(guide.guide_type)}
-                    title={guide.title}
-                    body={compactText(guide.summary) || "Guide details are being updated."}
-                    meta={[guide.subject, guide.course_code, guide.audience]}
-                    href={`/guides/${guide.slug}`}
-                    action="Open guide"
-                  />
-                ))}
-              </div>
+              <LibraryRecordsDisplay records={guideRecords} marker="library-guides" />
             )}
           </div>
           <SidePanel title="Specialist support" eyebrow="Research help">
@@ -135,19 +142,7 @@ export default async function LibraryGuidesPage({ searchParams }: GuidesPageProp
                 No matching specialists are published yet.
               </p>
             ) : (
-              <div className="grid gap-4">
-                {specialists.data.slice(0, 4).map((specialist) => (
-                  <CompactRecord
-                    key={specialist.id}
-                    icon="users"
-                    title={specialist.subjects.join(", ") || "Library specialist"}
-                    body={specialist.support_areas.join(", ") || "Support areas are being updated."}
-                    meta={[specialist.schools.join(", "), specialist.departments.join(", ")]}
-                    href={safeExternalUrl(specialist.booking_url) ?? "/specialists"}
-                    action={safeExternalUrl(specialist.booking_url) ? "Book support" : "View specialists"}
-                  />
-                ))}
-              </div>
+              <LibraryRecordsDisplay records={specialistRecords} marker="library-guide-specialists" />
             )}
           </SidePanel>
         </div>

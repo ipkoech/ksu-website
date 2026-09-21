@@ -8,13 +8,14 @@ from fastapi import APIRouter, Header, Request, status
 from fastapi.responses import JSONResponse
 from ksu_common import rate_limit
 from ksu_common.rate_limit import RateLimiter
-from ksu_common.schemas.responses import error, success
+from ksu_common.schemas.responses import SuccessResponse, error, success
 
 from ....deps import DbSession
 from ....schemas.contact_inquiry import PublicEntityInquiryCreate
 from ....services.contact_inquiry import ContactInquiryService
 from ....services.idempotency import acquire_json_command, complete_json_command
 from ....services.public_inquiry_target import resolve_public_inquiry_target
+from ....schemas.public_api import PublicInquirySubmission
 
 router = APIRouter()
 _INQUIRY_EMAIL_LIMITER = RateLimiter(requests=10, window=3600, prefix="main:public-inquiries:email")
@@ -43,6 +44,8 @@ def _request_payload(data: PublicEntityInquiryCreate) -> dict[str, object]:
 @router.post(
     "/schools/{school_slug}/inquiries",
     status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[PublicInquirySubmission],
+    response_model_exclude_unset=True,
 )
 @rate_limit(
     requests=5,
@@ -75,6 +78,8 @@ async def create_public_school_inquiry(
     )
     if isinstance(claim, JSONResponse):
         return claim
+    if claim.kind == "replay":
+        return claim.record.response_body or {}
     await _enforce_email_limit(request, data)
     item = await ContactInquiryService.create_public(
         db,
@@ -98,7 +103,12 @@ async def create_public_school_inquiry(
     )
 
 
-@router.post("/entities/{entity_type}/{entity_slug}/inquiries", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/entities/{entity_type}/{entity_slug}/inquiries",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[PublicInquirySubmission],
+    response_model_exclude_unset=True,
+)
 @rate_limit(
     requests=5,
     window=300,
@@ -131,6 +141,8 @@ async def create_public_entity_inquiry(
     )
     if isinstance(claim, JSONResponse):
         return claim
+    if claim.kind == "replay":
+        return claim.record.response_body or {}
     await _enforce_email_limit(request, data)
     item = await ContactInquiryService.create_public(
         db,

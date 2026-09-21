@@ -65,13 +65,13 @@ export default function PageCmsDashboardPage() {
 
   const sectionsQuery = useQuery({
     queryKey: ["page-cms", "sections", "admin"],
-    queryFn: () => pageSectionsApi.listAdmin({ page: 1, per_page: 100 }),
+    queryFn: ({ signal }) => pageSectionsApi.listAdmin({ page: 1, per_page: 100 }, { signal }),
     enabled: canViewSections,
   });
 
   const spotlightsQuery = useQuery({
     queryKey: ["page-cms", "spotlights", "admin"],
-    queryFn: () => partnershipSpotlightsApi.listAdmin({ page: 1, per_page: 100 }),
+    queryFn: ({ signal }) => partnershipSpotlightsApi.listAdmin({ page: 1, per_page: 100 }, { signal }),
     enabled: canManageSpotlights,
   });
 

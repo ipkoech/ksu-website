@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
@@ -26,6 +27,7 @@ class RealtimeConnection:
     last_pong: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     last_ack: str | None = None
     sender_task: asyncio.Task | None = None
+    validate_access: Callable[[], Awaitable[bool]] | None = None
 
 
 class ConnectionManager:
@@ -62,6 +64,15 @@ class ConnectionManager:
     async def _sender(self, connection: RealtimeConnection):
         while True:
             payload = await connection.queue.get()
+            if connection.validate_access:
+                try:
+                    allowed = await connection.validate_access()
+                except Exception:
+                    allowed = False
+                if not allowed:
+                    await connection.websocket.close(code=1008, reason="access_revoked")
+                    await self.disconnect(connection)
+                    return
             await connection.websocket.send_json(payload)
 
     async def send(self, connection: RealtimeConnection, payload: dict) -> bool:

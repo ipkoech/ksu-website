@@ -38,6 +38,7 @@ import {
 import { toast } from "@ksu/ui";
 import { useAnnouncement, useCreateAnnouncement, useUpdateAnnouncement } from "@ksu/api-client";
 import type { Announcement } from "@ksu/api-client";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const schema = z
   .object({
@@ -247,6 +248,7 @@ export default function AnnouncementEditorPage() {
         }
         toast.success("Announcement updated successfully");
       }
+      void revalidatePublicContent("main", "announcements");
       router.push("/content/announcements");
     } catch {
       toast.error(isNew ? "Failed to create announcement" : "Failed to update announcement");

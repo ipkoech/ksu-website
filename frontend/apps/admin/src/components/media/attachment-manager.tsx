@@ -221,6 +221,7 @@ export type AttachmentManagerProps = {
   uploadEntityType?: string;
   uploadEntityId?: string | null;
   mode?: "persisted" | "pending";
+  onPersistedChange?: () => void | Promise<void>;
 };
 
 export function AttachmentManager({
@@ -238,6 +239,7 @@ export function AttachmentManager({
   uploadEntityType,
   uploadEntityId,
   mode = "persisted",
+  onPersistedChange,
 }: AttachmentManagerProps) {
   const [role, setRole] = React.useState(defaultRole);
   const [removeTarget, setRemoveTarget] = React.useState<null | { id: string; label: string; pending: boolean }>(null);
@@ -291,6 +293,7 @@ export function AttachmentManager({
       display_order: 100,
       is_public: isPublic,
     });
+    void onPersistedChange?.();
     toast.success("Attachment linked");
   };
 
@@ -325,12 +328,14 @@ export function AttachmentManager({
     }
 
     await deleteMediaLink.mutateAsync(removeTarget.id);
+    void onPersistedChange?.();
     setRemoveTarget(null);
   };
 
   const updatePersistedLink = async (link: MediaLinkWithMedia, data: Partial<Pick<MediaLink, "role" | "is_public" | "display_order">>) => {
     await updateMediaLink.mutateAsync({ id: link.id, data });
     await linksQuery.refetch();
+    void onPersistedChange?.();
   };
 
   const movePersistedLink = async (link: MediaLinkWithMedia, direction: -1 | 1) => {
@@ -344,6 +349,7 @@ export function AttachmentManager({
       updateMediaLink.mutateAsync({ id: next[nextIndex].id, data: { display_order: nextIndex } }),
     ]);
     await linksQuery.refetch();
+    void onPersistedChange?.();
   };
 
   const updatePendingAttachment = (attachmentId: string, changes: Partial<PendingMediaAttachment>) => {

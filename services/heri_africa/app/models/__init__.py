@@ -1,3 +1,8 @@
+"""HERI Africa ORM model exports."""
+
+# Package-level imports register and re-export the service's ORM models.
+# ruff: noqa: F401
+
 from .base import Base
 from .chair import ChairProfile
 from .analytics import AnalyticsEvent
@@ -25,6 +30,10 @@ from .people import TeamMember
 from .partners import Partner
 from .social import SocialPublication
 from .submissions import CommandIdempotency, Submission
+
+from ksu_common.audit_relay import audit_relay_table
+
+audit_relay = audit_relay_table(Base.metadata, schema="heri")
 
 __all__ = [
     "AnalyticsEvent", "AuditLog", "Base", "ChairProfile", "ContentRevision", "Event", "FooterLink", "HeroSlide", "MediaAsset", "NewsArticle", "NavigationItem", "Opportunity", "Page",

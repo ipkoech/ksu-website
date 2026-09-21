@@ -1,5 +1,7 @@
-import { mainApi } from "@ksu/api-client";
+import "server-only";
+import { ApiClientError, mainApi } from "@ksu/api-client/server";
 
+import { publicFileUrl } from "./public-media";
 import { nullIfNotFound } from "./public-fetch";
 
 export type PublicMedia = {
@@ -183,12 +185,72 @@ export type PublicFactsData = {
 
 type DataResponse<T> = { data: T };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+// Managed uploads live on the API service. Use the existing same-origin file
+// proxy so Next Image does not request /uploads from the web application's disk.
+export function resolveAboutMedia<T>(value: T): T {
+  if (Array.isArray(value)) return value.map(resolveAboutMedia) as T;
+  if (!isRecord(value)) return value;
+  const record = Object.fromEntries(Object.entries(value).map(([key, item]) => [key, resolveAboutMedia(item)]));
+  if (typeof record.id === "string" && typeof record.url === "string" && record.url.startsWith("/uploads/")) {
+    record.url = publicFileUrl(record.id);
+  }
+  return record as T;
+}
+
+function malformedResponse(message: string): never {
+  throw new ApiClientError(message, 502, undefined, "INVALID_RESPONSE");
+}
+
+function parseInstitutionalPage(value: unknown): PublicInstitutionalPage {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== "string" ||
+    typeof value.slug !== "string" ||
+    typeof value.title !== "string" ||
+    typeof value.introduction !== "string" ||
+    !Array.isArray(value.sections)
+  ) {
+    return malformedResponse("The institutional page response was malformed.");
+  }
+  return resolveAboutMedia(value) as unknown as PublicInstitutionalPage;
+}
+
+function parseAboutData(value: unknown): PublicAboutData {
+  if (
+    !isRecord(value) ||
+    !isRecord(value.university) ||
+    typeof value.university.name !== "string" ||
+    !isRecord(value.history) ||
+    !Array.isArray(value.history.milestones)
+  ) {
+    return malformedResponse("The public About response was malformed.");
+  }
+  return resolveAboutMedia(value) as unknown as PublicAboutData;
+}
+
+function parseFactsData(value: unknown): PublicFactsData {
+  if (
+    !isRecord(value) ||
+    !isRecord(value.edition) ||
+    typeof value.edition.reporting_year !== "number" ||
+    !Array.isArray(value.groups) ||
+    !Array.isArray(value.available_years)
+  ) {
+    return malformedResponse("The public facts response was malformed.");
+  }
+  return resolveAboutMedia(value) as unknown as PublicFactsData;
+}
+
 export async function getPublicAboutData(): Promise<PublicAboutData | null> {
   try {
     const response = await mainApi.get<DataResponse<PublicAboutData>>(
       "/api/v1/public/about",
     );
-    return response.data;
+    return parseAboutData(response.data);
   } catch (error) {
     console.error("Failed to load public About content:", error);
     return nullIfNotFound(error);
@@ -203,7 +265,7 @@ export async function getPublicFactsData(
       "/api/v1/public/about/facts",
       year ? { year } : undefined,
     );
-    return response.data;
+    return parseFactsData(response.data);
   } catch (error) {
     console.error("Failed to load public institutional facts:", error);
     return nullIfNotFound(error);
@@ -215,7 +277,7 @@ export async function getPublicInstitutionalPage(slug: string): Promise<PublicIn
     const response = await mainApi.get<DataResponse<PublicInstitutionalPage>>(
       `/api/v1/public/institutional-pages/${slug}`,
     );
-    return response.data;
+    return parseInstitutionalPage(response.data);
   } catch (error) {
     console.error(`Failed to load public institutional page ${slug}:`, error);
     return nullIfNotFound(error);

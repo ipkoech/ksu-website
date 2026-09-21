@@ -21,6 +21,7 @@ import { useAdminEvents, useDeleteEvent } from "@ksu/api-client";
 import { toast } from "@ksu/ui";
 import { useState } from "react";
 import { TableSearch } from "@/components/shared/table-search";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const getEventColumns = ({
     canDelete,
@@ -128,7 +129,8 @@ export default function EventsPage() {
 
     const handleDelete = (id: string) => {
         confirmDelete("event", async () => {
-            await deleteEvent.mutateAsync(id);
+          await deleteEvent.mutateAsync(id);
+            void revalidatePublicContent("main", "events");
             toast.success("Event deleted successfully");
         });
     };

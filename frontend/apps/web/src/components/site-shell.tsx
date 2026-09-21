@@ -1,17 +1,16 @@
+import "server-only";
 import Link from "next/link";
-import {
-  MiniHeader,
-  PublicHeader,
-  PublicFooter,
-  type MegaMenuData,
-} from "@ksu/ui/layout/public";
-import { corporateCommSettingsApi } from "@ksu/api-client";
+import { cache } from "react";
+import { PublicFooter, type MegaMenuData } from "@ksu/ui/layout/public";
+import { corporateCommSettingsApi } from "@ksu/api-client/server";
+import { publicFallback } from "@/lib/public-fetch";
 import { getNavData } from "@/lib/nav-data";
 import {
   heriAfricaFrontendUrl,
   libraryFrontendUrl,
   researchFrontendUrl,
 } from "@/lib/service-urls";
+import { PublicSiteChrome } from "./public/public-site-chrome";
 
 const fallbackSocialLinks = {
   facebook: "https://facebook.com/kisiiuniversity",
@@ -26,18 +25,20 @@ const fallbackSocialLinks = {
  * (public setting corporate_communication.social_links); the hardcoded map
  * is the fallback when the setting is unseeded or the API is unreachable.
  */
-export async function getSocialLinks(): Promise<typeof fallbackSocialLinks> {
-  try {
-    const managed = await corporateCommSettingsApi.publicSocialLinks();
-    if (!managed) return fallbackSocialLinks;
-    const entries = Object.entries(managed).filter(
-      ([, url]) => typeof url === "string" && url.trim() !== "",
-    );
-    return { ...fallbackSocialLinks, ...Object.fromEntries(entries) };
-  } catch {
-    return fallbackSocialLinks;
-  }
-}
+export const getSocialLinks = cache(
+  async (): Promise<typeof fallbackSocialLinks> => {
+    try {
+      const managed = await corporateCommSettingsApi.publicSocialLinks();
+      if (!managed) return fallbackSocialLinks;
+      const entries = Object.entries(managed).filter(
+        ([, url]) => typeof url === "string" && url.trim() !== "",
+      );
+      return { ...fallbackSocialLinks, ...Object.fromEntries(entries) };
+    } catch (error) {
+      return publicFallback(error, fallbackSocialLinks);
+    }
+  },
+);
 
 const contactInfo = {
   address: "Main Campus, Kisii",
@@ -107,18 +108,17 @@ export async function PageShell({
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_38%,hsl(var(--surface-muted))_100%)] text-foreground">
-      <MiniHeader
-        contactInfo={contactInfo}
-        quickLinks={miniQuickLinks}
-        socialLinks={socialLinks}
-      />
       {header ?? (
-        <PublicHeader
+        <PublicSiteChrome
+          contactInfo={contactInfo}
+          quickLinks={miniQuickLinks}
+          socialLinks={socialLinks}
           transparent={transparent}
           megaMenuData={resolvedMegaMenuData}
           researchHref={researchFrontendUrl}
           libraryHref={libraryFrontendUrl}
           heriHref={heriAfricaFrontendUrl}
+          header={header}
         />
       )}
       <main id="main-content" tabIndex={-1}>

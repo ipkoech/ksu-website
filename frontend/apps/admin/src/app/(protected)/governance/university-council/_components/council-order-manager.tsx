@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, GripVertical, Save } from "lucide-react";
 import { toast } from "@ksu/ui";
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ksu/ui/components";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { councilGovernanceProfile, type CouncilMember, type CouncilOrderNode, type GovernanceWorkspaceProfile } from "@/lib/api/organization";
 
 type DisplayGroup = CouncilOrderNode["display_group"];
@@ -108,6 +109,7 @@ export function CouncilOrderManager({ profile = councilGovernanceProfile }: { pr
   const saveMutation = useMutation({
     mutationFn: () => profile.api.updateOrder({ nodes: normalizeOrder(nodes) }),
     onSuccess: async () => {
+      void revalidatePublicContent("main", "governance");
       toast.success(`${profile.badgeLabel} order saved`);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["governance", profile.key, "order"] }),

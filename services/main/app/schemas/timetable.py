@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, time
+from datetime import date, datetime, time
 
 from pydantic import Field, model_validator
 
-from .base import BaseSchema
+from .base import BaseReadSchema, BaseSchema, optional_snapshot
 
 
 class TimetableVenueCreate(BaseSchema):
@@ -67,3 +67,55 @@ class TimetableSittingUpdate(BaseSchema):
     candidate_count: int | None = Field(default=None, ge=0)
     special_instructions: str | None = None
     status: str | None = Field(default=None, max_length=32)
+
+
+class TimetableVenueRead(BaseReadSchema):
+    campus_id: uuid.UUID | None = None
+    name: str
+    code: str
+    building: str | None = None
+    capacity: int | None = None
+    is_active: bool
+
+
+class TimetableSittingRead(BaseReadSchema):
+    timetable_id: uuid.UUID
+    course_code: str
+    course_title: str
+    sitting_date: date
+    start_time: time
+    end_time: time
+    venue_id: uuid.UUID | None = None
+    cohort_label: str | None = None
+    candidate_count: int | None = None
+    special_instructions: str | None = None
+    status: str
+    venue: dict[str, object] | None = None
+    programmes: list[dict[str, object]] | None = None
+
+
+class AcademicTimetableRead(BaseReadSchema):
+    calendar_id: uuid.UUID
+    title: str
+    timetable_type: str
+    version: int
+    notes: str | None = None
+    fallback_document_id: uuid.UUID | None = None
+    status: str
+    is_public: bool
+    is_published: bool
+    published_at: datetime | None = None
+    archived_at: datetime | None = None
+    supersedes_id: uuid.UUID | None = None
+    fallback_document: dict[str, object] | None = None
+    sittings: list[TimetableSittingRead] = Field(default_factory=list)
+
+
+TimetableVenueSnapshot = optional_snapshot("TimetableVenueSnapshot", TimetableVenueRead)
+TimetableSittingSnapshot = optional_snapshot("TimetableSittingSnapshot", TimetableSittingRead)
+AcademicTimetableSnapshot = optional_snapshot("AcademicTimetableSnapshot", AcademicTimetableRead)
+
+
+class PublicTimetableItem(BaseSchema):
+    timetable: AcademicTimetableSnapshot
+    sittings: list[TimetableSittingSnapshot] = Field(default_factory=list)

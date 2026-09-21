@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import EmailStr, Field
 
-from .base import BaseReadSchema, BaseSchema
+from .base import BaseReadSchema, BaseSchema, optional_snapshot
 
 
 class FAQCreate(BaseSchema):
@@ -56,6 +56,9 @@ class FAQRead(BaseReadSchema):
     updated_by_id: uuid.UUID | None = None
     updated_by: dict[str, Any] | None = None
     deleted_at: datetime | None = None
+
+
+FAQSnapshot = optional_snapshot("FAQSnapshot", FAQRead)
 
 
 class ContactDirectoryCreate(BaseSchema):
@@ -172,3 +175,7 @@ class SupportTicketRead(BaseReadSchema):
     assigned_to_user: dict[str, Any] | None = None
     requester_user: dict[str, Any] | None = None
     deleted_at: datetime | None = None
+
+
+ContactDirectorySnapshot = optional_snapshot("ContactDirectorySnapshot", ContactDirectoryRead)
+SupportTicketSnapshot = optional_snapshot("SupportTicketSnapshot", SupportTicketRead)

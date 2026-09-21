@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ResearchPageHero, ResearchPageHeroStats } from "../../components/research-page-hero";
 import Link from "next/link";
-import type { ResearchGenericRecord } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import { ResearchFilterForm } from "../../components/research-listing";
 import { Badge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { getResearchRecordDownloadHref } from "../../lib/research-downloads";
@@ -63,7 +63,7 @@ function FormsMasthead({
   ];
 
   return (
-    <ResearchPageHero eyebrow="Funding / Support" title="Forms, templates, and practical research resources" description="Search backend-published forms, templates, and guidance records with direct detail links." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Forms" }]} actions={[{ label: "Open resources", href: "/resources-tools" }, { label: "Guidelines", href: "/guidelines", variant: "secondary" }]} imageSrc="/institutional-research-images/KSUGreenLandscapingWithoutWMJuly2026-7606.jpg" imageAlt="Kisii University research resources">
+    <ResearchPageHero eyebrow="Funding / Support" title="Forms, templates, and practical research resources" description="Search backend-published forms, templates, and guidance records with direct detail links." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Forms" }]} actions={[{ label: "Open resources", href: "/resources-tools" }, { label: "Guidelines", href: "/guidelines", variant: "secondary" }]} imageSrc="/images/research/headers/innovation-week-8101.jpg" imageAlt="Kisii University research resources">
       <ResearchPageHeroStats facts={stats} />
     </ResearchPageHero>
   );

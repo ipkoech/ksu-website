@@ -19,7 +19,7 @@ from app.models.admissions import (
     INTAKE_PUBLIC_ACTION_TYPES,
 )
 
-from .base import BaseReadSchema, BaseSchema, CodeStr, SlugStr
+from .base import BaseReadSchema, BaseSchema, CodeStr, SlugStr, optional_snapshot
 
 
 def _validate_choice(
@@ -215,6 +215,9 @@ class ProgrammeRead(BaseReadSchema):
     admission_requirements: list[dict[str, Any]] = Field(default_factory=list)
     fee_structures: list[dict[str, Any]] = Field(default_factory=list)
     admission_documents: list[dict[str, Any]] = Field(default_factory=list)
+
+
+ProgrammeSnapshot = optional_snapshot("ProgrammeSnapshot", ProgrammeRead)
 
 
 class IntakeCreate(BaseSchema):
@@ -1304,21 +1307,40 @@ class AdmissionPageSectionRead(BaseReadSchema):
     display_order: int
 
 
+ProgrammeTutorSnapshot = optional_snapshot("ProgrammeTutorSnapshot", ProgrammeTutorRead)
+ProgrammeIntakeSnapshot = optional_snapshot("ProgrammeIntakeSnapshot", ProgrammeIntakeRead)
+IntakeSnapshot = optional_snapshot("IntakeSnapshot", IntakeRead)
+IntakePublicActionSnapshot = optional_snapshot("IntakePublicActionSnapshot", IntakePublicActionRead)
+IntakeMilestoneSnapshot = optional_snapshot("IntakeMilestoneSnapshot", IntakeMilestoneRead)
+AdmissionInfoSnapshot = optional_snapshot("AdmissionInfoSnapshot", AdmissionInfoRead)
+AdmissionPathwaySnapshot = optional_snapshot("AdmissionPathwaySnapshot", AdmissionPathwayRead)
+AdmissionRequirementSnapshot = optional_snapshot("AdmissionRequirementSnapshot", AdmissionRequirementRead)
+ProgrammeFeeStructureSnapshot = optional_snapshot("ProgrammeFeeStructureSnapshot", ProgrammeFeeStructureRead)
+AdmissionDocumentSnapshot = optional_snapshot("AdmissionDocumentSnapshot", AdmissionDocumentRead)
+AdmissionFaqSnapshot = optional_snapshot("AdmissionFaqSnapshot", AdmissionFaqRead)
+AdmissionPageSectionSnapshot = optional_snapshot("AdmissionPageSectionSnapshot", AdmissionPageSectionRead)
+
+
 __all__ = [
     "ProgrammeCreate",
     "ProgrammeUpdate",
     "ProgrammeRead",
+    "ProgrammeSnapshot",
     "ProgrammeTutorCreate",
     "ProgrammeTutorRead",
+    "ProgrammeTutorSnapshot",
     "IntakeCreate",
     "IntakeUpdate",
     "IntakeRead",
+    "IntakeSnapshot",
     "IntakePublicActionCreate",
     "IntakePublicActionUpdate",
     "IntakePublicActionRead",
+    "IntakePublicActionSnapshot",
     "IntakeMilestoneCreate",
     "IntakeMilestoneUpdate",
     "IntakeMilestoneRead",
+    "IntakeMilestoneSnapshot",
     "HomepageActionConfig",
     "HomepageActionConfigUpdate",
     "HomepageReportingConfig",
@@ -1330,22 +1352,29 @@ __all__ = [
     "AdmissionInfoCreate",
     "AdmissionInfoUpdate",
     "AdmissionInfoRead",
+    "AdmissionInfoSnapshot",
     "AdmissionPathwayCreate",
     "AdmissionPathwayUpdate",
     "AdmissionPathwayRead",
+    "AdmissionPathwaySnapshot",
     "AdmissionRequirementCreate",
     "AdmissionRequirementUpdate",
     "AdmissionRequirementRead",
+    "AdmissionRequirementSnapshot",
     "ProgrammeFeeStructureCreate",
     "ProgrammeFeeStructureUpdate",
     "ProgrammeFeeStructureRead",
+    "ProgrammeFeeStructureSnapshot",
     "AdmissionDocumentCreate",
     "AdmissionDocumentUpdate",
     "AdmissionDocumentRead",
+    "AdmissionDocumentSnapshot",
     "AdmissionFaqCreate",
     "AdmissionFaqUpdate",
     "AdmissionFaqRead",
+    "AdmissionFaqSnapshot",
     "AdmissionPageSectionCreate",
     "AdmissionPageSectionUpdate",
     "AdmissionPageSectionRead",
+    "AdmissionPageSectionSnapshot",
 ]

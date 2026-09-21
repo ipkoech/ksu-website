@@ -8,6 +8,8 @@ export const metadata = {
   description: "Kisii University website terms of use and public access guidance.",
 };
 
+export const revalidate = 300;
+
 export default function TermsPage() {
   return (
     <PageShell>

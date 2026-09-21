@@ -5,8 +5,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote
 
-from fastapi import HTTPException, status
-from ksu_common.internal_client import get_integration_pool
+from fastapi import HTTPException
+from .notification_outbox import enqueue_notification
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -39,6 +39,7 @@ async def create_recovery_link(
 
 
 async def send_reply_notification(
+    db: AsyncSession,
     *,
     email: str,
     token: str,
@@ -55,43 +56,38 @@ async def send_reply_notification(
         f'<p><a href="{link}">Open your Library conversation</a></p>'
         "<p>This recovery link expires soon.</p>"
     )
-    response = await get_integration_pool().request_internal(
-        "main-library-reply-notification",
-        settings.MAIN_SERVICE_URL.rstrip("/"),
-        "POST",
-        "/api/v1/internal/email/send",
-        api_key=settings.MAIN_SERVICE_API_KEY,
-        timeout=10,
-        json={
-            "to_email": email,
-            "subject": "A librarian replied to your conversation",
-            "text_body": text,
-            "html_body": html,
-        },
-    )
-    response.raise_for_status()
+    await enqueue_notification(db, {
+        "to_email": email, "subject": "A librarian replied to your conversation",
+        "text_body": text, "html_body": html,
+    }, expires_at=_now() + timedelta(days=settings.CONVERSATION_CONTINUATION_TTL_DAYS), settings=settings)
+
 
 
 async def recover_conversation(
     db: AsyncSession,
     token: str,
 ) -> tuple[LibraryConversation, str]:
-    recovery = (
-        await db.execute(
-            select(LibraryConversationRecovery)
-            .options(selectinload(LibraryConversationRecovery.conversation).selectinload(LibraryConversation.messages))
-            .where(
-                LibraryConversationRecovery.token_hash == hash_secret(token),
-                LibraryConversationRecovery.used_at.is_(None),
-            )
-        )
-    ).scalar_one_or_none()
+    conversation_id = await db.scalar(select(LibraryConversationRecovery.conversation_id).where(
+        LibraryConversationRecovery.token_hash == hash_secret(token),
+        LibraryConversationRecovery.used_at.is_(None), LibraryConversationRecovery.deleted_at.is_(None),
+    ))
+    if conversation_id is None:
+        raise HTTPException(status_code=401, detail="Recovery link expired or invalid")
+    # Match the parent-first lock order used by replies and token issuance.
+    conversation = await db.scalar(select(LibraryConversation).options(
+        selectinload(LibraryConversation.messages),
+    ).where(LibraryConversation.id == conversation_id, LibraryConversation.deleted_at.is_(None))
+      .with_for_update().execution_options(populate_existing=True))
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    recovery = await db.scalar(select(LibraryConversationRecovery).where(
+        LibraryConversationRecovery.token_hash == hash_secret(token),
+        LibraryConversationRecovery.conversation_id == conversation_id,
+        LibraryConversationRecovery.used_at.is_(None), LibraryConversationRecovery.deleted_at.is_(None),
+    ).with_for_update().execution_options(populate_existing=True))
     now = _now()
     if recovery is None or recovery.expires_at <= now:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Recovery link expired or invalid")
-    conversation = recovery.conversation
-    if conversation.deleted_at is not None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
+        raise HTTPException(status_code=401, detail="Recovery link expired or invalid")
     recovery.used_at = now
     continuation_token = create_guest_token()
     conversation.continuation_token_hash = hash_secret(continuation_token)

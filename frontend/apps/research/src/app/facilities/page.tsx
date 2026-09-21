@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { pageFromSearchParams } from "@ksu/ui/components";
 import { ProgramTableControls } from "../programs/program-table-controls";
 import { ResearchListPagination } from "../../components/research-list-pagination";
@@ -8,25 +7,22 @@ import {
   ResearchPortfolioShell,
 } from "../../components/research-portfolio";
 import {
-  Badge,
   ResearchSection,
-  FilledBadge,
   StatusMessage,
 } from "../../components/research-ui";
 import {
-  compactText,
-  formatLabel,
   getCenters,
   getFacilities,
   getFacilitiesFiltered,
   getServices,
 } from "../../lib/research-public-data";
-import type { ResearchGenericRecord } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
+import { FacilitiesDisplay, ServicesDisplay } from "../../components/research-record-displays";
+import { toResearchRecordDisplayDto } from "../../lib/research-formatters";
 import {
   filterRecordsByMonth,
   getListPageSize,
   getRecordMonths,
-  getRecordTitle,
   getRecordYears,
 } from "../../lib/research-page-model";
 
@@ -101,6 +97,8 @@ export default async function FacilitiesPage({
   const totalPages = Math.ceil(
     (params.month ? visibleFacilities.length : facilities.total) / facilities.perPage,
   );
+  const facilityDisplayRecords = visibleFacilities.map((facility) => toResearchRecordDisplayDto(facility));
+  const serviceDisplayRecords = services.data.map((service) => toResearchRecordDisplayDto(service));
 
   return (
     <main id="research-main" className="min-h-screen bg-white text-foreground">
@@ -111,7 +109,7 @@ export default async function FacilitiesPage({
         primary={{ label: "Explore facilities", href: "#facility-portfolio" }}
         secondary={{ label: "View centers", href: "/centers" }}
         illustration="facilities"
-        imageSrc="/institutional-research-images/research-header2.jpg"
+        imageSrc="/images/research/headers/innovation-week-8243.jpg"
         immersive
       />
 
@@ -142,26 +140,7 @@ export default async function FacilitiesPage({
             </div>
           ))}
 
-        {visibleFacilities.length > 0 ? (
-          <>
-            <div className="mt-6 overflow-hidden rounded-lg border border-border bg-white shadow-sm">
-              <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-border bg-surface-subtle px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid">
-                <span>Facility</span>
-                <span>Type</span>
-                <span>Status</span>
-              </div>
-              <div className="divide-y divide-border">
-                {visibleFacilities.map((facility) => (
-                  <FacilityRow key={facility.id} facility={facility} />
-                ))}
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="mt-7">
-            <StatusMessage>No facilities match the current filters.</StatusMessage>
-          </div>
-        )}
+        <FacilitiesDisplay facilities={facilityDisplayRecords} />
       </ResearchPortfolioShell>
 
       <ResearchSection
@@ -170,31 +149,7 @@ export default async function FacilitiesPage({
         body="Service records explain access, process, support scope, contact points, and downloadable requirements when available."
       >
         {services.error ? <StatusMessage tone="error">{services.error}</StatusMessage> : null}
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {services.data.slice(0, 6).map((service) => (
-            <Link
-              key={service.id}
-              href={service.slug ? `/services/${service.slug}` : "/services"}
-              className="block rounded-lg border border-border bg-white p-5 shadow-sm transition hover:border-primary/30"
-            >
-              <Badge>{formatLabel(service.service_type ?? service.type ?? "service")}</Badge>
-              <h3 className="mt-4 text-xl font-semibold text-foreground">
-                {service.name ?? service.title}
-              </h3>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                {compactText(service.summary) ||
-                  compactText(service.description) ||
-                  compactText(service.how_to_access) ||
-                  "Service details will appear when published."}
-              </p>
-              <p className="mt-5 rounded-md bg-surface-subtle p-3 text-sm font-semibold text-muted-foreground">
-                {compactText(service.turnaround_time) ||
-                  compactText(service.contact_email) ||
-                  "Access details not published"}
-              </p>
-            </Link>
-          ))}
-        </div>
+        {serviceDisplayRecords.length > 0 ? <ServicesDisplay services={serviceDisplayRecords} /> : <StatusMessage>No public facility services are currently published.</StatusMessage>}
       </ResearchSection>
     </main>
   );
@@ -231,34 +186,6 @@ function FacilityFilters({
       sortValue={params.sort}
       sortOptions={sortOptions}
     />
-  );
-}
-
-function FacilityRow({ facility }: { facility: ResearchGenericRecord }) {
-  const href = facility.slug ? `/farm/${facility.slug}` : "/farm";
-  const title = getRecordTitle(facility, "Research facility");
-  const type = formatLabel(compactText(facility.farm_type) || "facility");
-  const status = formatLabel(compactText(facility.status) || (facility.is_active === false ? "inactive" : "active"));
-
-  return (
-    <Link
-      href={href}
-      className="group grid gap-2 px-4 py-3 transition hover:bg-surface-subtle/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
-    >
-      <div className="min-w-0">
-        <h2 className="truncate text-sm font-semibold leading-6 text-foreground transition group-hover:text-primary">
-          {title}
-        </h2>
-        {facility.code ? (
-          <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{compactText(facility.code)}</p>
-        ) : null}
-      </div>
-      <div className="text-xs font-medium text-muted-foreground md:text-sm">{type}</div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge>{status}</Badge>
-        {facility.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
-      </div>
-    </Link>
   );
 }
 

@@ -1,3 +1,4 @@
+import "server-only";
 import {
   mainApi,
   publicEntityApi,
@@ -10,7 +11,13 @@ import {
   type PaginatedResponse,
   type Document,
   type PublicEntityContentType,
-} from "@ksu/api-client";
+  type PublicEntityContent,
+} from "@ksu/api-client/server";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
+import {
+  normalizePublicListResponse,
+  normalizePublicRecordResponse,
+} from "@/lib/web-response-shapes";
 
 type ListResponse<T> = {
   data?: T[];
@@ -62,7 +69,12 @@ async function safeList<T>(
   request: Promise<ListResponse<T> | PaginatedResponse<T>>,
 ): Promise<ListResponse<T> | PaginatedResponse<T>> {
   try {
-    return await request;
+    const response = await request;
+    const normalized = normalizePublicListResponse<T>(response);
+    if (!normalized) {
+      return uncachedPublicFallback({ data: [] });
+    }
+    return normalized;
   } catch (error) {
     const status =
       typeof error === "object" && error !== null && "status" in error
@@ -70,11 +82,11 @@ async function safeList<T>(
         : undefined;
 
     if (status && [401, 403, 404, 422].includes(status)) {
-      return { data: [] };
+      return uncachedPublicFallback({ data: [] });
     }
 
     console.error("Failed to load scoped entity media:", error);
-    return { data: [] };
+    return uncachedPublicFallback({ data: [] });
   }
 }
 
@@ -293,10 +305,14 @@ export async function getEntityContent(
       search: options?.search,
       fields: entityContentFields,
     });
-    return response.data;
+    const normalized = normalizePublicRecordResponse<PublicEntityContent>(response);
+    if (!normalized || !Array.isArray(normalized.records)) {
+      throw new Error("Malformed public entity content response");
+    }
+    return normalized;
   } catch (error) {
     console.error(`Failed to load ${entityType} ${contentType}:`, error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 

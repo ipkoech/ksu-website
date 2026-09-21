@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import uuid
 from datetime import datetime
+from urllib.parse import unquote, urlparse
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import or_, select
@@ -23,7 +25,9 @@ from app.models import (
 from app.schemas.base import slugify
 
 from ._shared import SeedContext
+from .live_site_document_updates_20260914 import LIVE_SITE_DOCUMENT_UPDATES_20260914
 from .live_site_snapshot import LIVE_SITE_DOCUMENTS
+from .live_site_updates_20260914 import LIVE_SITE_NEWS_UPDATES_20260914
 
 
 EAT = ZoneInfo("Africa/Nairobi")
@@ -329,19 +333,114 @@ def _live_document_spec(spec: dict[str, object]) -> dict[str, object]:
     }
 
 
+def _current_news_document_specs() -> list[dict[str, object]]:
+    """Expose current article-linked files as public Documents too."""
+    documents: list[dict[str, object]] = []
+    seen_urls: set[str] = set()
+    seen_slugs: set[str] = set()
+    display_order = 300
+
+    for article in LIVE_SITE_NEWS_UPDATES_20260914:
+        source_url = str(article["source_url"])
+        source_title = str(article["title"])
+        for link in article.get("related_links", []):
+            url = str(link.get("url", "")).strip()
+            parsed = urlparse(url)
+            path = unquote(parsed.path)
+            if not path.startswith("/storage/public/downloads/"):
+                continue
+
+            normalized_url = re.sub(r"\s+", " ", url).replace(
+                "/storage/public/downloads//", "/storage/public/downloads/"
+            )
+            if normalized_url in seen_urls:
+                continue
+            seen_urls.add(normalized_url)
+
+            filename = path.rsplit("/", 1)[-1] or "document"
+            label = str(link.get("label", "")).strip()
+            label_lower = label.lower()
+            title = filename if label_lower.startswith(("http://", "https://")) else (
+                source_title if not label or any(
+                phrase in label_lower
+                for phrase in ("click", "view full advert", "open the full advert")
+                ) else label
+            )
+            base_slug = slugify(title) or slugify(filename.rsplit(".", 1)[0])
+            document_slug = base_slug
+            if document_slug in seen_slugs:
+                document_slug = f"{base_slug}-{slugify(filename.rsplit('.', 1)[0])}"
+            if len(document_slug) > 128:
+                document_slug = (
+                    f"{document_slug[:117].rstrip('-')}-"
+                    f"{hashlib.sha1(normalized_url.encode('utf-8')).hexdigest()[:10]}"
+                )
+            seen_slugs.add(document_slug)
+
+            filename_lower = filename.lower()
+            if filename_lower.endswith(".docx"):
+                mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            elif filename_lower.endswith(".xlsx"):
+                mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            else:
+                mime_type = "application/pdf"
+
+            title_lower = title.lower()
+            if "tender" in title_lower:
+                document_type, category = "tender", "Procurement"
+            elif "scholarship" in title_lower or "hest" in title_lower:
+                document_type, category = "scholarship", "Scholarships"
+            elif "application" in title_lower or "referee" in title_lower or "form" in title_lower:
+                document_type, category = "form", "Admissions"
+            elif "advert" in title_lower or "vacanc" in title_lower:
+                document_type, category = "notice", "Human Resources"
+            else:
+                document_type, category = "document", "Official Website"
+
+            documents.append(
+                {
+                    "slug": document_slug,
+                    "title": title,
+                    "url": normalized_url,
+                    "document_type": document_type,
+                    "category": category,
+                    "description": f"Official Kisii University document linked from {source_title}.",
+                    "mime_type": mime_type,
+                    "display_order": display_order,
+                    "source_page_url": source_url,
+                    "source_page_title": source_title,
+                }
+            )
+            display_order += 1
+
+    return documents
+
+
 def _merged_download_specs() -> list[dict[str, object]]:
     merged: list[dict[str, object]] = []
     seen_urls: set[str] = set()
-    for spec in [*DOWNLOAD_SPECS, *(_live_document_spec(spec) for spec in LIVE_SITE_DOCUMENTS)]:
-        url = str(spec["url"])
+    for spec in [
+        *DOWNLOAD_SPECS,
+        *(_live_document_spec(spec) for spec in LIVE_SITE_DOCUMENTS),
+        *LIVE_SITE_DOCUMENT_UPDATES_20260914,
+        *_current_news_document_specs(),
+    ]:
+        # The legacy site emits the same file with encoded/unencoded spaces,
+        # duplicate download slashes, or repeated whitespace. Treat those as
+        # one source document so one URL variation cannot overwrite another
+        # document with the same slug.
+        url = re.sub(r"\s+", " ", unquote(str(spec["url"]))).replace(
+            "/storage/public/downloads//", "/storage/public/downloads/"
+        )
         if url in seen_urls:
             continue
         seen_urls.add(url)
+        spec = {**spec, "url": url}
         merged.append(spec)
     return merged
 
 
-FAQ_SPECS = [
+_UNVERIFIED_FAQ_SPECS = [
     {
         "question": "How do I apply to Kisii University?",
         "answer": "Choose a programme, confirm the entry requirements, complete the official application process, and submit the required documents through the admissions office or approved digital portal before the advertised deadline.",
@@ -463,6 +562,14 @@ FAQ_SPECS = [
         "display_order": 130,
     },
 ]
+
+# The official FAQ page currently publishes no FAQ entries. Keep the former
+# hand-written questions only as a migration reference so they can be hidden
+# on the next seed run rather than presented as official answers.
+FAQ_SPECS: list[dict[str, object]] = []
+_UNVERIFIED_FAQ_QUESTIONS = {
+    str(spec["question"]) for spec in _UNVERIFIED_FAQ_SPECS
+}
 
 
 CONTACT_SPECS = [
@@ -961,7 +1068,12 @@ def _hash_url(url: str) -> str:
 
 
 def _filename_from_spec(spec: dict[str, object]) -> str:
-    suffix = ".pdf" if spec["mime_type"] == "application/pdf" else ".html"
+    suffixes = {
+        "application/pdf": ".pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+    }
+    suffix = suffixes.get(str(spec["mime_type"]), ".bin")
     return f"{spec['slug']}{suffix}"
 
 
@@ -969,7 +1081,10 @@ async def _upsert_external_media(db: AsyncSession, spec: dict[str, object]) -> M
     storage_path = f"seed/external/{_filename_from_spec(spec)}"
     media = (
         await db.execute(
-            select(Media).where(or_(Media.storage_path == storage_path, Media.public_url == spec["url"]))
+            select(Media)
+            .where(or_(Media.public_url == spec["url"], Media.storage_path == storage_path))
+            .order_by(Media.created_at, Media.id)
+            .limit(1)
         )
     ).scalar_one_or_none()
     payload = {
@@ -1223,6 +1338,12 @@ async def seed_public_records(db: AsyncSession, ctx: SeedContext) -> None:
 
     for spec in FAQ_SPECS:
         await _upsert_faq(db, spec)
+
+    for item in (
+        await db.execute(select(FAQ).where(FAQ.question.in_(_UNVERIFIED_FAQ_QUESTIONS)))
+    ).scalars().all():
+        item.is_public = False
+        item.status = "archived"
 
     for spec in CONTACT_SPECS:
         await _upsert_contact(db, spec)

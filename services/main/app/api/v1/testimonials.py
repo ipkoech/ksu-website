@@ -8,12 +8,12 @@ from types import SimpleNamespace
 from fastapi import APIRouter, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import CurrentUser, DbSession
 from ...models import Testimonial
 from ...security.scopes import can_access_scope
-from ...schemas import TestimonialCreate, TestimonialUpdate
+from ...schemas import TestimonialCreate, TestimonialSnapshot, TestimonialUpdate
 from ...services import TestimonialService
 from ._fields import FieldSelection, FieldsDep, build_selector
 
@@ -73,7 +73,7 @@ async def _require_testimonial_scope(
         )
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[TestimonialSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "testimonial_type", "school_id", "department_id", "programme_id", "featured_only", "fields", "include"))
 async def list_testimonials(
     db: DbSession,
@@ -101,7 +101,7 @@ async def list_testimonials(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin")
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[TestimonialSnapshot]])
 async def list_admin_testimonials(
     db: DbSession,
     user: CurrentUser,
@@ -145,7 +145,7 @@ async def list_admin_testimonials(
     return success(data=selector.apply(items), meta=meta)
 
 
-@router.get("/{item_id}")
+@router.get("/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[TestimonialSnapshot])
 @cached_public(timeout=300, vary_on=("item_id", "fields", "include"))
 async def get_testimonial(item_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Testimonial, fields)
@@ -155,7 +155,7 @@ async def get_testimonial(item_id: uuid.UUID, db: DbSession, fields: FieldSelect
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[TestimonialSnapshot])
 async def create_testimonial(data: TestimonialCreate, db: DbSession, user: CurrentUser):
     scope_type, scope_id = _testimonial_scope(data)
     await _require_testimonial_scope(
@@ -169,7 +169,7 @@ async def create_testimonial(data: TestimonialCreate, db: DbSession, user: Curre
     return success(data=item, message="Testimonial created")
 
 
-@router.patch("/{item_id}")
+@router.patch("/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[TestimonialSnapshot])
 async def update_testimonial(item_id: uuid.UUID, data: TestimonialUpdate, db: DbSession, user: CurrentUser):
     item = await TestimonialService.get_by_id(db, item_id, public_only=False)
     if item is None:

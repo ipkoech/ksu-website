@@ -7,6 +7,8 @@ import {
   getPublicVcHub,
 } from "@/lib/vice-chancellor-data";
 
+export const revalidate = 300;
+
 export default async function ViceChancellorPage() {
   const [hub, assignment] = await Promise.all([
     getPublicVcHub(),

@@ -33,7 +33,7 @@ export default function RolesPage() {
       <div className="space-y-4 p-6">
         <SearchFilter
           searchValue={search}
-          onSearchChange={setSearch}
+          onSearchChange={(value) => { setSearch(value); setPage(1); }}
           filters={[
             {
               key: "system",
@@ -45,10 +45,11 @@ export default function RolesPage() {
               ],
             },
           ]}
-          onFilterChange={(_, value) => setSystemOnly(value)}
+          onFilterChange={(_, value) => { setSystemOnly(value); setPage(1); }}
           onClearAll={() => {
             setSearch("");
             setSystemOnly(null);
+            setPage(1);
           }}
         />
         <DataTable<Role>
@@ -77,7 +78,8 @@ export default function RolesPage() {
             setPage(nextPage);
             setLimit(nextLimit);
           }}
-          onSearch={setSearch}
+          searchValue={search}
+          onSearch={(value) => { setSearch(value); setPage(1); }}
           isLoading={roles.isLoading}
           onRowClick={(row) => router.push(`/system/roles/${row.id}`)}
           bulkActions={canDelete ? [

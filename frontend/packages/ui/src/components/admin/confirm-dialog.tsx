@@ -3,14 +3,15 @@
 import * as React from "react";
 import { AlertTriangle, Info } from "lucide-react";
 import {
-  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../ui";
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { useDialogAction } from "./use-dialog-action";
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -37,31 +38,52 @@ export function ConfirmDialog({
   isLoading = false,
   disabled = false,
 }: ConfirmDialogProps) {
-  const handleConfirm = async () => {
-    if (disabled || isLoading) return;
-    await onConfirm();
-  };
+  const action = useDialogAction({
+    open,
+    onAction: onConfirm,
+    pending: isLoading,
+    disabled,
+  });
 
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => !isLoading && onOpenChange(nextOpen)}>
-      <DialogContent className="sm:max-w-lg">
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => action.canDismiss() && onOpenChange(nextOpen)}
+    >
+      <DialogContent className="sm:max-w-lg" aria-busy={action.pending}>
         <DialogHeader>
-          <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-full ${variant === "destructive" ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
-            {variant === "destructive" ? <AlertTriangle className="h-6 w-6" /> : <Info className="h-6 w-6" />}
+          <div
+            className={`mb-4 flex h-12 w-12 items-center justify-center rounded-full ${variant === "destructive" ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}
+          >
+            {variant === "destructive" ? (
+              <AlertTriangle className="h-6 w-6" />
+            ) : (
+              <Info className="h-6 w-6" />
+            )}
           </div>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
+        {action.failed ? (
+          <p role="alert" className="text-sm text-destructive">
+            Unable to complete this action. Please try again.
+          </p>
+        ) : null}
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={action.pending}
+          >
             {cancelLabel}
           </Button>
           <Button
             type="button"
             variant={variant === "destructive" ? "destructive" : "default"}
-            loading={isLoading}
+            loading={action.pending}
             disabled={disabled}
-            onClick={handleConfirm}
+            onClick={action.run}
           >
             {confirmLabel}
           </Button>

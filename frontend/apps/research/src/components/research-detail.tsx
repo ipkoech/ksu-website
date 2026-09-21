@@ -1,9 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ArrowRight } from "lucide-react";
 import { Badge, ResearchSection, StatusMessage } from "./research-ui";
-import { compactText, formatDate, formatLabel } from "../lib/research-public-data";
+import { compactText, formatDate, formatLabel } from "../lib/research-formatters";
 import { getResearchRecordDownloadHref } from "../lib/research-downloads";
 import { ResearchDetailLayout } from "./research-page-primitives";
 import { ResearchPageHero } from "./research-page-hero";
@@ -38,7 +40,7 @@ export function ResearchDetailHero({
   labels = [],
   facts = [],
   actions = [],
-  imageSrc = "/images/research/research-home-hero.svg",
+  imageSrc = "/images/research/headers/innovation-week-8197.jpg",
   imageAlt = "",
 }: {
   eyebrow: string;
@@ -58,8 +60,10 @@ export function ResearchDetailHero({
     .map((fact) => ({ label: fact.label, value: compactText(fact.value) }))
     .filter((fact) => fact.value);
   return (
-    <>
+    <div data-server-data-display="research-detail" className="contents">
       <ResearchPageHero
+        varyImage={false}
+        clean={false}
         eyebrow={eyebrow}
         title={title}
         description={body}
@@ -91,7 +95,7 @@ export function ResearchDetailHero({
           </dl>
         </section>
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -334,7 +338,7 @@ export function ResearchDetailSidebar({
   }
 
   return (
-    <aside className="h-fit min-w-0 rounded-lg border border-border bg-card p-5 shadow-sm">
+    <aside data-server-data-display="research-detail-sidebar" className="h-fit min-w-0 rounded-lg border border-border bg-card p-5 shadow-sm">
       {cleanLabels.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {cleanLabels.map((label) => (

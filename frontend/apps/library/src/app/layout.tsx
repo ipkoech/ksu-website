@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     template: "%s | KSU Library",
   },
   description: "Kisii University Library - Digital Resources and Services",
-  manifest: "/site.webmanifest",
+  manifest: "/manifests/library.webmanifest",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },

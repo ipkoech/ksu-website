@@ -6,7 +6,8 @@
     "dev": "next dev -p 3001",
     "build": "node scripts/build-export.mjs",
     "start": "node scripts/serve-export.mjs 3001",
-    "lint": "eslint .",
+    "test": "vitest run --maxWorkers=1 --minWorkers=1 --testTimeout=10000",
+    "lint": "eslint --config ../../eslint.config.mjs .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -76,7 +76,7 @@ export function SchoolsSection({ schools }: { schools: HomeSchoolCard[] }) {
                   focusVisibleStyles.primary,
                 )}
               >
-                <article className="relative flex h-full min-h-[11rem] flex-col justify-end sm:min-h-[15rem] overflow-hidden rounded-3xl bg-brand-overlay shadow-[0_1px_2px_hsl(var(--brand-overlay)/0.05),0_16px_38px_-24px_hsl(var(--brand-overlay)/0.5)] transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:group-hover:-translate-y-1">
+                <article className="relative flex h-full min-h-[11rem] flex-col justify-end sm:min-h-[15rem] overflow-hidden rounded-3xl bg-brand-overlay shadow-[0_1px_2px_hsl(var(--brand-overlay)/0.05),0_16px_38px_-24px_hsl(var(--brand-overlay)/0.5)] transition-[transform,box-shadow] duration-500 ease-in-out motion-safe:group-hover:-translate-y-1">
                   <ImageCurtainReveal className="absolute inset-0 z-0">
                     <PublicImage
                       src={

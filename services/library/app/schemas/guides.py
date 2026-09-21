@@ -64,10 +64,13 @@ class LibraryGuideBase(BaseModel):
 
 
 class LibraryGuideCreate(LibraryGuideBase):
-    pass
+    sections: Optional[list[LibraryGuideSectionCreate]] = Field(default=None, max_length=100)
+    specialist_ids: Optional[list[uuid.UUID]] = Field(default=None, max_length=100)
 
 
 class LibraryGuideUpdate(BaseModel):
+    sections: Optional[list[LibraryGuideSectionCreate]] = Field(default=None, max_length=100)
+    specialist_ids: Optional[list[uuid.UUID]] = Field(default=None, max_length=100)
     library_id: Optional[uuid.UUID] = None
     title: Optional[str] = None
     slug: Optional[str] = None

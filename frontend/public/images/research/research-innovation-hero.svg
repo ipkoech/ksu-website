@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a1628"/>
+      <stop offset="100%" style="stop-color:#1a2e4a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <!-- Lightbulb / idea -->
+  <path d="M 960 350 Q 960 300 930 300 Q 900 300 900 350 L 880 500 Q 880 520 900 520 L 1020 520 Q 1040 520 1040 500 Z" fill="#c15106" opacity="0.7"/>
+  <rect x="920" y="520" width="80" height="12" rx="4" fill="#c15106" opacity="0.5"/>
+  <rect x="930" y="535" width="60" height="8" rx="3" fill="#c15106" opacity="0.4"/>
+  <rect x="940" y="548" width="40" height="6" rx="3" fill="#c15106" opacity="0.3"/>
+  <!-- Circuit lines -->
+  <path d="M 1200 400 L 1250 350 L 1300 350 L 1350 400" fill="none" stroke="#6a8bc3" stroke-width="2" opacity="0.4"/>
+  <path d="M 1350 400 L 1400 450 L 1450 450" fill="none" stroke="#6a8bc3" stroke-width="2" opacity="0.4"/>
+  <circle cx="1200" cy="400" r="6" fill="#1043b1" opacity="0.5"/>
+  <circle cx="1350" cy="400" r="6" fill="#c15106" opacity="0.5"/>
+  <circle cx="1450" cy="450" r="6" fill="#1e5a3f" opacity="0.5"/>
+  <path d="M 500 500 L 550 450 L 650 450 L 700 400" fill="none" stroke="#6a8bc3" stroke-width="2" opacity="0.4"/>
+  <circle cx="500" cy="500" r="6" fill="#c15106" opacity="0.4"/>
+  <circle cx="700" cy="400" r="6" fill="#1043b1" opacity="0.4"/>
+  <!-- Gear -->
+  <circle cx="550" cy="650" r="50" fill="none" stroke="#6a8bc3" stroke-width="4" opacity="0.3"/>
+  <circle cx="550" cy="650" r="30" fill="none" stroke="#6a8bc3" stroke-width="3" opacity="0.2"/>
+  <line x1="550" y1="600" x2="550" y2="580" stroke="#6a8bc3" stroke-width="4" opacity="0.3"/>
+  <line x1="550" y1="700" x2="550" y2="720" stroke="#6a8bc3" stroke-width="4" opacity="0.3"/>
+  <line x1="500" y1="650" x2="480" y2="650" stroke="#6a8bc3" stroke-width="4" opacity="0.3"/>
+  <line x1="600" y1="650" x2="620" y2="650" stroke="#6a8bc3" stroke-width="4" opacity="0.3"/>
+  <!-- Background circles -->
+  <circle cx="1600" cy="300" r="140" fill="#1043b1" opacity="0.06"/>
+  <circle cx="300" cy="200" r="100" fill="#c15106" opacity="0.05"/>
+  <circle cx="1700" cy="850" r="80" fill="#1e5a3f" opacity="0.06"/>
+</svg>

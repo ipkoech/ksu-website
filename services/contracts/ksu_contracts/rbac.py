@@ -41,6 +41,9 @@ KNOWN_SCOPE_TYPES = frozenset(
         "department",
         "programme",
         "club",
+        "research_domain",
+        "heri",
+        "self",
     }
 )
 
@@ -80,7 +83,9 @@ def normalize_permission(permission: str) -> str:
     return PERMISSION_ALIASES.get(normalized, normalized)
 
 
-def _normalize_scope_type(value: str) -> str:
+def _normalize_scope_type(value: object) -> str:
+    if not isinstance(value, str):
+        return ""
     normalized = value.strip().lower().replace("-", "_")
     if normalized == "directorate":
         return "division"
@@ -169,7 +174,7 @@ def get_role_scopes(role_name: str) -> tuple[str, ...]:
 
 
 def _string_values(value: object) -> list[str]:
-    if not isinstance(value, Iterable) or isinstance(value, (str, bytes)):
+    if not isinstance(value, Iterable) or isinstance(value, (str, bytes, Mapping)):
         return []
     return [item for item in value if isinstance(item, str)]
 
@@ -191,10 +196,17 @@ def _subject_permissions(subject: object) -> list[str]:
         permissions = subject
 
     values = [*_string_values(scopes), *_string_values(permissions)]
-    if isinstance(raw, Mapping):
-        for grant in raw.get("scope_grants") or []:
-            if isinstance(grant, Mapping):
-                values.extend(_string_values(grant.get("permissions")))
+    # Current structured assignments are authoritative. Role names are only
+    # templates for provisioning; they cannot fill gaps in an empty assignment.
+    grants = _scope_grants(subject)
+    if grants is not None:
+        return [permission for grant in grants
+                for permission in _string_values(grant.get("permissions"))
+                if _normalize_scope_type(grant.get("scope_type")) in KNOWN_SCOPE_TYPES
+                and (grant.get("scope_id") not in (None, "")
+                     or _normalize_scope_type(grant.get("scope_type")) in {"global", "university"})]
+    for grant in _scope_grants(subject) or []:
+        values.extend(_string_values(grant.get("permissions")))
     for role in _string_values(roles):
         values.extend(get_role_scopes(role))
     return values
@@ -206,7 +218,10 @@ def _scope_grants(subject: object) -> list[Mapping[str, Any]] | None:
         raw = subject.get("raw", subject)
     if not isinstance(raw, Mapping) or "scope_grants" not in raw:
         return None
-    return [grant for grant in raw.get("scope_grants") or [] if isinstance(grant, Mapping)]
+    grants = raw.get("scope_grants")
+    if not isinstance(grants, Iterable) or isinstance(grants, (str, bytes, Mapping)):
+        return []
+    return [grant for grant in grants if isinstance(grant, Mapping)]
 
 
 def _permission_decision(subject: object, required_permission: str) -> AuthorizationDecision:
@@ -231,16 +246,16 @@ def _scope_decision(
 
     grants = _scope_grants(subject)
     if grants is None:
-        return permission_decision
+        return AuthorizationDecision(False, "missing_scope")
 
     target_id = None if scope.scope_id in (None, "") else str(scope.scope_id)
     for grant in grants:
         for granted_permission in _string_values(grant.get("permissions")):
             if not _permission_grants(granted_permission, required_permission):
                 continue
-            grant_scope_type = _normalize_scope_type(str(grant.get("scope_type") or "global"))
+            grant_scope_type = _normalize_scope_type(grant.get("scope_type"))
             grant_scope_id = grant.get("scope_id")
-            if grant_scope_type in {"global", "university"}:
+            if grant_scope_type in {"global", "university"} and grant_scope_id in (None, ""):
                 return AuthorizationDecision(True, "allowed", granted_permission.strip().lower())
             if (
                 grant_scope_type == scope_type
@@ -269,6 +284,15 @@ def authorize(
         return AuthorizationDecision(False, "unknown_permission")
 
     decision = _permission_decision(subject, required_permission)
+    if _is_known_permission(required_permission) and any(
+        _normalize_scope_type(grant.get("scope_type")) in {"global", "university"}
+        and grant.get("scope_id") in (None, "")
+        and "platform.admin" in _string_values(grant.get("permissions"))
+        for grant in _scope_grants(subject) or []
+    ):
+        if scope is not None and _normalize_scope_type(scope.scope_type) not in KNOWN_SCOPE_TYPES:
+            return AuthorizationDecision(False, "unknown_scope")
+        return AuthorizationDecision(True, "explicit_platform_authority", "platform.admin")
     if not decision.allowed or scope is None:
         return decision
     return _scope_decision(subject, required_permission, scope, decision)
@@ -304,6 +328,8 @@ def build_scope_dependency(user_dependency: UserDependency):
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Insufficient privileges",
                 )
+            from .assurance import require_operation_assurance
+            require_operation_assurance(payload, scope)
             return payload
 
         return _check

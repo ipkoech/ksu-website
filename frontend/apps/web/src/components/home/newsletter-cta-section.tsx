@@ -26,17 +26,19 @@ const socialIcons: Array<{
   { key: "instagram", label: "Instagram", Icon: Instagram },
 ];
 
-/**
- * The closing call to action: subscribe on the left, the direct routes on the
- * right for anyone who would rather reach a person than a mailing list.
- */
-export function NewsletterCtaSection({
-  contactInfo,
-  socialLinks,
-}: {
+type NewsletterSignupBandProps = {
   contactInfo: HomeContactInfo;
   socialLinks: HomeSocialLinks;
-}) {
+};
+
+/**
+ * The newsletter/contact content without a section wrapper. This lets the
+ * homepage place the signup at the end of its combined Life & Updates beat.
+ */
+export function NewsletterSignupBand({
+  contactInfo,
+  socialLinks,
+}: NewsletterSignupBandProps) {
   const socials = socialIcons
     .map(({ key, label, Icon }) => ({ href: socialLinks[key], label, Icon }))
     .filter(
@@ -45,10 +47,7 @@ export function NewsletterCtaSection({
     );
 
   return (
-    <section
-      aria-labelledby="newsletter-heading"
-      className="relative isolate overflow-hidden bg-brand-overlay text-white"
-    >
+    <div className="relative isolate overflow-hidden rounded-3xl bg-brand-overlay text-white">
       {/* A single wash of brand light across the band, and the dot field the
           approved design carries in the right margin. */}
       <div
@@ -65,7 +64,7 @@ export function NewsletterCtaSection({
         }}
       />
 
-      <div className="ksu-shell relative grid gap-12 py-16 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-20 lg:py-20">
+      <div className="relative grid gap-8 px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16 lg:px-10 lg:py-10">
         <Reveal className="min-w-0">
           <h2
             id="newsletter-heading"
@@ -146,6 +145,23 @@ export function NewsletterCtaSection({
             </ul>
           ) : null}
         </Reveal>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The closing call to action. Kept as a compatibility wrapper for other
+ * pages while the homepage embeds the same band in Life & Updates.
+ */
+export function NewsletterCtaSection(props: NewsletterSignupBandProps) {
+  return (
+    <section
+      aria-labelledby="newsletter-heading"
+      className="relative isolate overflow-hidden bg-brand-overlay text-white"
+    >
+      <div className="ksu-shell py-8 lg:py-10">
+        <NewsletterSignupBand {...props} />
       </div>
     </section>
   );

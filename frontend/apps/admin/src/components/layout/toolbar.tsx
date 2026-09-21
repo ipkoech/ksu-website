@@ -25,6 +25,7 @@ import { NotificationBell } from "./notification-bell";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import type { PortalConfig } from "@/lib/portals/types";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useWorkspaceContext } from "@/components/workspaces/workspace-context";
 
 type ToolbarProps = {
   portal?: Pick<PortalConfig, "shortTitle" | "title" | "baseHref">;
@@ -47,9 +48,10 @@ function formatRole(role: string) {
 }
 
 function realtimeLabel(status: ReturnType<typeof useRealtime>["status"]) {
-  if (status === "connected") return "Live";
-  if (status === "connecting") return "Connecting";
-  if (status === "error") return "Offline";
+  if (status === "connected") return "Live updates connected";
+  if (status === "connecting") return "Connecting to live updates…";
+  if (status === "disconnected") return "Reconnecting…";
+  if (status === "error") return "Updates paused";
   return "Idle";
 }
 
@@ -63,8 +65,9 @@ function realtimeTone(status: ReturnType<typeof useRealtime>["status"]) {
 export function Toolbar({ portal }: ToolbarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
-  const { status } = useRealtime();
+  const { user, logout } = useAuth();
+  const { status, retry } = useRealtime();
+  const { workspaces, active, activate } = useWorkspaceContext();
   const { setMobileOpen } = useSidebar();
   const [search, setSearch] = useState("");
 
@@ -137,10 +140,16 @@ export function Toolbar({ portal }: ToolbarProps) {
         </div>
       ) : null}
 
-      <Badge variant="outline" className="hidden h-9 gap-2 rounded-md px-2.5 md:inline-flex">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild><Button variant="outline" size="sm" className="hidden max-w-48 truncate md:inline-flex" aria-label="Select workspace">{active?.label ?? portal?.shortTitle ?? "Workspace"}</Button></DropdownMenuTrigger>
+        <DropdownMenuContent align="start">{workspaces.map((workspace) => <DropdownMenuItem key={workspace.workspace} onClick={() => void activate(workspace).then(() => router.push(portal?.baseHref ?? "/select-service"))}>{workspace.label ?? workspace.workspace}{workspace.selected_scope?.scope_id ? ` · ${workspace.selected_scope.scope_id}` : ""}</DropdownMenuItem>)}<DropdownMenuSeparator /><DropdownMenuItem asChild><Link href="/select-service">Workspace directory</Link></DropdownMenuItem></DropdownMenuContent>
+      </DropdownMenu>
+
+      <Badge variant="outline" role="status" aria-live="polite" className="hidden h-9 gap-2 rounded-md px-2.5 md:inline-flex">
         <span className={`size-2 rounded-full ${realtimeTone(status)}`} />
         {realtimeLabel(status)}
       </Badge>
+      {status === "error" ? <Button variant="ghost" size="sm" className="hidden text-xs lg:inline-flex" onClick={retry}>Updates paused · Retry</Button> : null}
 
       {/* Search */}
       <form
@@ -210,6 +219,10 @@ export function Toolbar({ portal }: ToolbarProps) {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href={settingsHref}>Portal settings</Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive" onClick={() => void logout().then(() => router.replace("/login"))}>
+                Log out
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/select-service">Portal directory</Link>

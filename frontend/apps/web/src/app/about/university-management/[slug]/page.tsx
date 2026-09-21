@@ -12,6 +12,8 @@ import {
 } from "@/components/site-shell";
 import { getLeaderProfile } from "@/lib/about-data";
 
+export const revalidate = 300;
+
 export default async function LeaderProfilePage({
   params,
 }: {

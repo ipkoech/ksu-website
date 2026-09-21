@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getNews, getTeam } from "../lib/api";
+import { uncachedFallback } from "../lib/server-fallback";
 
 const origin = "https://kisiiuniversity.ac.ke";
 const base = `${origin}${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}`;
@@ -23,8 +24,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const [news, team] = await Promise.all([
-    getNews().catch(() => []),
-    getTeam().catch(() => []),
+    getNews().catch(() => uncachedFallback([])),
+    getTeam().catch(() => uncachedFallback([])),
   ]);
 
   return [

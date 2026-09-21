@@ -3,27 +3,30 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import Cookie, Depends, HTTPException, Header, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy import select
+from fastapi.security import HTTPAuthorizationCredentials
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ksu_common import TokenPayload, build_user_dependencies
+from ksu_common.auth import StrictHTTPBearer
 from ksu_common.cache import get_redis
-from ksu_contracts.rbac import authorize_permission, normalize_permission
+from ksu_contracts.rbac import AuthorizationScope, authorize_permission, normalize_permission
 
 from .core.config import get_settings
 from .core.database import get_session
-from .models import ApiKey, Person, Role, RolePermission, User, UserRole
+from .models import ApiKey, Person, Role, RolePermission, Session, User, UserRole
 from .security.role_assignments import is_role_assignment_current
 
-security = HTTPBearer(auto_error=False)
+security = StrictHTTPBearer(auto_error=False)
 settings = get_settings()
+logger = logging.getLogger(__name__)
 get_current_token = build_user_dependencies(
     public_key_b64=settings.JWT_PUBLIC_KEY_B64,
     algorithm=settings.JWT_ALGORITHM,
@@ -134,8 +137,18 @@ async def _enforce_api_key_rate_limit(api_key: ApiKey) -> None:
             )
     except HTTPException:
         raise
-    except Exception:
-        return None
+    except Exception as exc:
+        # API-key traffic must not become an unbounded bypass when Redis is
+        # unavailable. Keep the log free of key material and remote details.
+        logger.warning(
+            "API-key rate-limit backend unavailable",
+            extra={"event": "api_key_rate_limit_backend_error", "error_type": type(exc).__name__},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Rate-limit backend unavailable",
+            headers={"Retry-After": "5"},
+        ) from exc
 
 
 def require_api_key_scope(scope: str):
@@ -158,9 +171,10 @@ async def get_current_active_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
     db: Annotated[AsyncSession, Depends(get_db)],
     access_cookie: Annotated[str | None, Cookie(alias="ksu_access")] = None,
+    legacy_access_cookie: Annotated[str | None, Cookie(alias="access_token")] = None,
 ) -> User:
     """Resolve the currently authenticated active user."""
-    credentials = _credentials_from_request(credentials, access_cookie)
+    credentials = _credentials_from_request(credentials, access_cookie or legacy_access_cookie)
     payload = await get_current_token(credentials)
     try:
         user_id = uuid.UUID(payload.sub)
@@ -168,6 +182,15 @@ async def get_current_active_user(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token subject") from exc
     result = await db.execute(
         select(User)
+        .join(
+            Session,
+            (Session.user_id == User.id)
+            & (Session.jti == payload.jti)
+            & (Session.token_type == "refresh")
+            & Session.is_active.is_(True)
+            & Session.revoked_at.is_(None)
+            & or_(Session.expires_at.is_(None), Session.expires_at > datetime.now(timezone.utc)),
+        )
         .options(
             selectinload(User.person).selectinload(Person.assignments),
             selectinload(User.role_assignments)
@@ -180,16 +203,32 @@ async def get_current_active_user(
     user = result.scalar_one_or_none()
     if user is None or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive or missing user")
+    active_session = next((session for session in user.sessions if session.jti == payload.jti), None)
+    verified = active_session.mfa_verified_at if active_session is not None else None
+    user._auth_assurance = {"mfa_enabled": user.mfa_enabled is True,
+                           "mfa_verified_at": verified.timestamp() if verified and user.mfa_enabled else None}
     return user
 
 
 async def get_token_payload(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
     access_cookie: Annotated[str | None, Cookie(alias="ksu_access")] = None,
+    legacy_access_cookie: Annotated[str | None, Cookie(alias="access_token")] = None,
+    user: User = Depends(get_current_active_user),
 ) -> TokenPayload:
     """Expose the decoded JWT payload."""
-    credentials = _credentials_from_request(credentials, access_cookie)
-    return await get_current_token(credentials)
+    credentials = _credentials_from_request(credentials, access_cookie or legacy_access_cookie)
+    payload = await get_current_token(credentials)
+    from .services.auth import _active_scope_grants
+
+    payload.roles = []
+    current_session = next((session for session in user.sessions if session.jti == payload.jti), None)
+    verified_at = current_session.mfa_verified_at if current_session is not None else None
+    payload.raw = {**payload.raw, "roles": [], "permissions": [], "scopes": [],
+                   "mfa_enabled": user.mfa_enabled is True,
+                   "mfa_verified_at": verified_at.timestamp() if verified_at and user.mfa_enabled else None,
+                   "scope_grants": _active_scope_grants(user)}
+    return payload
 
 
 def _has_permission(permissions: set[str], scope: str) -> bool:
@@ -199,6 +238,12 @@ def _has_permission(permissions: set[str], scope: str) -> bool:
 
 def permissions_for_user(user: User) -> set[str]:
     """Return active permission names granted to a loaded user."""
+    from .security.scopes import user_scoped_grants
+    from ksu_contracts.roles import ALL_PERMISSIONS
+
+    if any(grant.scope_type in {"global", "university"} and "platform.admin" in grant.permissions
+           for grant in user_scoped_grants(user)):
+        return set(ALL_PERMISSIONS)
     return {
         normalize_permission(rp.permission.name)
         for assignment in user.role_assignments
@@ -220,6 +265,7 @@ def require_scope(scope: str):
         payload: Annotated[TokenPayload, Depends(get_token_payload)],
         db: Annotated[AsyncSession, Depends(get_db)],
     ) -> TokenPayload:
+        require_account_authority(payload, scope)
         try:
             user_id = uuid.UUID(payload.sub)
         except ValueError:
@@ -230,6 +276,15 @@ def require_scope(scope: str):
 
         result = await db.execute(
             select(User)
+            .join(
+                Session,
+                (Session.user_id == User.id)
+                & (Session.jti == payload.jti)
+                & (Session.token_type == "refresh")
+                & Session.is_active.is_(True)
+                & Session.revoked_at.is_(None)
+                & or_(Session.expires_at.is_(None), Session.expires_at > datetime.now(timezone.utc)),
+            )
             .options(
                 selectinload(User.role_assignments)
                 .selectinload(UserRole.role)
@@ -250,10 +305,18 @@ def require_scope(scope: str):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient privileges",
             )
-
+        from ksu_contracts.assurance import require_operation_assurance
+        require_operation_assurance(payload, scope)
         return payload
 
     return _check
+
+
+def require_account_authority(payload: TokenPayload, permission: str) -> None:
+    """Account and access provisioning belongs to explicit platform authority."""
+    if permission in {"users.create", "users.edit", "users.delete", "roles.manage", "permissions.manage", "school.team.roles"}:
+        if not authorize_permission(payload, "platform.admin", AuthorizationScope("global")).allowed:
+            raise HTTPException(403, "Web Master authority is required for account and access changes")
 
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]

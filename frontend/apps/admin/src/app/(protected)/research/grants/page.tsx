@@ -262,6 +262,7 @@ export default function ResearchGrantsPage() {
         is_featured: values.is_featured,
       })}
       resourceKey="research-grants"
+      revalidateResearchCache
     />
   );
 }

@@ -1,3 +1,4 @@
+import "server-only";
 import {
   documentsApi,
   governanceApi,
@@ -11,10 +12,18 @@ import {
   type School,
   type StaffAssignment,
   type UniversityInfo,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
 import type { BoardMember } from "@/components/about/BoardMemberGrid";
 import type { LeaderCardData } from "@/components/about/LeaderCard";
 import { publicFileUrl, resolvePublicMediaUrl } from "@/lib/public-media";
+import {
+  markUncacheableIfFailed,
+  uncachedPublicFallback,
+} from "@/lib/public-fetch";
+import {
+  normalizePublicListResponse,
+  normalizePublicRecordResponse,
+} from "@/lib/web-response-shapes";
 
 export const aboutNavigation = [
   { title: "About KSU", href: "/about" },
@@ -46,11 +55,7 @@ export type GovernancePageData = {
 };
 
 export type ManagementPageData = {
-  overview: UniversityInfo | null;
   managementBoard: BackendBoard | null;
-  senate: BackendBoard | null;
-  leaders: LeaderCardData[];
-  featuredLeader: LeaderCardData | null;
 };
 
 export type QualityAssurancePageData = {
@@ -276,18 +281,21 @@ function toBoardMembers(assignments: StaffAssignment[]): BoardMember[] {
       if (firstLevel !== secondLevel) return firstLevel - secondLevel;
       return (first.display_order ?? 100) - (second.display_order ?? 100);
     })
-    .map((assignment) => ({
-      name:
-        displayName(assignment.person) ??
-        present(assignment.title) ??
-        "Published member",
-      role: roleLabel(assignment),
-      note: assignment.term_display ?? assignment.notes ?? undefined,
-      profileHref: `/staff/${assignment.person_id}`,
-      photoUrl:
-        publicFileUrl(assignment.person?.photo_id) ??
-        resolvePublicMediaUrl(assignment.person?.photo_url),
-    }));
+    .map((assignment) => {
+      const name = displayName(assignment.person);
+      if (!assignment.person_id || !name) {
+        throw new Error(`Board member ${assignment.id} is missing its person profile`);
+      }
+      return {
+        name,
+        role: roleLabel(assignment),
+        note: assignment.term_display ?? assignment.notes ?? undefined,
+        profileHref: `/staff/${assignment.person_id}`,
+        photoUrl:
+          publicFileUrl(assignment.person?.photo_id) ??
+          resolvePublicMediaUrl(assignment.person?.photo_url),
+      };
+    });
 }
 
 function toLeaderCard(person: Person): LeaderCardData {
@@ -376,7 +384,9 @@ export async function getUniversityCouncilPage(): Promise<UniversityCouncilPageD
     const response = await mainApi.get<{ data: UniversityCouncilPageData }>(
       "/api/v1/governance/public/university-council",
     );
-    return normalizeCouncilPage(response.data);
+    const normalized = normalizePublicRecordResponse<UniversityCouncilPageData>(response);
+    if (normalized === undefined) throw new Error("Invalid University Council response");
+    return normalized ? normalizeCouncilPage(normalized) : null;
   } catch (error) {
     if (!isNotFoundError(error)) {
       console.error("Failed to fetch University Council page:", error);
@@ -391,7 +401,9 @@ export async function getUniversityCouncilProfile(slug: string): Promise<Univers
     const response = await mainApi.get<{ data: UniversityCouncilProfileData }>(
       `/api/v1/governance/public/university-council/${slug}`,
     );
-    return normalizeCouncilMember(response.data);
+    const normalized = normalizePublicRecordResponse<UniversityCouncilProfileData>(response);
+    if (normalized === undefined) throw new Error("Invalid University Council profile response");
+    return normalizeCouncilMember(normalized);
   } catch (error) {
     if (!isNotFoundError(error)) {
       console.error(`Failed to fetch University Council profile ${slug}:`, error);
@@ -473,10 +485,12 @@ export async function getOverviewData(): Promise<UniversityInfo | null> {
       fields: universityInfoFields,
       include: "cover_image,brochure,main_campus,vc,chancellor,council_chair",
     });
-    return response.data;
+    const normalized = normalizePublicRecordResponse<UniversityInfo>(response);
+    if (normalized === undefined) throw new Error("Invalid university info response");
+    return normalized;
   } catch (error) {
     console.error("Failed to fetch university info:", error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -486,7 +500,9 @@ export async function getAboutSchools(): Promise<AboutSchoolSummary[]> {
       per_page: 8,
       fields: schoolFields,
     });
-    return (response.data ?? [])
+    const normalized = normalizePublicListResponse<School>(response);
+    if (!normalized) throw new Error("Invalid About schools response");
+    return normalized.data
       .filter((school) => school.is_public !== false && school.is_active !== false)
       .sort(
         (first, second) =>
@@ -502,7 +518,7 @@ export async function getAboutSchools(): Promise<AboutSchoolSummary[]> {
       }));
   } catch (error) {
     console.error("Failed to fetch about schools:", error);
-    return [];
+    return uncachedPublicFallback([]);
   }
 }
 
@@ -512,12 +528,12 @@ async function getBoardMembers(slug: string) {
       slug,
       boardMemberFieldSelection,
     );
-    return toBoardMembers(response.data ?? []);
+    const normalized = normalizePublicListResponse<StaffAssignment>(response);
+    if (!normalized) throw new Error("Invalid board members response");
+    return toBoardMembers(normalized.data);
   } catch (error) {
-    if (!isNotFoundError(error)) {
-      console.error(`Failed to fetch board members for ${slug}:`, error);
-    }
-    return [];
+    console.error(`Failed to fetch board members for ${slug}:`, error);
+    throw error;
   }
 }
 
@@ -530,15 +546,21 @@ export async function getGovernanceData(): Promise<GovernancePageData> {
       fields: boardFields,
     }),
   ]);
-  const boards =
+  const normalizedBoards =
     boardsResponse.status === "fulfilled"
-      ? (boardsResponse.value.data ?? []).filter(
-          (board) => board.is_public !== false && board.is_active !== false,
-        )
-      : [];
+      ? normalizePublicListResponse<Board>(boardsResponse.value)
+      : null;
+  if (boardsResponse.status === "fulfilled" && !normalizedBoards) {
+    uncachedPublicFallback(null);
+  }
+  const boards =
+    normalizedBoards?.data.filter(
+        (board) => board.is_public !== false && board.is_active !== false,
+      ) ?? [];
 
   if (boardsResponse.status === "rejected") {
     console.error("Failed to fetch governance boards:", boardsResponse.reason);
+    uncachedPublicFallback(null);
   }
 
   return {
@@ -558,13 +580,18 @@ export async function getGovernanceBoard(slug: string) {
       governanceApi.getBoardBySlug(slug, { fields: boardFields }),
       getBoardMembers(slug),
     ]);
+    const normalized = normalizePublicRecordResponse<Board>(boardResponse);
+    if (normalized === undefined || normalized === null) {
+      if (normalized === undefined) throw new Error("Invalid governance board response");
+      return null;
+    }
     if (
-      boardResponse.data.is_public === false ||
-      boardResponse.data.is_active === false
+      normalized.is_public === false ||
+      normalized.is_active === false
     ) {
       return null;
     }
-    return { ...boardResponse.data, members };
+    return { ...normalized, members };
   } catch (error) {
     if (!isNotFoundError(error)) {
       console.error(`Failed to fetch governance board ${slug}:`, error);
@@ -575,43 +602,8 @@ export async function getGovernanceBoard(slug: string) {
 }
 
 export async function getManagementData(): Promise<ManagementPageData> {
-  const [overview, managementBoard, senate, persons] = await Promise.allSettled([
-    getOverviewData(),
-    getGovernanceBoard("management-board"),
-    getGovernanceBoard("senate"),
-    personsApi.list({
-      per_page: 100,
-      status: "active",
-      fields: personFields,
-    }),
-  ]);
-  const publicPeople =
-    persons.status === "fulfilled"
-      ? (persons.value.data ?? []).filter((person) => person.is_public !== false)
-      : [];
-
-  if (persons.status === "rejected") {
-    console.error("Failed to fetch public leaders:", persons.reason);
-  }
-
-  const leaders = publicPeople
-    .filter((person) => present(person.institutional_role))
-    .map(toLeaderCard);
-  const overviewValue = overview.status === "fulfilled" ? overview.value : null;
-  const featuredLeader =
-    leaders.find((leader) => leader.slug === overviewValue?.vc_id) ??
-    leaders.find((leader) => leader.role.toLowerCase().includes("vc")) ??
-    leaders.find((leader) => leader.role.toLowerCase().includes("vice chancellor")) ??
-    leaders[0] ??
-    null;
-
   return {
-    overview: overviewValue,
-    managementBoard:
-      managementBoard.status === "fulfilled" ? managementBoard.value : null,
-    senate: senate.status === "fulfilled" ? senate.value : null,
-    leaders,
-    featuredLeader,
+    managementBoard: await getGovernanceBoard("management-board"),
   };
 }
 
@@ -626,8 +618,13 @@ async function getQualityDocuments() {
       }),
   );
   const settled = await Promise.allSettled(requests);
+  markUncacheableIfFailed(settled);
   return settled
-    .flatMap((result) => (result.status === "fulfilled" ? result.value.data ?? [] : []))
+    .flatMap((result) => {
+      if (result.status !== "fulfilled") return [];
+      const normalized = normalizePublicListResponse<Document>(result.value);
+      return normalized?.data ?? uncachedPublicFallback([]);
+    })
     .filter((document, index, all) => {
       if (document.is_public === false || document.is_active === false) return false;
       return all.findIndex((item) => item.id === document.id) === index;
@@ -667,7 +664,11 @@ export async function getLeaderProfile(slug: string) {
       ].join(","),
       include: "photo,cv_file,department",
     });
-    const person = response.data;
+    const person = normalizePublicRecordResponse<Person>(response);
+    if (person === undefined || person === null) {
+      if (person === undefined) throw new Error("Invalid leader profile response");
+      return null;
+    }
 
     return {
       ...toLeaderCard(person),
@@ -695,6 +696,6 @@ export async function getLeaderProfile(slug: string) {
     };
   } catch (error) {
     console.error(`Failed to fetch leader profile ${slug}:`, error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }

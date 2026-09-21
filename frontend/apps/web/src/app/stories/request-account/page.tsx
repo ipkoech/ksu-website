@@ -3,7 +3,7 @@ import { ArrowLeft, CheckCircle2, ShieldCheck } from "lucide-react";
 import { AmbientPageBackground } from "@ksu/ui/components";
 import { MiniHeader, PublicFooter, PublicHeader } from "@ksu/ui/layout/public";
 import { StoryAccountRequestForm } from "@/components/stories/story-account-request-form";
-import { getHomepageData } from "@/lib/homepage-data";
+import { getSiteChromeData } from "@/lib/homepage-data";
 import { getNavData } from "@/lib/nav-data";
 import {
   heriAfricaFrontendUrl,
@@ -15,7 +15,7 @@ export const revalidate = 300;
 
 export default async function StoryContributorRequestPage() {
   const [homepage, megaMenuData] = await Promise.all([
-    getHomepageData(),
+    getSiteChromeData(),
     getNavData(),
   ]);
 

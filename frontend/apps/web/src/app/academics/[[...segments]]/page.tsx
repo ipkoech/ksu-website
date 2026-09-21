@@ -53,6 +53,8 @@ const entityMediaTypes = new Set<EntityMediaType>([
   "gallery",
 ]);
 
+export const dynamic = "force-dynamic";
+
 export default async function AcademicsRoutePage({
   params,
   searchParams,

@@ -6,7 +6,7 @@ import { ContentRecordDetailPage } from "../../_components/content-record-detail
 export default function ResearchSliderDetailPage() {
   return (
     <ContentRecordDetailPage
-      title="Research Slider"
+      title="Slider"
       description="View research slider media, call-to-action metadata, scope binding, attachments, and audit history."
       backHref="/research/content/sliders"
       entityType="slider"

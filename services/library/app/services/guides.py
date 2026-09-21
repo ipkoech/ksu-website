@@ -152,7 +152,7 @@ async def get_guide_entity(db: AsyncSession, guide_id: uuid.UUID) -> LibraryGuid
 async def create_guide(db: AsyncSession, data: LibraryGuideCreate) -> LibraryGuide:
     guide = LibraryGuide(**data.model_dump())
     db.add(guide)
-    await db.commit()
+    await db.flush()
     await db.refresh(guide)
     return guide
 
@@ -163,7 +163,7 @@ async def update_guide(
     guide = await get_guide_entity(db, guide_id)
     for field, value in _updates(data).items():
         setattr(guide, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(guide)
     return guide
 
@@ -171,7 +171,7 @@ async def update_guide(
 async def delete_guide(db: AsyncSession, guide_id: uuid.UUID) -> None:
     guide = await get_guide_entity(db, guide_id)
     guide.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 async def list_guide_sections(
@@ -206,7 +206,7 @@ async def create_guide_section(
 ) -> LibraryGuideSection:
     section = LibraryGuideSection(**data.model_dump())
     db.add(section)
-    await db.commit()
+    await db.flush()
     await db.refresh(section)
     return section
 
@@ -217,7 +217,7 @@ async def update_guide_section(
     section = await get_guide_section_entity(db, section_id)
     for field, value in _updates(data).items():
         setattr(section, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(section)
     return section
 
@@ -225,7 +225,7 @@ async def update_guide_section(
 async def delete_guide_section(db: AsyncSession, section_id: uuid.UUID) -> None:
     section = await get_guide_section_entity(db, section_id)
     section.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 async def list_specialists(
@@ -268,7 +268,7 @@ async def create_specialist(
 ) -> LibrarySpecialist:
     specialist = LibrarySpecialist(**data.model_dump())
     db.add(specialist)
-    await db.commit()
+    await db.flush()
     await db.refresh(specialist)
     return specialist
 
@@ -279,7 +279,7 @@ async def update_specialist(
     specialist = await get_specialist_entity(db, specialist_id)
     for field, value in _updates(data).items():
         setattr(specialist, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(specialist)
     return specialist
 
@@ -287,7 +287,7 @@ async def update_specialist(
 async def delete_specialist(db: AsyncSession, specialist_id: uuid.UUID) -> None:
     specialist = await get_specialist_entity(db, specialist_id)
     specialist.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 async def list_workflows(
@@ -355,7 +355,7 @@ async def create_workflow(
 ) -> LibraryWorkflow:
     workflow = LibraryWorkflow(**data.model_dump())
     db.add(workflow)
-    await db.commit()
+    await db.flush()
     await db.refresh(workflow)
     return workflow
 
@@ -366,7 +366,7 @@ async def update_workflow(
     workflow = await get_workflow_entity(db, workflow_id)
     for field, value in _updates(data).items():
         setattr(workflow, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(workflow)
     return workflow
 
@@ -374,7 +374,7 @@ async def update_workflow(
 async def delete_workflow(db: AsyncSession, workflow_id: uuid.UUID) -> None:
     workflow = await get_workflow_entity(db, workflow_id)
     workflow.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 async def list_workflow_steps(
@@ -406,7 +406,7 @@ async def create_workflow_step(
 ) -> LibraryWorkflowStep:
     step = LibraryWorkflowStep(**data.model_dump())
     db.add(step)
-    await db.commit()
+    await db.flush()
     await db.refresh(step)
     return step
 
@@ -417,7 +417,7 @@ async def update_workflow_step(
     step = await get_workflow_step_entity(db, step_id)
     for field, value in _updates(data).items():
         setattr(step, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(step)
     return step
 
@@ -425,7 +425,7 @@ async def update_workflow_step(
 async def delete_workflow_step(db: AsyncSession, step_id: uuid.UUID) -> None:
     step = await get_workflow_step_entity(db, step_id)
     step.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 async def list_policy_pages(
@@ -489,7 +489,7 @@ async def create_policy_page(
 ) -> LibraryPolicyPage:
     policy_page = LibraryPolicyPage(**data.model_dump())
     db.add(policy_page)
-    await db.commit()
+    await db.flush()
     await db.refresh(policy_page)
     return policy_page
 
@@ -500,7 +500,7 @@ async def update_policy_page(
     policy_page = await get_policy_page_entity(db, policy_page_id)
     for field, value in _updates(data).items():
         setattr(policy_page, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(policy_page)
     return policy_page
 
@@ -508,4 +508,4 @@ async def update_policy_page(
 async def delete_policy_page(db: AsyncSession, policy_page_id: uuid.UUID) -> None:
     policy_page = await get_policy_page_entity(db, policy_page_id)
     policy_page.soft_delete()
-    await db.commit()
+    await db.flush()

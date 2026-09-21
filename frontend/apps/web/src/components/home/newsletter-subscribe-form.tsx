@@ -1,8 +1,9 @@
 "use client";
 
-import { useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { Loader2 } from "lucide-react";
-import { getMainApiBaseUrl } from "@ksu/api-client";
+import { publicBackendApi } from "@/lib/browser-api";
+import { useCommandKey } from "@/lib/use-command-key";
 import { cn } from "@ksu/ui/lib/utils";
 import { focusVisibleStyles } from "@ksu/ui/motion";
 
@@ -24,12 +25,21 @@ export function NewsletterSubscribeForm({
   const [email, setEmail] = useState("");
   const [state, setState] = useState<SubscribeState>("idle");
   const [message, setMessage] = useState("");
+  const pending = useRef(false);
+  const submitAbortRef = useRef<AbortController | null>(null);
+  const command = useCommandKey();
+
+  useEffect(() => () => {
+    submitAbortRef.current?.abort();
+    submitAbortRef.current = null;
+  }, []);
 
   const invalid = state === "error";
   const submitting = state === "submitting";
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending.current) return;
     const normalizedEmail = email.trim().toLowerCase();
 
     if (!emailPattern.test(normalizedEmail)) {
@@ -38,33 +48,38 @@ export function NewsletterSubscribeForm({
       return;
     }
 
+    pending.current = true;
     setState("submitting");
     setMessage("");
+    const controller = new AbortController();
+    submitAbortRef.current?.abort();
+    submitAbortRef.current = controller;
 
     try {
-      const response = await fetch(
-        `${getMainApiBaseUrl()}/api/v1/newsletters/subscribe`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: normalizedEmail,
-            frequency: "all",
-            categories: ["news", "events", "articles"],
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("Subscription request failed");
-      }
-
+      const path = "/api/v1/newsletters/subscribe";
+      const payload = {
+        email: normalizedEmail,
+        frequency: "all",
+        categories: ["news", "events", "articles"],
+      };
+      await publicBackendApi.post(path, payload, {
+        auth: "none",
+        headers: { "Idempotency-Key": command.forPayload(path, payload) },
+        signal: controller.signal,
+      });
+      command.confirmed();
       setEmail("");
       setState("success");
       setMessage("You are subscribed to Kisii University updates.");
     } catch {
+      if (controller.signal.aborted) return;
       setState("error");
       setMessage("Subscription failed. Please try again.");
+    } finally {
+      if (submitAbortRef.current === controller) {
+        submitAbortRef.current = null;
+        pending.current = false;
+      }
     }
   }
 

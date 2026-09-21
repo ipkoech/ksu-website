@@ -137,7 +137,7 @@ export function AboutScrollAccordion({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <div ref={rootRef} data-about-scroll-accordion>
+    <div ref={rootRef} data-about-scroll-accordion data-server-data-display="research-about-content">
       <div data-about-runway>
         <div data-about-sticky>
           <div data-about-stage className="space-y-5">

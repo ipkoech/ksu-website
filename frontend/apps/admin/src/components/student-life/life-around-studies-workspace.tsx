@@ -66,6 +66,7 @@ import {
 import { cn } from "@ksu/ui/lib/utils";
 import { usePermissions } from "@ksu/auth";
 import { PageTransition } from "@/lib/animations";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import {
   LIFE_AROUND_STUDIES_AUDIENCES,
   LIFE_AROUND_STUDIES_SOURCE_TYPES,
@@ -346,6 +347,7 @@ export function LifeAroundStudiesWorkspace() {
       });
     },
     onSuccess: async () => {
+      void revalidatePublicContent("main", "student-life");
       toast.success("Life Around Studies content saved.");
       setFailedIndices(new Set());
       await queryClient.invalidateQueries({ queryKey: ["page-cms", "life-around-studies"] });
@@ -395,6 +397,7 @@ export function LifeAroundStudiesWorkspace() {
       return pageSectionsApi.workflow(section.id, action);
     },
     onSuccess: async (_, action) => {
+      void revalidatePublicContent("main", "student-life");
       toast.success(`Section ${action.replace(/_/g, " ")} complete.`);
       await queryClient.invalidateQueries({ queryKey: ["page-cms", "life-around-studies"] });
     },

@@ -2,7 +2,15 @@
 
 import * as React from "react";
 import { ImagePlus, Search } from "lucide-react";
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input } from "../ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  Input,
+} from "../ui";
 import { FileUploader } from "./file-uploader";
 
 export interface ImagePickerProps {
@@ -22,6 +30,20 @@ const demoImages = [
 export function ImagePicker({ value, onChange, aspectRatio, disabled = false }: ImagePickerProps) {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
+  const ownedPreviewRef = React.useRef<string | null>(null);
+
+  const releaseOwnedPreview = React.useCallback(() => {
+    if (ownedPreviewRef.current) {
+      URL.revokeObjectURL(ownedPreviewRef.current);
+      ownedPreviewRef.current = null;
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (value !== ownedPreviewRef.current) releaseOwnedPreview();
+  }, [releaseOwnedPreview, value]);
+
+  React.useEffect(() => releaseOwnedPreview, [releaseOwnedPreview]);
 
   const filtered = demoImages.filter((imageUrl) => imageUrl.toLowerCase().includes(query.toLowerCase()));
 
@@ -53,6 +75,9 @@ export function ImagePicker({ value, onChange, aspectRatio, disabled = false }: 
         <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>Select image</DialogTitle>
+            <DialogDescription>
+              Choose an existing media image or upload a new one.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="relative max-w-sm">
@@ -82,7 +107,10 @@ export function ImagePicker({ value, onChange, aspectRatio, disabled = false }: 
                 onChange={(files) => {
                   const file = Array.isArray(files) ? files[0] : files;
                   if (file instanceof File) {
-                    onChange(URL.createObjectURL(file));
+                    releaseOwnedPreview();
+                    const previewUrl = URL.createObjectURL(file);
+                    ownedPreviewRef.current = previewUrl;
+                    onChange(previewUrl);
                   }
                 }}
               />

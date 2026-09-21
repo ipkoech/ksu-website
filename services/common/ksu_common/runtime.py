@@ -14,6 +14,8 @@ from typing import Any
 from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 
 from .audit import (
     build_audit_payload,
@@ -23,7 +25,17 @@ from .audit import (
     should_skip_audit,
 )
 from .cache import begin_cache_context, end_cache_context, get_cache_context
-from .database import DatabaseBudgetRegistry
+from .database import DatabaseBudgetRegistry, DatabaseConcurrencyLimitExceeded
+from .errors import (
+    AccessDenied,
+    ApplicationError,
+    AuthenticationRequired,
+    Conflict,
+    InvalidInput,
+    ResourceNotFound,
+    TemporarilyUnavailable,
+)
+from .field_selection import is_sensitive_field
 from .observability import (
     CompositeMetricsSink,
     Metrics,
@@ -44,7 +56,12 @@ from .response_validation import (
 logger = logging.getLogger("ksu_common.runtime")
 
 STANDARD_CORS_METHODS = ("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-STANDARD_CORS_HEADERS = ("Authorization", "Content-Type", "X-Internal-Key")
+STANDARD_CORS_HEADERS = (
+    "Authorization",
+    "Content-Type",
+    "Idempotency-Key",
+    "X-Internal-Key",
+)
 
 RouteRegistrar = Callable[[FastAPI], None]
 AfterResponse = Callable[[Request, Response], Awaitable[None] | None]
@@ -113,6 +130,12 @@ class AuditOptions:
     #: Skip safe-method requests that carry no credential. Public reads are the
     #: bulk of traffic and auditing them turns every page view into a write.
     skip_anonymous_reads: bool = False
+    #: Persist a built audit payload in the active business transaction.
+    #: A service opting in must also provide durable background draining.
+    capture: Callable[[Any, dict[str, Any]], Awaitable[None]] | None = None
+    #: Legacy broker dispatchers can fall back to indexed local writes. Durable
+    #: capture dispatchers disable this to avoid a second write on DB failure.
+    inline_fallback: bool = True
 
 
 async def _resolve_callback(value: Awaitable[Any] | Any) -> Any:
@@ -155,6 +178,8 @@ def create_service_app(
     http_metrics = Metrics(CompositeMetricsSink(*sinks))
     app.state.metrics_registry = registry
     app.state.metrics = http_metrics
+    if audit and not audit.inline_fallback:
+        http_metrics.increment("audit.capture_failure", 0, tags={"service": audit.service_name})
 
     if config.metrics_path:
         @app.get(config.metrics_path, include_in_schema=False)
@@ -182,12 +207,16 @@ def create_service_app(
         Bearer clients remain usable without an Origin header. Browser cookie
         requests are additionally protected from CSRF beyond SameSite=Lax.
         """
-        if request.method not in {"GET", "HEAD", "OPTIONS"} and request.cookies.get("ksu_access"):
+        auth_cookies = ("ksu_access", "ksu_refresh", "access_token")
+        if request.method not in {"GET", "HEAD", "OPTIONS"} and any(
+            request.cookies.get(name) for name in auth_cookies
+        ):
             origin = request.headers.get("origin")
             if (
-                origin is not None
+                (origin is None and request.headers.get("sec-fetch-site") == "cross-site")
+                or (origin is not None
                 and "*" not in allowed_cookie_origins
-                and origin.rstrip("/") not in allowed_cookie_origins
+                and origin.rstrip("/") not in allowed_cookie_origins)
             ):
                 return JSONResponse(
                     status_code=status.HTTP_403_FORBIDDEN,
@@ -198,6 +227,51 @@ def create_service_app(
     error_response_class = (
         config.error_response_class or config.default_response_class or JSONResponse
     )
+
+    @app.exception_handler(RequestValidationError)
+    async def request_validation_error_handler(_request: Request, exc: RequestValidationError) -> Response:
+        errors = []
+        for error in exc.errors():
+            safe_error = dict(error)
+            # Container-level failures can otherwise echo whole credential-bearing
+            # bodies. Field locations/messages remain the legacy validation API.
+            sensitive_location = any(
+                isinstance(part, str) and is_sensitive_field(part) for part in error.get("loc", ())
+            )
+            if isinstance(error.get("input"), (dict, list, tuple)) or sensitive_location:
+                safe_error.pop("input", None)
+            if sensitive_location:
+                safe_error.pop("ctx", None)
+                rejected_value = error.get("input")
+                message = str(error.get("msg", ""))
+                echoes_value = isinstance(rejected_value, str) and bool(rejected_value) and (
+                    rejected_value in message or repr(rejected_value)[1:-1] in message
+                )
+                if error.get("type") in {"value_error", "assertion_error"} and echoes_value:
+                    safe_error["msg"] = "Invalid value for sensitive field"
+            errors.append(safe_error)
+        return error_response_class(status_code=422, content={"detail": jsonable_encoder(errors)})
+
+    application_statuses = {
+        InvalidInput: 400,
+        AuthenticationRequired: 401,
+        AccessDenied: 403,
+        ResourceNotFound: 404,
+        Conflict: 409,
+        TemporarilyUnavailable: 503,
+    }
+
+    @app.exception_handler(ApplicationError)
+    async def application_error_handler(_request: Request, exc: ApplicationError) -> Response:
+        status_code = next(
+            (code for kind, code in application_statuses.items() if isinstance(exc, kind)),
+            500,
+        )
+        return error_response_class(
+            status_code=status_code,
+            content={"status": "error", "message": str(exc), "code": exc.code},
+            headers={"WWW-Authenticate": "Bearer"} if status_code == 401 else None,
+        )
 
     @app.exception_handler(ValueError)
     async def value_error_handler(_request: Request, exc: ValueError) -> Response:
@@ -251,6 +325,9 @@ def create_service_app(
     ) -> None:
         """Record one audit entry, off the request path when a dispatcher exists."""
 
+        if status_code < 400 and request.scope.get("ksu.audit_committed"):
+            return
+
         changes = options.collect_changes() if options.collect_changes else None
         if options.dispatch is None:
             if options.audit_model is None:
@@ -287,7 +364,13 @@ def create_service_app(
         )
         try:
             await _resolve_callback(options.dispatch(payload))
-        except Exception:  # pragma: no cover - a broker outage must not fail the request
+        except Exception as exc:  # a broker outage must not fail the request
+            if not options.inline_fallback:
+                http_metrics.increment("audit.capture_failure", tags={"service": options.service_name})
+                logger.error("durable audit capture failed", extra={
+                    "service": options.service_name, "exception_type": type(exc).__name__,
+                })
+                return
             logger.exception(
                 "failed to dispatch audit entry for %s; falling back to inline write",
                 payload.get("request_path"),
@@ -304,11 +387,30 @@ def create_service_app(
     async def service_runtime_middleware(request: Request, call_next: Callable) -> Response:
         observation = begin_request_observation(request, service_name=config.service_name)
         audit_state: object | None = None
-        audit_enabled = audit is not None and not audit.skip_path(request.url.path)
+        audit_path_enabled = audit is not None and not audit.skip_path(request.url.path)
+        audit_enabled = audit_path_enabled
         if audit_enabled and audit and audit.skip_anonymous_reads and is_anonymous_read(request):
             audit_enabled = False
         if audit_enabled and audit and audit.begin_request:
             audit_state = await _resolve_callback(audit.begin_request(request))
+
+        if audit_enabled and audit and audit.capture:
+            async def capture_in_transaction(session, route_request, response):
+                # A trusted ingestion endpoint has already inserted the source
+                # audit events in this transaction. Avoid auditing that transfer
+                # again; the route marks coverage only after commit succeeds.
+                if route_request.scope.get("ksu.audit_ingested"):
+                    return
+                payload = await build_audit_payload(
+                    service_name=audit.service_name, request=route_request,
+                    status_code=response.status_code, token_key=audit.token_key,
+                    token_algorithm=audit.token_algorithm, token_issuer=audit.token_issuer,
+                    token_audience=audit.token_audience, token_key_id=audit.token_key_id,
+                    changes=audit.collect_changes() if audit.collect_changes else None,
+                )
+                await audit.capture(session, payload)
+
+            request.scope["ksu.capture_audit"] = capture_in_transaction
 
         response: Response | None = None
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -319,6 +421,12 @@ def create_service_app(
                 async with database_budget_registry.for_path(request.url.path).limit():
                     response = await call_next(request)
                 status_code = response.status_code
+            except DatabaseConcurrencyLimitExceeded as exc:
+                error_type = type(exc).__name__
+                status_code = exc.status_code
+                response = error_response_class(
+                    status_code=status_code, content={"detail": exc.detail}, headers=exc.headers,
+                )
             except Exception as exc:
                 error_type = type(exc).__name__
                 if audit_enabled and audit:
@@ -330,7 +438,7 @@ def create_service_app(
                     )
                 raise
 
-            if audit_enabled and audit:
+            if audit and (audit_enabled or (audit_path_enabled and status_code in {401, 403})):
                 await _write_audit(audit, request, status_code)
             if after_response:
                 await _resolve_callback(after_response(request, response))

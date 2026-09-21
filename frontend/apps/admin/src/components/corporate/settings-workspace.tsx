@@ -46,6 +46,7 @@ import {
   PortalWorkspaceHeader,
 } from "@/components/portals/portal-workspace";
 import { SocialAccountsPanel } from "@/components/corporate/social-accounts-panel";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const EMPTY_OFFICE: CorporateOfficeChannels = {
   email: null,
@@ -198,6 +199,7 @@ export function CorporateSettingsWorkspace() {
         corporateCommSettingsQueryKeys.settings,
         response.data,
       );
+      void revalidatePublicContent("main", "organization");
       toast.success("Settings saved");
     },
     onError: (error: unknown) => {

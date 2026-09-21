@@ -85,9 +85,9 @@ export function FundingIllustratedHero({
 }
 
 function getFundingHeroImage(tone: "grant" | "scholarship" | "endowment" | "donate") {
-  if (tone === "scholarship") return "/images/research/research-about-hero.webp";
-  if (tone === "donate") return "/images/research/research-home-hero.webp";
-  return "/images/research/research-projects-hero.webp";
+  if (tone === "scholarship") return "/images/research/headers/innovation-week-8101.jpg";
+  if (tone === "donate") return "/images/research/headers/innovation-week-8173.jpg";
+  return "/images/research/headers/innovation-week-8040.jpg";
 }
 
 export function FundingHeroArtwork({ tone }: { tone: "grant" | "scholarship" | "endowment" | "donate" }) {

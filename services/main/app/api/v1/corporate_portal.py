@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import CurrentUser
 from ...schemas.corporate_portal import CorporatePortalContextResponse
@@ -26,7 +26,7 @@ def context_response(user) -> CorporatePortalContextResponse:
     )
 
 
-@router.get("/context")
+@router.get("/context", response_model=SuccessResponse[CorporatePortalContextResponse])
 async def get_context(user: CurrentUser):
     """Return server-derived capabilities and navigation for the portal."""
     return success(data=context_response(user).model_dump(mode="json"))

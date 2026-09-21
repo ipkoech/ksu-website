@@ -8,8 +8,8 @@ import { motion, useReducedMotion } from "framer-motion";
  *
  * Section internals may still stagger their cards; this wrapper only brings
  * the section surface into the viewport so the page has one continuous
- * scroll rhythm. The hero and its overlapping stats band intentionally stay
- * outside this treatment because they are present on first paint.
+ * scroll rhythm. The hero intentionally stays outside this treatment because
+ * it is present on first paint.
  */
 export function HomeSectionReveal({ children }: { children: ReactNode }) {
   const reducedMotion = useReducedMotion();

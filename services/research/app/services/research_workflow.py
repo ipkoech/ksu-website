@@ -1,28 +1,9 @@
-"""Draft → pending → published gating for Research Portal records.
+"""Research editorial states adapted to each model's public visibility fields.
 
-The portal requires that records created by non-admins are held for review
-before they reach the public site. The research models were deliberately left
-unchanged, so this gate is expressed with the visibility columns each model
-already has — and those differ per model:
-
-===================  ===========================================
-``research_farms``   ``is_public`` (no ``status`` column at all)
-``sustainabilities`` ``status`` (no ``is_public`` column at all)
-``research_projects`` both ``is_public`` and ``status``
-``partners``          ``is_active`` + ``status``
-``focus_areas``       ``is_active`` only
-===================  ===========================================
-
-:class:`VisibilityAdapter` hides that variation behind one vocabulary, so the
-review queue and the portal can speak in terms of DRAFT / PENDING / PUBLISHED
-without knowing which columns back a given table.
-
-.. warning::
-   Because no columns were added, there is nowhere to persist *who* submitted
-   or reviewed a record, or *why* something was rejected — only
-   ``publications`` carries ``submitted_at`` / ``reviewed_at`` /
-   ``reviewer_comments``. :func:`workflow_audit_supported` reports this per
-   model so callers can degrade honestly instead of inventing an audit trail.
+Boolean-only Farm, FocusArea and ImpactMetric models persist editorial_state.
+Other models retain their existing status columns. Public visibility stays in
+its original fields; publication changes are made by canonical commands.
+Canonical creation and transition commands persist service-owned provenance.
 """
 
 from __future__ import annotations
@@ -37,10 +18,8 @@ PENDING = "pending"
 PUBLISHED = "published"
 REJECTED = "rejected"
 
-#: The states the portal exposes. ``rejected`` is represented the same way as
-#: ``draft`` at rest (hidden, editable) because no column can distinguish them
-#: without a schema change; the difference is carried by the review queue's own
-#: record, not by the row.
+#: Stable states exposed by the portal. Boolean-only models store these in
+#: editorial_state while keeping their v1 visibility fields unchanged.
 WORKFLOW_STATES: tuple[str, ...] = (DRAFT, PENDING, PUBLISHED, REJECTED)
 
 #: Statuses that ``CRUDService.public_statuses`` treats as publicly visible.
@@ -128,17 +107,18 @@ def adapter_for(resource_key: str) -> VisibilityAdapter | None:
 
 
 def workflow_audit_supported(resource_key: str) -> bool:
-    """True when this model can record who submitted or reviewed a record.
+    """Whether canonical commands persist provenance for this resource.
 
-    Only ``publications`` can today. Callers should surface "no history
-    available" rather than implying an audit trail exists.
+    Historical rows and changes outside these commands may have no events.
     """
-    adapter = adapter_for(resource_key)
-    return bool(adapter and adapter.supports_audit)
+    return resource_key in {"farms", "sustainability", "projects", "partners", "stories",
+                            "focus-areas", "publications", "impact-metrics"}
 
 
 def workflow_state(resource_key: str, record: Any) -> str:
     """Report a stored record's workflow state in the portal's vocabulary."""
+    if getattr(record, "editorial_state", None) in WORKFLOW_STATES:
+        return record.editorial_state
     adapter = adapter_for(resource_key)
     if adapter is None:
         return PUBLISHED
@@ -161,6 +141,8 @@ def apply_workflow_state(resource_key: str, record: Any, state: str) -> Any:
     adapter = adapter_for(resource_key)
     if adapter is None:
         return record
+    if hasattr(record, "editorial_state"):
+        record.editorial_state = state
 
     if state == PUBLISHED:
         values = adapter.public_values()

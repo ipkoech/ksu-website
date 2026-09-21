@@ -1,5 +1,4 @@
 import {
-  CompactRecord,
   LibraryContentBand,
   LibraryHero,
   LibrarySectionHeading,
@@ -14,13 +13,14 @@ import {
   getLibrarySpecialistsData,
   safeExternalUrl,
 } from "../../lib/library-public-data";
+import { LibraryRecordsDisplay, type LibraryRecordDto } from "../../components/library-records-display";
 
 export const metadata = {
   title: "Library Specialists",
   description: "Find Kisii University Library subject and research support specialists.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type SpecialistsPageProps = {
   searchParams?: Promise<{
@@ -45,6 +45,16 @@ export default async function LibrarySpecialistsPage({ searchParams }: Specialis
   const supportAreas = Array.from(
     new Set(specialists.data.flatMap((specialist) => specialist.support_areas)),
   ).filter(Boolean);
+  const specialistRecords: LibraryRecordDto[] = specialists.data.map((specialist) => ({
+    id: specialist.id,
+    icon: "users",
+    eyebrow: specialist.schools.join(", ") || "Library specialist",
+    title: specialist.subjects.join(", ") || "Subject support",
+    body: specialist.support_areas.join(", ") || "Support areas are being updated.",
+    meta: specialist.departments.join(", ") ? [specialist.departments.join(", ")] : [],
+    href: safeExternalUrl(specialist.booking_url),
+    action: "Book support",
+  }));
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
@@ -115,20 +125,7 @@ export default async function LibrarySpecialistsPage({ searchParams }: Specialis
             {specialists.data.length === 0 ? (
               <StatusMessage>No specialists are available for these filters yet.</StatusMessage>
             ) : (
-              <div className="grid gap-4 lg:grid-cols-2">
-                {specialists.data.map((specialist) => (
-                  <CompactRecord
-                    key={specialist.id}
-                    icon="users"
-                    eyebrow={specialist.schools.join(", ") || "Library specialist"}
-                    title={specialist.subjects.join(", ") || "Subject support"}
-                    body={specialist.support_areas.join(", ") || "Support areas are being updated."}
-                    meta={[specialist.departments.join(", ")]}
-                    href={safeExternalUrl(specialist.booking_url) ?? undefined}
-                    action="Book support"
-                  />
-                ))}
-              </div>
+              <LibraryRecordsDisplay records={specialistRecords} marker="library-specialists" />
             )}
           </div>
           <SidePanel title="Support areas" eyebrow="Specialist filters">

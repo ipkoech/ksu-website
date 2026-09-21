@@ -50,12 +50,17 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
             "strategic partnerships, and community engagement."
         ),
         vision=(
-            "To be a World Class University in the advancement of academic excellence, research, innovation, "
-            "and enhancement of social welfare."
+            "An inclusive and borderless University that creates positive change in the world"
         ),
-        mission=HANDBOOK_INSTITUTIONAL_FACTS["mission"],
+        # Current official homepage wording, verified during the 2026-09-08
+        # live-site audit. Handbook wording remains available in quick_facts.
+        mission=(
+            "Creating a transformative environment that preserves knowledge, enriches the student "
+            "experience, delivers quality training and research, and promotes community engagement "
+            "for sustainable development."
+        ),
         core_values=(
-            "Integrity; Diligence; Hard work; Professionalism; Academic freedom; Civility; Social responsiveness; Accountability."
+            "Transformative Thinking; Respect; Inclusivity; Fairness."
         ),
         founding_year=1965,
         institution_type="public_university",
@@ -70,8 +75,7 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
             "in 1999, became a constituent college in 2007, and attained full university status in 2013."
         ),
         philosophy=(
-            "World-class education in an atmosphere of academic freedom, civility, social responsiveness, "
-            "integrity and accountability."
+            "Creative, scientific, technological, innovative, and critical thinking, responsive to societal needs and service to humanity"
         ),
         strategic_plan_summary=(
             "Kisii University's strategic direction advances quality education and training, knowledge "
@@ -122,7 +126,7 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
             "institutional_facts": HANDBOOK_INSTITUTIONAL_FACTS,
         },
         strategic_priorities={
-            "philosophy": "World-class education in an atmosphere of academic freedom, civility, social responsiveness, integrity and accountability.",
+            "philosophy": "Creative, scientific, technological, innovative, and critical thinking, responsive to societal needs and service to humanity",
             "mandate": [
                 "Produce competent and high-quality graduates.",
                 "Generate appropriate knowledge, skills, competencies, and innovation outputs impacting national development goals and social welfare.",

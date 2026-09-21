@@ -51,6 +51,7 @@ import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { StaffAssignmentEditor } from "@/components/staff/staff-assignment-editor";
 import { hasChangedPayload, pickChangedPayloadWithRecord, type PayloadFieldMap } from "@/lib/changed-fields";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const objectSchema = z.record(z.string(), z.unknown()).nullable().optional();
 
@@ -298,6 +299,7 @@ export default function DirectorateEditorPage() {
     try {
       if (isNew) {
         const response = await createWing.mutateAsync(payload);
+        void revalidatePublicContent("main", "organization");
         toast.success("Directorate created");
         router.push(`/organization/directorates/_static?id=${encodeURIComponent(response.data.id)}`);
       } else if (wing) {
@@ -332,6 +334,7 @@ export default function DirectorateEditorPage() {
           is_active: response.data.is_active ?? true,
           display_order: response.data.display_order ?? 100,
         });
+        void revalidatePublicContent("main", "organization");
         toast.success("Directorate updated");
       }
     } catch (error) {

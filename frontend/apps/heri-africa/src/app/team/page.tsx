@@ -6,6 +6,7 @@ import { SiteShell } from "../../components/site-shell";
 import { Reveal } from "../../components/motion/reveal";
 import { getTeam } from "../../lib/api";
 import { withBasePath } from "../../lib/base-path";
+import { uncachedFallback } from "../../lib/server-fallback";
 
 export const metadata: Metadata = {
   title: "Our Team",
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 export const revalidate = 300;
 
 export default async function TeamPage() {
-  const team = await getTeam().catch(() => []);
+  const team = await getTeam().catch(() => uncachedFallback([]));
   const chair = team.find((member) =>
     member.role.toLowerCase().includes("chair"),
   );

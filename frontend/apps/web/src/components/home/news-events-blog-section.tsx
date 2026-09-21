@@ -162,7 +162,7 @@ function NewsCard({ item }: { item: HomeCard }) {
         focusVisibleStyles.primary,
       )}
     >
-      <article className="flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-[0_1px_2px_hsl(var(--brand-overlay)/0.05),0_14px_34px_-22px_hsl(var(--brand-overlay)/0.45)] ring-1 ring-brand-overlay/8 transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:group-hover:-translate-y-1 motion-safe:group-hover:shadow-[0_1px_2px_hsl(var(--brand-overlay)/0.06),0_26px_50px_-24px_hsl(var(--brand-overlay)/0.55)]">
+      <article className="flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-[0_1px_2px_hsl(var(--brand-overlay)/0.05),0_14px_34px_-22px_hsl(var(--brand-overlay)/0.45)] ring-1 ring-brand-overlay/8 transition-[transform,box-shadow] duration-500 ease-in-out motion-safe:group-hover:-translate-y-1 motion-safe:group-hover:shadow-[0_1px_2px_hsl(var(--brand-overlay)/0.06),0_26px_50px_-24px_hsl(var(--brand-overlay)/0.55)]">
         <ImageCurtainReveal className="relative aspect-[16/10] w-full overflow-hidden">
           <PublicImage
             src={item.imageUrl ?? defaultUniversityImage(item.id ?? item.href)}

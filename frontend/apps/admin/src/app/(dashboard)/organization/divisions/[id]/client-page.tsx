@@ -50,6 +50,7 @@ import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { StaffAssignmentEditor } from "@/components/staff/staff-assignment-editor";
 import { hasChangedPayload, pickChangedPayloadWithRecord, type PayloadFieldMap } from "@/lib/changed-fields";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const objectSchema = z.record(z.string(), z.unknown()).nullable().optional();
 
@@ -293,6 +294,7 @@ export default function DivisionEditorPage() {
     try {
       if (isNew) {
         await createDivision.mutateAsync(payload);
+        void revalidatePublicContent("main", "organization");
         toast.success("Division created");
       } else if (division) {
         const patch = pickChangedPayloadWithRecord(
@@ -306,6 +308,7 @@ export default function DivisionEditorPage() {
           return;
         }
         await updateDivision.mutateAsync({ id: division.id, data: patch });
+        void revalidatePublicContent("main", "organization");
         toast.success("Division updated");
       }
       router.push("/organization/divisions");

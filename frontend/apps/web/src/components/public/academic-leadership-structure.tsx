@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, ChevronDown, Users } from "lucide-react";
 import { ScrollReveal } from "@ksu/ui/components";
@@ -6,7 +8,7 @@ import type {
   AcademicOrganization,
   AcademicOrganizationMember,
   AcademicOrganizationTier,
-} from "@/lib/public-team-data";
+} from "@/lib/public-team-types";
 
 function tierByKey(data: AcademicOrganization, key: string) {
   return data.tiers.find((tier) => tier.key === key) ?? null;
@@ -40,7 +42,7 @@ function LeaderIdentity({
           <PublicImage
             src={member.photo_url}
             alt={`${member.name}, ${member.title ?? member.position ?? "academic leader"}`}
-            ratio="fill"
+            ratio="profile"
             className="h-full w-full rounded-full"
             imageClassName="object-cover"
             sizes={featured ? "96px" : "56px"}
@@ -132,6 +134,7 @@ export function AcademicLeadershipStructure({
   return (
     <ScrollReveal
       as="section"
+      data-server-data-display="web-academic-leadership"
       aria-labelledby="academic-leadership-title"
       className="border-y border-border bg-white px-4 py-12 sm:px-6 lg:px-8 lg:py-16"
     >

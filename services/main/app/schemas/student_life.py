@@ -8,7 +8,7 @@ from datetime import date, datetime
 
 from pydantic import ConfigDict, Field
 
-from .base import BaseReadSchema, BaseSchema, PhoneStr, SlugStr, UrlStr
+from .base import BaseReadSchema, BaseSchema, PhoneStr, SlugStr, UrlStr, optional_snapshot
 
 
 class ClubCreate(BaseSchema):
@@ -137,6 +137,36 @@ class ClubMediaUpdate(BaseSchema):
 
 class ClubMediaPublicationUpdate(BaseSchema):
     is_public: bool
+
+
+class ClubLeaderRead(BaseSchema):
+    id: uuid.UUID
+    person_id: uuid.UUID
+    name: str | None = None
+    role: str
+    title: str | None = None
+    hierarchy_level: int | None = None
+
+
+class ClubMediaRead(BaseSchema):
+    id: uuid.UUID
+    media_id: uuid.UUID
+    entity_type: str
+    entity_id: uuid.UUID
+    role: str
+    folder_id: uuid.UUID | None = None
+    display_order: int
+    is_public: bool
+    is_published: bool = False
+    status: str = "draft"
+    workflow_status: str = "draft"
+    owner_portal: str | None = None
+    owner_scope_type: str | None = None
+    owner_scope_id: uuid.UUID | None = None
+    submitted_at: datetime | None = None
+    approved_at: datetime | None = None
+    published_at: datetime | None = None
+    media: dict[str, Any] | None = None
 
 
 class ClubRead(BaseReadSchema):
@@ -404,13 +434,23 @@ class StudentGovernanceRead(BaseReadSchema):
     is_active: bool
 
 
+ClubSnapshot = optional_snapshot("ClubSnapshot", ClubRead)
+ClubActivitySnapshot = optional_snapshot("ClubActivitySnapshot", ClubActivityRead)
+AccommodationSnapshot = optional_snapshot("AccommodationSnapshot", AccommodationRead)
+SportsFacilitySnapshot = optional_snapshot("SportsFacilitySnapshot", SportsFacilityRead)
+ArtsCultureSnapshot = optional_snapshot("ArtsCultureSnapshot", ArtsCultureRead)
+StudentGovernanceSnapshot = optional_snapshot("StudentGovernanceSnapshot", StudentGovernanceRead)
+
+
 __all__ = [
     "ClubCreate",
     "ClubUpdate",
     "ClubRead",
+    "ClubSnapshot",
     "ClubActivityCreate",
     "ClubActivityUpdate",
     "ClubActivityRead",
+    "ClubActivitySnapshot",
     "AccommodationCreate",
     "AccommodationUpdate",
     "AccommodationRead",

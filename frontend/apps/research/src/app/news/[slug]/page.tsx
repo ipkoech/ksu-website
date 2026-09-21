@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import {
   ResearchDetailHero,
   ResearchDetailSidebar,
@@ -14,7 +13,6 @@ import {
   compactText,
   formatDate,
   formatLabel,
-  generateSlugParams,
   getArticleBySlug,
   getCenters,
   getInnovations,
@@ -29,17 +27,14 @@ import {
 import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getArticleBySlug(slug);
-  return researchRecordMetadata(data, { fallbackTitle: "Research news", pathname: "/news/" + slug });
+  return researchRecordMetadata(data, { fallbackTitle: "News", pathname: "/news/" + slug });
 }
 const passthroughImageLoader = ({ src }: { src: string }) => src;
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.articles.list);
-}
 
 export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -87,7 +82,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
           ...(compactText(record.external_url) ? [{ label: "Open source link", href: compactText(record.external_url) }] : []),
           ...(compactText(record.video_url) ? [{ label: "Watch media", href: compactText(record.video_url), variant: "secondary" as const }] : []),
         ]}
-        imageSrc="/images/research/research-home-hero.svg"
+        imageSrc="/images/research/verified/multidisciplinary-conference-2026.jpg"
         imageAlt="Research news and public update context"
       />
       {error ? (

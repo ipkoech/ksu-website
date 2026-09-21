@@ -9,13 +9,13 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Query, Request, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ._scoped import can_access_scoped_record, require_scoped_record
 from ...deps import CurrentUser, DbSession, permissions_for_user
 from ...models import News
-from ...schemas import NewsCreate, NewsUpdate
+from ...schemas import NewsCreate, NewsSnapshot, NewsUpdate
 from ...services import ContentWorkflowService, NewsService
 from .content_workflow import authorize_content_workflow_action
 from ...core.config import public_content_rate_limit
@@ -34,7 +34,7 @@ NEWS_MANAGE_PERMISSIONS = [
 ]
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[NewsSnapshot]])
 @public_content_rate_limit
 @cached_public(timeout=300, vary_on=("page", "per_page", "scope_type", "scope_id", "is_main", "is_published", "search", "fields", "include"))
 async def list_news(
@@ -64,7 +64,7 @@ async def list_news(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin")
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[NewsSnapshot]])
 async def list_admin_news(
     db: DbSession,
     user: CurrentUser,
@@ -120,7 +120,7 @@ async def list_admin_news(
     return success(data=selector.apply(items), meta=meta)
 
 
-@router.get("/id/{news_id}")
+@router.get("/id/{news_id}", response_model_exclude_unset=True, response_model=SuccessResponse[NewsSnapshot])
 async def get_news_by_id(news_id: uuid.UUID, db: DbSession, user: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(News, fields)
     item = await NewsService.get_by_id(db, news_id, load_options=selector.load_options)
@@ -137,7 +137,7 @@ async def get_news_by_id(news_id: uuid.UUID, db: DbSession, user: CurrentUser, f
     return success(data=selector.apply(item))
 
 
-@router.get("/{slug}")
+@router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[NewsSnapshot])
 @public_content_rate_limit
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_news(request: Request, slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
@@ -148,7 +148,7 @@ async def get_news(request: Request, slug: str, db: DbSession, fields: FieldSele
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[NewsSnapshot])
 async def create_news(data: NewsCreate, db: DbSession, user: CurrentUser):
     await require_scoped_record(
         db,
@@ -169,7 +169,7 @@ async def create_news(data: NewsCreate, db: DbSession, user: CurrentUser):
     return success(data=item, message="News created")
 
 
-@router.patch("/{news_id}")
+@router.patch("/{news_id}", response_model_exclude_unset=True, response_model=SuccessResponse[NewsSnapshot])
 async def update_news(news_id: uuid.UUID, data: NewsUpdate, db: DbSession, user: CurrentUser):
     item = await NewsService.get_by_id(db, news_id)
     if item is None:
@@ -215,7 +215,7 @@ async def update_news(news_id: uuid.UUID, data: NewsUpdate, db: DbSession, user:
     return success(data=item, message="News updated")
 
 
-@router.post("/{news_id}/publish")
+@router.post("/{news_id}/publish", response_model_exclude_unset=True, response_model=SuccessResponse[NewsSnapshot])
 async def publish_news(news_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await NewsService.get_by_id(db, news_id)
     if item is None:
@@ -239,7 +239,7 @@ async def publish_news(news_id: uuid.UUID, db: DbSession, user: CurrentUser):
     return success(data=item, message="News published")
 
 
-@router.post("/{news_id}/unpublish")
+@router.post("/{news_id}/unpublish", response_model_exclude_unset=True, response_model=SuccessResponse[NewsSnapshot])
 async def unpublish_news(news_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await NewsService.get_by_id(db, news_id)
     if item is None:

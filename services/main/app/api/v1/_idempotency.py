@@ -15,7 +15,7 @@ from fastapi.routing import APIRoute, request_response
 from fastapi.responses import JSONResponse
 from ksu_common.schemas.responses import error
 from ksu_common.audit import request_actor_id
-from ksu_common.response_validation import _iter_route_inspections
+from ksu_common.response_validation import _iter_route_inspections, _mark_included_router_routes_changed
 from ksu_common.security import decode_key_material
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -72,7 +72,9 @@ def install_main_idempotency(routes: list[object] | tuple[object, ...]) -> None:
             continue
 
         endpoint = route.dependant.call
-        if _uses_existing_idempotency(endpoint):
+        if _uses_existing_idempotency(endpoint) or _uses_existing_idempotency(
+            getattr(route, "_response_bypass_original_endpoint", None)
+        ):
             route.main_idempotency_enabled = True
             route.main_idempotency_mode = "endpoint"
             continue
@@ -83,6 +85,7 @@ def install_main_idempotency(routes: list[object] | tuple[object, ...]) -> None:
         route.app = _request_context_app(request_response(route.get_route_handler()))
         route.main_idempotency_enabled = True
         route.main_idempotency_mode = "route"
+    _mark_included_router_routes_changed(routes)
 
 
 def _uses_existing_idempotency(endpoint: Any) -> bool:
@@ -111,13 +114,31 @@ def _request_context_app(app: Any) -> Any:
 
 
 def _adopt_endpoint(endpoint: Any, *, route: APIRoute, path: str) -> Any:
+    endpoint_parameters = inspect.signature(endpoint, eval_str=True).parameters
+
+    def invoke(request: Request, args: tuple[Any, ...], kwargs: dict[str, Any]) -> Any:
+        # FastAPI normally injects ``Request`` into the adopted wrapper.  The
+        # wrapper then calls the original endpoint directly, bypassing
+        # FastAPI's dependency injection a second time.  Preserve the request
+        # argument for handlers that use it to capture request metadata.
+        call_kwargs = dict(kwargs)
+        if "request" in endpoint_parameters and "request" not in call_kwargs:
+            call_kwargs["request"] = request
+        return endpoint(*args, **call_kwargs)
+
     @wraps(endpoint)
     async def adopted_endpoint(*args: Any, **kwargs: Any) -> Any:
-        request = _request_context.get()
+        request = kwargs.pop("_idempotency_request", None) or _request_context.get()
         if request is None:
             raise RuntimeError("Main idempotency route called outside an HTTP request")
 
-        key = request.headers.get("Idempotency-Key", "").strip()
+        supplied_key = request.headers.get("Idempotency-Key")
+        if supplied_key is None:
+            # Legacy clients may omit the header. Replay protection is opt-in;
+            # domain commands with mandatory keys enforce their own contract.
+            result = invoke(request, args, kwargs)
+            return await result if inspect.isawaitable(result) else result
+        key = supplied_key.strip()
         if not 8 <= len(key) <= 255:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -167,7 +188,7 @@ def _adopt_endpoint(endpoint: Any, *, route: APIRoute, path: str) -> Any:
                 }
 
             try:
-                result = endpoint(*args, **kwargs)
+                result = invoke(request, args, kwargs)
                 if inspect.isawaitable(result):
                     result = await result
             except HTTPException as exc:
@@ -212,6 +233,13 @@ def _adopt_endpoint(endpoint: Any, *, route: APIRoute, path: str) -> Any:
                 await _finish_owned_session(session, owned_session, commit=False)
             raise
 
+    signature = inspect.signature(endpoint, eval_str=True)
+    parameters = list(signature.parameters.values())
+    injected = inspect.Parameter("_idempotency_request", inspect.Parameter.KEYWORD_ONLY, annotation=Request)
+    position = next((index for index, parameter in enumerate(parameters)
+                     if parameter.kind == inspect.Parameter.VAR_KEYWORD), len(parameters))
+    parameters.insert(position, injected)
+    adopted_endpoint.__signature__ = signature.replace(parameters=parameters)
     return adopted_endpoint
 
 

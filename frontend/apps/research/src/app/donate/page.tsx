@@ -12,7 +12,7 @@ import {
   Landmark,
   Sprout,
 } from "lucide-react";
-import { researchServiceApi, type ResearchGenericRecord, type ResearchProject } from "@ksu/api-client";
+import { researchServiceApi, type ResearchGenericRecord, type ResearchProject } from "@ksu/api-client/server";
 import { Badge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { FundingIllustratedHero, fundingIcons } from "../../components/funding-ui";
 import {
@@ -33,6 +33,10 @@ import {
   getFormString,
   type DonationBankDetails,
 } from "./donation-model";
+import {
+  DonationPriorities,
+  type DonationPriorityDto,
+} from "../../components/donation-priorities";
 
 export const revalidate = 300;
 
@@ -120,6 +124,13 @@ export default async function DonatePage({
     sustainability: sustainability.data,
   });
   const featuredImpact = impacts.data[0];
+  const priorityRows: DonationPriorityDto[] = priorities.map((priority) => ({
+    id: String(priority.id),
+    title: priority.title,
+    body: priority.body,
+    value: priority.value,
+    icon: priority.type === "General research support" ? "hand" : priority.type === "Research projects" ? "book" : priority.type === "Scholarships" ? "graduation" : priority.type === "Research centers" ? "landmark" : priority.type === "Community and sustainability" ? "sprout" : "banknote",
+  }));
 
   return (
     <ResearchPageShell tone="subtle">
@@ -155,7 +166,7 @@ export default async function DonatePage({
         body="Giving priorities are assembled from published research records and kept compact so donors can move quickly to the form."
         tone="white"
       >
-        <PrioritySelector priorities={priorities} />
+        <DonationPriorities priorities={priorityRows} />
         {[settings.error, projects.error, scholarships.error, centers.error, endowments.error, sustainability.error]
           .filter(Boolean)
           .map((error) => (
@@ -376,33 +387,6 @@ function buildPriorities({
       value: featuredEndowment?.id ? `fund:${featuredEndowment.id}` : "fund",
     },
   ];
-}
-
-function PrioritySelector({ priorities }: { priorities: Priority[] }) {
-  return (
-    <div id="priorities" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-      {priorities.map((priority, index) => {
-        const Icon = priority.icon;
-        return (
-          <a
-            key={priority.id}
-            href="#make-a-gift"
-            className={
-              index === 0
-                ? "rounded-lg border border-primary bg-primary/[0.04] p-4 shadow-sm"
-                : "rounded-lg border border-border bg-white p-4 shadow-sm transition hover:border-primary/30"
-            }
-          >
-            <span className={index === 0 ? "inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary text-white" : "inline-flex h-10 w-10 items-center justify-center rounded-md bg-surface-muted text-primary"}>
-              <Icon aria-hidden className="h-5 w-5" />
-            </span>
-            <h2 className="mt-3 text-base font-semibold leading-6 text-foreground">{priority.title}</h2>
-            <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">{priority.body}</p>
-          </a>
-        );
-      })}
-    </div>
-  );
 }
 
 function DonationForm({
@@ -733,7 +717,7 @@ function ImpactFeature({ impact }: { impact?: ResearchGenericRecord }) {
     <article className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
       <div className="relative aspect-[16/7] min-h-[150px] sm:min-h-[220px]">
         <Image
-          src="/images/research/research-events-hero.svg"
+          src="/images/research/verified/multidisciplinary-conference-2026.jpg"
           alt="Donation impact reporting and research outcomes"
           fill
           sizes="(min-width: 1024px) 50vw, 100vw"

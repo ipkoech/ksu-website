@@ -7,7 +7,7 @@ import { ContentWorkspaceHeader, contentColumns } from "../_components/content-w
 export default function ResearchSlidersPage() {
   return (
     <ResearchContentResourcePage
-      title="Research Sliders"
+      title="Sliders"
       description="Manage slider groups scoped to research."
       queryKey={["research", "content", "sliders"]}
       resource={{

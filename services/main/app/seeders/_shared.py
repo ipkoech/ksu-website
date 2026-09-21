@@ -43,7 +43,6 @@ from app.models import (
 from app.schemas.base import slugify
 from app.helpers.password import hash_password
 from .seed_handbook import (
-    HANDBOOK_DEPARTMENT_SEED_SPECS,
     HANDBOOK_LIBRARY_FACTS,
     HANDBOOK_RESEARCH_FACTS,
     HANDBOOK_SCHOOL_FACTS,
@@ -864,21 +863,6 @@ for school_spec in SCHOOL_SPECS:
         school_spec["mandate"] = f"{school_spec['mandate']} Handbook research context: {handbook_fact['research_context']}."
     if handbook_fact.get("programmes"):
         school_spec["mandate"] = f"{school_spec['mandate']} Handbook programmes: {', '.join(handbook_fact['programmes'])}."
-    existing_departments = {department["name"]: department for department in school_spec["departments"]}
-    for department_fact in HANDBOOK_DEPARTMENT_SEED_SPECS.get(school_spec["code"], ()):
-        existing_department = existing_departments.get(department_fact["name"])
-        if existing_department:
-            existing_department["about"] = department_fact["about"]
-            existing_department["handbook_source_url"] = HANDBOOK_SOURCE["url"]
-            continue
-        school_spec["departments"].append(
-            {
-                "name": department_fact["name"],
-                "code": department_fact["code"],
-                "about": department_fact["about"],
-                "handbook_source_url": HANDBOOK_SOURCE["url"],
-            }
-        )
 
 
 ADMIN_DEPARTMENTS: list[dict[str, Any]] = [
@@ -1071,7 +1055,11 @@ async def get_or_create_person(session: AsyncSession, ctx: SeedContext, key: str
         ]
         if cv_source_url:
             media_filters.append(Media.public_url == cv_source_url)
-        media = (await session.execute(select(Media).where(or_(*media_filters)))).scalar_one_or_none()
+        media = await session.scalar(
+            select(Media).where(or_(*media_filters)).order_by(
+                (Media.storage_path == storage_path).desc(), Media.id,
+            ).limit(1)
+        )
         media_payload = {
             "filename": filename,
             "original_filename": original_filename,
@@ -1314,6 +1302,16 @@ async def upsert_department_service(session: AsyncSession, department: Departmen
 
 
 async def upsert_staff_assignment(session: AsyncSession, ctx: SeedContext, key: str, **payload: Any) -> StaffAssignment:
+    # Assignment views use this field directly. Reuse the already-seeded
+    # person portrait when an assignment does not provide its own portrait.
+    if payload.get("portrait_media_id") is None:
+        person = next(
+            (item for item in ctx.people.values() if item.id == payload.get("person_id")),
+            None,
+        )
+        if person is not None and person.photo_id is not None:
+            payload["portrait_media_id"] = person.photo_id
+
     constrained_active_role = (
         payload.get("status") == "active"
         and payload.get("entity_id") is not None

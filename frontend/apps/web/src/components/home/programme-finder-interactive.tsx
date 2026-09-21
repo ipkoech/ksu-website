@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { ArrowRight, Search, SlidersHorizontal, X } from "lucide-react";
-import { getMainApiBaseUrl } from "@ksu/api-client";
+import { publicBackendApi } from "@/lib/browser-api";
 import type { HomeProgrammeCard, HomeSchoolCard } from "@/lib/homepage-data";
 
 type ProgrammeFinderInteractiveProps = {
@@ -29,14 +29,21 @@ export function ProgrammeFinderInteractive({
   const [level, setLevel] = useState(allValue);
   const [mode, setMode] = useState(allValue);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [remoteResults, setRemoteResults] = useState<HomeProgrammeCard[] | null>(null);
+  const [remoteResults, setRemoteResults] = useState<
+    HomeProgrammeCard[] | null
+  >(null);
   const [isSearching, setIsSearching] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
   const deferredQuery = useDeferredValue(query);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const navigationTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    searchInputRef.current?.focus();
+    return () => {
+      if (navigationTimerRef.current !== null) {
+        window.clearTimeout(navigationTimerRef.current);
+      }
+    };
   }, []);
 
   const hasActiveFilters =
@@ -99,17 +106,13 @@ export function ProgrammeFinderInteractive({
       if (mode !== allValue) params.set("mode_of_study", mode);
 
       try {
-        const response = await fetch(
-          `${getMainApiBaseUrl()}/api/v1/programmes?${params.toString()}`,
-          {
-          signal: controller.signal,
-          headers: { Accept: "application/json" },
-          },
-        );
-        if (!response.ok) throw new Error(`Programme search failed: ${response.status}`);
-        const payload = (await response.json()) as {
+        const payload = await publicBackendApi.get<{
           data?: Array<Record<string, unknown>>;
-        };
+        }>("/api/v1/programmes", Object.fromEntries(params), {
+          signal: controller.signal,
+          auth: "none",
+        });
+        if (controller.signal.aborted) return;
         setRemoteResults((payload.data ?? []).map(normalizeSearchProgramme));
       } catch (error) {
         if ((error as Error).name !== "AbortError") setRemoteResults(null);
@@ -163,116 +166,147 @@ export function ProgrammeFinderInteractive({
               <span className="hidden sm:inline">Filters</span>
               {hasActiveFilters && !query.trim() ? (
                 <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary px-1 text-[10px] text-white">
-                  {[schoolId, level, mode].filter((value) => value !== allValue).length}
+                  {
+                    [schoolId, level, mode].filter(
+                      (value) => value !== allValue,
+                    ).length
+                  }
                 </span>
               ) : null}
-              {filtersOpen ? <X className="h-4 w-4 sm:hidden" aria-hidden /> : null}
+              {filtersOpen ? (
+                <X className="h-4 w-4 sm:hidden" aria-hidden />
+              ) : null}
             </button>
           </div>
 
-          {filtersOpen ? <div id="programme-filters" role="dialog" aria-label="Programme filters" className="absolute right-0 top-full z-50 mt-2 grid w-[min(24rem,calc(100vw-2rem))] grid-cols-1 gap-3 rounded-3xl bg-white p-4 shadow-[0_24px_60px_-30px_hsl(var(--primary)/.55)] ring-1 ring-primary/10 sm:p-5">
-            <FilterSelect
-              label="School"
-              name="school_id"
-              value={schoolId}
-              onChange={setSchoolId}
-              options={schools.map((school) => ({
-                label: school.title,
-                value: school.id ?? "",
-              }))}
-            />
-            <FilterSelect
-              label="Level"
-              name="level"
-              value={level}
-              onChange={setLevel}
-              options={levels.map((item) => ({ label: item, value: item }))}
-            />
-            <FilterSelect
-              label="Study mode"
-              name="mode_of_study"
-              value={mode}
-              onChange={setMode}
-              options={modes.map((item) => ({ label: item, value: item }))}
-            />
-          </div> : null}
+          {filtersOpen ? (
+            <div
+              id="programme-filters"
+              role="dialog"
+              aria-label="Programme filters"
+              className="absolute right-0 top-full z-50 mt-2 grid w-[min(24rem,calc(100vw-2rem))] grid-cols-1 gap-3 rounded-3xl bg-white p-4 shadow-[0_24px_60px_-30px_hsl(var(--primary)/.55)] ring-1 ring-primary/10 sm:p-5"
+            >
+              <FilterSelect
+                label="School"
+                name="school_id"
+                value={schoolId}
+                onChange={setSchoolId}
+                options={schools.map((school) => ({
+                  label: school.title,
+                  value: school.id ?? "",
+                }))}
+              />
+              <FilterSelect
+                label="Level"
+                name="level"
+                value={level}
+                onChange={setLevel}
+                options={levels.map((item) => ({ label: item, value: item }))}
+              />
+              <FilterSelect
+                label="Study mode"
+                name="mode_of_study"
+                value={mode}
+                onChange={setMode}
+                options={modes.map((item) => ({ label: item, value: item }))}
+              />
+            </div>
+          ) : null}
         </form>
         {!hasActiveFilters ? (
           intakeProgrammes.length ? (
-            <IntakeProgrammes programmes={intakeProgrammes} intakeName={intakeName} />
-          ) : <PopularSearches schools={schools} onSelect={setQuery} />
+            <IntakeProgrammes
+              programmes={intakeProgrammes}
+              intakeName={intakeName}
+            />
+          ) : (
+            <PopularSearches schools={schools} onSelect={setQuery} />
+          )
         ) : null}
       </div>
 
-      {hasActiveFilters ? <div className="programme-mosaic-results mx-auto max-w-5xl rounded-t-[1.25rem] px-5 py-7 sm:px-8 lg:px-12 lg:py-9">
-        <div className="flex items-end justify-between gap-4 border-b border-white/15 pb-3">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
-              Programme directory
-            </p>
-            <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-white">
-              {hasActiveFilters ? "Your matches" : "Explore programmes"}
-            </h3>
-          </div>
-          <p
-            aria-live="polite"
-            className="shrink-0 text-sm text-white/70"
-          >
-            {isSearching ? <span className="mr-2 text-xs text-secondary">Searching…</span> : null}
-            <strong className="text-xl text-secondary">
-              {matchingProgrammes.length}
-            </strong>{" "}
-            {matchingProgrammes.length === 1 ? "programme" : "programmes"}
-          </p>
-        </div>
-
-        <div aria-live="polite" className="divide-y divide-white/10">
-          {previewItems.length ? (
-            previewItems.map((programme, index) => (
-              <Link
-                key={`${resultSetKey}-${programme.id ?? programme.href}`}
-                href={programme.href}
-                onClick={(event) => {
-                  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-                  event.preventDefault();
-                  setCelebrating(true);
-                  window.setTimeout(() => router.push(programme.href), 620);
-                }}
-                className="programme-result group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3 transition duration-300 hover:bg-white/10 focus-visible:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary sm:gap-4 sm:px-2"
-                style={{ transitionDelay: `${index * 35}ms` }}
-              >
-                <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-secondary">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="line-clamp-1 block font-[family-name:var(--font-display)] text-base font-semibold text-white transition group-hover:text-secondary">
-                    {programme.title}
-                  </span>
-                  <span className="mt-1 line-clamp-1 block text-xs text-white/65">
-                    {[programme.schoolName, programme.body]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </span>
-                </span>
-                <ArrowRight className="h-4 w-4 text-secondary transition group-hover:translate-x-1" />
-              </Link>
-            ))
-          ) : (
-            <div className="border-b border-white/10 py-5 text-sm leading-6 text-white/70">
-              No programmes match these search criteria. Try a broader keyword
-              or choose “All” in one of the filters.
+      {hasActiveFilters ? (
+        <div className="programme-mosaic-results mx-auto max-w-5xl rounded-t-[1.25rem] px-5 py-7 sm:px-8 lg:px-12 lg:py-9">
+          <div className="flex items-end justify-between gap-4 border-b border-white/15 pb-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
+                Programme directory
+              </p>
+              <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-white">
+                {hasActiveFilters ? "Your matches" : "Explore programmes"}
+              </h3>
             </div>
-          )}
-        </div>
+            <p aria-live="polite" className="shrink-0 text-sm text-white/70">
+              {isSearching ? (
+                <span className="mr-2 text-xs text-secondary">Searching…</span>
+              ) : null}
+              <strong className="text-xl text-secondary">
+                {matchingProgrammes.length}
+              </strong>{" "}
+              {matchingProgrammes.length === 1 ? "programme" : "programmes"}
+            </p>
+          </div>
 
-        <Link
-          href={actionHref}
-          className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 border-b border-secondary pb-1 text-sm font-bold text-white transition hover:text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-secondary"
-        >
-          View matching programmes
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
-      </div> : null}
+          <div aria-live="polite" className="divide-y divide-white/10">
+            {previewItems.length ? (
+              previewItems.map((programme, index) => (
+                <Link
+                  key={`${resultSetKey}-${programme.id ?? programme.href}`}
+                  href={programme.href}
+                  onClick={(event) => {
+                    if (
+                      event.metaKey ||
+                      event.ctrlKey ||
+                      event.shiftKey ||
+                      event.altKey
+                    )
+                      return;
+                    event.preventDefault();
+                    setCelebrating(true);
+                    if (navigationTimerRef.current !== null) {
+                      window.clearTimeout(navigationTimerRef.current);
+                    }
+                    navigationTimerRef.current = window.setTimeout(() => {
+                      navigationTimerRef.current = null;
+                      router.push(programme.href);
+                    }, 620);
+                  }}
+                  className="programme-result group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3 transition duration-300 hover:bg-white/10 focus-visible:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary sm:gap-4 sm:px-2"
+                  style={{ transitionDelay: `${index * 35}ms` }}
+                >
+                  <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-secondary">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="line-clamp-1 block font-[family-name:var(--font-display)] text-base font-semibold text-white transition group-hover:text-secondary">
+                      {programme.title}
+                    </span>
+                    <span className="mt-1 line-clamp-1 block text-xs text-white/65">
+                      {[programme.schoolName, programme.body]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-secondary transition group-hover:translate-x-1" />
+                </Link>
+              ))
+            ) : (
+              <div className="border-b border-white/10 py-5 text-sm leading-6 text-white/70">
+                No programmes match these search criteria. Try a broader keyword
+                or choose “All” in one of the filters.
+              </div>
+            )}
+          </div>
+
+          <Link
+            href={actionHref}
+            className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 border-b border-secondary pb-1 text-sm font-bold text-white transition hover:text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-secondary"
+          >
+            View matching programmes
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        </div>
+      ) : null}
     </>
   );
 }
@@ -298,7 +332,9 @@ function IntakeProgrammes({
           >
             {programme.title}
             {index < Math.min(programmes.length, 6) - 1 ? (
-              <span className="ml-4 text-white/35" aria-hidden>│</span>
+              <span className="ml-4 text-white/35" aria-hidden>
+                │
+              </span>
             ) : null}
           </Link>
         ))}
@@ -314,12 +350,17 @@ function PopularSearches({
   schools: HomeSchoolCard[];
   onSelect: (value: string) => void;
 }) {
-  const searches = schools.slice(0, 6).map((school) => school.title).filter(Boolean);
+  const searches = schools
+    .slice(0, 6)
+    .map((school) => school.title)
+    .filter(Boolean);
   if (!searches.length) return null;
 
   return (
     <div className="mt-6 text-white">
-      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">Popular searches</p>
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">
+        Popular searches
+      </p>
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
         {searches.map((search, index) => (
           <button
@@ -329,7 +370,11 @@ function PopularSearches({
             className="text-sm font-medium text-white/90 underline decoration-white/35 underline-offset-4 transition hover:text-secondary hover:decoration-secondary"
           >
             {search}
-            {index < searches.length - 1 ? <span className="ml-4 text-white/35" aria-hidden>│</span> : null}
+            {index < searches.length - 1 ? (
+              <span className="ml-4 text-white/35" aria-hidden>
+                │
+              </span>
+            ) : null}
           </button>
         ))}
       </div>
@@ -340,7 +385,11 @@ function PopularSearches({
 function CelebrationBurst() {
   const colors = ["#39c8ff", "#f5b544", "#ef6b7a", "#8ce38a", "#ffffff"];
   return (
-    <div className="programme-celebration" aria-live="polite" aria-label="Opening programme">
+    <div
+      className="programme-celebration"
+      aria-live="polite"
+      aria-label="Opening programme"
+    >
       {Array.from({ length: 28 }, (_, index) => {
         const angle = (index / 28) * Math.PI * 2;
         const distance = 90 + (index % 5) * 22;
@@ -350,7 +399,13 @@ function CelebrationBurst() {
           backgroundColor: colors[index % colors.length],
           animationDelay: `${(index % 7) * 18}ms`,
         } as CSSProperties;
-        return <span key={index} className="programme-celebration-particle" style={style} />;
+        return (
+          <span
+            key={index}
+            className="programme-celebration-particle"
+            style={style}
+          />
+        );
       })}
     </div>
   );
@@ -399,12 +454,18 @@ function uniqueValues(values: Array<string | null | undefined>) {
   ).slice(0, 8);
 }
 
-function normalizeSearchProgramme(record: Record<string, unknown>): HomeProgrammeCard {
-  const department = (record.department as Record<string, unknown> | undefined) ?? {};
-  const school = (department.school as Record<string, unknown> | undefined) ?? {};
+function normalizeSearchProgramme(
+  record: Record<string, unknown>,
+): HomeProgrammeCard {
+  const department =
+    (record.department as Record<string, unknown> | undefined) ?? {};
+  const school =
+    (department.school as Record<string, unknown> | undefined) ?? {};
   const name = String(record.name ?? "Programme");
   const slug = String(record.slug ?? record.id ?? "");
-  const departmentName = String(record.department_name ?? department.name ?? "");
+  const departmentName = String(
+    record.department_name ?? department.name ?? "",
+  );
   const duration = String(record.duration ?? "");
   const mode = String(record.mode_of_study ?? "");
 

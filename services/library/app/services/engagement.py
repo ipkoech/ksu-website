@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from .guide_relationships import validate_guide_relationships, validate_specialist_relationships
+from .ownership import lock_guide_relationships, lock_owner
+
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
@@ -79,7 +82,7 @@ def _public_library_parent_filter(model):
     )
 
 
-def _guide_out(guide: LibraryGuide) -> LibraryGuideOut:
+def _guide_out(guide: LibraryGuide, *, public_only: bool = False) -> LibraryGuideOut:
     data = {
         "id": guide.id,
         "library_id": guide.library_id,
@@ -99,12 +102,14 @@ def _guide_out(guide: LibraryGuide) -> LibraryGuideOut:
         "sections": [
             LibraryGuideSectionOut.model_validate(section).model_dump()
             for section in guide.sections
-            if section.deleted_at is None
+            if section.deleted_at is None and (not public_only or section.is_active)
         ],
         "specialists": [
         LibrarySpecialistOut.model_validate(link.specialist).model_dump()
         for link in guide.specialists
-        if link.specialist is not None and link.specialist.deleted_at is None
+        if link.deleted_at is None and link.specialist is not None and link.specialist.deleted_at is None
+        and (not public_only or (link.specialist.is_active and link.specialist.is_public
+                                 and link.specialist.library_id == guide.library_id))
         ],
         "created_at": guide.created_at,
         "updated_at": guide.updated_at,
@@ -113,10 +118,11 @@ def _guide_out(guide: LibraryGuide) -> LibraryGuideOut:
     return LibraryGuideOut.model_validate(data)
 
 
-def _workflow_out(workflow: LibraryWorkflow) -> LibraryWorkflowOut:
+def _workflow_out(workflow: LibraryWorkflow, *, public_only: bool = False) -> LibraryWorkflowOut:
     data = LibraryWorkflowOut.model_validate(workflow).model_dump()
     data["steps"] = [
         step for step in data.get("steps", []) if step.get("deleted_at") is None
+        and (not public_only or step.get("is_active") is True)
     ]
     return LibraryWorkflowOut.model_validate(data)
 
@@ -247,7 +253,7 @@ async def submit_inquiry(
         user_agent=user_agent,
     )
     db.add(inquiry)
-    await db.commit()
+    await db.flush()
     await db.refresh(inquiry, attribute_names=["library"])
     return LibraryInquiryOut.model_validate(inquiry)
 
@@ -308,7 +314,7 @@ async def reply_to_inquiry(
     inquiry.replied_at = datetime.now(timezone.utc)
     inquiry.reply_message = data.reply_message
     inquiry.replied_by_person_id = replied_by_person_id
-    await db.commit()
+    await db.flush()
     await db.refresh(inquiry, attribute_names=["library"])
     return LibraryInquiryOut.model_validate(inquiry)
 
@@ -320,7 +326,7 @@ async def update_inquiry_status(
     inquiry = await get_inquiry(db, inquiry_id)
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(inquiry, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(inquiry, attribute_names=["library"])
     return LibraryInquiryOut.model_validate(inquiry)
 
@@ -329,7 +335,7 @@ async def delete_inquiry(db: AsyncSession, inquiry_id: uuid.UUID) -> None:
     """Soft-delete a library inquiry."""
     inquiry = await get_inquiry(db, inquiry_id)
     inquiry.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 # ── SupportTicket ─────────────────────────────────────────────────────────────
@@ -347,7 +353,7 @@ async def create_ticket(
         requester_person_id=person_id,
     )
     db.add(ticket)
-    await db.commit()
+    await db.flush()
     await db.refresh(ticket)
     await _populate_ticket_targets(db, [ticket])
     return SupportTicketOut.model_validate(ticket)
@@ -399,7 +405,7 @@ async def update_ticket(
     ticket = await get_ticket(db, ticket_id)
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(ticket, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(ticket)
     await _populate_ticket_targets(db, [ticket])
     return SupportTicketOut.model_validate(ticket)
@@ -409,7 +415,7 @@ async def delete_ticket(db: AsyncSession, ticket_id: uuid.UUID) -> None:
     """Soft-delete a support ticket."""
     ticket = await get_ticket(db, ticket_id)
     ticket.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 # ── LibraryRegulation ─────────────────────────────────────────────────────────
@@ -495,7 +501,7 @@ async def create_regulation(
     """Create a new library regulation."""
     regulation = LibraryRegulation(**data.model_dump())
     db.add(regulation)
-    await db.commit()
+    await db.flush()
     await db.refresh(regulation)
     return LibraryRegulationOut.model_validate(regulation)
 
@@ -507,7 +513,7 @@ async def update_regulation(
     regulation = await get_regulation(db, regulation_id)
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(regulation, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(regulation)
     return LibraryRegulationOut.model_validate(regulation)
 
@@ -516,7 +522,7 @@ async def delete_regulation(db: AsyncSession, regulation_id: uuid.UUID) -> None:
     """Soft-delete a library regulation."""
     regulation = await get_regulation(db, regulation_id)
     regulation.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 # ── LibrarySpecialist ─────────────────────────────────────────────────────────
@@ -567,9 +573,11 @@ async def get_specialist(db: AsyncSession, specialist_id: uuid.UUID) -> LibraryS
 async def create_specialist(
     db: AsyncSession, data: LibrarySpecialistCreate
 ) -> LibrarySpecialistOut:
+    await lock_guide_relationships(db)
+    await validate_specialist_relationships(db, data)
     specialist = LibrarySpecialist(**data.model_dump())
     db.add(specialist)
-    await db.commit()
+    await db.flush()
     await db.refresh(specialist)
     return LibrarySpecialistOut.model_validate(specialist)
 
@@ -578,9 +586,12 @@ async def update_specialist(
     db: AsyncSession, specialist_id: uuid.UUID, data: LibrarySpecialistUpdate
 ) -> LibrarySpecialistOut:
     specialist = await get_specialist(db, specialist_id)
+    await lock_owner(db, specialist)
+    await db.refresh(specialist, attribute_names=["staff_id"])
+    await validate_specialist_relationships(db, data, specialist)
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(specialist, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(specialist)
     return LibrarySpecialistOut.model_validate(specialist)
 
@@ -588,7 +599,7 @@ async def update_specialist(
 async def delete_specialist(db: AsyncSession, specialist_id: uuid.UUID) -> None:
     specialist = await get_specialist(db, specialist_id)
     specialist.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 # ── LibraryGuide ──────────────────────────────────────────────────────────────
@@ -616,7 +627,7 @@ async def _replace_guide_children(
             sa.delete(LibraryGuideSection).where(LibraryGuideSection.guide_id == guide.id)
         )
         for section in data.sections or []:
-            db.add(LibraryGuideSection(guide_id=guide.id, **section.model_dump()))
+            db.add(LibraryGuideSection(guide_id=guide.id, **section.model_dump(exclude={"guide_id"})))
     if "specialist_ids" in updates:
         await db.execute(
             sa.delete(LibraryGuideSpecialist).where(
@@ -661,7 +672,7 @@ async def list_guides(
     result = await paginate(
         db, query, page=page, per_page=per_page, include_total=include_total
     )
-    result.items = [_guide_out(item) for item in result.items]
+    result.items = [_guide_out(item, public_only=public_only) for item in result.items]
     return result
 
 
@@ -686,12 +697,14 @@ async def get_guide_by_slug(
 
 
 async def create_guide(db: AsyncSession, data: LibraryGuideCreate) -> LibraryGuideOut:
+    await lock_guide_relationships(db)
+    await validate_guide_relationships(db, data)
     payload = data.model_dump(exclude={"sections", "specialist_ids"})
     guide = LibraryGuide(**payload)
     db.add(guide)
     await db.flush()
     await _replace_guide_children(db, guide, data)
-    await db.commit()
+    await db.flush()
     return _guide_out(await get_guide(db, guide.id))
 
 
@@ -699,19 +712,23 @@ async def update_guide(
     db: AsyncSession, guide_id: uuid.UUID, data: LibraryGuideUpdate
 ) -> LibraryGuideOut:
     guide = await get_guide(db, guide_id)
+    await lock_owner(db, guide)
+    await db.refresh(guide, attribute_names=["owner_staff_id"])
+    await validate_guide_relationships(db, data, guide)
     for field, value in data.model_dump(
         exclude_unset=True, exclude={"sections", "specialist_ids"}
     ).items():
         setattr(guide, field, value)
     await _replace_guide_children(db, guide, data)
-    await db.commit()
+    await db.flush()
+    db.expire(guide, ["sections", "specialists"])
     return _guide_out(await get_guide(db, guide.id))
 
 
 async def delete_guide(db: AsyncSession, guide_id: uuid.UUID) -> None:
     guide = await get_guide(db, guide_id)
     guide.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 # ── LibraryWorkflow ───────────────────────────────────────────────────────────
@@ -764,7 +781,7 @@ async def list_workflows(
     result = await paginate(
         db, query, page=page, per_page=per_page, include_total=include_total
     )
-    result.items = [_workflow_out(item) for item in result.items]
+    result.items = [_workflow_out(item, public_only=public_only) for item in result.items]
     return result
 
 
@@ -798,7 +815,7 @@ async def create_workflow(
     db.add(workflow)
     await db.flush()
     await _replace_workflow_steps(db, workflow, data)
-    await db.commit()
+    await db.flush()
     return _workflow_out(await get_workflow(db, workflow.id))
 
 
@@ -809,14 +826,14 @@ async def update_workflow(
     for field, value in data.model_dump(exclude_unset=True, exclude={"steps"}).items():
         setattr(workflow, field, value)
     await _replace_workflow_steps(db, workflow, data)
-    await db.commit()
+    await db.flush()
     return _workflow_out(await get_workflow(db, workflow.id))
 
 
 async def delete_workflow(db: AsyncSession, workflow_id: uuid.UUID) -> None:
     workflow = await get_workflow(db, workflow_id)
     workflow.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 # ── LibraryPolicyPage ─────────────────────────────────────────────────────────
@@ -884,7 +901,7 @@ async def create_policy(
 ) -> LibraryPolicyPageOut:
     policy = LibraryPolicyPage(**data.model_dump())
     db.add(policy)
-    await db.commit()
+    await db.flush()
     await db.refresh(policy)
     return LibraryPolicyPageOut.model_validate(policy)
 
@@ -895,7 +912,7 @@ async def update_policy(
     policy = await get_policy(db, policy_id)
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(policy, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(policy)
     return LibraryPolicyPageOut.model_validate(policy)
 
@@ -903,4 +920,4 @@ async def update_policy(
 async def delete_policy(db: AsyncSession, policy_id: uuid.UUID) -> None:
     policy = await get_policy(db, policy_id)
     policy.soft_delete()
-    await db.commit()
+    await db.flush()

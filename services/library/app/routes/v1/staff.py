@@ -9,14 +9,12 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.auth import TokenPayload
-from ksu_contracts.rbac import has_scope
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 from ksu_common.cache import cache_response
-from ...services.cache import invalidate_library_caches
 from ksu_common.audit import audit_action
 from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
 
-from ...core.auth import get_optional_user, require_library_scope, requires_scope
+from ...core.auth import has_library_permission, get_optional_user, require_library_scope, requires_scope
 from ...core.database import get_db
 from ...models import LibraryService, LibraryStaff
 from ...schemas import (
@@ -25,6 +23,11 @@ from ...schemas import (
     LibraryStaffCreate,
     LibraryStaffUpdate,
     LibraryStatisticsCreate,
+    LibraryStaffOut,
+    LibraryStaffSnapshot,
+    LibraryServiceOut,
+    LibraryServiceSnapshot,
+    LibraryStatisticsOut,
 )
 from ...services import staff as svc
 
@@ -34,10 +37,11 @@ staff_router = APIRouter(prefix="/library/staff", tags=["Library Staff"])
 
 
 async def invalidate_public_library_cache() -> None:
-    await invalidate_library_caches()
+    """Compatibility shim; cache invalidation runs after commit in app middleware."""
+    return None
 
 
-@staff_router.get("/")
+@staff_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryStaffSnapshot]])
 async def list_staff(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -45,7 +49,7 @@ async def list_staff(
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
     library_id: uuid.UUID = Query(...),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     if is_writer:
         require_library_scope(user, "library.read", library_id)
     selector = FieldSelector(LibraryStaff, fields, always_include={"id"})
@@ -54,7 +58,7 @@ async def list_staff(
     return success(data=selector.apply(data))
 
 
-@staff_router.get("/leadership")
+@staff_router.get("/leadership", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryStaffSnapshot]])
 async def list_library_leadership(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -62,7 +66,7 @@ async def list_library_leadership(
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
     library_id: Optional[uuid.UUID] = Query(None),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     if is_writer:
         require_library_scope(user, "library.read", library_id)
     selector = FieldSelector(LibraryStaff, fields, always_include={"id"})
@@ -75,7 +79,7 @@ async def list_library_leadership(
     return success(data=selector.apply(data))
 
 
-@staff_router.post("/")
+@staff_router.post("/", response_model=SuccessResponse[LibraryStaffOut])
 @audit_action("staff.create", target_type="LibraryStaff", include_body=True)
 async def create_staff(
     request: Request,
@@ -89,7 +93,7 @@ async def create_staff(
     return success(data=member, message="Staff member created")
 
 
-@staff_router.patch("/{staff_id}")
+@staff_router.patch("/{staff_id}", response_model=SuccessResponse[LibraryStaffOut])
 @audit_action("staff.update", target_type="LibraryStaff", target_id_param="staff_id")
 async def update_staff(
     request: Request,
@@ -124,7 +128,7 @@ async def delete_staff(
 services_router = APIRouter(prefix="/library/services", tags=["Library Services"])
 
 
-@services_router.get("/")
+@services_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryServiceSnapshot]])
 async def list_services(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -132,7 +136,7 @@ async def list_services(
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
     library_id: uuid.UUID = Query(...),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     if is_writer:
         require_library_scope(user, "library.read", library_id)
     selector = FieldSelector(LibraryService, fields, always_include={"id"})
@@ -141,7 +145,7 @@ async def list_services(
     return success(data=selector.apply(data))
 
 
-@services_router.post("/")
+@services_router.post("/", response_model=SuccessResponse[LibraryServiceOut])
 @audit_action("service.create", target_type="LibraryService", include_body=True)
 async def create_service(
     request: Request,
@@ -155,7 +159,7 @@ async def create_service(
     return success(data=service, message="Service created")
 
 
-@services_router.patch("/{service_id}")
+@services_router.patch("/{service_id}", response_model=SuccessResponse[LibraryServiceOut])
 @audit_action(
     "service.update", target_type="LibraryService", target_id_param="service_id"
 )
@@ -194,7 +198,7 @@ async def delete_service(
 statistics_router = APIRouter(prefix="/library/statistics", tags=["Library Statistics"])
 
 
-@statistics_router.get("/")
+@statistics_router.get("/", response_model=SuccessResponse[list[LibraryStatisticsOut]])
 @cache_response(timeout=300, vary_on=("library_id", "period_type"))
 async def list_statistics(
     request: Request,
@@ -208,7 +212,7 @@ async def list_statistics(
     return success(data=stats)
 
 
-@statistics_router.post("/")
+@statistics_router.post("/", response_model=SuccessResponse[LibraryStatisticsOut])
 @audit_action("statistics.create", target_type="LibraryStatistics", include_body=True)
 async def create_statistics(
     request: Request,

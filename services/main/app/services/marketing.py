@@ -70,6 +70,66 @@ class NewsletterService:
         await db.flush()
 
     @staticmethod
+    async def _for_update(db: AsyncSession, item_id: uuid.UUID) -> Newsletter | None:
+        result = await db.execute(
+            select(Newsletter)
+            .where(Newsletter.id == item_id, Newsletter.deleted_at.is_(None))
+            .with_for_update()
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def queue_send(db: AsyncSession, item_id: uuid.UUID) -> Newsletter | None:
+        """Atomically move a draft/failed newsletter into the send queue."""
+        item = await NewsletterService._for_update(db, item_id)
+        if item is None:
+            return None
+        if item.send_status not in {"draft", "failed"}:
+            raise ValueError(f"Newsletter cannot be sent while status is {item.send_status}")
+        item.send_status = "scheduled"
+        item.scheduled_send_at = datetime.now(timezone.utc)
+        item.send_error = None
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def schedule_send(
+        db: AsyncSession,
+        item_id: uuid.UUID,
+        scheduled_send_at: datetime,
+    ) -> Newsletter | None:
+        """Atomically schedule a draft/failed newsletter for a future time."""
+        if scheduled_send_at.tzinfo is None or scheduled_send_at.utcoffset() is None:
+            raise ValueError("scheduled_send_at must include a timezone")
+        scheduled_send_at = scheduled_send_at.astimezone(timezone.utc)
+        if scheduled_send_at <= datetime.now(timezone.utc):
+            raise ValueError("scheduled_send_at must be in the future")
+        item = await NewsletterService._for_update(db, item_id)
+        if item is None:
+            return None
+        if item.send_status not in {"draft", "failed"}:
+            raise ValueError(f"Newsletter cannot be scheduled while status is {item.send_status}")
+        item.send_status = "scheduled"
+        item.scheduled_send_at = scheduled_send_at
+        item.send_error = None
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def cancel_schedule(db: AsyncSession, item_id: uuid.UUID) -> Newsletter | None:
+        """Atomically return a scheduled newsletter to draft."""
+        item = await NewsletterService._for_update(db, item_id)
+        if item is None:
+            return None
+        if item.send_status != "scheduled":
+            raise ValueError(f"Newsletter cannot cancel while status is {item.send_status}")
+        item.send_status = "draft"
+        item.scheduled_send_at = None
+        item.send_error = None
+        await db.flush()
+        return item
+
+    @staticmethod
     async def list(
         db: AsyncSession,
         *,
@@ -136,6 +196,22 @@ class NewsletterSubscriberService:
     async def unsubscribe(db: AsyncSession, email: str) -> NewsletterSubscriber | None:
         normalized = email.strip().lower()
         result = await db.execute(select(NewsletterSubscriber).where(NewsletterSubscriber.email == normalized))
+        item = result.scalar_one_or_none()
+        if item is None:
+            return None
+        item.status = "unsubscribed"
+        item.unsubscribed_at = datetime.now(timezone.utc)
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def unsubscribe_by_id(db: AsyncSession, item_id: uuid.UUID) -> NewsletterSubscriber | None:
+        """Atomically opt out one subscriber from an admin action."""
+        result = await db.execute(
+            select(NewsletterSubscriber)
+            .where(NewsletterSubscriber.id == item_id)
+            .with_for_update()
+        )
         item = result.scalar_one_or_none()
         if item is None:
             return None

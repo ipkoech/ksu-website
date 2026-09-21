@@ -11,8 +11,11 @@ from ksu_common import (
     invalidate_prefix,
     request_actor_id,
 )
+from ksu_common.response_validation import allow_response_model_exemption
 from ksu_common.cache import close_redis
+from ksu_common.gemini import close_gemini_transports
 from ksu_common.internal_client import close_integration_pool
+from ksu_common.lifecycle import close_resources
 from ksu_common.runtime import (
     AuditOptions,
     CorsConfig,
@@ -26,7 +29,7 @@ from .api.v1 import register_routes
 from .api.v1._idempotency import install_main_idempotency
 from .cache_invalidation import should_invalidate_public_cache
 from .core.config import get_settings
-from .core.database import AsyncSessionLocal
+from .core.database import AsyncSessionLocal, engine
 from .helpers.storage import normalize_storage_path
 from .helpers.email import close_email_transport
 from .models import AuditLog, Media
@@ -37,7 +40,7 @@ from .services.change_tracking import (
     collected_audit_changes,
     reset_audit_context,
 )
-from .tasks.audit import dispatch_audit
+from .tasks.audit import capture_request_audit, dispatch_audit
 
 settings = get_settings()
 token_public_key = decode_key_material(settings.JWT_PUBLIC_KEY_B64, field_name="JWT_PUBLIC_KEY_B64")
@@ -51,15 +54,14 @@ configure_service_logging(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await subscriber.start()
     try:
+        await subscriber.start()
         yield
     finally:
-        await subscriber.stop()
-        await manager.close_all()
-        await close_email_transport()
-        await close_integration_pool()
-        await close_redis()
+        await close_resources(
+            subscriber.stop, manager.close_all, close_email_transport,
+            close_gemini_transports, close_integration_pool, close_redis, engine.dispose,
+        )
 
 
 def create_app() -> FastAPI:
@@ -73,7 +75,7 @@ def create_app() -> FastAPI:
             docs_url="/api/docs" if settings.DEBUG or settings.APP_ENV != "production" else None,
             redoc_url="/api/redoc" if settings.DEBUG or settings.APP_ENV != "production" else None,
             openapi_url="/api/openapi.json" if settings.DEBUG or settings.APP_ENV != "production" else None,
-            response_model_missing_baseline=742,
+            response_model_missing_baseline=0,
             lifespan=lifespan,
         ),
         cors=CorsConfig(origins=settings.CORS_ORIGINS),
@@ -91,13 +93,14 @@ def create_app() -> FastAPI:
             collect_changes=collected_audit_changes,
             finish_request=reset_audit_context,
             dispatch=dispatch_audit,
+            capture=capture_request_audit,
+            inline_fallback=False,
             skip_anonymous_reads=True,
         ),
         after_response=_after_response,
     )
-    # The shared response-validation layer rebuilds route handlers. Install
-    # request-context idempotency afterwards so its context wrapper remains the
-    # outermost handler for every adopted mutation.
+    # Adopt the validated endpoints, then refresh included-router contexts so
+    # their rebuilt dependency graphs include the idempotency request parameter.
     install_main_idempotency(app.routes)
     return app
 
@@ -129,7 +132,8 @@ async def _after_response(request: Request, response: Response) -> None:
 
 def _register_service_routes(app: FastAPI) -> None:
 
-    @app.get("/uploads/{storage_path:path}", include_in_schema=False)
+    @allow_response_model_exemption("file", path="/uploads/{storage_path:path}")
+    @app.get("/uploads/{storage_path:path}", include_in_schema=False, response_class=FileResponse)
     async def serve_public_upload(storage_path: str):
         normalized_path = normalize_storage_path(storage_path)
         if not normalized_path:

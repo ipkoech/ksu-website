@@ -58,6 +58,7 @@ import {
   useUpdateSlider,
 } from "@ksu/api-client";
 import type { Media, Slider } from "@ksu/api-client";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const schema = z
   .object({
@@ -366,6 +367,7 @@ export default function SliderItemsPage() {
         }
         toast.success("Slider created successfully");
       }
+      void revalidatePublicContent("main", "sliders");
       closeEditorPanel();
     } catch {
       toast.error(editingSlider ? "Failed to update slider" : "Failed to create slider");
@@ -376,6 +378,7 @@ export default function SliderItemsPage() {
     if (!deleteTarget) return;
     try {
       await deleteSlider.mutateAsync(deleteTarget.id);
+      void revalidatePublicContent("main", "sliders");
       toast.success("Slider deleted successfully");
       setDeleteTarget(null);
     } catch {

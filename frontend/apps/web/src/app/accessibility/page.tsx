@@ -15,6 +15,8 @@ export const metadata = {
   description: "Kisii University accessibility statement and inclusive access guidance.",
 };
 
+export const revalidate = 300;
+
 export default function AccessibilityPage() {
   return (
     <PageShell>

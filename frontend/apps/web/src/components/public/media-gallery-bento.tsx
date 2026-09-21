@@ -234,14 +234,14 @@ export function MediaGalleryBento({
 
   if (!items.length) {
     return (
-      <article className="rounded-lg border border-dashed border-border bg-surface-subtle p-5 text-sm text-muted-foreground">
+      <article className="rounded-lg border border-dashed border-border bg-surface-subtle p-5 text-sm text-muted-foreground" data-server-data-display="web-media-gallery">
         No gallery records are currently published.
       </article>
     );
   }
 
   return (
-    <section className={compact ? "min-w-0" : "rounded-2xl border border-border bg-white p-4 ring-1 ring-primary/10 sm:p-5 lg:p-6"}>
+    <section className={compact ? "min-w-0" : "rounded-2xl border border-border bg-white p-4 ring-1 ring-primary/10 sm:p-5 lg:p-6"} data-server-data-display="web-media-gallery">
       {!compact ? <div className="mb-6 text-center">
         <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
           Gallery

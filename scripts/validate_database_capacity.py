@@ -42,22 +42,39 @@ def validate(values: dict[str, str]) -> tuple[int, int, int]:
     celery_replicas = _integer(values, "CELERY_REPLICAS", 1)
     integration_concurrency = _integer(values, "CELERY_INTEGRATION_CONCURRENCY", 2)
     integration_replicas = _integer(values, "INTEGRATION_WORKER_REPLICAS", 1)
+    audit_replicas = _integer(values, "AUDIT_WORKER_REPLICAS", 1)
+    audit_concurrency = _integer(values, "AUDIT_CELERY_CONCURRENCY", 1)
+    audit_pool_size = _integer(values, "AUDIT_DB_POOL_SIZE", 1)
+    audit_max_overflow = _integer(values, "AUDIT_DB_MAX_OVERFLOW", 0)
 
     if pool_size < 1:
         raise ValueError("DB_POOL_SIZE must be at least 1")
-    if api_workers < 1 or celery_concurrency < 1 or integration_concurrency < 1:
+    if any(
+        value < 1
+        for value in (api_workers, celery_concurrency, integration_concurrency, audit_concurrency)
+    ):
         raise ValueError("worker concurrency values must be at least 1")
-    if api_replicas < 1 or celery_replicas < 1 or integration_replicas < 1:
+    if any(
+        value < 1
+        for value in (api_replicas, celery_replicas, integration_replicas, audit_replicas)
+    ):
         raise ValueError("replica values must be at least 1")
+    if audit_pool_size < 1:
+        raise ValueError("AUDIT_DB_POOL_SIZE must be at least 1")
     if reserve >= postgres_max:
         raise ValueError("POSTGRES_CONNECTION_RESERVE must be below POSTGRES_MAX_CONNECTIONS")
 
     pool_capacity = pool_size + max_overflow
+    audit_pool_capacity = audit_pool_size + audit_max_overflow
     possible = (
         (4 * api_replicas * api_workers)
         + (4 * celery_replicas * celery_concurrency)
         + (integration_replicas * integration_concurrency)
     ) * pool_capacity
+    # Main, Research, Library and HERI each have one isolated audit worker
+    # topology. Their smaller pools must be budgeted separately from general
+    # workers because the Compose command overrides their database settings.
+    possible += 4 * audit_replicas * audit_concurrency * audit_pool_capacity
     budget = postgres_max - reserve
     if possible > budget:
         raise ValueError(

@@ -52,6 +52,7 @@ import {
 } from "@ksu/ui/components";
 import { MediaPicker } from "@/components/media/media-picker";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { SchoolImportDialog } from "@/components/schools/imports/school-import-dialog";
 import { SchoolDepartmentSelect } from "@/components/schools/shared/school-reference-selectors";
 import {
@@ -240,7 +241,7 @@ function ProgrammeDialog({
   }, [programme, open]);
   const mutation = useMutation({
     mutationFn: () => programme ? schoolPortalApi.programmes.update(programme.id, values) : schoolPortalApi.programmes.create(values),
-    onSuccess: async () => { await onSaved(); onOpenChange(false); },
+    onSuccess: async () => { void revalidatePublicContent("main", "academic-programmes"); await onSaved(); onOpenChange(false); },
     onError: (caught) => setError(caught instanceof Error ? caught.message : "Unable to save programme."),
   });
 

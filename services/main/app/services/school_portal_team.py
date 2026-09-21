@@ -34,7 +34,7 @@ from .school_portal_context import SchoolPortalContext
 from .school_portal_scope import get_school_record_or_404, school_owned_query
 from .staff import StaffService
 from .user import UserService
-from ..tasks.email import queue_account_created_email
+from .domain_events import enqueue_email_event
 
 TEAM_ROLE_GROUPS = {
     "leadership": ("dean", "deputy_dean"),
@@ -50,6 +50,13 @@ TEAM_ROLES = frozenset(
 
 
 def _require(context: SchoolPortalContext, permission: str) -> None:
+    if permission == "school.team.roles":
+        from ksu_common.auth import TokenPayload
+        from ..deps import require_account_authority
+        from .auth import _active_scope_grants
+        require_account_authority(TokenPayload(str(context.user.id), "account-operation", raw={
+            "scope_grants": _active_scope_grants(context.user),
+        }), permission)
     if permission not in context.permissions:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -231,11 +238,15 @@ async def create_school_team_member(
     data: SchoolTeamMemberCreate,
 ) -> StaffAssignment:
     _require(context, "school.team.manage")
+    if data.invite_user or data.portal_role:
+        _require(context, "school.team.roles")
     department = await _department_or_404(db, context, data.department_id)
     person = await _person_for_create(db, context, data)
     user = None
     if data.invite_user:
         _require(context, "school.team.roles")
+        if not person.email:
+            raise HTTPException(status_code=422, detail="A staff email is required before inviting this person")
         user = await UserService.get_by_email(db, person.email)
         if user is None:
             user = await UserService.create(
@@ -322,7 +333,12 @@ async def resend_school_team_invite(
     person = await PersonService.get_by_id(db, assignment.person_id)
     if person is None:
         raise HTTPException(status_code=404, detail="Person not found")
-    queue_account_created_email.delay(person.email, person.full_name, None)
+    enqueue_email_event(
+        db,
+        event_type="auth.account_created_email",
+        user_id=assignment.user_id,
+        payload={"args": [person.email, person.full_name, None]},
+    )
 
 
 async def list_school_team(
@@ -402,7 +418,7 @@ async def list_school_team_person_options(
     )
     query = (
         select(Person)
-        .options(selectinload(Person.department))
+        .options(selectinload(Person.department), selectinload(Person.photo))
         .where(
             Person.deleted_at.is_(None),
             Person.is_active.is_(True),
@@ -427,6 +443,7 @@ def serialize_school_team_person_options(people: list[Person]) -> list[dict[str,
         {
             "id": person.id,
             "full_name": person.full_name,
+            "photo_url": person.photo_url,
             "email": person.email,
             "employee_number": person.employee_number,
             "department": (
@@ -449,7 +466,7 @@ async def serialize_school_team_assignments(
         return []
 
     person_ids = {assignment.person_id for assignment in assignments}
-    loaded_people = await db.execute(select(Person).where(Person.id.in_(person_ids)))
+    loaded_people = await db.execute(select(Person).options(selectinload(Person.photo)).where(Person.id.in_(person_ids)))
     people = {person.id: person for person in loaded_people.scalars().all()}
 
     department_ids = {
@@ -492,6 +509,7 @@ async def serialize_school_team_assignments(
                 "id": assignment.id,
                 "person_id": assignment.person_id,
                 "full_name": getattr(person, "full_name", None),
+                "photo_url": getattr(person, "photo_url", None),
                 "title": assignment.title,
                 "role": assignment.role,
                 "department_id": department.id if department else None,

@@ -43,6 +43,22 @@ class UploadBatchRead(BaseSchema):
     files: list[UploadBatchFileRead] = Field(default_factory=list)
 
 
+class PortalUploadBatchRead(BaseSchema):
+    """Upload batch payload for global portals without a school owner."""
+
+    id: uuid.UUID
+    school_id: uuid.UUID | None = None
+    status: str
+    total_files: int
+    completed_files: int
+    failed_files: int
+    total_bytes: int
+    received_bytes: int
+    expires_at: datetime
+    completed_at: datetime | None = None
+    files: list[UploadBatchFileRead] = Field(default_factory=list)
+
+
 class SchoolContentMetadataImport(BaseSchema):
     model_config = ConfigDict(extra="forbid")
 

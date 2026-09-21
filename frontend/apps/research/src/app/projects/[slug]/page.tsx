@@ -3,16 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowRight,
-  BarChart3,
-  Building2,
-  CalendarDays,
-  Coins,
   Download,
   ImageIcon,
-  Network,
-  Tags,
   type LucideIcon,
-  UserRound,
 } from "lucide-react";
 import { ResearchBackground } from "../../../components/research-background";
 import { StatusMessage } from "../../../components/research-ui";
@@ -21,7 +14,6 @@ import {
   compactText,
   formatDate,
   formatLabel,
-  generateSlugParams,
   getProjectBySlug,
   getProjectPublications,
   getRelatedOutputs,
@@ -32,19 +24,19 @@ import {
   projectMediaRecords,
 } from "../../../components/project-detail-sections";
 import { getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
-import type { ResearchGenericRecord, ResearchProject, ResearchPublication } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord, ResearchProject, ResearchPublication } from "@ksu/api-client/server";
 import {
   getProjectTimelineLabel,
   getVisibleProjectStorySections,
 } from "../project-page-model";
 import { researchRecordMetadata } from "../../../lib/research-metadata";
+import {
+  ProjectGlanceDisplay,
+  type ProjectGlanceDto,
+} from "../../../components/project-glance-display";
 
 export const revalidate = 300;
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.projects.list);
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -53,7 +45,7 @@ export async function generateMetadata({
 }) {
   const { slug } = await params;
   const { data } = await getProjectBySlug(slug);
-  return researchRecordMetadata(data, { fallbackTitle: "Research project", pathname: "/projects/" + slug });
+  return researchRecordMetadata(data, { fallbackTitle: "Project", pathname: "/projects/" + slug });
 }
 
 export default async function ProjectDetailPage({
@@ -86,6 +78,16 @@ export default async function ProjectDetailPage({
   const coverImage = getProjectCoverImage(project);
   const storySections = getVisibleProjectStorySections(project);
   const milestones = getProjectMilestones(project, publications.data, outputs.data);
+  const glanceCards = ([
+    { label: "Timeline", value: getProjectTimelineLabel(project), icon: "calendar" },
+    { label: "Lead center", value: center ? getRecordTitle(center, "") : "", caption: "Institutional anchor", icon: "building" },
+    { label: "Programme", value: program ? getRecordTitle(program, "") : "", caption: compactText(program?.code), icon: "network" },
+    { label: "Project lead", value: leadName || "", caption: contactEmail, icon: "user" },
+    { label: "School", value: compactText(project.school_name), icon: "building" },
+    { label: "Funding", value: formatMoney(project.budget, project.currency) || compactText(project.funder_name), caption: project.budget ? compactText(project.funder_name) : "Funding organization", icon: "coins" },
+    { label: "Progress", value: getProjectProgressLabel(project), caption: formatLabel(compactText(project.status)), icon: "chart" },
+    { label: "Project code", value: compactText(project.code), caption: formatLabel(compactText(project.project_type)), icon: "tags" },
+  ] satisfies ProjectGlanceDto[]).filter((card) => Boolean(card.value));
   return (
     <ResearchBackground as="main" id="research-main" variant="evidence" intensity="soft" className="min-h-screen text-foreground">
       <ProjectHero
@@ -95,13 +97,7 @@ export default async function ProjectDetailPage({
         project={project}
       />
 
-      <ProjectGlance
-        project={project}
-        center={center}
-        program={program}
-        leadName={leadName}
-        contactEmail={contactEmail}
-      />
+      <ProjectGlanceDisplay cards={glanceCards} />
 
       {[error].filter(Boolean).map((message, i) => (
         <section key={`${message}-${i}`} className="px-4 pt-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
@@ -213,93 +209,6 @@ function ProjectHero({
           ) : null}
         </div>
       </div>
-    </section>
-  );
-}
-
-function ProjectGlance({
-  project,
-  center,
-  program,
-  leadName,
-  contactEmail,
-}: {
-  project: ResearchProject & ResearchGenericRecord;
-  center?: ResearchGenericRecord;
-  program?: ResearchGenericRecord;
-  leadName?: string;
-  contactEmail?: string;
-}) {
-  type GlanceCard = { label: string; value?: string | number; icon: LucideIcon; caption?: string };
-  type PublishedGlanceCard = {
-    label: string;
-    value: string;
-    icon: LucideIcon;
-    caption: string | undefined;
-  };
-
-  const cards = ([
-    { label: "Timeline", value: getProjectTimelineLabel(project), icon: CalendarDays, caption: "" },
-    {
-      label: "Lead center",
-      value: center ? getRecordTitle(center, "") : "",
-      icon: Building2,
-      caption: "Institutional anchor",
-    },
-    {
-      label: "Programme",
-      value: program ? getRecordTitle(program, "") : "",
-      icon: Network,
-      caption: compactText(program?.code),
-    },
-    { label: "Project lead", value: leadName, icon: UserRound, caption: contactEmail },
-    {
-      label: "Funding",
-      value: formatMoney(project.budget, project.currency) || compactText(project.funder_name),
-      icon: Coins,
-      caption: "Project budget",
-    },
-    {
-      label: "Progress",
-      value: getProjectProgressLabel(project),
-      icon: BarChart3,
-      caption: formatLabel(compactText(project.status)),
-    },
-    { label: "Project code", value: compactText(project.code), icon: Tags, caption: formatLabel(compactText(project.project_type)) },
-  ] satisfies GlanceCard[]).map((item) => ({
-    ...item,
-    value: compactText(item.value),
-  })).filter((item): item is PublishedGlanceCard => Boolean(item.value));
-
-  if (!cards.length) return null;
-
-  return (
-    <section className="relative z-10 -mt-8 px-4 sm:px-6 lg:-mt-10 lg:px-8 xl:px-10 2xl:px-12">
-      <dl
-        className={`mx-auto grid max-w-[1580px] overflow-hidden rounded-2xl border border-primary/15 bg-white/95 shadow-[0_24px_65px_-42px_hsl(var(--primary)/0.7)] backdrop-blur sm:grid-cols-2 lg:grid-cols-3 ${
-          cards.length <= 5 ? "xl:grid-cols-5" : "xl:grid-cols-7"
-        }`}
-      >
-        {cards.map((fact) => {
-          const Icon = fact.icon;
-          return (
-            <div key={fact.label} className="flex min-h-20 gap-3 border-b border-r border-primary/10 px-4 py-3 last:border-r-0">
-              <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-              <div className="min-w-0">
-                <dt className="text-xs font-semibold text-muted-foreground">{fact.label}</dt>
-                <dd className="mt-1 line-clamp-3 break-words text-sm font-semibold leading-5 text-foreground [overflow-wrap:anywhere]">
-                  {fact.value}
-                </dd>
-                {fact.caption ? (
-                  <p className="mt-1 line-clamp-1 break-words text-xs leading-4 text-muted-foreground [overflow-wrap:anywhere]">
-                    {fact.caption}
-                  </p>
-                ) : null}
-              </div>
-            </div>
-          );
-        })}
-      </dl>
     </section>
   );
 }
@@ -469,11 +378,12 @@ function getProjectCoverImage(project: ResearchProject & ResearchGenericRecord) 
     compactText(coverImage?.thumbnail_url) ||
     compactText(project.image_url) ||
     compactText(project.thumbnail_url) ||
-    "/images/research/research-projects-hero.webp"
+    "/images/research/verified/multidisciplinary-conference-2026.jpg"
   );
 }
 
 function getProjectProgress(project: ResearchProject) {
+  if (project.source_references?.length && !project.progress_percentage) return null;
   const progress = Number(project.progress_percentage);
   if (!Number.isFinite(progress)) return null;
   return Math.max(0, Math.min(100, Math.round(progress)));

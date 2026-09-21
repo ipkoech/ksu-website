@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 
 class LibraryAssistantPageContext(BaseModel):
@@ -51,24 +52,40 @@ class LibraryAssistantAnswer(BaseModel):
 
 
 class LibraryAssistantMessageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     conversation_id: uuid.UUID
     sender_type: str
     content: str
     citations: list[LibraryAssistantCitation] = Field(default_factory=list)
-    metadata: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = Field(
+        default=None,
+        validation_alias=AliasChoices("message_metadata", "metadata"),
+    )
     sender_person_id: uuid.UUID | None = None
-    created_at: Any
+    created_at: datetime
 
 
 class LibraryAssistantConversationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     context_id: uuid.UUID | None = None
     verified_email: str
     title: str | None = None
     status: str
     assigned_to_person_id: uuid.UUID | None = None
-    last_message_at: Any = None
-    created_at: Any
-    updated_at: Any
+    last_message_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
     messages: list[LibraryAssistantMessageOut] = Field(default_factory=list)
+
+
+class LibraryAssistantRecoveryOut(BaseModel):
+    conversation: LibraryAssistantConversationOut
+
+
+class LibraryAssistantGuestSessionOut(BaseModel):
+    guest_session_id: uuid.UUID
+    expires_at: datetime

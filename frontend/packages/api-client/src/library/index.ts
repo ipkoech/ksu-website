@@ -2,6 +2,7 @@ import { libraryApi } from "../client";
 import type { FieldSelectionParams, QueryParams } from "../client";
 import type { PaginatedResponse } from "../main/types";
 import type { PublicStatsResponse } from "../main/types";
+import type { FetchCacheOptions } from "../transport";
 
 type ListParams<
   T extends Record<string, string | number | boolean | undefined> = Record<
@@ -142,6 +143,7 @@ export interface LibraryStaff {
     full_name?: string | null;
     email?: string | null;
     photo?: string | null;
+    photo_url?: string | null;
     title?: string | null;
   } | null;
   sort_order?: number;
@@ -866,7 +868,8 @@ function crudApi<TRecord, TPayload>(path: string) {
       libraryApi.get<PaginatedResponse<TRecord>>(path, params),
     get: (id: string, params?: FieldSelectionParams) =>
       libraryApi.get<{ data: TRecord }>(`${path}${id}`, params),
-    create: (data: TPayload) => libraryApi.post<{ data: TRecord }>(path, data),
+    create: (data: TPayload, options?: FetchCacheOptions) =>
+      libraryApi.post<{ data: TRecord }>(path, data, options),
     update: (id: string, data: Partial<TPayload>) =>
       libraryApi.patch<{ data: TRecord }>(`${path}${id}`, data),
     delete: (id: string) => libraryApi.delete<void>(`${path}${id}`),
@@ -990,32 +993,38 @@ export const libraryServiceApi = {
         "/api/v1/library/assistant/guest/session",
         {},
       ),
-    answer: (data: LibraryAssistantAnswerRequest) =>
+    answer: (data: LibraryAssistantAnswerRequest, options?: FetchCacheOptions) =>
       libraryApi.post<{ data: LibraryAssistantAnswer }>(
         "/api/v1/library/assistant/answer",
         data,
+        options,
       ),
     verification: {
-      request: (email: string) =>
+      request: (email: string, options?: FetchCacheOptions) =>
         libraryApi.post<{ data: LibraryAssistantVerificationResponse }>(
           "/api/v1/library/assistant/verification/request",
           { email },
+          options,
         ),
-      resend: (email: string) =>
+      resend: (email: string, options?: FetchCacheOptions) =>
         libraryApi.post<{ data: LibraryAssistantVerificationResponse }>(
           "/api/v1/library/assistant/verification/resend",
           { email },
+          options,
         ),
-      confirm: (data: { token?: string; code?: string }) =>
+      confirm: (data: { token?: string; code?: string }, options?: FetchCacheOptions) =>
         libraryApi.post<{ data: LibraryAssistantVerificationResponse }>(
           "/api/v1/library/assistant/verification/confirm",
           data,
+          options,
         ),
     },
     recovery: {
-      confirm: (token: string) =>
+      confirm: (token: string, options?: FetchCacheOptions) =>
         libraryApi.get<{ data: { conversation: LibraryAssistantConversation } }>(
           `/api/v1/library/assistant/recovery/confirm?token=${encodeURIComponent(token)}`,
+          undefined,
+          options,
         ),
     },
     conversations: {
@@ -1027,14 +1036,17 @@ export const libraryServiceApi = {
         libraryApi.get<{ data: LibraryAssistantConversation }>(
           `/api/v1/library/assistant/conversations/${id}`,
         ),
-      messages: (id: string) =>
+      messages: (id: string, options?: FetchCacheOptions) =>
         libraryApi.get<{ data: LibraryAssistantMessage[] }>(
           `/api/v1/library/assistant/conversations/${id}/messages`,
+          undefined,
+          options,
         ),
-      continue: (id: string, data: LibraryAssistantAnswerRequest) =>
+      continue: (id: string, data: LibraryAssistantAnswerRequest, options?: FetchCacheOptions) =>
         libraryApi.post<{ data: LibraryAssistantAnswer }>(
           `/api/v1/library/assistant/conversations/${id}/continue`,
           data,
+          options,
       ),
     },
     staff: {

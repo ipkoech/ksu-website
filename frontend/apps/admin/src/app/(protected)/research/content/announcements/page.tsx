@@ -7,7 +7,7 @@ import { ContentWorkspaceHeader, contentColumns, contentFilters } from "../_comp
 export default function ResearchAnnouncementsPage() {
   return (
     <ResearchContentResourcePage
-      title="Research Announcements"
+      title="Announcements"
       description="Manage announcement records scoped to research."
       queryKey={["research", "content", "announcements"]}
       resource={{ list: announcementsApi.list, create: announcementsApi.create, update: announcementsApi.update, delete: announcementsApi.delete }}

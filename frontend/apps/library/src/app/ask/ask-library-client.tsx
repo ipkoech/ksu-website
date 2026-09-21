@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, BookOpen, CheckCircle2, Loader2, Mail, Send, ShieldCheck } from "lucide-react";
 import {
@@ -30,38 +30,48 @@ export function AskLibraryClient({ contexts }: AskLibraryClientProps) {
   const [isBusy, setIsBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const requestAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => {
+    requestAbortRef.current?.abort();
+    requestAbortRef.current = null;
+  }, []);
+
+  const beginRequest = useCallback(() => {
+    requestAbortRef.current?.abort();
+    const controller = new AbortController();
+    requestAbortRef.current = controller;
+    return controller;
+  }, []);
+
+  const finishRequest = useCallback((controller: AbortController) => {
+    if (requestAbortRef.current !== controller) return;
+    requestAbortRef.current = null;
+    setIsBusy(false);
+  }, []);
 
   const selectedContext = useMemo(
     () => contexts.find((context) => context.id === contextId) ?? contexts[0],
     [contextId, contexts],
   );
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const verificationToken = params.get("verification_token");
-    const recoveryToken = params.get("recovery_token");
-    if (verificationToken) {
-      void confirmVerification({ token: verificationToken });
-    } else if (recoveryToken) {
-      void recoverConversation(recoveryToken);
-    }
-  }, []);
-
-  async function recoverConversation(token: string) {
+  const recoverConversation = useCallback(async (token: string) => {
     setIsBusy(true);
     setError(null);
+    const controller = beginRequest();
     try {
-      const response = await libraryServiceApi.assistant.recovery.confirm(token);
+      const response = await libraryServiceApi.assistant.recovery.confirm(token, { signal: controller.signal });
       const conversation = response.data.conversation;
       setConversationId(conversation.id);
       setMessages(conversation.messages ?? []);
       setStatus("Your Library conversation is ready to continue.");
     } catch (caught) {
+      if (controller.signal.aborted) return;
       setError(caught instanceof ApiClientError ? caught.message : "That recovery link is no longer valid.");
     } finally {
-      setIsBusy(false);
+      finishRequest(controller);
     }
-  }
+  }, [beginRequest, finishRequest]);
 
   async function submitQuestion(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -70,28 +80,30 @@ export function AskLibraryClient({ contexts }: AskLibraryClientProps) {
     setIsBusy(true);
     setError(null);
     setStatus(null);
+    const controller = beginRequest();
     setMessages((current) => [...current, { sender_type: "user", content: trimmed, citations: [] }]);
     setQuestion("");
     try {
       const response = conversationId
-        ? await libraryServiceApi.assistant.conversations.continue(conversationId, {
-            message: trimmed,
-            conversation_id: conversationId,
-          })
-      : await libraryServiceApi.assistant.answer({
+         ? await libraryServiceApi.assistant.conversations.continue(conversationId, {
+             message: trimmed,
+             conversation_id: conversationId,
+           }, { signal: controller.signal })
+       : await libraryServiceApi.assistant.answer({
             message: trimmed,
             context_id: selectedContext?.id,
             page_context: {
               url: new URLSearchParams(window.location.search).get("source_url") ?? "/ask",
               title: new URLSearchParams(window.location.search).get("source_title") ?? "Ask the Library",
             },
-          });
+           }, { signal: controller.signal });
       appendAnswer(response.data);
     } catch (caught) {
+      if (controller.signal.aborted) return;
       const message = caught instanceof ApiClientError ? caught.message : "The assistant could not answer right now.";
       setError(message);
     } finally {
-      setIsBusy(false);
+      finishRequest(controller);
     }
   }
 
@@ -115,39 +127,54 @@ export function AskLibraryClient({ contexts }: AskLibraryClientProps) {
     if (!email.trim() || isBusy) return;
     setIsBusy(true);
     setError(null);
+    const controller = beginRequest();
     try {
-      const response = await libraryServiceApi.assistant.verification.request(email.trim());
+      const response = await libraryServiceApi.assistant.verification.request(email.trim(), { signal: controller.signal });
       setVerificationRequested(response.data.accepted);
       setStatus(response.data.message);
     } catch (caught) {
+      if (controller.signal.aborted) return;
       setError(caught instanceof ApiClientError ? caught.message : "We could not send the verification email.");
     } finally {
-      setIsBusy(false);
+      finishRequest(controller);
     }
   }
 
-  async function confirmVerification(data: { token?: string; code?: string }) {
+  const confirmVerification = useCallback(async (data: { token?: string; code?: string }) => {
     setIsBusy(true);
     setError(null);
+    const controller = beginRequest();
     try {
-      const response = await libraryServiceApi.assistant.verification.confirm(data);
+      const response = await libraryServiceApi.assistant.verification.confirm(data, { signal: controller.signal });
       if (!response.data.accepted) throw new Error(response.data.message);
       setConversationId(response.data.conversation_id ?? null);
       setVerificationRequested(false);
       setStatus(response.data.message);
       if (response.data.conversation_id) {
-        const history = await libraryServiceApi.assistant.conversations.messages(response.data.conversation_id);
+        const history = await libraryServiceApi.assistant.conversations.messages(response.data.conversation_id, { signal: controller.signal });
         setMessages(history.data);
       }
     } catch (caught) {
+      if (controller.signal.aborted) return;
       setError(caught instanceof ApiClientError ? caught.message : "That verification link or code is no longer valid.");
     } finally {
-      setIsBusy(false);
+      finishRequest(controller);
     }
-  }
+  }, [beginRequest, finishRequest]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const verificationToken = params.get("verification_token");
+    const recoveryToken = params.get("recovery_token");
+    if (verificationToken) {
+      void confirmVerification({ token: verificationToken });
+    } else if (recoveryToken) {
+      void recoverConversation(recoveryToken);
+    }
+  }, [confirmVerification, recoverConversation]);
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_330px] lg:gap-16">
+    <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_330px] lg:gap-16" data-server-data-display="library-assistant-contexts">
       <section className="min-w-0" aria-labelledby="assistant-conversation-heading">
         <div className="flex flex-col gap-5 border-y border-border py-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -221,7 +248,7 @@ export function AskLibraryClient({ contexts }: AskLibraryClientProps) {
             <p className="mt-2 text-sm leading-7 text-muted-foreground">Enter your email to receive a magic link and six-digit code. Your next questions and any librarian reply will stay in this thread.</p>
             <label htmlFor="library-assistant-email" className="mt-5 block text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Email address</label>
             <input id="library-assistant-email" type="email" required autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 min-h-11 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/15" placeholder="you@example.com" />
-            <button type="submit" disabled={isBusy || !email.trim()} className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-secondary px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">{isBusy ? <Loader2 aria-hidden className="h-4 w-4 animate-spin" /> : <Mail aria-hidden className="h-4 w-4" />} Send verification</button>
+            <button type="submit" disabled={isBusy || !email.trim()} className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-[hsl(var(--secondary-deep))] px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">{isBusy ? <Loader2 aria-hidden className="h-4 w-4 animate-spin" /> : <Mail aria-hidden className="h-4 w-4" />} Send verification</button>
           </form>
         ) : (
           <div className="border-l-4 border-secondary bg-surface-subtle p-5">

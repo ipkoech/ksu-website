@@ -1,20 +1,5 @@
 @import "@ksu/ui/globals.css";
 
-/* Research portal theme contract, aligned with the main public website. */
-:root {
-  --primary: 201 100% 36%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 24 91% 54%;
-  --secondary-foreground: 0 0% 100%;
-  --font-sans:
-    "Bookman Old Style", var(--app-font-bookman, "URW Bookman"), Georgia,
-    "Times New Roman", serif;
-  --font-display:
-    "Bookman Old Style", var(--app-font-bookman, "URW Bookman"), Georgia,
-    "Times New Roman", serif;
-  --font-size-base: 12pt;
-}
-
 .research-canvas {
   position: relative;
   isolation: isolate;

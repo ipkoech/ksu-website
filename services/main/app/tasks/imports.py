@@ -6,21 +6,28 @@ import uuid
 from typing import Any
 
 from ksu_common.task_queue import run_worker_async
+from ksu_common.auth import TokenPayload
+from ksu_contracts.rbac import authorize_permission
 
 from ..core.database import AsyncSessionLocal
-from ..models import School, User
+from ..deps import permissions_for_user
+from ..models import Person, Role, RolePermission, School, User, UserRole
 from ..schemas.imports import ImportCommitRequest
 from ..schemas.school_portal_team import SchoolTeamMemberCreate
 from ..services.domain_events import enqueue_domain_event
 from ..services.notification import NotificationService
 from ..services.imports import ImportService
-from ..services.school_portal_context import SchoolPortalContext
+from ..services.school_portal_context import resolve_school_portal_context
+from ..services.user import UserService
+from ..services.auth import _active_scope_grants
 from ..services.school_portal_team import (
     create_school_team_member,
     preview_school_team_import,
     school_import_resource_id,
 )
 from .celery_app import celery_app
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 
 @celery_app.task(name="main.imports.commit")
@@ -75,15 +82,22 @@ async def _run_school_team_import(
 ) -> dict[str, Any]:
     async with AsyncSessionLocal() as db:
         school = await School.get_by_id(db, school_id)
-        actor = await User.get_by_id(db, actor_id)
+        actor = await db.scalar(
+            select(User)
+            .options(
+                selectinload(User.person).selectinload(Person.assignments),
+                selectinload(User.role_assignments)
+                .selectinload(UserRole.role)
+                .selectinload(Role.role_permissions)
+                .selectinload(RolePermission.permission),
+            )
+            .where(User.id == actor_id, User.deleted_at.is_(None), User.is_active.is_(True))
+        )
         if school is None or actor is None:
             raise ValueError("School import context is unavailable")
-        context = SchoolPortalContext(
-            school=school,
-            user=actor,
-            permissions=("school.team.manage", "school.team.roles"),
-            role_names=("school_admin",),
-        )
+        context = await resolve_school_portal_context(db, actor, school_id)
+        if "school.team.bulk" not in context.permissions:
+            raise ValueError("School import authority is no longer assigned")
         preview = await preview_school_team_import(
             db, school_id, payload.get("rows", [])
         )
@@ -221,7 +235,25 @@ async def _commit_import(resource_key: str, payload: dict[str, Any], user_id: st
     request = ImportCommitRequest.model_validate(payload)
     async with AsyncSessionLocal() as db:
         try:
-            result = await ImportService.commit(db, config, request)
+            actor = await db.scalar(
+                select(User)
+                .options(*UserService._auth_load_options())
+                .where(User.id == uuid.UUID(user_id) if user_id else False,
+                       User.deleted_at.is_(None), User.is_active.is_(True))
+            )
+            if actor is None:
+                raise ValueError("Import authority is no longer assigned")
+            actor_payload = TokenPayload(
+                sub=str(actor.id),
+                jti="import-worker",
+                raw={
+                    "permissions": list(permissions_for_user(actor)),
+                    "scope_grants": _active_scope_grants(actor),
+                },
+            )
+            if not authorize_permission(actor_payload, config.scope).allowed:
+                raise ValueError("Import authority is no longer assigned")
+            result = await ImportService.commit(db, config, request, actor_id=user_id)
             if user_id:
                 await NotificationService.send_to_user(
                     db,
@@ -250,4 +282,8 @@ async def _commit_import(resource_key: str, payload: dict[str, Any], user_id: st
             await db.rollback()
             raise
 
-    return result.model_dump(mode="json")
+    completed = result.model_dump(mode="json")
+    # Keep the async artifact bound to the account that queued it.  The
+    # status endpoint uses this private field before exposing the result.
+    completed["_actor_id"] = str(user_id) if user_id else None
+    return completed

@@ -25,9 +25,13 @@ scrape_configs:
     static_configs:
       - targets:
           - celery-main:9100
+          - celery-main-audit:9100
           - celery-library:9101
+          - celery-library-audit:9101
           - celery-research:9102
+          - celery-research-audit:9102
           - celery-heri:9103
+          - celery-heri-audit:9103
 
   - job_name: ksu-postgres
     static_configs:

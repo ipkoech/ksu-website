@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { ResearchPublication } from "@ksu/api-client";
+import type { ResearchPublication } from "@ksu/api-client/server";
 import { pageFromSearchParams } from "@ksu/ui/components";
 import { ArrowRight } from "lucide-react";
 import { ResearchListPagination } from "../../components/research-list-pagination";

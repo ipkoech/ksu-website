@@ -25,6 +25,7 @@ import {
   type InstitutionalSectionType,
 } from "@/lib/api/about-content";
 import { AboutWorkflowActions } from "./about-workflow-actions";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const SECTION_TYPES: Array<{ value: InstitutionalSectionType; label: string }> = [
   { value: "narrative", label: "Narrative" },
@@ -87,6 +88,7 @@ export function InstitutionalPageWorkspace({ slug }: { slug: "about" | "service-
       client.invalidateQueries({ queryKey: ["institutional-items"] }),
       client.invalidateQueries({ queryKey: ["institutional-documents"] }),
     ]);
+    void revalidatePublicContent("main", "institutional-pages");
   };
   const savePage = useMutation({
     mutationFn: () => institutionalPagesApi.update(page!.id, {

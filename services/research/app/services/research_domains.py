@@ -26,19 +26,16 @@ from typing import Any, Mapping
 
 from fastapi import HTTPException, status
 from ksu_common.auth import TokenPayload
-from ksu_contracts.rbac import authorize_permission
+from ksu_contracts.rbac import AuthorizationScope, authorize_permission
 
 FARM_DOMAIN = "farm"
 SUSTAINABILITY_DOMAIN = "sustainability"
+INNOVATION_DOMAIN = "innovation"
 
 #: Permissions that grant unrestricted, cross-domain research authority. A
 #: caller holding any of these is never narrowed by a domain filter.
 GLOBAL_RESEARCH_PERMISSIONS: tuple[str, ...] = (
-    "research.manage_projects",
-    "research.manage_centers",
-    "research.manage_impact",
-    "research.review",
-    "research.publish",
+    "research.oversight",
 )
 
 
@@ -73,6 +70,11 @@ class DomainDefinition:
 #: An empty mapping means "this resource is wholly owned by the domain" (its
 #: table serves no other portal section), so no narrowing column is needed.
 DOMAIN_DEFINITIONS: Mapping[str, DomainDefinition] = {
+    INNOVATION_DOMAIN: DomainDefinition(
+        key=INNOVATION_DOMAIN, namespace="innovation",
+        resource_filters={"innovations": {}, "startups": {},
+                          "incubation": {}, "competitions": {}, "transfers": {}},
+    ),
     FARM_DOMAIN: DomainDefinition(
         key=FARM_DOMAIN,
         namespace="farm",
@@ -111,7 +113,10 @@ def _has(user: TokenPayload | None, permission: str) -> bool:
 
 def has_global_research_authority(user: TokenPayload | None) -> bool:
     """Return True when the caller may act across every research domain."""
-    return any(_has(user, permission) for permission in GLOBAL_RESEARCH_PERMISSIONS)
+    return user is not None and any(
+        authorize_permission(user, permission, AuthorizationScope("research")).allowed
+        for permission in GLOBAL_RESEARCH_PERMISSIONS
+    )
 
 
 def caller_domains(user: TokenPayload | None) -> list[str]:
@@ -119,7 +124,14 @@ def caller_domains(user: TokenPayload | None) -> list[str]:
     return [
         definition.key
         for definition in DOMAIN_DEFINITIONS.values()
-        if _has(user, definition.view_permission())
+        if any(_has(user, permission) for permission in (
+            definition.view_permission(), definition.manage_permission(),
+            definition.publish_permission(), f"{definition.namespace}.review",
+            f"{definition.namespace}.submit",
+            *(["innovation.manage_startups", "innovation.manage_competitions",
+               "innovation.manage_transfers", "innovation.review_disclosure"]
+              if definition.key == INNOVATION_DOMAIN else []),
+        ))
     ]
 
 
@@ -129,16 +141,32 @@ def resolve_domain_filters(
 ) -> dict[str, Any]:
     """Return filters that must be applied to ``resource_key`` for this caller.
 
-    An empty dict means "no narrowing" — either the caller has global research
-    authority, or they hold no domain namespace at all (in which case the
-    ordinary ``require_scope`` guard has already decided the request).
+    An empty dict means explicit oversight or a table wholly owned by an
+    assigned domain. Missing authority denies. Multiple slices use SQL OR.
     """
     if has_global_research_authority(user):
         return {}
 
+    # Export identifiers use the public ``research-*`` prefix while domain
+    # ownership definitions use the underlying resource key.
+    resource_key = resource_key.removeprefix("research-")
+
+    # A Research-wide assignment is distinct from domain assignments. Preserve
+    # an explicitly selected center when the grant is center-scoped; never infer
+    # this authority from an unrelated management permission.
+    for grant in (user.raw.get("scope_grants", []) if user is not None else []) or []:
+        if not isinstance(grant, Mapping) or grant.get("scope_type") != "research":
+            continue
+        if not any(authorize_permission(grant.get("permissions", []), permission).allowed
+                   for permission in ("research.view", "research.manage_reports", "research.manage_projects")):
+            continue
+        if grant.get("scope_id"):
+            return {"center_id": str(grant["scope_id"])}
+        return {}
+
     domains = caller_domains(user)
     if not domains:
-        return {}
+        raise HTTPException(status_code=403, detail="An explicit Research domain or oversight assignment is required")
 
     definitions = [DOMAIN_DEFINITIONS[key] for key in domains]
     owning = [
@@ -155,24 +183,13 @@ def resolve_domain_filters(
             ),
         )
 
-    # A caller holding several domain namespaces (e.g. research staff, who can
-    # read both workspaces) cannot be expressed as one AND-ed filter set. Rather
-    # than silently widening them to the whole table, narrow to the single
-    # domain that owns this resource; when more than one owns it, apply only the
-    # filters they agree on, so the result is never broader than every domain
-    # the caller legitimately holds.
+    # Preserve each complete ownership predicate as an alternative. Intersecting
+    # discriminator dictionaries would remove every restriction when values differ.
     if len(owning) == 1:
         return dict(owning[0].resource_filters[resource_key])
 
-    shared: dict[str, Any] = {}
-    first = owning[0].resource_filters[resource_key]
-    for column, value in first.items():
-        if all(
-            definition.resource_filters[resource_key].get(column) == value
-            for definition in owning[1:]
-        ):
-            shared[column] = value
-    return shared
+    return {"__domain_any__": [dict(definition.resource_filters[resource_key])
+                               for definition in owning]}
 
 
 def assert_record_in_domain(
@@ -201,14 +218,14 @@ def assert_record_in_domain(
             if hasattr(payload, key)
         }
 
-    for column, required in filters.items():
-        if column in values and values[column] != required:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=(
-                    f"'{column}' must remain '{required}' inside your workspace"
-                ),
-            )
+    alternatives = filters.get("__domain_any__", [filters])
+    if not isinstance(payload, Mapping) and not hasattr(payload, "model_dump"):
+        values = {key: getattr(payload, key)
+                  for alternative in alternatives for key in alternative if hasattr(payload, key)}
+    if not any(all(key not in values or values[key] == required
+                   for key, required in alternative.items())
+               for alternative in alternatives):
+        raise HTTPException(403, "Record is outside your assigned Research domains")
 
 
 def stamp_domain_defaults(
@@ -224,6 +241,10 @@ def stamp_domain_defaults(
     """
     filters = resolve_domain_filters(user, resource_key)
     if not filters:
+        return payload
+
+    if "__domain_any__" in filters:
+        # The client must identify which authorized domain owns a new record.
         return payload
 
     for column, value in filters.items():

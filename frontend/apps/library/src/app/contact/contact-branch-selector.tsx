@@ -3,7 +3,7 @@
 import type { LibraryBranch } from "@ksu/api-client";
 import { Clock3, Mail, MapPin, Phone } from "lucide-react";
 import { useState } from "react";
-import { compactText } from "../../lib/library-public-data";
+import { compactText } from "../../lib/library-formatters";
 
 export function ContactBranchSelector({
   branches,
@@ -16,7 +16,7 @@ export function ContactBranchSelector({
   const selected = branches.find((branch) => branch.id === selectedId) ?? null;
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(220px,0.7fr)_minmax(0,1.3fr)]">
+    <div className="grid gap-8 lg:grid-cols-[minmax(220px,0.7fr)_minmax(0,1.3fr)]" data-server-data-display="library-branches-contact">
       <div>
         <label htmlFor="contact-branch" className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Select a library branch</label>
         <select id="contact-branch" value={selectedId} onChange={(event) => setSelectedId(event.target.value)} className="mt-3 h-12 w-full rounded-md border border-border bg-white px-3 text-sm font-semibold text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15">

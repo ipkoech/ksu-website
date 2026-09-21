@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_noStore as noStore } from "next/cache";
 import { institutionContact } from "../../config/institution";
 import { ResearchPageShell } from "../../components/research-page-primitives";
 import { ResearchPageHero } from "../../components/research-page-hero";
@@ -17,7 +18,7 @@ import {
   SlidersHorizontal,
   TrendingUp,
 } from "lucide-react";
-import { researchServiceApi } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client/server";
 import {
   RESEARCH_SEARCH_GROUPS,
   SEARCH_TABS,
@@ -35,6 +36,7 @@ import {
   type SearchRecord,
   type SearchTabKey,
 } from "./search-model";
+import { ResearchSearchResults } from "../../components/research-search-results";
 
 export const metadata = {
   title: "Search | KSU Research",
@@ -136,29 +138,7 @@ export default async function ResearchSearchPage({
                 ) : null}
 
                 {visibleResults.length > 0 ? (
-                  <div
-                    className={
-                      view === "grid"
-                        ? "mt-5 grid gap-4 lg:grid-cols-2"
-                        : "mt-5 overflow-hidden rounded-lg border border-border bg-white"
-                    }
-                  >
-                    {visibleResults.map((result) =>
-                      view === "grid" ? (
-                        <GridResultCard
-                          key={`${result.groupKey}-${result.id}`}
-                          query={query}
-                          result={result}
-                        />
-                      ) : (
-                        <ResultRow
-                          key={`${result.groupKey}-${result.id}`}
-                          query={query}
-                          result={result}
-                        />
-                      ),
-                    )}
-                  </div>
+                  <ResearchSearchResults query={query} results={visibleResults} view={view} />
                 ) : (
                   <NoResults query={query} />
                 )}
@@ -184,7 +164,7 @@ function SearchHero({ query }: { query: string }) {
       title="Find research records across Kisii University"
       description="Search projects, publications, grants, innovations, partners, centers, facilities, outputs, resources, training, news, and events from the REIRM public portfolio."
       breadcrumbs={[{ label: "Home", href: "/" }, { label: "Search" }]}
-      imageSrc="/institutional-research-images/KSUInnovationWeek2025,April7,2026-7968.jpg"
+      imageSrc="/images/research/headers/innovation-week-8147.jpg"
       imageAlt="Kisii University research discovery"
     >
           <form action="/search" className="max-w-3xl">
@@ -466,44 +446,6 @@ function TopMatchCard({
   );
 }
 
-function ResultRow({ query, result }: { query: string; result: ResearchSearchResult }) {
-  return (
-    <Link href={result.href} className="grid gap-4 border-b border-border p-4 transition last:border-b-0 hover:bg-primary/5 md:grid-cols-[170px_minmax(0,1fr)_auto]">
-      <ResultThumb result={result} />
-      <div className="min-w-0">
-        <div className="flex flex-wrap gap-2">
-          <ResultBadge result={result} />
-          {result.isOpenAccess ? <span className="rounded-md border border-success/30 bg-success/10 px-2 py-1 text-xs font-semibold text-success">Open access</span> : null}
-        </div>
-        <h3 className="mt-2 font-display text-xl font-semibold leading-7 text-foreground">
-          {result.title}
-        </h3>
-        <HighlightedText query={query} text={result.description} className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground" />
-        <ResultMeta result={result} />
-      </div>
-      <ArrowRight aria-hidden className="mt-2 h-5 w-5 text-primary" />
-    </Link>
-  );
-}
-
-function GridResultCard({ query, result }: { query: string; result: ResearchSearchResult }) {
-  return (
-    <Link href={result.href} className="group overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
-      <ResultThumb result={result} large />
-      <div className="p-5">
-        <div className="flex flex-wrap gap-2">
-          <ResultBadge result={result} />
-          {result.isFeatured ? <span className="rounded-md bg-secondary px-2 py-1 text-xs font-semibold text-white">Featured</span> : null}
-        </div>
-        <h3 className="mt-3 font-display text-xl font-semibold leading-7 text-foreground">
-          {result.title}
-        </h3>
-        <HighlightedText query={query} text={result.description} className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground" />
-        <ResultMeta result={result} />
-      </div>
-    </Link>
-  );
-}
 
 function SearchSupportRail({
   relatedAreas,
@@ -641,6 +583,7 @@ async function runResearchSearch(
       }
     }
   } catch {
+    noStore();
     for (const group of researchGroups) {
       responses.set(group.key, {
         group,
@@ -674,6 +617,7 @@ async function runResearchSearch(
           error: null,
         });
       } catch {
+        noStore();
         responses.set(group.key, {
           group,
           results: [],
@@ -709,6 +653,7 @@ async function loadCenterOptions() {
       }))
       .filter((center) => center.label);
   } catch {
+    noStore();
     return [];
   }
 }
@@ -726,6 +671,7 @@ async function loadRelatedAreas() {
       .filter(Boolean);
     return areas.length ? areas : relatedResearchAreas;
   } catch {
+    noStore();
     return relatedResearchAreas;
   }
 }

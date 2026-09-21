@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../hooks/use-auth";
 import type { Service } from "../types";
+import { SessionError } from "./session-error";
 
 interface ServiceGuardProps {
   service: Service;
@@ -19,7 +20,7 @@ export function ServiceGuard({
   redirectTo = "/select-service",
 }: ServiceGuardProps) {
   const router = useRouter();
-  const { user, isLoading, activeService, checkAuth, switchService } = useAuth();
+  const { user, isLoading, error, activeService, checkAuth, switchService } = useAuth();
   const hasAccess = Boolean(user?.services.some((access) => access.service === service));
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export function ServiceGuard({
   }, [checkAuth, user]);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || error) return;
     if (!user) {
       router.push("/login");
       return;
@@ -39,15 +40,18 @@ export function ServiceGuard({
     } else if (activeService !== service) {
       switchService(service);
     }
-  }, [isLoading, user, hasAccess, service, activeService, switchService, router, redirectTo]);
+  }, [isLoading, error, user, hasAccess, service, activeService, switchService, router, redirectTo]);
 
   if (isLoading) {
     return fallback || <ServiceLoadingSkeleton />;
   }
 
   if (!user || !hasAccess) {
+    if (error) return <SessionError retry={checkAuth} />;
     return fallback || null;
   }
+
+  if (error) return <SessionError retry={checkAuth} />;
 
   return <>{children}</>;
 }

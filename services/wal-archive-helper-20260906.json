@@ -1,0 +1,23 @@
+{
+  "captured_at": "2026-09-06",
+  "checks": [
+    "relative PostgreSQL %p path resolved under PGDATA",
+    "WAL segment copied to archive directory with matching bytes",
+    "temporary archive file is atomically renamed and not left behind",
+    "path-like invalid segment name is rejected",
+    "production host archive path is required to be an absolute managed off-host path"
+  ],
+  "configuration": {
+    "archive_command": "/bin/sh /usr/local/bin/ksu-archive-wal.sh %p %f",
+    "archive_mode_default": "off",
+    "compose": "docker-compose.yml",
+    "host_archive_variable": "POSTGRES_WAL_ARCHIVE_HOST_DIR",
+    "production_example": "POSTGRES_ARCHIVE_MODE=on"
+  },
+  "helper": "scripts/postgres-archive-wal.sh",
+  "limitations": [
+    "This is a helper/configuration check, not a running PostgreSQL archive_mode or point-in-time recovery drill.",
+    "Production off-site storage, retention and restore-to-time validation remain deployment gates."
+  ],
+  "result": "passed"
+}

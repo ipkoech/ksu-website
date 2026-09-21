@@ -16,6 +16,8 @@ from ...schemas import (
     FocusAreaCreate,
     FocusAreaUpdate,
     ResearchProjectCreate,
+    ResearchProjectAdminDetail,
+    ResearchProjectPublicDetail,
     ResearchProjectUpdate,
     ResearchThemeCreate,
     ResearchThemeUpdate,
@@ -29,7 +31,7 @@ router = APIRouter()
 @router.get(
     "/projects/featured",
     tags=["Research Projects"],
-    response_model=SuccessEnvelope[JsonObject],
+    response_model=SuccessEnvelope[ResearchProjectPublicDetail],
 )
 @cached_public(timeout=300)
 async def get_featured_project(db: AsyncSession = Depends(get_db)):
@@ -42,7 +44,7 @@ async def get_featured_project(db: AsyncSession = Depends(get_db)):
 @router.get(
     "/projects/{slug}/public-detail",
     tags=["Research Projects"],
-    response_model=SuccessEnvelope[JsonObject],
+    response_model=SuccessEnvelope[ResearchProjectPublicDetail],
 )
 @cached_public(timeout=300)
 async def get_public_project_detail(
@@ -58,14 +60,14 @@ async def get_public_project_detail(
 @router.get(
     "/projects/{slug}/detail",
     tags=["Research Projects"],
-    response_model=SuccessEnvelope[JsonObject],
+    response_model=SuccessEnvelope[ResearchProjectAdminDetail],
 )
-@cached_public(timeout=300)
 async def get_project_detail(
     slug: str,
     db: AsyncSession = Depends(get_db),
+    user=Depends(require_scope("research.view_projects")),
 ):
-    detail = await ProjectDetailService.get_by_slug(db, slug)
+    detail = await ProjectDetailService.get_by_slug(db, slug, user=user)
     if detail is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Research Project not found")
     return success(data=detail)

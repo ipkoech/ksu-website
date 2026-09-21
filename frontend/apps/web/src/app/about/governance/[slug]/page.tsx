@@ -23,6 +23,8 @@ function boardTypeLabel(value?: string | null) {
   );
 }
 
+export const revalidate = 300;
+
 export default async function GovernanceBoardPage({
   params,
 }: {

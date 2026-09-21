@@ -7,7 +7,7 @@ import { RelatedRecordsCard, RelatedRecordsGrid } from "../../../_components/res
 export default function ResearchConsultancyDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Consultancy"
+      title="Consultancy"
       description="View consultancy client, value, partner linkage, dates, related work, and audit history."
       resource={researchServiceApi.consultancies}
       backHref="/research/capacity/consultancies"

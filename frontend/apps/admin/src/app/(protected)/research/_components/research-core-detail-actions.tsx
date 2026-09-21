@@ -21,6 +21,7 @@ import {
 import { ChevronDown, Edit3, Eye, EyeOff, Star, StarOff, Trash2 } from "lucide-react";
 import { MediaPicker } from "@/components/media";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 type CoreDetailResource = {
   update: (id: string, data: Partial<ResearchGenericPayload>) => Promise<{ data: ResearchGenericRecord }>;
@@ -39,11 +40,13 @@ type CoreActionConfirmation = {
 export function ResearchCoreDetailActions({
   record,
   resource,
+  resourceKey,
   resourceLabel,
   listHref,
 }: {
   record: ResearchGenericRecord;
   resource: CoreDetailResource;
+  resourceKey: string;
   resourceLabel: string;
   listHref: string;
 }) {
@@ -66,6 +69,7 @@ export function ResearchCoreDetailActions({
       const nextFields = getEditableFields(nextRecord);
       setEditValues(buildEditValues(nextRecord, nextFields));
       await queryClient.invalidateQueries({ queryKey: ["research", "detail"] });
+      void revalidatePublicContent("research", resourceKey);
       router.refresh();
       setEditOpen(false);
       toast.success(`${resourceLabel} updated`);
@@ -77,6 +81,7 @@ export function ResearchCoreDetailActions({
     mutationFn: () => resource.delete(id),
     onSuccess: () => {
       toast.success(`${resourceLabel} deleted`);
+      void revalidatePublicContent("research", resourceKey);
       router.push(listHref);
       router.refresh();
     },

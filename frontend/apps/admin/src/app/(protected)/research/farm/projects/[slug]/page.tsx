@@ -31,7 +31,7 @@ export default function FarmProjectDetailPage() {
       ]}
       sections={[
         { title: "Overview", fields: ["summary", "abstract", "background"] },
-        { title: "Research Design", fields: ["objectives", "methodology", "expected_outcomes", "deliverables"] },
+        { title: "Design", fields: ["objectives", "methodology", "expected_outcomes", "deliverables"] },
         { title: "Impact and Funding", fields: ["impact", "budget", "currency"] },
       ]}
       auditResourceTypes={["research_project", "projects", "project"]}

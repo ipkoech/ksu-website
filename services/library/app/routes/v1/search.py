@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.cache import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...core.database import get_db
 from ...schemas.search import LibrarySearchResponse
@@ -19,7 +19,7 @@ from ._rate_limits import public_catalog_rate_limit
 router = APIRouter(prefix="/library/search", tags=["Library Search"])
 
 
-@router.get("")
+@router.get("", response_model=SuccessResponse[LibrarySearchResponse])
 @public_catalog_rate_limit
 @cached_public(timeout=60, vary_on=("q", "types", "library_id", "limit"))
 async def search_library(

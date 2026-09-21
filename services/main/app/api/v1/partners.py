@@ -6,14 +6,15 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from httpx import HTTPError
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...services.research_partners import ResearchPartnersProxyService
+from ...schemas.partners import PartnerDetailSnapshot, PartnerListSnapshot
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get("", response_model=SuccessResponse[list[PartnerListSnapshot]], response_model_exclude_unset=True)
 @cached_public(timeout=300, vary_on=("page", "per_page", "search", "status", "is_active", "is_featured"))
 async def list_partners(
     request: Request,
@@ -42,7 +43,7 @@ async def list_partners(
     return success(data=payload.get("data"), meta=payload.get("meta"))
 
 
-@router.get("/{slug}")
+@router.get("/{slug}", response_model=SuccessResponse[PartnerDetailSnapshot], response_model_exclude_unset=True)
 @cached_public(timeout=300, vary_on=("slug",))
 async def get_partner(slug: str, request: Request):
     if request.headers.get("x-ksu-proxy") == "main-partners":

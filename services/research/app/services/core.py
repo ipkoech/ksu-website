@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..core.config import get_settings
+from ..core.auth import require_scoped_record
 from ..models import (
     CenterTeamMember,
     FocusArea,
@@ -36,7 +37,7 @@ from ..models import (
     project_partners,
     sustainability_projects,
 )
-from ._crud import build_simple_service
+from ._crud import apply_public_visibility, build_simple_service
 from .audit_snapshots import list_audit_snapshots
 from .media_snapshots import public_media_by_id
 from .person_snapshots import public_people_by_id
@@ -141,13 +142,28 @@ def _model_payload(item: Any) -> dict[str, Any]:
     }
 
 
-async def _related_many(db: AsyncSession, statement, *extra_fields: str) -> list[dict[str, Any]]:
+async def _related_many(db: AsyncSession, statement, *extra_fields: str, public: bool = True) -> list[dict[str, Any]]:
+    if public:
+        entity = next((item.get("entity") for item in statement.column_descriptions if item.get("entity") is not None), None)
+        if entity is not None:
+            statement = apply_public_visibility(entity, statement)
     result = await db.execute(statement)
     return [_brief(item, *extra_fields) for item in result.scalars().all()]
 
 
 async def _get_or_404(db: AsyncSession, model: Any, record_id: uuid.UUID, error_message: str) -> Any:
     result = await db.execute(model.active_query().where(model.id == record_id))
+    record = result.scalar_one_or_none()
+    if record is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error_message)
+    return record
+
+
+async def _get_public_or_404(db: AsyncSession, model: Any, record_id: uuid.UUID, error_message: str) -> Any:
+    """Resolve a public relationship parent without exposing draft records."""
+
+    query = apply_public_visibility(model, model.active_query().where(model.id == record_id))
+    result = await db.execute(query)
     record = result.scalar_one_or_none()
     if record is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error_message)
@@ -190,7 +206,7 @@ class ProjectDetailService:
     """Admin-oriented aggregate payloads for research project detail screens."""
 
     @staticmethod
-    async def get_by_slug(db: AsyncSession, slug: str) -> dict[str, Any] | None:
+    async def get_by_slug(db: AsyncSession, slug: str, *, user=None) -> dict[str, Any] | None:
         project = await ProjectService.get_by_slug(
             db,
             slug,
@@ -198,6 +214,13 @@ class ProjectDetailService:
         )
         if project is None:
             return None
+        if user is not None:
+            require_scoped_record(
+                user,
+                "research.view_projects",
+                "research",
+                project.center_id,
+            )
 
         grants = []
         if project.grant_id:
@@ -221,16 +244,18 @@ class ProjectDetailService:
                     "year",
                     "doi",
                     "url",
+                    public=False,
                 ),
                 "grants": grants,
-                "funders": await ProjectRelationshipService.list_funders(db, project.id),
-                "partners": await ProjectRelationshipService.list_partners(db, project.id),
-                "focus_areas": await ProjectRelationshipService.list_focus_areas(db, project.id),
+                "funders": await ProjectRelationshipService.list_funders(db, project.id, public=False),
+                "partners": await ProjectRelationshipService.list_partners(db, project.id, public=False),
+                "focus_areas": await ProjectRelationshipService.list_focus_areas(db, project.id, public=False),
                 "impact": await _related_many(
                     db,
                     SuccessStory.active_query().where(SuccessStory.project_id == project.id).order_by(SuccessStory.story_date.desc().nullslast(), SuccessStory.created_at.desc()),
                     "story_type",
                     "story_date",
+                    public=False,
                 ),
                 "activities": await MainScopedEventService.list("research_project", project.id),
                 "metrics": await _related_many(
@@ -240,6 +265,7 @@ class ProjectDetailService:
                     "category",
                     "value",
                     "unit",
+                    public=False,
                 ),
                 "sustainability": await _related_many(
                     db,
@@ -248,6 +274,7 @@ class ProjectDetailService:
                     .where(sustainability_projects.c.project_id == project.id)
                     .order_by(Sustainability.display_order.asc(), Sustainability.created_at.desc()),
                     "initiative_type",
+                    public=False,
                 ),
                 "audit": (await list_audit_snapshots(page=1, per_page=20, resource_id=str(project.id))).get("data", []),
             },
@@ -260,9 +287,8 @@ class ProjectPublicDetailService:
     @staticmethod
     async def get_featured(db: AsyncSession) -> dict[str, Any] | None:
         result = await db.execute(
-            ResearchProject.active_query()
+            apply_public_visibility(ResearchProject, ResearchProject.active_query())
             .where(
-                ResearchProject.is_public.is_(True),
                 ResearchProject.is_featured.is_(True),
             )
             .order_by(ResearchProject.display_order.asc(), ResearchProject.created_at.desc())
@@ -385,7 +411,9 @@ class ProjectRelationshipService:
         return await _get_or_404(db, model, record_id, error_message)
 
     @staticmethod
-    async def _ensure_project(db: AsyncSession, project_id: uuid.UUID) -> ResearchProject:
+    async def _ensure_project(db: AsyncSession, project_id: uuid.UUID, *, public: bool = False) -> ResearchProject:
+        if public:
+            return await _get_public_or_404(db, ResearchProject, project_id, "Project not found")
         project = await ProjectService.get_by_id(db, project_id)
         if project is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
@@ -404,13 +432,13 @@ class ProjectRelationshipService:
         return await ProjectRelationshipService._ensure_record(db, FocusArea, focus_area_id, "Focus area not found")
 
     @staticmethod
-    async def list_activities(db: AsyncSession, project_id: uuid.UUID) -> list[dict[str, Any]]:
-        await ProjectRelationshipService._ensure_project(db, project_id)
+    async def list_activities(db: AsyncSession, project_id: uuid.UUID, *, public: bool = True) -> list[dict[str, Any]]:
+        await ProjectRelationshipService._ensure_project(db, project_id, public=public)
         return await MainScopedEventService.list("research_project", project_id)
 
     @staticmethod
-    async def list_impact_stories(db: AsyncSession, project_id: uuid.UUID) -> list[dict[str, Any]]:
-        await ProjectRelationshipService._ensure_project(db, project_id)
+    async def list_impact_stories(db: AsyncSession, project_id: uuid.UUID, *, public: bool = True) -> list[dict[str, Any]]:
+        await ProjectRelationshipService._ensure_project(db, project_id, public=public)
         return await _related_many(
             db,
             SuccessStory.active_query()
@@ -418,11 +446,12 @@ class ProjectRelationshipService:
             .order_by(SuccessStory.story_date.desc().nullslast(), SuccessStory.created_at.desc()),
             "story_type",
             "story_date",
+            public=public,
         )
 
     @staticmethod
-    async def list_impact_metrics(db: AsyncSession, project_id: uuid.UUID) -> list[dict[str, Any]]:
-        await ProjectRelationshipService._ensure_project(db, project_id)
+    async def list_impact_metrics(db: AsyncSession, project_id: uuid.UUID, *, public: bool = True) -> list[dict[str, Any]]:
+        await ProjectRelationshipService._ensure_project(db, project_id, public=public)
         return await _related_many(
             db,
             ImpactMetric.active_query()
@@ -432,11 +461,12 @@ class ProjectRelationshipService:
             "category",
             "value",
             "unit",
+            public=public,
         )
 
     @staticmethod
-    async def list_partners(db: AsyncSession, project_id: uuid.UUID) -> list[dict[str, Any]]:
-        await ProjectRelationshipService._ensure_project(db, project_id)
+    async def list_partners(db: AsyncSession, project_id: uuid.UUID, *, public: bool = True) -> list[dict[str, Any]]:
+        await ProjectRelationshipService._ensure_project(db, project_id, public=public)
         return await _related_many(
             db,
             Partner.active_query()
@@ -445,6 +475,7 @@ class ProjectRelationshipService:
             .order_by(Partner.display_order.asc(), Partner.name.asc()),
             "partner_type",
             "partnership_level",
+            public=public,
         )
 
     @staticmethod
@@ -463,8 +494,8 @@ class ProjectRelationshipService:
         await db.flush()
 
     @staticmethod
-    async def list_funders(db: AsyncSession, project_id: uuid.UUID) -> list[dict[str, Any]]:
-        await ProjectRelationshipService._ensure_project(db, project_id)
+    async def list_funders(db: AsyncSession, project_id: uuid.UUID, *, public: bool = True) -> list[dict[str, Any]]:
+        await ProjectRelationshipService._ensure_project(db, project_id, public=public)
         return await _related_many(
             db,
             Funding.active_query()
@@ -472,6 +503,7 @@ class ProjectRelationshipService:
             .where(project_funders.c.project_id == project_id)
             .order_by(Funding.display_order.asc(), Funding.name.asc()),
             "funder_type",
+            public=public,
         )
 
     @staticmethod
@@ -490,8 +522,8 @@ class ProjectRelationshipService:
         await db.flush()
 
     @staticmethod
-    async def list_focus_areas(db: AsyncSession, project_id: uuid.UUID) -> list[dict[str, Any]]:
-        await ProjectRelationshipService._ensure_project(db, project_id)
+    async def list_focus_areas(db: AsyncSession, project_id: uuid.UUID, *, public: bool = True) -> list[dict[str, Any]]:
+        await ProjectRelationshipService._ensure_project(db, project_id, public=public)
         return await _related_many(
             db,
             FocusArea.active_query()
@@ -499,6 +531,7 @@ class ProjectRelationshipService:
             .where(project_focus_areas.c.project_id == project_id)
             .order_by(FocusArea.display_order.asc(), FocusArea.name.asc()),
             "code",
+            public=public,
         )
 
     @staticmethod
@@ -521,7 +554,9 @@ class CenterRelationshipService:
     """Manage research center relationships backed by FK and center_focus_areas links."""
 
     @staticmethod
-    async def _ensure_center(db: AsyncSession, center_id: uuid.UUID) -> ResearchCenter:
+    async def _ensure_center(db: AsyncSession, center_id: uuid.UUID, *, public: bool = False) -> ResearchCenter:
+        if public:
+            return await _get_public_or_404(db, ResearchCenter, center_id, "Research center not found")
         return await _get_or_404(db, ResearchCenter, center_id, "Research center not found")
 
     @staticmethod
@@ -534,8 +569,8 @@ class CenterRelationshipService:
 
     @staticmethod
     async def list_partners(db: AsyncSession, center_id: uuid.UUID) -> list[dict[str, Any]]:
-        await CenterRelationshipService._ensure_center(db, center_id)
-        result = await db.execute(
+        await CenterRelationshipService._ensure_center(db, center_id, public=True)
+        statement = (
             select(
                 Partner,
                 center_partners.c.partnership_type,
@@ -550,6 +585,8 @@ class CenterRelationshipService:
             .where(center_partners.c.center_id == center_id)
             .order_by(Partner.display_order.asc(), Partner.name.asc())
         )
+        statement = apply_public_visibility(Partner, statement)
+        result = await db.execute(statement)
         rows = []
         for partner, partnership_type, partnership_level, mou_start_date, mou_end_date, relationship_status, collaboration_areas, notes in result.all():
             rows.append({
@@ -569,6 +606,88 @@ class CenterRelationshipService:
                 "mou_end_date": mou_end_date,
                 "notes": notes,
             })
+        return rows
+
+    @staticmethod
+    async def list_partner_links(
+        db: AsyncSession,
+        center_ids: list[uuid.UUID],
+    ) -> list[dict[str, Any]]:
+        """Return public partner links for up to one bounded center batch.
+
+        Sibling services use this endpoint during projection syncs. Keeping the
+        relationship expansion in one query avoids one request (and one query)
+        per center while preserving the public visibility rules of the single
+        center endpoint.
+        """
+        if not center_ids:
+            return []
+        statement = (
+            select(
+                center_partners.c.center_id,
+                ResearchCenter.slug.label("center_slug"),
+                Partner,
+                center_partners.c.partnership_type,
+                center_partners.c.partnership_level,
+                center_partners.c.mou_start_date,
+                center_partners.c.mou_end_date,
+                center_partners.c.status.label("relationship_status"),
+                center_partners.c.collaboration_areas,
+                center_partners.c.notes,
+            )
+            .join(ResearchCenter, ResearchCenter.id == center_partners.c.center_id)
+            .join(Partner, Partner.id == center_partners.c.partner_id)
+            .where(
+                center_partners.c.center_id.in_(set(center_ids)),
+                ResearchCenter.is_active.is_(True),
+                ResearchCenter.deleted_at.is_(None),
+            )
+            .order_by(
+                center_partners.c.center_id,
+                Partner.display_order.asc(),
+                Partner.name.asc(),
+            )
+        )
+        statement = apply_public_visibility(Partner, statement)
+        result = await db.execute(statement)
+        rows = []
+        for (
+            center_id,
+            center_slug,
+            partner,
+            partnership_type,
+            partnership_level,
+            mou_start_date,
+            mou_end_date,
+            relationship_status,
+            collaboration_areas,
+            notes,
+        ) in result.all():
+            rows.append(
+                {
+                    "center_id": center_id,
+                    "center_slug": center_slug,
+                    "id": partner.id,
+                    "name": partner.name,
+                    "slug": partner.slug,
+                    "acronym": partner.acronym,
+                    "partner_type": partner.partner_type,
+                    "partnership_level": partnership_level or partner.partnership_level,
+                    "about": partner.about,
+                    "collaboration_areas": (
+                        collaboration_areas
+                        if collaboration_areas is not None
+                        else partner.collaboration_areas
+                    ),
+                    "website": partner.website,
+                    "country": partner.country,
+                    "status": relationship_status,
+                    "partnership_type": partnership_type,
+                    "mou_start_date": mou_start_date,
+                    "mou_end_date": mou_end_date,
+                    "notes": notes,
+                }
+            )
         return rows
 
     @staticmethod
@@ -599,7 +718,7 @@ class CenterRelationshipService:
 
     @staticmethod
     async def list_projects(db: AsyncSession, center_id: uuid.UUID) -> list[dict[str, Any]]:
-        await CenterRelationshipService._ensure_center(db, center_id)
+        await CenterRelationshipService._ensure_center(db, center_id, public=True)
         return await _related_many(
             db,
             ResearchProject.active_query()
@@ -613,7 +732,7 @@ class CenterRelationshipService:
 
     @staticmethod
     async def list_programs(db: AsyncSession, center_id: uuid.UUID) -> list[dict[str, Any]]:
-        await CenterRelationshipService._ensure_center(db, center_id)
+        await CenterRelationshipService._ensure_center(db, center_id, public=True)
         return await _related_many(
             db,
             ResearchProgram.active_query()
@@ -626,7 +745,7 @@ class CenterRelationshipService:
 
     @staticmethod
     async def list_farms(db: AsyncSession, center_id: uuid.UUID) -> list[dict[str, Any]]:
-        await CenterRelationshipService._ensure_center(db, center_id)
+        await CenterRelationshipService._ensure_center(db, center_id, public=True)
         return await _related_many(
             db,
             ResearchFarm.active_query()
@@ -639,7 +758,7 @@ class CenterRelationshipService:
 
     @staticmethod
     async def list_focus_areas(db: AsyncSession, center_id: uuid.UUID) -> list[dict[str, Any]]:
-        await CenterRelationshipService._ensure_center(db, center_id)
+        await CenterRelationshipService._ensure_center(db, center_id, public=True)
         return await _related_many(
             db,
             FocusArea.active_query()
@@ -674,7 +793,9 @@ class ProgramRelationshipService:
     """Manage research program relationships backed by project FK and program_themes links."""
 
     @staticmethod
-    async def _ensure_program(db: AsyncSession, program_id: uuid.UUID) -> ResearchProgram:
+    async def _ensure_program(db: AsyncSession, program_id: uuid.UUID, *, public: bool = False) -> ResearchProgram:
+        if public:
+            return await _get_public_or_404(db, ResearchProgram, program_id, "Research program not found")
         return await _get_or_404(db, ResearchProgram, program_id, "Research program not found")
 
     @staticmethod
@@ -685,7 +806,7 @@ class ProgramRelationshipService:
 
     @staticmethod
     async def list_projects(db: AsyncSession, program_id: uuid.UUID) -> list[dict[str, Any]]:
-        await ProgramRelationshipService._ensure_program(db, program_id)
+        await ProgramRelationshipService._ensure_program(db, program_id, public=True)
         return await _related_many(
             db,
             ResearchProject.active_query()
@@ -701,7 +822,7 @@ class ProgramRelationshipService:
     async def list_themes(db: AsyncSession, program_id: uuid.UUID) -> list[dict[str, Any]]:
         from ..models import ResearchTheme
 
-        await ProgramRelationshipService._ensure_program(db, program_id)
+        await ProgramRelationshipService._ensure_program(db, program_id, public=True)
         return await _related_many(
             db,
             ResearchTheme.active_query()
@@ -737,7 +858,7 @@ class FarmDetailService:
 
     @staticmethod
     async def get_by_slug(db: AsyncSession, slug: str) -> dict[str, Any] | None:
-        farm = await FarmService.get_by_slug(
+        farm = await FarmService.get_public_by_slug(
             db,
             slug,
             load_options=(selectinload(ResearchFarm.center), selectinload(ResearchFarm.projects)),
@@ -756,7 +877,6 @@ class FarmDetailService:
                 "activities": await FarmRelationshipService.list_activities(db, farm.id),
                 "impact": await FarmRelationshipService.list_impact_stories(db, farm.id),
                 "metrics": await FarmRelationshipService.list_impact_metrics(db, farm.id),
-                "audit": (await list_audit_snapshots(page=1, per_page=20, resource_id=str(farm.id))).get("data", []),
             },
         }
 
@@ -765,12 +885,14 @@ class FarmRelationshipService:
     """Manage farm relationships backed by existing project farm_id fields."""
 
     @staticmethod
-    async def _ensure_farm(db: AsyncSession, farm_id: uuid.UUID) -> ResearchFarm:
+    async def _ensure_farm(db: AsyncSession, farm_id: uuid.UUID, *, public: bool = False) -> ResearchFarm:
+        if public:
+            return await _get_public_or_404(db, ResearchFarm, farm_id, "Farm not found")
         return await ResearchFarm.get_or_raise(db, farm_id, error_message="Farm not found")
 
     @staticmethod
     async def list_projects(db: AsyncSession, farm_id: uuid.UUID) -> list[dict[str, Any]]:
-        await FarmRelationshipService._ensure_farm(db, farm_id)
+        await FarmRelationshipService._ensure_farm(db, farm_id, public=True)
         return await _related_many(
             db,
             ResearchProject.active_query()
@@ -799,7 +921,7 @@ class FarmRelationshipService:
 
     @staticmethod
     async def list_partners(db: AsyncSession, farm_id: uuid.UUID) -> list[dict[str, Any]]:
-        await FarmRelationshipService._ensure_farm(db, farm_id)
+        await FarmRelationshipService._ensure_farm(db, farm_id, public=True)
         return await _related_many(
             db,
             Partner.active_query()
@@ -813,12 +935,12 @@ class FarmRelationshipService:
 
     @staticmethod
     async def list_activities(db: AsyncSession, farm_id: uuid.UUID) -> list[dict[str, Any]]:
-        await FarmRelationshipService._ensure_farm(db, farm_id)
+        await FarmRelationshipService._ensure_farm(db, farm_id, public=True)
         return await MainScopedEventService.list("research_farm", farm_id)
 
     @staticmethod
     async def list_impact_stories(db: AsyncSession, farm_id: uuid.UUID) -> list[dict[str, Any]]:
-        await FarmRelationshipService._ensure_farm(db, farm_id)
+        await FarmRelationshipService._ensure_farm(db, farm_id, public=True)
         return await _related_many(
             db,
             SuccessStory.active_query()
@@ -831,7 +953,7 @@ class FarmRelationshipService:
 
     @staticmethod
     async def list_impact_metrics(db: AsyncSession, farm_id: uuid.UUID) -> list[dict[str, Any]]:
-        await FarmRelationshipService._ensure_farm(db, farm_id)
+        await FarmRelationshipService._ensure_farm(db, farm_id, public=True)
         return await _related_many(
             db,
             ImpactMetric.active_query()

@@ -314,7 +314,7 @@ export function buildSupportAreaCards({
 
   return [
     {
-      title: "Research Support",
+      title: "Support",
       body: "Administrative and technical support for proposals, ethics, compliance, data, publication, and reporting workflows.",
       count: collectionCount(services) + collectionCount(guidelines),
       href: "/services",

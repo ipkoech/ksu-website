@@ -32,6 +32,7 @@ import {
 } from "@ksu/ui/components";
 import { MediaPicker } from "@/components/media/media-picker";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 export type ProfileDialogSection =
   | "overview"
@@ -208,6 +209,7 @@ export function SchoolProfileDialog({
       return (await schoolPortalApi.profile.update(payload)).data;
     },
     onSuccess: async () => {
+      void revalidatePublicContent("main", "academic-schools");
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: schoolPortalQueryKeys.profile(school.id),

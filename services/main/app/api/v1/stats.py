@@ -5,10 +5,12 @@ import io
 import json
 from datetime import date, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.response_validation import allow_response_model_exemption
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import CurrentUser, DbSession, require_scope, user_has_scope
 from ...services.corporate_dashboard import (
@@ -18,11 +20,13 @@ from ...services.corporate_dashboard import (
     build_dashboard_range,
 )
 from ...services.stats import PORTAL_ALIASES, admin_stats, portal_stats, public_stats
+from ...schemas.stats import PortalStatsResponse, PublicStatsResponse
+from ...schemas.corporate_dashboard import CorporateDashboardResponse
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get("", response_model=SuccessResponse[PublicStatsResponse])
 @cached_public(timeout=300, vary_on=("scope", "slug"))
 async def get_public_stats(
     request: Request,
@@ -36,7 +40,7 @@ async def get_public_stats(
     return success(data=result.model_dump())
 
 
-@router.get("/admin", dependencies=[Depends(require_scope("analytics.view"))])
+@router.get("/admin", response_model=SuccessResponse[PublicStatsResponse], dependencies=[Depends(require_scope("analytics.view"))])
 async def get_admin_stats(
     db: DbSession,
     _: CurrentUser,
@@ -158,7 +162,7 @@ async def _corporate_dashboard_data(
     )
 
 
-@router.get("/portal/corporate-communication/dashboard")
+@router.get("/portal/corporate-communication/dashboard", response_model=SuccessResponse[CorporateDashboardResponse])
 async def get_corporate_communication_dashboard(
     db: DbSession,
     user: CurrentUser,
@@ -182,7 +186,8 @@ async def get_corporate_communication_dashboard(
     return success(data=dashboard.model_dump(mode="json"))
 
 
-@router.get("/portal/corporate-communication/dashboard/export")
+@allow_response_model_exemption("stream", path="/api/v1/stats/portal/corporate-communication/dashboard/export")
+@router.get("/portal/corporate-communication/dashboard/export", response_class=StreamingResponse)
 async def export_corporate_communication_dashboard(
     db: DbSession,
     user: CurrentUser,
@@ -246,14 +251,14 @@ async def export_corporate_communication_dashboard(
     writer.writeheader()
     writer.writerows(rows)
     filename = f"corporate-communication-dashboard-{data['period']['date_from']}-{data['period']['date_to']}.csv"
-    return Response(
-        content=buffer.getvalue(),
+    return StreamingResponse(
+        iter([buffer.getvalue()]),
         media_type="text/csv",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
-@router.get("/portal/{portal}")
+@router.get("/portal/{portal}", response_model=SuccessResponse[PortalStatsResponse])
 async def get_portal_stats(
     portal: str,
     db: DbSession,

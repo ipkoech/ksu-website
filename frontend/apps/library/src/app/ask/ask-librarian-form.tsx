@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ApiClientError, libraryServiceApi } from "@ksu/api-client";
 import type { LibraryBranch, LibraryInquiryPayload } from "@ksu/api-client";
 import { Loader2, Send } from "lucide-react";
@@ -34,6 +34,12 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
     type: "idle",
     message: null,
   });
+  const submitAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => {
+    submitAbortRef.current?.abort();
+    submitAbortRef.current = null;
+  }, []);
 
   const defaultBranchId = useMemo(() => branches[0]?.id ?? "", [branches]);
 
@@ -82,9 +88,13 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
 
     setIsSubmitting(true);
     setStatus({ type: "idle", message: null });
+    submitAbortRef.current?.abort();
+    const controller = new AbortController();
+    submitAbortRef.current = controller;
 
     try {
-      await libraryServiceApi.inquiries.create(payload);
+      await libraryServiceApi.inquiries.create(payload, { signal: controller.signal });
+      if (controller.signal.aborted) return;
       form.reset();
       setStatus({
         type: "success",
@@ -92,12 +102,16 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
           "Your question has been sent to the library team. They will reply using the email address provided.",
       });
     } catch (error) {
+      if (controller.signal.aborted) return;
       setStatus({
         type: "error",
         message: getErrorMessage(error),
       });
     } finally {
-      setIsSubmitting(false);
+      if (submitAbortRef.current === controller) {
+        submitAbortRef.current = null;
+        setIsSubmitting(false);
+      }
     }
   }
 

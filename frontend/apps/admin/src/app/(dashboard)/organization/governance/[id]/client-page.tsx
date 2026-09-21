@@ -52,6 +52,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StaffAssignmentEditor } from "@/components/staff/staff-assignment-editor";
 import { usePermissions } from "@/hooks/use-permissions";
 import { hasChangedPayload, pickChangedPayloadWithRecord, type PayloadFieldMap } from "@/lib/changed-fields";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const optionalNumber = z.string().optional().nullable();
 
@@ -436,6 +437,7 @@ export default function BoardEditorPage() {
     try {
       if (isNew) {
         await createBoard.mutateAsync(payload);
+        void revalidatePublicContent("main", "governance");
         toast.success("Board created");
       } else if (board) {
         const patch = pickChangedPayloadWithRecord(
@@ -449,6 +451,7 @@ export default function BoardEditorPage() {
           return;
         }
         await updateBoard.mutateAsync({ id: board.id, data: patch });
+        void revalidatePublicContent("main", "governance");
         toast.success("Board updated");
       }
       router.push(listHref);
@@ -466,6 +469,7 @@ export default function BoardEditorPage() {
         notes: "Ended from governance board member management.",
       },
     });
+    void revalidatePublicContent("main", "governance");
     toast.success("Board member assignment ended");
     setEndingAssignment(null);
     await membersQuery.refetch();

@@ -13,6 +13,8 @@ export default function LibraryBranchesPage() {
       title="Library Branches"
       description="Create and maintain branch records used across catalog, services, and staff."
       backHref="/library"
+      resourceKey="branches"
+      revalidatePublicService="library"
       queryKey={["library", "branches"]}
       fields={[
         { name: "name", label: "Name", required: true },

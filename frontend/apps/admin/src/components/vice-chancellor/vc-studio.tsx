@@ -100,6 +100,7 @@ import {
 import { MediaPicker } from "@/components/media";
 import { usePermissions } from "@/hooks/use-permissions";
 import { VcPortraitLibrary } from "./vc-portrait-library";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const TABS = [
   ["overview", "Overview", LayoutDashboard],
@@ -225,6 +226,7 @@ function WorkflowActions({
     try {
       if (resource === "hub") await hub.mutateAsync({ action, reason: actionReason });
       else if (id) await content.mutateAsync({ resource, id, action, reason: actionReason });
+      void revalidatePublicContent("main", "vice-chancellor");
       toast.success("Workflow updated");
       setReasonDialog(null);
       setReason("");
@@ -395,6 +397,7 @@ function OverviewTab({ hub, canManage }: { hub: VcHub; canManage: boolean }) {
         section_order: form.section_order,
         section_visibility: form.section_visibility,
       });
+      void revalidatePublicContent("main", "vice-chancellor");
       toast.success("VC landing page saved");
     } catch (error) {
       toast.error(errorMessage(error));
@@ -631,6 +634,7 @@ function VideosTab({
       if (editor === "new") await create.mutateAsync(payload);
       else if (editor)
         await update.mutateAsync({ id: editor.id, data: payload });
+      void revalidatePublicContent("main", "vice-chancellor");
       toast.success("Video saved");
       setEditor(null);
     } catch (error) {
@@ -642,6 +646,7 @@ function VideosTab({
     if (!confirm(`Delete "${item.title}"?`)) return;
     try {
       await remove.mutateAsync(item.id);
+      void revalidatePublicContent("main", "vice-chancellor");
       toast.success("Video deleted");
     } catch (error) {
       toast.error(errorMessage(error));
@@ -654,6 +659,7 @@ function VideosTab({
     try {
       await viceChancellorApi.refreshVideo(item.id);
       await client.invalidateQueries({ queryKey: queryKeys.viceChancellor.videos });
+      void revalidatePublicContent("main", "vice-chancellor");
       toast.success("Metadata refreshed");
     } catch (error) {
       toast.error(errorMessage(error));
@@ -1002,6 +1008,7 @@ function SpeechesTab({
       if (editor === "new") await create.mutateAsync(payload);
       else if (editor)
         await update.mutateAsync({ id: editor.id, data: payload });
+      void revalidatePublicContent("main", "vice-chancellor");
       toast.success("Speech saved");
       setEditor(null);
     } catch (error) {
@@ -1140,6 +1147,7 @@ function SpeechEditor({
       });
       setVideoId("");
       await links.refetch();
+      void revalidatePublicContent("main", "vice-chancellor");
       toast.success("Recording attached");
     } catch (error) {
       toast.error(errorMessage(error));
@@ -1383,6 +1391,7 @@ function GalleriesTab({
       if (editor === "new") await create.mutateAsync(payload);
       else if (editor)
         await update.mutateAsync({ id: editor.id, data: payload });
+      void revalidatePublicContent("main", "vice-chancellor");
       toast.success("Gallery saved");
       setEditor(null);
     } catch (error) {
@@ -1516,6 +1525,7 @@ function GalleryEditor({
       setNewCaption("");
       setNewAltText("");
       await links.refetch();
+      void revalidatePublicContent("main", "vice-chancellor");
       toast.success("Photo added");
     } catch (error) {
       toast.error(errorMessage(error));
@@ -1738,6 +1748,7 @@ function ActivitiesTab({ canManage }: { canManage: boolean }) {
     try {
       await create.mutateAsync(payload);
       setSelected("");
+      void revalidatePublicContent("main", "vice-chancellor");
       toast.success("Item added to Meet the VC");
     } catch (error) {
       toast.error(errorMessage(error));
@@ -1938,6 +1949,7 @@ function CurationTab({ canManage }: { canManage: boolean }) {
     try {
       await create.mutateAsync({ section, is_enabled: true, ...reference });
       setSelected("");
+      void revalidatePublicContent("main", "vice-chancellor");
       toast.success("Content added to the page");
     } catch (error) {
       toast.error(errorMessage(error));
@@ -2106,6 +2118,7 @@ function PlacementEditButton({
         },
       });
       setOpen(false);
+      void revalidatePublicContent("main", "vice-chancellor");
       toast.success("Editorial overrides saved");
     } catch (error) {
       toast.error(errorMessage(error));
@@ -2262,6 +2275,7 @@ function DeleteButton({
         if (!confirm(`Delete "${label}"?`)) return;
         try {
           await onDelete();
+          void revalidatePublicContent("main", "vice-chancellor");
           toast.success("Deleted");
         } catch (error) {
           toast.error(errorMessage(error));

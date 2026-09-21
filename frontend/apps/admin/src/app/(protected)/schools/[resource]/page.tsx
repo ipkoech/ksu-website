@@ -8,6 +8,8 @@ import { SchoolPublicationsPage } from "@/components/schools/publications/school
 import { SchoolInquiryInbox } from "@/components/schools/inquiries/school-inquiry-inbox";
 import { SchoolAuditPage } from "@/components/schools/audit/school-audit-page";
 import { SchoolNotificationsPage } from "@/components/schools/notifications/school-notifications-page";
+import { SchoolReportsPage } from "@/components/schools/school-reports-page";
+import { SchoolOperationsPage } from "@/components/schools/school-operations-page";
 
 export function generateStaticParams() {
   return [
@@ -20,6 +22,10 @@ export function generateStaticParams() {
     { resource: "inquiries" },
     { resource: "notifications" },
     { resource: "audit" },
+    { resource: "synchronization" },
+    { resource: "documents" },
+    { resource: "work-queue" },
+    { resource: "reports" },
   ];
 }
 
@@ -48,6 +54,12 @@ export default async function SchoolsResourcePage({
       return <SchoolAuditPage />;
     case "notifications":
       return <SchoolNotificationsPage />;
+    case "reports":
+      return <SchoolReportsPage />;
+    case "work-queue":
+      return <SchoolOperationsPage kind="queue" />;
+    case "documents":
+      return <MediaBatchUploader />;
     default:
       break;
   }

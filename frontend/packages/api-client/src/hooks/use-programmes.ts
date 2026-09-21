@@ -7,7 +7,7 @@ import type { PaginationParams } from "../client";
 export function useProgrammes(params?: PaginationParams & { q?: string; school_id?: string; department_id?: string; level?: string; mode_of_study?: string }) {
   return useQuery({
     queryKey: queryKeys.programmes.list(params),
-    queryFn: () => programmesApi.list(params),
+    queryFn: ({ signal }) => programmesApi.list(params, { signal }),
   });
 }
 

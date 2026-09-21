@@ -11,7 +11,7 @@ export default function ResearchSettingsPage() {
         <ResearchSettingsWorkspaceHeader />
       </div>
       <ResearchSectionIndex
-        title="Research Administration"
+        title="Administration"
         description="Manage the research administrative unit profile, staff, services, documents, policies, media, and settings."
         links={[
           { title: "Profile", description: "Manage the research administrative unit profile, leadership, mandates, and cover image.", href: "/research/settings/profile", icon: Building2 },

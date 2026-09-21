@@ -15,5 +15,5 @@ export function AboutTabs({
       content: <p>{item.value}</p>,
     }));
 
-  return <TabSet tabs={tabs} />;
+  return tabs.length ? <div data-server-data-display="library-about-tabs"><TabSet tabs={tabs} /></div> : null;
 }

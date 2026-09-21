@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
-from sqlalchemy import func, select
+from sqlalchemy import func, inspect, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
@@ -48,6 +48,12 @@ async def paginate(
     per_page = max(1, min(max_per_page, per_page))
 
     result = await db.execute(query.offset((page - 1) * per_page).limit(per_page))
+    # Joined collection loading produces several physical rows per entity.
+    # SQLAlchemy requires uniquing before consuming such ORM results.
+    first_projection = query.column_descriptions[0].get("expr")
+    projection = inspect(first_projection, raiseerr=False)
+    if getattr(projection, "is_mapper", False) or getattr(projection, "is_aliased_class", False):
+        result = result.unique()
     items = result.scalars().all()
 
     meta: dict[str, int] = {"page": page, "per_page": per_page}

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run --maxWorkers=1 --minWorkers=1 --testTimeout=10000",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

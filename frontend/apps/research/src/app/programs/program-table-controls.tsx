@@ -3,7 +3,7 @@
 import { useId, type ReactNode } from "react";
 import { ArrowUpDown, Search } from "lucide-react";
 import { ActiveFilterChips, FilterDrawerSheet } from "@ksu/ui/components";
-import { formatLabel } from "../../lib/research-public-data";
+import { formatLabel } from "../../lib/research-formatters";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 
 type SelectChoice = string | { value: string; label: string };
@@ -69,7 +69,7 @@ export function ProgramTableControls({
   };
 
   return (
-    <div className="rounded-lg border border-border bg-white p-3 shadow-sm">
+    <div className="rounded-lg border border-border bg-white p-3 shadow-sm" data-server-data-display="research-filter-controls">
       <form id={formId} action={action} className="flex flex-col gap-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <label className="block min-w-0 flex-1">

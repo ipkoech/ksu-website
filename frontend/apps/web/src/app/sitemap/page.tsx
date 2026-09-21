@@ -8,6 +8,8 @@ export const metadata = {
   description: "Directory of key public website sections on the Kisii University website.",
 };
 
+export const revalidate = 300;
+
 const mainSections = [
   { label: "Home", href: "/", icon: Home },
   { label: "About", href: "/about", icon: Landmark },

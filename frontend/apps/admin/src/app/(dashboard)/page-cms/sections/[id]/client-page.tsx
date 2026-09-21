@@ -98,6 +98,7 @@ import { EntityPicker } from "@/components/relationships/entity-picker";
 import { PersonPicker } from "@/components/relationships/relationship-pickers";
 import { relationshipAdapters } from "@/components/relationships/relationship-adapters";
 import { blogsApi, eventsApi, newsApi } from "@ksu/api-client";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 type SectionFormState = {
   page_key: string;
@@ -1280,6 +1281,7 @@ export default function PageCmsSectionDetailPage() {
           : [createItemDraft()],
       );
       setForm(formFromSection(savedSection));
+      void revalidatePublicContent("main", "page-cms");
       toast.success(isNew ? "Page section created." : "Page section updated.");
 
       if (isNew) {
@@ -1355,6 +1357,7 @@ export default function PageCmsSectionDetailPage() {
       const response = await pageSectionsApi.workflow(sectionId, action, reason);
       setSection(response.data);
       setForm(formFromSection(response.data));
+      void revalidatePublicContent("main", "page-cms");
       toast.success(`Section ${action.replace(/_/g, " ")} complete.`);
       setPendingWorkflowAction(null);
       setWorkflowReason("");

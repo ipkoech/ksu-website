@@ -1,6 +1,8 @@
 import { PublicSectionPage } from "@/components/public/section-page";
 import { getAzIndexPage } from "@/lib/public-page-data";
 
+export const revalidate = 300;
+
 export default function AzIndexPage() {
   return <PublicSectionPage config={getAzIndexPage()} showHero={false} />;
 }

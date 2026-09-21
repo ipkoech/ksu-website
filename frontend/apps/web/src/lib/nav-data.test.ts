@@ -3,13 +3,22 @@ import {
   clubsApi,
   departmentsApi,
   divisionsApi,
+  navigationApi,
   schoolsApi,
   wingsApi,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
 
 import { getNavData } from "./nav-data";
 
-vi.mock("@ksu/api-client", () => ({
+vi.mock("server-only", () => ({}));
+vi.mock("next/cache", () => ({ unstable_noStore: vi.fn() }));
+vi.mock("next/navigation", () => ({ unstable_rethrow: vi.fn() }));
+
+vi.mock("@ksu/api-client/server", async () => ({
+  ApiClientError: (
+    await import("../../../../packages/api-client/src/transport")
+  ).ApiClientError,
+  navigationApi: { get: vi.fn() },
   schoolsApi: { list: vi.fn() },
   divisionsApi: { list: vi.fn() },
   departmentsApi: { list: vi.fn() },
@@ -30,6 +39,9 @@ const response = <T>(data: T[]) => ({
 describe("getNavData", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(navigationApi.get).mockRejectedValue(
+      new Error("Legacy backend: navigation endpoint unavailable"),
+    );
     vi.mocked(schoolsApi.list).mockResolvedValue(response([]));
     vi.mocked(divisionsApi.list).mockResolvedValue(response([]));
     vi.mocked(departmentsApi.list).mockResolvedValue(response([]));
@@ -96,5 +108,13 @@ describe("getNavData", () => {
         clubs: "fetch failed",
       },
     );
+  });
+
+  it("drops malformed fallback collections instead of rendering invalid navigation", async () => {
+    vi.mocked(schoolsApi.list).mockResolvedValue({ data: { invalid: true } } as never);
+
+    const result = await getNavData();
+
+    expect(result.schools).toEqual([]);
   });
 });

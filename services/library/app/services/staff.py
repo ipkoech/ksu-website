@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import Optional
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..domain.leadership import LIBRARY_LEADERSHIP_ROLES
@@ -81,7 +82,7 @@ async def create_staff(db: AsyncSession, data: LibraryStaffCreate) -> LibrarySta
     """Create a new library staff member."""
     member = LibraryStaff(**data.model_dump())
     db.add(member)
-    await db.commit()
+    await db.flush()
     await db.refresh(member)
     return LibraryStaffOut.model_validate(member)
 
@@ -93,7 +94,7 @@ async def update_staff(
     member = await get_staff_entity(db, staff_id)
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(member, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(member)
     return LibraryStaffOut.model_validate(member)
 
@@ -102,7 +103,7 @@ async def delete_staff(db: AsyncSession, staff_id: uuid.UUID) -> None:
     """Soft-delete a library staff member."""
     member = await get_staff_entity(db, staff_id)
     member.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 # ── LibraryService ────────────────────────────────────────────────────────────
@@ -143,7 +144,7 @@ async def create_service(
     """Create a new library service."""
     service = LibraryService(**data.model_dump())
     db.add(service)
-    await db.commit()
+    await db.flush()
     await db.refresh(service)
     return LibraryServiceOut.model_validate(service)
 
@@ -155,7 +156,7 @@ async def update_service(
     service = await get_service_entity(db, service_id)
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(service, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(service)
     return LibraryServiceOut.model_validate(service)
 
@@ -164,7 +165,7 @@ async def delete_service(db: AsyncSession, service_id: uuid.UUID) -> None:
     """Soft-delete a library service."""
     service = await get_service_entity(db, service_id)
     service.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 # ── LibraryStatistics ─────────────────────────────────────────────────────────
@@ -192,8 +193,19 @@ async def create_statistics(
     db: AsyncSession, data: LibraryStatisticsCreate
 ) -> LibraryStatisticsOut:
     """Create a library statistics snapshot."""
+    if data.period_end < data.period_start:
+        raise ValueError("Statistics period end cannot precede its start")
+    metrics = ("total_books", "total_journals", "total_theses", "total_ebooks", "total_loans",
+               "total_renewals", "total_reservations", "total_visits", "fines_collected")
+    if any(getattr(data, field) is not None and getattr(data, field) < 0 for field in metrics):
+        raise ValueError("Statistics totals cannot be negative")
+    branch = await db.scalar(select(Library.id).where(
+        Library.id == data.library_id, Library.deleted_at.is_(None), Library.is_active.is_(True),
+    ))
+    if branch is None:
+        raise ValueError("Statistics require an active library branch")
     stats = LibraryStatistics(**data.model_dump())
     db.add(stats)
-    await db.commit()
+    await db.flush()
     await db.refresh(stats)
     return LibraryStatisticsOut.model_validate(stats)

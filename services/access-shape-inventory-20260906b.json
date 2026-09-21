@@ -1,0 +1,173 @@
+{
+  "captured_at": "2026-09-06",
+  "command": "python scripts/access_shape_inventory.py services/access-shape-inventory-20260906b.json --max-workers 2",
+  "limitations": [
+    "Dependency markers classify declared access shape only; they do not prove anonymous, forbidden, missing-resource or record-ownership outcomes.",
+    "The probe imports each app in an isolated subprocess and makes no HTTP requests or database mutations."
+  ],
+  "result": "passed",
+  "services": {
+    "heri_africa": {
+      "access_shape": {
+        "identity_or_scope": 19,
+        "public_or_unclassified": 31
+      },
+      "effective_routes": 50,
+      "examples": {
+        "identity_or_scope": {
+          "methods": [
+            "GET"
+          ],
+          "path": "/api/v1/heri/admin/dashboard"
+        },
+        "public_or_unclassified": {
+          "methods": [
+            "GET"
+          ],
+          "path": "/metrics"
+        }
+      },
+      "guard_dependency_markers": {
+        "HTTPBearer": 19,
+        "get_current_user": 19,
+        "require_permission.<locals>.dependency": 18
+      },
+      "methods": {
+        "DELETE": 1,
+        "GET": 33,
+        "PATCH": 2,
+        "POST": 14
+      },
+      "redirect_slashes": true
+    },
+    "library": {
+      "access_shape": {
+        "identity_or_scope": 118,
+        "internal_key": 2,
+        "public_or_unclassified": 23
+      },
+      "effective_routes": 143,
+      "examples": {
+        "identity_or_scope": {
+          "methods": [
+            "GET"
+          ],
+          "path": "/api/v1/library/stats/admin"
+        },
+        "internal_key": {
+          "methods": [
+            "GET"
+          ],
+          "path": "/api/v1/audit"
+        },
+        "public_or_unclassified": {
+          "methods": [
+            "GET"
+          ],
+          "path": "/metrics"
+        }
+      },
+      "guard_dependency_markers": {
+        "HTTPBearer": 118,
+        "build_user_dependencies.<locals>.get_current_user": 91,
+        "internal_key_guard.<locals>._dependency": 2
+      },
+      "methods": {
+        "DELETE": 21,
+        "GET": 61,
+        "PATCH": 24,
+        "POST": 36,
+        "PUT": 1
+      },
+      "redirect_slashes": true
+    },
+    "main": {
+      "access_shape": {
+        "identity_or_scope": 618,
+        "internal_key": 14,
+        "public_or_unclassified": 148
+      },
+      "effective_routes": 780,
+      "examples": {
+        "identity_or_scope": {
+          "methods": [
+            "POST"
+          ],
+          "path": "/api/v1/auth/logout"
+        },
+        "internal_key": {
+          "methods": [
+            "POST"
+          ],
+          "path": "/api/v1/internal/audit"
+        },
+        "public_or_unclassified": {
+          "methods": [
+            "GET"
+          ],
+          "path": "/metrics"
+        }
+      },
+      "guard_dependency_markers": {
+        "HTTPBearer": 614,
+        "get_api_key_user": 3,
+        "get_current_active_user": 600,
+        "get_current_calendar_composition": 1,
+        "get_current_school_context": 69,
+        "get_token_payload": 274,
+        "internal_key_guard.<locals>._dependency": 14,
+        "require_scope.<locals>._check": 273
+      },
+      "methods": {
+        "DELETE": 82,
+        "GET": 345,
+        "PATCH": 108,
+        "POST": 232,
+        "PUT": 13
+      },
+      "redirect_slashes": true
+    },
+    "research": {
+      "access_shape": {
+        "identity_or_scope": 235,
+        "internal_key": 8,
+        "public_or_unclassified": 125
+      },
+      "effective_routes": 368,
+      "examples": {
+        "identity_or_scope": {
+          "methods": [
+            "GET"
+          ],
+          "path": "/api/v1/research-portal/context"
+        },
+        "internal_key": {
+          "methods": [
+            "POST"
+          ],
+          "path": "/api/v1/internal/imports/{resource}"
+        },
+        "public_or_unclassified": {
+          "methods": [
+            "GET"
+          ],
+          "path": "/metrics"
+        }
+      },
+      "guard_dependency_markers": {
+        "HTTPBearer": 235,
+        "get_current_user": 235,
+        "internal_key_guard.<locals>._dependency": 8,
+        "require_scope.<locals>._check": 223
+      },
+      "methods": {
+        "DELETE": 57,
+        "GET": 169,
+        "PATCH": 42,
+        "POST": 84,
+        "PUT": 16
+      },
+      "redirect_slashes": true
+    }
+  }
+}

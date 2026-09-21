@@ -24,7 +24,7 @@ export default function InnovationDetailPage() {
       ]}
       sections={[
         { title: "Innovation", fields: ["summary", "description", "problem_addressed", "solution", "benefits", "applications", "target_users"] },
-        { title: "IP And Commercialization", fields: ["ip_status", "patent_number", "patent_filing_date", "patent_grant_date", "license_type", "commercialization_status"] },
+        { title: "IP And Commercialization", fields: ["ip_status", "copyright_number", "patent_number", "patent_filing_date", "patent_grant_date", "license_type", "commercialization_status"] },
         { title: "Value", fields: ["commercial_value", "revenue_generated", "currency", "awards"] },
       ]}
       auditResourceTypes={["innovation", "innovations", "research_innovation"]}

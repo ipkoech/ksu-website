@@ -114,7 +114,7 @@ export function usePersons(params?: PersonListParams) {
   const queryParams = withDefaultPersonListSelection(params);
   return useQuery({
     queryKey: queryKeys.persons.list(queryParams),
-    queryFn: () => personsApi.list(queryParams),
+    queryFn: ({ signal }) => personsApi.list(queryParams, { signal }),
   });
 }
 

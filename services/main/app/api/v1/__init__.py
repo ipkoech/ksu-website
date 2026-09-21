@@ -18,6 +18,7 @@ from .alumni_associations import router as alumni_associations_router
 from .arts_culture import router as arts_culture_router
 from .about_content import router as about_content_router
 from .auth import router as auth_router
+from .auth_mfa import router as auth_mfa_router
 from .blogs import router as blogs_router
 from .campuses import router as campuses_router
 from .campus_life import router as campus_life_router
@@ -81,6 +82,7 @@ from .vice_chancellor import router as vice_chancellor_router
 from .content_workflow_bulk import router as content_workflow_bulk_router
 from .exports import router as exports_router
 from .digital_sync import router as digital_sync_router
+from .workspaces import router as workspaces_router
 
 
 def register_routes(app: FastAPI) -> None:
@@ -88,6 +90,8 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(health_router, prefix="/api/v1", tags=["Health"])
     app.include_router(internal_router, prefix="/api/v1/internal", tags=["Internal"])
     app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
+    app.include_router(auth_mfa_router, prefix="/api/v1/auth", tags=["Auth"])
+    app.include_router(workspaces_router, prefix="/api/v1/workspaces", tags=["Workspaces"])
     app.include_router(me_router, prefix="/api/v1/me", tags=["Me"])
     app.include_router(analytics_router, prefix="/api/v1/analytics", tags=["Analytics"])
     app.include_router(about_content_router, prefix="/api/v1", tags=["About"])

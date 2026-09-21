@@ -37,7 +37,7 @@ import type {
   Campus,
   PublicContactDirectoryEntry,
   PublicContactFAQ,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
 import { getSocialLinks, PageShell } from "@/components/site-shell";
 import { PublicImage } from "@/components/public/public-image";
 import { ContactMessageForm } from "@/components/public/contact-message-form";
@@ -484,7 +484,7 @@ function ContactHero({ config }: { config: ContactPageConfig }) {
   );
 }
 
-async function LegacyContactPage({
+async function _LegacyContactPage({
   searchParams,
 }: {
   searchParams: Promise<ContactSearchParams>;
@@ -1015,6 +1015,8 @@ async function LegacyContactPage({
     </PageShell>
   );
 }
+
+export const dynamic = "force-dynamic";
 
 export default async function ContactPage({
   searchParams,

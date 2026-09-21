@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
@@ -15,9 +14,11 @@ import {
   UsersRound,
 } from "lucide-react";
 import { ContactForm } from "../../components/forms/contact-form";
+import { PartnerDirectoryPreview } from "../../components/data/partner-directory-preview";
 import { SiteShell } from "../../components/site-shell";
 import { Reveal, RevealItem } from "../../components/motion/reveal";
-import { getPartners } from "../../lib/api";
+import { getPartners, type PartnerSummary } from "../../lib/api";
+import { uncachedFallback } from "../../lib/server-fallback";
 
 export const metadata: Metadata = {
   title: "Partner With Us",
@@ -67,9 +68,10 @@ const partnerTypes = [
   "Communities",
   "Development Organisations",
 ];
-const fallbackPartners = [
+const fallbackPartners: PartnerSummary[] = [
   {
     id: "kisii",
+    slug: "kisii-university",
     name: "Kisii University",
     description: "Host institution for the Language Education Research Chair",
     logo_url: "/logos/ksu-logo.png",
@@ -78,6 +80,7 @@ const fallbackPartners = [
   },
   {
     id: "heri",
+    slug: "heri-africa",
     name: "HERI Africa",
     description: "Continental initiative supporting Africa-led education research",
     logo_url: null,
@@ -86,6 +89,7 @@ const fallbackPartners = [
   },
   {
     id: "kenyatta",
+    slug: "kenyatta-university",
     name: "Kenyatta University",
     description: "Language education research partner",
     logo_url: null,
@@ -94,6 +98,7 @@ const fallbackPartners = [
   },
   {
     id: "maseno",
+    slug: "maseno-university",
     name: "Maseno University",
     description: "Language education research partner",
     logo_url: null,
@@ -107,7 +112,7 @@ export const revalidate = 300;
 export default async function PartnerPage() {
   const partners = await getPartners()
     .then((items) => (items.length ? items : fallbackPartners))
-    .catch(() => fallbackPartners);
+    .catch(() => uncachedFallback(fallbackPartners));
   return (
     <SiteShell>
       <main className="bg-white">
@@ -231,34 +236,7 @@ export default async function PartnerPage() {
                 Our Partners
               </h2>
             </Reveal>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {partners.slice(0, 8).map((partner, index) => (
-                <RevealItem key={partner.id} index={index} className="h-full">
-                  <article className="flex h-full items-center gap-4 rounded-2xl border border-slate-200 p-5">
-                    {partner.logo_url ? (
-                      <Image
-                        alt={`${partner.name} logo`}
-                        className="size-14 object-contain"
-                        height={56}
-                        src={partner.logo_url}
-                        unoptimized
-                        width={56}
-                      />
-                    ) : (
-                      <span className="grid size-14 place-items-center rounded-full bg-heri-cream text-sm font-bold text-heri-teal">
-                        {partner.name.slice(0, 2).toUpperCase()}
-                      </span>
-                    )}
-                    <div>
-                      <h3 className="font-bold text-heri-blue">{partner.name}</h3>
-                      <p className="text-xs text-slate-500">
-                        {partner.country ?? "Africa"}
-                      </p>
-                    </div>
-                  </article>
-                </RevealItem>
-              ))}
-            </div>
+            <PartnerDirectoryPreview partners={partners} />
             <Reveal>
               <Link
                 className="mx-auto mt-8 block w-fit text-sm font-bold text-heri-teal"

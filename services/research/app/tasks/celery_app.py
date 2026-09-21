@@ -19,6 +19,18 @@ celery_app = create_celery_app(
             "research.exports.generate": {"queue": "research.exports"},
             "research.donations.*": {"queue": "research.donations"},
             "research.audit.persist": {"queue": "research.audit"},
+            "research.audit.relay": {"queue": "research.audit"},
+            "research.audit.observe": {"queue": "research.audit"},
+        },
+        beat_schedule={
+            "observe-pending-audits": {
+                "task": "research.audit.observe", "schedule": 30.0,
+                "options": {"expires": 30},
+            },
+            "relay-pending-audits": {
+                "task": "research.audit.relay", "schedule": 5.0,
+                "options": {"expires": 5},
+            },
         },
         imports=("app.tasks.audit", "app.tasks.exports", "app.tasks.donations"),
         shutdown_hooks=(database.engine.dispose,),

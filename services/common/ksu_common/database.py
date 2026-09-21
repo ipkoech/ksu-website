@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import json
-from collections.abc import AsyncIterator, Iterator, Mapping, Sequence
-from contextlib import asynccontextmanager, contextmanager
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator, Mapping, Sequence
+from contextlib import AsyncExitStack, asynccontextmanager, contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from time import perf_counter
@@ -22,8 +22,80 @@ from sqlalchemy.ext.asyncio import (
 
 from .observability import Metrics, get_prometheus_registry
 
-_query_count: ContextVar[int | None] = ContextVar("ksu_database_query_count", default=None)
+@dataclass
+class _QueryCounter:
+    # Child asyncio tasks inherit this object, sharing one request allowance.
+    count: int = 0
+
+
+_query_count: ContextVar[_QueryCounter | None] = ContextVar("ksu_database_query_count", default=None)
 _query_budget: ContextVar[int | None] = ContextVar("ksu_database_query_budget", default=None)
+_request_transaction: ContextVar[RequestTransaction | None] = ContextVar(
+    "ksu_request_transaction", default=None
+)
+
+
+class RequestTransaction:
+    """Own one service database transaction through response serialization.
+
+    Sessions close before the response is sent. Streaming responses and workers
+    must open their own explicitly scoped sessions instead of retaining an HTTP
+    dependency. Multiple database runtimes cannot form an atomic transaction.
+    """
+
+    def __init__(self, stack: AsyncExitStack) -> None:
+        self.stack = stack
+        self.runtime: DatabaseRuntime | None = None
+        self.session: AsyncSession | None = None
+        self.rollback_only = False
+        self.active = True
+        self.committed_observers: list[Callable[[], Awaitable[None]]] = []
+
+    async def acquire(self, runtime: DatabaseRuntime) -> AsyncSession:
+        if not self.active:
+            raise RuntimeError("HTTP transaction is closed; background work needs its own session")
+        if self.runtime is not None and self.runtime is not runtime:
+            raise RuntimeError("one HTTP operation cannot own multiple database runtimes")
+        if self.session is None:
+            self.runtime = runtime
+            self.session = await self.stack.enter_async_context(runtime.session_factory())
+        return self.session
+
+
+def defer_committed_observation(callback: Callable[[], Awaitable[None]]) -> bool:
+    """Defer optional telemetry; critical work still requires a durable outbox."""
+    transaction = _request_transaction.get()
+    if transaction is None:
+        return False
+    if not transaction.active:
+        raise RuntimeError("cannot register observation on a closed HTTP transaction")
+    transaction.committed_observers.append(callback)
+    return True
+
+
+@asynccontextmanager
+async def request_transaction() -> AsyncIterator[RequestTransaction]:
+    """Commit after response validation and before transport/audit/cache hooks."""
+    async with AsyncExitStack() as stack:
+        transaction = RequestTransaction(stack)
+        token = _request_transaction.set(transaction)
+        try:
+            yield transaction
+            if transaction.session is not None:
+                if transaction.rollback_only:
+                    await transaction.session.rollback()
+                else:
+                    await transaction.session.commit()
+        except BaseException:
+            if transaction.session is not None:
+                await transaction.session.rollback()
+            raise
+        finally:
+            transaction.active = False
+            _request_transaction.reset(token)
+    if not transaction.rollback_only:
+        for callback in transaction.committed_observers:
+            await callback()
 
 
 @dataclass
@@ -57,19 +129,23 @@ class QueryBudgetExceeded(HTTPException):
 def query_count_context() -> Iterator[QueryCountObservation]:
     """Count SQL executions in the current async/request context."""
 
-    token = _query_count.set(0)
+    existing_count = _query_count.get()
+    token = _query_count.set(_QueryCounter()) if existing_count is None else None
+    starting_count = current_query_count()
     observation = QueryCountObservation()
     try:
         yield observation
     finally:
-        observation.count = _query_count.get() or 0
-        _query_count.reset(token)
+        observation.count = current_query_count() - starting_count
+        if token is not None:
+            _query_count.reset(token)
 
 
 def current_query_count() -> int:
     """Return the current scoped SQL execution count, or zero outside a scope."""
 
-    return _query_count.get() or 0
+    counter = _query_count.get()
+    return counter.count if counter is not None else 0
 
 
 @contextmanager
@@ -85,8 +161,10 @@ def query_budget_context(max_queries: int) -> Iterator[QueryCountObservation]:
 
     count_token = None
     if _query_count.get() is None:
-        count_token = _query_count.set(0)
-    budget_token = _query_budget.set(max_queries)
+        count_token = _query_count.set(_QueryCounter())
+    outer_budget = _query_budget.get()
+    effective_budget = min(max_queries, outer_budget) if outer_budget is not None else max_queries
+    budget_token = _query_budget.set(effective_budget)
     observation = QueryCountObservation()
     try:
         yield observation
@@ -100,11 +178,11 @@ def query_budget_context(max_queries: int) -> Iterator[QueryCountObservation]:
 def _record_query_count() -> None:
     count = _query_count.get()
     if count is not None:
-        next_count = count + 1
+        next_count = count.count + 1
         max_queries = _query_budget.get()
         if max_queries is not None and next_count > max_queries:
             raise QueryBudgetExceeded(max_queries)
-        _query_count.set(next_count)
+        count.count = next_count
 
 
 @dataclass
@@ -283,11 +361,15 @@ class DatabaseRuntime:
     max_overflow: int | None = None
 
     async def session(self) -> AsyncIterator[AsyncSession]:
+        transaction = _request_transaction.get()
+        if transaction is not None:
+            yield await transaction.acquire(self)
+            return
         async with self.session_factory() as session:
             try:
                 yield session
                 await session.commit()
-            except Exception:
+            except BaseException:
                 await session.rollback()
                 raise
 

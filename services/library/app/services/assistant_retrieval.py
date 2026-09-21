@@ -21,16 +21,18 @@ async def retrieve_approved_sources(
 ) -> list[dict[str, Any]]:
     """Search public Library records and keep only context-approved sources."""
 
+    limit = min(max(limit, 1), 40)
+    allowed_types = set(context.allowed_source_types or [])
     approved = {
         (source.source_type, source.source_id): source
         for source in context.sources
         if source.deleted_at is None and source.is_approved
+        and (not allowed_types or source.source_type in allowed_types)
     }
     if not approved:
         return []
 
-    source_types = set(context.allowed_source_types or [])
-    source_types.update(source_type for source_type, _ in approved)
+    source_types = {source_type for source_type, _ in approved}
     search_query = query.strip()
     if page_context and page_context.get("title"):
         search_query = f"{search_query} {page_context['title']}"
@@ -39,24 +41,26 @@ async def retrieve_approved_sources(
         query=search_query,
         types=",".join(sorted(source_types)),
         library_id=context.library_id,
-        limit=min(max(limit, 1), 40),
+        limit=limit,
     )
 
     sources: list[dict[str, Any]] = []
+    seen = set()
     for item in result.get("results", []):
         try:
             key = (str(item["type"]), uuid.UUID(str(item["id"])))
         except (KeyError, TypeError, ValueError):
             continue
         approved_source = approved.get(key)
-        if approved_source is None:
+        if approved_source is None or key in seen:
             continue
+        seen.add(key)
         sources.append(
             {
                 "source_type": approved_source.source_type,
                 "source_id": approved_source.source_id,
-                "title": approved_source.title or item.get("title", "Library source"),
-                "url": approved_source.public_url or item.get("url"),
+                "title": item.get("title") or "Library source",
+                "url": item.get("url"),
                 "snippet": item.get("description"),
                 "metadata": item.get("metadata", {}),
             }

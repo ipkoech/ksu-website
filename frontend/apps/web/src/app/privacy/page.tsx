@@ -8,6 +8,8 @@ export const metadata = {
   description: "Kisii University data privacy and information handling policy.",
 };
 
+export const revalidate = 300;
+
 export default function PrivacyPage() {
   return (
     <PageShell>

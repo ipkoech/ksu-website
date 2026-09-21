@@ -29,8 +29,8 @@ import { ScrollAffordance } from "@/components/home/scroll-affordance";
 import { HomeSectionReveal } from "@/components/home/home-section-reveal";
 import { EntityInquiryLauncher } from "@/components/public/entity-inquiry-launcher";
 import { getHomepageData, type HomeMetric } from "@/lib/homepage-data";
+import { getComposedHomepage } from "@/lib/homepage-composition-data";
 import {
-  getComposedHomepage,
   heroImage,
   mediaAlt,
   mediaUrl,

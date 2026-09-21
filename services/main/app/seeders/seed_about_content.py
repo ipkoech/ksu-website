@@ -18,7 +18,8 @@ from ..models import (
 from ._shared import SeedContext
 
 
-SOURCE = "Kisii University Revised Students Handbook and institutional profile"
+SOURCE = "Kisii University About Us page and institutional profile"
+ABOUT_SOURCE_URL = "https://kisiiuniversity.ac.ke/about_us"
 STRATEGIC_PLAN_SOURCE = "Kisii University Strategic Plan 2024–2028"
 STRATEGIC_PLAN_URL = (
     "https://kisiiuniversity.ac.ke/storage/public/downloads/"
@@ -67,6 +68,29 @@ EVERGREEN_FACT_GROUPS = (
                 "numeric_value": 50,
                 "icon_key": "book-open",
                 "explanation": "Departments listed across the University's eight academic schools.",
+            },
+        ),
+    },
+    {
+        "slug": "current-about-profile",
+        "heading": "Current institutional profile",
+        "summary": "Facts stated on the official Kisii University About Us page.",
+        "display_order": 25,
+        "source_title": "Kisii University About Us page",
+        "source_url": ABOUT_SOURCE_URL,
+        "items": (
+            {
+                "label": "Student population",
+                "display_value": "Over 20,000",
+                "icon_key": "users",
+                "explanation": "The official About Us page reports a student population of over 20,000.",
+            },
+            {
+                "label": "Academic schools named on source page",
+                "display_value": "8",
+                "numeric_value": 8,
+                "icon_key": "school",
+                "explanation": "Health Sciences; Law; Pure and Applied Sciences; Education and Human Resource Development; Information Science and Technology; Arts and Social Sciences; Agriculture and Natural Resource Management; and Business and Economics.",
             },
         ),
     },
@@ -139,14 +163,14 @@ ANNUAL_FACT_GROUPS = (
 INSTITUTIONAL_PAGES = (
     {
         "page_type": "about", "slug": "about", "eyebrow": "About Kisii University",
-        "title": "An Inclusive and Bordeless Learning Path.",
+        "title": "An inclusive and borderless University that creates positive change in the world",
         "introduction": "Kisii University is Kenya's 13th chartered public university advancing accessible education, purposeful research, innovation and service from Kisii County to Kenya and beyond.",
         "sections": (
             {"slug": "core-values", "section_type": "commitments", "eyebrow": "Core values", "heading": "What guides how we work", "theme": "blue", "items": (
-                ("Transformative Thinking", "We welcome creativity, inquiry and bold ideas that solve real-world challenges.", "lightbulb"),
-                ("Respect", "We value every person and nurture a culture of dignity and mutual regard.", "heart-handshake"),
-                ("Inclusivity", "We create opportunity across backgrounds, disciplines and borders.", "users"),
-                ("Fairness", "We uphold justice, transparency and equity in our decisions and relationships.", "scale"),
+                ("Transformative Thinking", "We prioritize innovation, critical thinking and new ideas in education, training, learning and research, empowering students and staff to become catalysts for positive change.", "lightbulb"),
+                ("Respect", "We uphold the rights and dignity of every person, value diverse perspectives and promote equitable treatment.", "heart-handshake"),
+                ("Inclusivity", "We embrace Ubuntu and cultivate a diverse, welcoming community where backgrounds and perspectives are valued and everyone has an equitable opportunity to participate and succeed.", "users"),
+                ("Fairness", "We promote equity through transparent and consistent decisions, ethical guidelines and impartial treatment, building trust and integrity across the University.", "scale"),
             )},
             {"slug": "university-mandate", "section_type": "outcomes", "eyebrow": "Our mandate", "heading": "Knowledge in service of society", "theme": "blue", "items": (
                 ("Teaching & Training", "Develop capable graduates through rigorous, relevant education.", "graduation-cap"),
@@ -194,12 +218,13 @@ INSTITUTIONAL_PAGES = (
         "introduction": "Kisii University’s strategic direction aligns teaching, research, partnerships and institutional strength with the needs of Kenya and the wider region.",
         "reporting_period_label": "2024–2028", "document_category": "strategic-plan", "sections": (
             {"slug": "strategic-horizon", "section_type": "narrative", "eyebrow": "Our strategic horizon", "heading": "Excellence that advances inclusive development", "body": "The University is strengthening academic excellence, impactful research and transformative engagement while building the institutional capacity required for enduring public value.", "theme": "ivory", "items": ()},
-            {"slug": "strategic-priorities", "section_type": "priorities", "heading": "Strategic priorities", "summary": "Five interconnected priorities guide decisions, resources and collective action.", "theme": "light", "items": (
-                ("Transformative Teaching", "Deliver future-ready, inclusive education that empowers critical thinking and lifelong learning.", "book-open"),
-                ("Research & Innovation", "Advance impactful research and innovation that solves real-world challenges.", "microscope"),
-                ("Student Experience", "Nurture a supportive, vibrant and safe environment that enables every student to thrive.", "users"),
-                ("Partnerships & Community Impact", "Strengthen partnerships and community engagement that create shared value.", "handshake"),
-                ("Institutional Excellence", "Build agile, efficient and transparent systems that sustain quality and accountability.", "landmark"),
+            {"slug": "strategic-priorities", "section_type": "priorities", "heading": "Strategic key result areas", "summary": "Six key result areas guide implementation of the official Strategic Plan.", "theme": "light", "items": (
+                ("Quality in education, training, and learning", "Improve education standards, the student experience and skills relevant to society and employment.", "book-open"),
+                ("Knowledge preservation, generation, and communication", "Preserve and share knowledge and undertake innovative research addressing societal challenges.", "microscope"),
+                ("Collaborations, partnerships, and community outreach", "Develop mutually beneficial relationships with industry, government and communities.", "handshake"),
+                ("Physical and technological infrastructure", "Develop the facilities and technology needed for teaching, learning and research.", "landmark"),
+                ("Financial sustainability and resource mobilization", "Diversify funding and strengthen the resources needed for sustainable university development.", "landmark"),
+                ("Cancer management and research as the niche", "Train the healthcare workforce and advance research to address gaps in cancer management.", "heart-handshake"),
             )},
             {"slug": "ambition-to-action", "section_type": "outcomes", "eyebrow": "From ambition to action", "heading": "Turning priorities into practical progress", "theme": "ivory", "items": (
                 ("Clear focus", "Aligned priorities concentrate effort where it matters most.", "target"),
@@ -302,6 +327,8 @@ async def _seed_fact_group(
 
 
 async def _seed_institutional_pages(db: AsyncSession, university) -> None:
+    priorities = next(section for page in INSTITUTIONAL_PAGES if page["slug"] == "strategic-plan" for section in page["sections"] if section["slug"] == "strategic-priorities")
+    university.strategic_priorities = [{"title": title, "body": body} for title, body, _ in priorities["items"]]
     strategic_media = await _get_one(db, Media, Media.public_url == STRATEGIC_PLAN_URL)
     if strategic_media is None:
         strategic_media = Media(
@@ -411,6 +438,12 @@ async def _seed_institutional_pages(db: AsyncSession, university) -> None:
                 for field_name, value in section_payload.items():
                     setattr(section, field_name, value)
             await db.flush()
+            if page_spec["slug"] == "strategic-plan" and section_spec["slug"] == "strategic-priorities":
+                official_titles = {item[0] for item in section_spec["items"]}
+                existing_items = (await db.scalars(select(InstitutionalPageItem).where(InstitutionalPageItem.section_id == section.id))).all()
+                for old_item in existing_items:
+                    if old_item.title not in official_titles:
+                        old_item.status = old_item.workflow_status = "archived"
             for item_order, item_spec in enumerate(section_spec.get("items", ()), start=1):
                 title, description, icon_key, *link = item_spec
                 item = await _get_one(
@@ -490,6 +523,27 @@ async def seed_about_content(db: AsyncSession, ctx: SeedContext) -> None:
         )
         db.add(about)
         await db.flush()
+
+    # Keep the structured About record faithful to the current official page,
+    # including its exact history and current institutional-profile wording.
+    # These values are refreshed on every seed run so the record cannot retain
+    # older editorial copy after the source changes.
+    about.hero_introduction = (
+        "Kisii University has a rich history dating back to 1965 when it began as a Primary Teachers' Training College. "
+        "In 1983, the college evolved into a Secondary Teachers' College, expanding its offerings to include diploma programmes. "
+        "In 1994, the Government of Kenya mandated Egerton University to take over the college as its campus. "
+        "Although Egerton University introduced a Postgraduate Diploma in Education, it later phased it out in 2001. "
+        "On August 23, 2007, KSU College became a Constituent College of Egerton University and received a charter on February 6, 2013, becoming the 13th public University in Kenya. "
+        "KSU has emerged as one of the leading institutions of higher learning in Kenya. Its diverse range of academic programmes and dedication to excellence make it a top choice for students seeking quality education."
+    )
+    about.identity_narrative = (
+        "The student population is over 20,000, distributed across eight schools, including Health Sciences; Law; Pure and Applied Sciences; "
+        "Education and Human Resource Development; Information Science and Technology; Arts and Social Sciences; Agriculture and Natural Resource Management; "
+        "and Business and Economics."
+    )
+    about.mandate_introduction = (
+        "Creative, scientific, technological, innovative, and critical thinking, responsive to societal needs and service to humanity."
+    )
 
     for order, (slug, year_label, event_date, title, summary) in enumerate(MILESTONES, start=1):
         existing = await _get_one(db, HistoryMilestone, HistoryMilestone.about_page_content_id == about.id, HistoryMilestone.slug == slug)

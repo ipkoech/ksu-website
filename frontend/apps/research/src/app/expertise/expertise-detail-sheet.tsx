@@ -15,7 +15,7 @@ import {
 } from "@ksu/ui/components";
 import { ResearchRichText } from "../../components/research-rich-text";
 import { Badge } from "../../components/research-ui";
-import { compactText, formatLabel } from "../../lib/research-public-data";
+import { compactText, formatLabel } from "../../lib/research-formatters";
 import { publicFrontendUrl } from "../../lib/service-urls";
 
 export function ExpertiseDetailSheet({

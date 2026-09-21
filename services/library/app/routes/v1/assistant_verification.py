@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Cookie, Depends, Query, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 from ksu_common.rate_limit import rate_limit
 
 from ...core.config import get_settings
@@ -16,6 +16,7 @@ from ...schemas import (
     LibraryAssistantVerificationConfirm,
     LibraryAssistantVerificationRequest,
     LibraryAssistantVerificationResponse,
+    LibraryAssistantGuestSessionOut,
 )
 from ...services import assistant_identity as identity
 
@@ -38,7 +39,7 @@ def _set_cookie(response: Response, name: str, value: str, max_age: int) -> None
     )
 
 
-@router.post("/guest/session")
+@router.post("/guest/session", response_model=SuccessResponse[LibraryAssistantGuestSessionOut])
 @rate_limit(requests=10, window=600, prefix="library:assistant:guest:ip")
 async def create_guest_session(
     request: Request,
@@ -51,7 +52,7 @@ async def create_guest_session(
     return success(data={"guest_session_id": str(session.id), "expires_at": session.expires_at})
 
 
-@router.post("/verification/request")
+@router.post("/verification/request", response_model=SuccessResponse[LibraryAssistantVerificationResponse])
 @rate_limit(requests=3, window=3600, prefix="library:assistant:verification:ip", max_body_bytes=8 * 1024)
 async def request_verification(
     request: Request,
@@ -67,26 +68,7 @@ async def request_verification(
             ).model_dump()
         )
     guest_session = await identity.get_guest_session(db, guest_token)
-    try:
-        await identity.request_verification(db, guest_session, data)
-    except HTTPException as exc:
-        if exc.status_code == 429:
-            raise
-        return success(
-            data=LibraryAssistantVerificationResponse(
-                accepted=True,
-                message="If the address can receive Library messages, a link and code are on their way.",
-            ).model_dump()
-        )
-    except Exception:
-        # Keep the public response generic; rate limits and operational failures are
-        # still recorded by the service logs and surfaced to retry-capable clients.
-        return success(
-            data=LibraryAssistantVerificationResponse(
-                accepted=True,
-                message="If the address can receive Library messages, a link and code are on their way.",
-            ).model_dump()
-        )
+    await identity.request_verification(db, guest_session, data)
     return success(
         data=LibraryAssistantVerificationResponse(
             accepted=True,
@@ -95,7 +77,7 @@ async def request_verification(
     )
 
 
-@router.post("/verification/resend")
+@router.post("/verification/resend", response_model=SuccessResponse[LibraryAssistantVerificationResponse])
 async def resend_verification(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -105,7 +87,7 @@ async def resend_verification(
     return await request_verification(request, db, data, guest_token)
 
 
-@router.post("/verification/confirm")
+@router.post("/verification/confirm", response_model=SuccessResponse[LibraryAssistantVerificationResponse])
 async def confirm_verification(
     response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -136,7 +118,7 @@ async def confirm_verification(
     )
 
 
-@router.get("/verification/confirm")
+@router.get("/verification/confirm", response_model=SuccessResponse[LibraryAssistantVerificationResponse])
 async def confirm_verification_link(
     response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],

@@ -6,7 +6,7 @@ import type { AnalyticsEventPayload } from "../main/types";
 export function useReportsOverview(params?: { days?: number }) {
   return useQuery({
     queryKey: queryKeys.reports.overview(params),
-    queryFn: () => adminReportsApi.overview(params),
+    queryFn: ({ signal }) => adminReportsApi.overview(params, { signal }),
   });
 }
 

@@ -30,3 +30,17 @@ class SiteResponse(BaseModel):
     social_links: dict[str, object]
     seo_defaults: dict[str, object]
     research_center_slug: str | None = None
+
+
+class HeroSlideResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    eyebrow: str
+    title: str
+    description: str
+    image_url: str
+    mobile_image_url: str | None
+    button_label: str
+    button_href: str
+    position: int

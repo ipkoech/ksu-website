@@ -7,7 +7,7 @@ import type { PaginationParams } from "../client";
 export function useSchools(params?: PaginationParams & { campus_id?: string; administrative_wing_id?: string; search?: string }) {
   return useQuery({
     queryKey: queryKeys.schools.list(params),
-    queryFn: () => schoolsApi.list(params),
+    queryFn: ({ signal }) => schoolsApi.list(params, { signal }),
   });
 }
 

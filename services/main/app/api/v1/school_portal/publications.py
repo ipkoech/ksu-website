@@ -10,6 +10,7 @@ from ....schemas.school_portal_publications import (
     SchoolPublicationCreate,
     SchoolPublicationUpdate,
 )
+from ....schemas.public_api import ForwardedServiceResponse
 from ....services.school_portal_context import CurrentSchoolContext
 
 router = APIRouter()
@@ -33,10 +34,12 @@ def _client(request: Request) -> ResearchClient:
         base_url=get_settings().RESEARCH_SERVICE_URL,
         authorization=authorization,
         request_id=request_id,
+        idempotency_key=request.headers.get("Idempotency-Key"),
+        selected_school=request.headers.get("X-School-ID"),
     )
 
 
-@router.get("/publications")
+@router.get("/publications", response_model=ForwardedServiceResponse, response_model_exclude_unset=True)
 async def list_publications(
     request: Request,
     context: CurrentSchoolContext,
@@ -52,7 +55,12 @@ async def list_publications(
     )
 
 
-@router.post("/publications", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/publications",
+    status_code=status.HTTP_201_CREATED,
+    response_model=ForwardedServiceResponse,
+    response_model_exclude_unset=True,
+)
 async def create_publication(
     data: SchoolPublicationCreate,
     request: Request,
@@ -64,7 +72,11 @@ async def create_publication(
     )
 
 
-@router.get("/publications/{publication_id}")
+@router.get(
+    "/publications/{publication_id}",
+    response_model=ForwardedServiceResponse,
+    response_model_exclude_unset=True,
+)
 async def get_publication(
     publication_id: uuid.UUID,
     request: Request,
@@ -74,7 +86,11 @@ async def get_publication(
     return await _client(request).get_school_publication(publication_id)
 
 
-@router.patch("/publications/{publication_id}")
+@router.patch(
+    "/publications/{publication_id}",
+    response_model=ForwardedServiceResponse,
+    response_model_exclude_unset=True,
+)
 async def update_publication(
     publication_id: uuid.UUID,
     data: SchoolPublicationUpdate,
@@ -88,7 +104,11 @@ async def update_publication(
     )
 
 
-@router.post("/publications/{publication_id}/submit")
+@router.post(
+    "/publications/{publication_id}/submit",
+    response_model=ForwardedServiceResponse,
+    response_model_exclude_unset=True,
+)
 async def submit_publication(
     publication_id: uuid.UUID,
     request: Request,
@@ -98,7 +118,11 @@ async def submit_publication(
     return await _client(request).submit_school_publication(publication_id)
 
 
-@router.post("/publications/{publication_id}/withdraw")
+@router.post(
+    "/publications/{publication_id}/withdraw",
+    response_model=ForwardedServiceResponse,
+    response_model_exclude_unset=True,
+)
 async def withdraw_publication(
     publication_id: uuid.UUID,
     request: Request,

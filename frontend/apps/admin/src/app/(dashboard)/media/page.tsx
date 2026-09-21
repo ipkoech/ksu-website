@@ -74,6 +74,7 @@ import { PageTransition } from "@/lib/animations";
 import { useDeleteConfirm } from "@/hooks/use-delete-confirm";
 import { usePermissions } from "@/hooks/use-permissions";
 import { formatFileSize, getMediaLabel, getMediaUrl, isImageMedia } from "@/components/media";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 type MediaFilter = "all" | "image" | "document" | "video" | "audio" | "file";
 type FolderDialogState = { mode: "create" | "edit"; folder?: MediaFolder | null } | null;
@@ -555,6 +556,7 @@ function UploadDialog({
       entityId: form.entity_id || undefined,
       role: form.role || undefined,
     });
+    void revalidatePublicContent("main", "media");
     toast.success("Media uploaded");
     onUploaded();
     onOpenChange(false);
@@ -656,9 +658,11 @@ function FolderDialog({
         return;
       }
       await updateFolder.mutateAsync({ id: editingFolder.id, data: patch });
+      void revalidatePublicContent("main", "media");
       toast.success("Folder updated");
     } else {
       await createFolder.mutateAsync(payload);
+      void revalidatePublicContent("main", "media");
       toast.success("Folder created");
     }
     onSaved();
@@ -766,6 +770,7 @@ function MediaDetailSheet({
       return;
     }
     await updateMedia.mutateAsync({ id: detail.id, data: payload });
+    void revalidatePublicContent("main", "media");
     toast.success("Media updated");
     await mediaQuery.refetch();
     onSaved();
@@ -786,6 +791,7 @@ function MediaDetailSheet({
       display_order: linkForm.display_order,
       is_public: linkForm.is_public,
     });
+    void revalidatePublicContent("main", "media");
     toast.success("Media linked");
     setLinkForm(emptyLinkForm);
     await mediaQuery.refetch();
@@ -794,6 +800,7 @@ function MediaDetailSheet({
   const confirmRemoveLink = async () => {
     if (!removeLink) return;
     await deleteLink.mutateAsync(removeLink.id);
+    void revalidatePublicContent("main", "media");
     setRemoveLink(null);
     toast.success("Media link removed");
     await mediaQuery.refetch();
@@ -1049,6 +1056,7 @@ export default function MediaPage() {
     (media: Media) => {
       confirmDelete(getMediaLabel(media), async () => {
         await deleteMedia.mutateAsync(media.id);
+        void revalidatePublicContent("main", "media");
         toast.success("Media deleted");
         await mediaQuery.refetch();
       });
@@ -1068,6 +1076,7 @@ export default function MediaPage() {
   const confirmDeleteFolder = async () => {
     if (!deleteFolderTarget) return;
     await deleteFolder.mutateAsync(deleteFolderTarget.id);
+    void revalidatePublicContent("main", "media");
     toast.success("Folder deleted");
     if (folderId === deleteFolderTarget.id) setFolderId("");
     setDeleteFolderTarget(null);

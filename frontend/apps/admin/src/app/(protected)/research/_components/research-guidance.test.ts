@@ -4,23 +4,21 @@ import {
   getResearchGuidance,
   researchFirstLoginTour,
 } from "./research-guidance";
+import { describe, expect, it } from "vitest";
 
-function assert(condition: unknown, message: string): asserts condition {
-  if (!condition) throw new Error(message);
-}
+describe("research guidance", () => {
+  it("covers the core research authoring workflow", () => {
+    const projects = getResearchGuidance("Projects");
+    const reports = getResearchGuidance("Research Reports");
+    const projectDetail = getResearchDetailGuidance("Research Project");
 
-const projects = getResearchGuidance("Projects");
-const reports = getResearchGuidance("Research Reports");
-const projectDetail = getResearchDetailGuidance("Research Project");
-
-assert(researchFirstLoginTour.length >= 4, "research tour should cover the main admin workflow");
-assert(projects?.steps.some((step) => step.includes("project basics")), "projects guide should explain first action");
-assert(projects?.emptyState.title === "No draft projects", "projects empty state should be specific");
-assert(reports?.steps.some((step) => step.includes("standard report")), "reports guide should explain standard reports");
-assert(reports?.emptyState.primaryActionLabel === "Open exports", "reports empty state should point to exports");
-assert(projectDetail?.relationships.includes("Publications"), "project detail guide should include relationship review");
-assert(projectDetail?.publishChecklist.some((step) => step.includes("public visibility")), "detail guide should explain publish readiness");
-assert(
-  getResearchFieldHelp("is_public")?.includes("public research portal"),
-  "public field should explain public portal visibility",
-);
+    expect(researchFirstLoginTour.length).toBeGreaterThanOrEqual(4);
+    expect(projects?.steps.some((step) => step.includes("project basics"))).toBe(true);
+    expect(projects?.emptyState.title).toBe("No draft projects");
+    expect(reports?.steps.some((step) => step.includes("standard report"))).toBe(true);
+    expect(reports?.emptyState.primaryActionLabel).toBe("Open exports");
+    expect(projectDetail?.relationships.includes("Publications")).toBe(true);
+    expect(projectDetail?.publishChecklist.some((step) => step.includes("public visibility"))).toBe(true);
+    expect(getResearchFieldHelp("is_public")?.includes("public research portal")).toBe(true);
+  });
+});

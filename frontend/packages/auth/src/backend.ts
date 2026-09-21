@@ -1,3 +1,9 @@
+"use client";
+
+import { ApiClient, ApiClientError, refreshStoredAccessToken, clearStoredAuthTokens, getStoredAccessToken, getStoredAuthTokens, setStoredAuthTokens } from "@ksu/api-client/browser";
+import { getMainApiBaseUrl } from "@ksu/api-client/service-urls";
+export { clearStoredAuthTokens, getStoredAccessToken, getStoredAuthTokens, setStoredAuthTokens };
+
 import { SERVICE_ROLES } from "./permissions";
 import type { AuthResponse, LoginCredentials, Service, User } from "./types";
 
@@ -20,7 +26,6 @@ type BackendUser = {
   must_change_password?: boolean;
 };
 
-const TOKEN_STORAGE_KEY = "ksu-auth-tokens";
 const SYSTEM_RESOURCES = new Set([
   "users",
   "roles",
@@ -54,51 +59,11 @@ const RESEARCH_RESOURCES = new Set([
 const HERI_RESOURCES = new Set(["heri"]);
 const LIBRARY_RESOURCES = new Set(["library"]);
 
-function getMainApiBaseUrl() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  const fallback = apiUrl?.replace(/\/api\/v1\/?$/, "");
-  const serverUrl = typeof window === "undefined" ? process.env.KSU_MAIN_API_URL : undefined;
-  return (serverUrl || process.env.NEXT_PUBLIC_MAIN_API_URL || fallback || "http://localhost:8000").replace(/\/$/, "");
-}
-
-function canUseSessionStorage() {
-  return typeof window !== "undefined" && typeof window.sessionStorage !== "undefined";
-}
-
-export function getStoredAuthTokens(): Record<string, never> {
-  // Remove credentials persisted by older frontend releases. Browser auth is
-  // now carried exclusively by HttpOnly cookies.
-  if (canUseSessionStorage()) window.sessionStorage.removeItem(TOKEN_STORAGE_KEY);
-  return {};
-}
-
-export function setStoredAuthTokens(_tokens: unknown) {
-  clearStoredAuthTokens();
-}
-
-export function clearStoredAuthTokens() {
-  if (!canUseSessionStorage()) return;
-  window.sessionStorage.removeItem(TOKEN_STORAGE_KEY);
-}
-
-export function getStoredAccessToken() {
-  getStoredAuthTokens();
-  return undefined;
-}
-
 function unwrapApiData<T>(payload: T | BackendAuthEnvelope<T>): T {
   if (payload && typeof payload === "object" && "data" in (payload as Record<string, unknown>)) {
     return (payload as BackendAuthEnvelope<T>).data as T;
   }
   return payload as T;
-}
-
-function errorMessage(payload: BackendAuthEnvelope<unknown>, fallback: string) {
-  return payload.detail || payload.message || fallback;
-}
-
-async function readJson<T>(response: Response): Promise<T> {
-  return response.json().catch(() => ({} as T));
 }
 
 function normalizeRole(role: string) {
@@ -296,6 +261,10 @@ function deriveServices(roles: string[], permissions: string[], memberships: Ser
 
 export function normalizeBackendUser(payload: BackendUser | BackendAuthEnvelope<BackendUser>): User {
   const user = unwrapApiData(payload);
+  if (!user || typeof user !== "object" || typeof user.id !== "string" || !user.id || typeof user.email !== "string" || !user.email ||
+    [user.roles, user.permissions, user.service_memberships].some(value => value !== undefined && (!Array.isArray(value) || value.some(item => typeof item !== "string")))) {
+    throw new ApiClientError("Invalid user profile from server", 200, undefined, "INVALID_RESPONSE");
+  }
   const roles = (user.roles || []).map(normalizeRole);
   const permissions = (user.permissions || []).map(normalizePermission);
   const serviceMemberships = (user.service_memberships || []).filter(
@@ -315,106 +284,48 @@ export function normalizeBackendUser(payload: BackendUser | BackendAuthEnvelope<
   };
 }
 
-export async function refreshStoredAuthTokens() {
-  const response = await fetch(`${getMainApiBaseUrl()}/api/v1/auth/refresh`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token_transport: "cookie" }),
-  });
+const authClient = new ApiClient({ baseUrl: getMainApiBaseUrl() });
 
-  if (!response.ok) {
-    clearStoredAuthTokens();
-    return false;
-  }
-
-  return true;
+export function refreshStoredAuthTokens() {
+  return refreshStoredAccessToken();
 }
 
-export async function fetchCurrentUser() {
+export async function fetchCurrentUser(signal?: AbortSignal) {
   clearStoredAuthTokens();
-  const response = await fetch(`${getMainApiBaseUrl()}/api/v1/auth/me?fields=id,email,full_name,avatar_url,roles,permissions`, {
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    return null;
+  try {
+    const raw = await authClient.get<BackendUser | BackendAuthEnvelope<BackendUser>>(
+      "/api/v1/auth/me",
+      { fields: "id,email,full_name,avatar_url,roles,permissions,service_memberships,must_change_password" },
+      { signal, auth: "none", cache: "no-store" },
+    );
+    return normalizeBackendUser(raw);
+  } catch (error) {
+    if (error instanceof ApiClientError && (error.status === 401 || error.status === 403)) return null;
+    throw error;
   }
-
-  const raw = await readJson<BackendUser | BackendAuthEnvelope<BackendUser>>(response);
-  return normalizeBackendUser(raw);
 }
 
-export async function loginWithPassword(credentials: LoginCredentials): Promise<AuthResponse> {
-  const response = await fetch(`${getMainApiBaseUrl()}/api/v1/auth/login`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(credentials),
-  });
-
-  const raw = await readJson<BackendAuthEnvelope<{ authenticated: boolean }> | { authenticated: boolean }>(response);
-  if (!response.ok) {
-    throw new Error(errorMessage(raw as BackendAuthEnvelope<unknown>, "Login failed"));
-  }
-
-  unwrapApiData(raw);
+export async function loginWithPassword(credentials: LoginCredentials, signal?: AbortSignal): Promise<AuthResponse> {
+  await authClient.post("/api/v1/auth/login", credentials, { auth: "none", signal });
   clearStoredAuthTokens();
-  const user = await fetchCurrentUser();
-  if (!user) {
-    clearStoredAuthTokens();
-    throw new Error("Authenticated, but failed to load user profile");
-  }
-
-  return {
-    user,
-  };
+  const user = await fetchCurrentUser(signal);
+  if (!user) throw new ApiClientError("Authenticated, but failed to load user profile", 401);
+  return { user };
 }
 
-export async function logoutCurrentSession() {
+export async function logoutCurrentSession(signal?: AbortSignal) {
   clearStoredAuthTokens();
-  await fetch(`${getMainApiBaseUrl()}/api/v1/auth/logout`, {
-    method: "POST",
-    credentials: "include",
-  }).catch(() => undefined);
+  await authClient.post("/api/v1/auth/logout", undefined, { auth: "none", signal });
 }
 
 export async function requestPasswordReset(email: string) {
-  const response = await fetch(`${getMainApiBaseUrl()}/api/v1/auth/forgot-password`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-  });
-
-  const raw = await readJson<BackendAuthEnvelope<unknown>>(response);
-  if (!response.ok) {
-    throw new Error(errorMessage(raw, "Failed to send reset email"));
-  }
+  await authClient.post("/api/v1/auth/forgot-password", { email }, { auth: "none" });
 }
 
 export async function resetPassword(token: string, newPassword: string) {
-  const response = await fetch(`${getMainApiBaseUrl()}/api/v1/auth/reset-password`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, new_password: newPassword }),
-  });
-
-  const raw = await readJson<BackendAuthEnvelope<unknown>>(response);
-  if (!response.ok) {
-    throw new Error(errorMessage(raw, "Failed to reset password"));
-  }
+  await authClient.post("/api/v1/auth/reset-password", { token, new_password: newPassword }, { auth: "none" });
 }
 
 export async function changePassword(currentPassword: string, newPassword: string) {
-  const response = await fetch(`${getMainApiBaseUrl()}/api/v1/auth/change-password`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ old_password: currentPassword, new_password: newPassword }),
-  });
-
-  const raw = await readJson<BackendAuthEnvelope<unknown>>(response);
-  if (!response.ok) {
-    throw new Error(errorMessage(raw, "Failed to change password"));
-  }
+  await authClient.post("/api/v1/auth/change-password", { old_password: currentPassword, new_password: newPassword });
 }

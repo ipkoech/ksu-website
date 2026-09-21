@@ -7,7 +7,7 @@ import { RelatedRecordsCard, RelatedRecordsGrid } from "../../../_components/res
 export default function ResearchDonorDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Donor"
+      title="Donor"
       description="View donor profile, giving history, linked impact records, stories, and audit history."
       resource={researchServiceApi.donors}
       backHref="/research/donations?tab=donors"

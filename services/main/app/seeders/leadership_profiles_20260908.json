@@ -1,0 +1,469 @@
+{
+  "verified_on": "2026-09-08",
+  "profiles": [
+    {
+      "key": "vice_chancellor",
+      "full_name": "Nathan Oyori Ogechi",
+      "source_url": "https://kisiiuniversity.ac.ke/university_management_board#officeModal1",
+      "source_name": "Prof.Dr.Nathan O.Ogechi",
+      "photo_url": "https://kisiiuniversity.ac.ke/storage/public/offices/SNmf93i7QcVNuYrCCBnTCu4u8V0YcEzk9e8LFrbo.png",
+      "cv_url": "https://kisiiuniversity.ac.ke/storage/public/downloads//CV%20Nathan%20Ogechi.pdf",
+      "fields": {
+        "bio": "Vice Chancellor.",
+        "full_bio": "Nathan O. Ogechi has served as Vice Chancellor of Kisii University since 1 September 2023. A professor of African linguistics, he specialises in contact linguistics and linguistic human rights. His previous leadership responsibilities at Moi University included Deputy Vice Chancellor for Student Affairs, acting deputy vice chancellor appointments, school dean and department chair. He has also served on the Moi University Council and the Jomo Kenyatta Foundation board. His academic work includes teaching, research, external examination and language consultancy.",
+        "qualifications": [
+          {
+            "degree": "PhD",
+            "institution": "University of Hamburg",
+            "field": "African Linguistics"
+          },
+          {
+            "degree": "MPhil",
+            "institution": "Moi University",
+            "field": "Kiswahili Studies"
+          },
+          {
+            "degree": "BEd",
+            "institution": "Moi University",
+            "field": "Arts"
+          }
+        ],
+        "website_url": "https://kisiiuniversity.ac.ke/university_management_board#officeModal1"
+      },
+      "sources": [
+        "https://kisiiuniversity.ac.ke/university_management_board",
+        "https://kisiiuniversity.ac.ke/board_/kisii-university-council/board_members"
+      ]
+    },
+    {
+      "key": "dvc_arsa",
+      "full_name": "Fredrick O. Wanyama",
+      "source_url": "https://kisiiuniversity.ac.ke/university_management_board#officeModal2",
+      "source_name": "Prof. Fredrick O. Wanyama, PhD",
+      "photo_url": "https://kisiiuniversity.ac.ke/storage/public/offices/949KnhS1dZqcBeX7kHbWNpFCYUYdQQ73fuuW4MNT.jpg",
+      "cv_url": "https://kisiiuniversity.ac.ke/storage/public/downloads//Prof.%20Fredrick%20Wanyama%20CV.pdf",
+      "fields": {
+        "bio": "Deputy Vice Chancellor (ARSA).",
+        "full_bio": "Fredrick O. Wanyama is Deputy Vice Chancellor for Academic, Research and Student Affairs at Kisii University. His field is political science, with research interests in development politics and cooperatives. He previously held academic leadership positions at Murang’a University of Technology and Murang’a University College, and served as director and dean of the School of Development and Strategic Studies at Maseno University. His professional experience includes consultancy for the International Labour Organization and the World Bank. He is a Fulbright and DAAD scholar and a former fellow of the Five College African Scholars Program.",
+        "qualifications": [
+          {
+            "degree": "PhD",
+            "institution": "Maseno University",
+            "field": "Political Science",
+            "year": 2004
+          },
+          {
+            "degree": "MA",
+            "institution": "University of Nairobi",
+            "field": "Political Science",
+            "year": 1994
+          },
+          {
+            "degree": "BA",
+            "institution": "University of Nairobi",
+            "field": "Political Science",
+            "year": 1990
+          }
+        ],
+        "website_url": "https://kisiiuniversity.ac.ke/university_management_board#officeModal2"
+      },
+      "sources": [
+        "https://kisiiuniversity.ac.ke/university_management_board"
+      ]
+    },
+    {
+      "key": "dvc_apf",
+      "full_name": "Nathan Oyaro",
+      "source_url": "https://kisiiuniversity.ac.ke/university_management_board#officeModal3",
+      "source_name": "Prof.Nathan Oyaro, PhD",
+      "photo_url": "https://kisiiuniversity.ac.ke/storage/public/offices/356ikBz8vIfhuQE7usT0N0IK2OsP7DboaTGlm8cm.png",
+      "cv_url": "https://kisiiuniversity.ac.ke/storage/public/downloads//Prof.%20Nathan%20Oyaro%20CV.pdf",
+      "fields": {
+        "bio": "Deputy Vice Chancellor (AP&F).",
+        "full_bio": "Nathan Oyaro is Deputy Vice Chancellor for Administration, Planning and Finance at Kisii University and a professor of atmospheric and environmental chemistry. His academic leadership experience includes serving as a school dean and director of research. His research covers atmospheric chemistry, environmental pollution, climate change, water quality, phytoremediation, renewable energy and sustainable environmental technologies. He has led research collaborations, secured research funding, reviewed scientific publications and mentored scientists. His professional affiliations include the Royal Society of Chemistry and the Society of Environmental Toxicology and Chemistry.",
+        "qualifications": [
+          {
+            "degree": "DSc",
+            "institution": "University of Oslo",
+            "field": "Physical Chemistry (Atmospheric Chemistry)"
+          },
+          {
+            "degree": "MSc",
+            "institution": "Kenyatta University"
+          },
+          {
+            "degree": "BSc",
+            "institution": "Kenyatta University"
+          }
+        ],
+        "website_url": "https://kisiiuniversity.ac.ke/university_management_board#officeModal3"
+      },
+      "sources": [
+        "https://kisiiuniversity.ac.ke/university_management_board"
+      ]
+    },
+    {
+      "key": "registrar_admin",
+      "full_name": "Stella Omari",
+      "source_url": "https://kisiiuniversity.ac.ke/university_management_board#officeModal4",
+      "source_name": "Dr.Stella Omari,PhD",
+      "photo_url": "https://kisiiuniversity.ac.ke/storage/public/offices/2asib9CUVNv2wJSQTcjj1iK2vpsBr8H9DZc5tfBd.jpg",
+      "cv_url": null,
+      "fields": {
+        "bio": "Ag. Registrar (AHRCS).",
+        "full_bio": "Stella Omari has served as Acting Registrar for Administration, Human Resource and Central Services at Kisii University since 2024. Her responsibilities include staffing, training, performance management, employee welfare and central services. She is a senior lecturer in human resource management with experience in strategic management, governance, policy development and postgraduate supervision. She previously chaired the Department of Business Administration and coordinated Keroka Campus. Her work includes curriculum development and supervision of doctoral candidates. She is a member of the Institute of Human Resource Management, Kenya, and the Africa Academy of Management.",
+        "qualifications": [
+          {
+            "degree": "PhD",
+            "institution": "University of Nairobi",
+            "field": "Business Administration (Human Resource Management)",
+            "year": 2012
+          },
+          {
+            "degree": "MA",
+            "institution": "Bharathidasan University",
+            "field": "Social Dynamics",
+            "year": 1995
+          },
+          {
+            "degree": "BA",
+            "institution": "Punjab University",
+            "year": 1993
+          },
+          {
+            "degree": "Postgraduate Diploma",
+            "field": "Computer Applications",
+            "year": 1995
+          }
+        ],
+        "website_url": "https://kisiiuniversity.ac.ke/university_management_board#officeModal4"
+      },
+      "sources": [
+        "https://kisiiuniversity.ac.ke/university_management_board"
+      ]
+    },
+    {
+      "key": "registrar_academic",
+      "full_name": "Kennedy Getange",
+      "source_url": "https://kisiiuniversity.ac.ke/university_management_board#officeModal5",
+      "source_name": "Prof.Kennedy Getange, PhD",
+      "photo_url": "https://kisiiuniversity.ac.ke/storage/public/offices/We17qhjxKOZzQC7M548OpiXUiqaCdf26b1kHsfMM.jpg",
+      "cv_url": null,
+      "fields": {
+        "bio": "Ag. Registrar (AA).",
+        "full_bio": "Kennedy Nyambeche Getange is Acting Registrar for Academic Affairs and Associate Professor of Planning and Economics of Education at Kisii University. A founding member of the School of Education, he previously chaired the Education Department and directed Academic Quality Assurance. His work in quality assurance supported the development and accreditation of 181 academic programmes. His research and consultancy address educational planning, financing, policy, quality assurance, management and education systems development.",
+        "qualifications": [
+          {
+            "degree": "PhD",
+            "institution": "Kenyatta University",
+            "field": "Education (Planning and Economics)"
+          },
+          {
+            "degree": "MEd",
+            "institution": "Maseno University",
+            "field": "Planning and Economics of Education"
+          },
+          {
+            "degree": "BA",
+            "institution": "Andrews University",
+            "field": "Education"
+          }
+        ],
+        "website_url": "https://kisiiuniversity.ac.ke/university_management_board#officeModal5"
+      },
+      "sources": [
+        "https://kisiiuniversity.ac.ke/university_management_board"
+      ]
+    },
+    {
+      "key": "finance_officer",
+      "full_name": "Charles M. Mwangi",
+      "source_url": "https://kisiiuniversity.ac.ke/university_management_board#officeModal7",
+      "source_name": "CPA Charles M. Mwangi",
+      "photo_url": "https://kisiiuniversity.ac.ke/storage/public/offices/L5xQkM1NP5blIoZzyLvHdm7wp2zyVVvxvKaiflsH.jpg",
+      "cv_url": "https://kisiiuniversity.ac.ke/storage/public/downloads//CURRICULUM%20VITAE%20MWANGI%202018.pdf",
+      "fields": {
+        "bio": "Finance Officer.",
+        "full_bio": "Charles Maina Mwangi is Finance Officer at Kisii University. His professional experience spans financial management, accounting, budgeting, auditing and institutional leadership. He has led financial planning, statutory compliance, reporting, audit coordination and financial policy implementation in public institutions. He is a Certified Public Accountant, a Certified Public Secretary and a registered member of the Institute of Certified Public Accountants of Kenya.",
+        "qualifications": [
+          {
+            "degree": "MBA",
+            "field": "Finance"
+          },
+          {
+            "degree": "Bachelor’s degree",
+            "field": "Business and Management (Accounting)"
+          },
+          {
+            "degree": "CPA-K"
+          },
+          {
+            "degree": "CS"
+          }
+        ],
+        "website_url": "https://kisiiuniversity.ac.ke/university_management_board#officeModal7"
+      },
+      "sources": [
+        "https://kisiiuniversity.ac.ke/university_management_board"
+      ]
+    },
+    {
+      "key": "council_chair",
+      "full_name": "Sara Jerop Ruto",
+      "source_url": "https://kisiiuniversity.ac.ke/about_adminstration",
+      "source_name": "Dr. Sara J. Ruto",
+      "photo_url": "https://kisiiuniversity.ac.ke/storage/staffprofiles/images/NzacepgtIhwzcYKztRJGgDheyWoyI4uBDohTMtjQ.jpg",
+      "cv_url": null,
+      "fields": {
+        "bio": "Chairperson, University Council.",
+        "qualifications": [
+          {
+            "degree": "PhD",
+            "institution": "University of Heidelberg"
+          },
+          {
+            "degree": "MEd",
+            "institution": "Kenyatta University"
+          },
+          {
+            "degree": "BEd",
+            "institution": "Kenyatta University"
+          }
+        ],
+        "website_url": "https://kisiiuniversity.ac.ke/about_adminstration"
+      },
+      "sources": [
+        "https://kisiiuniversity.ac.ke/about_adminstration",
+        "https://kisiiuniversity.ac.ke/board_/kisii-university-council/board_members",
+        "https://kisiiuniversity.ac.ke/storage/public/downloads/Kisii%20University%20Graduation%20Booklet%202025.pdf"
+      ]
+    },
+    {
+      "key": "council_member_peter_mageto",
+      "full_name": "Peter Mageto",
+      "source_url": "https://kisiiuniversity.ac.ke/about_adminstration",
+      "source_name": "Prof. Rev. Peter Mageto",
+      "photo_url": "https://kisiiuniversity.ac.ke/storage/staffprofiles/images/Oe8ssA1pFFMVXRAq5wmBHCEygrkLmtlGwNGNxnll.png",
+      "cv_url": null,
+      "fields": {
+        "bio": "Member, University Council.",
+        "qualifications": [
+          {
+            "degree": "PhD",
+            "institution": "Garrett Evangelical Seminary"
+          },
+          {
+            "degree": "MA",
+            "institution": "Garrett Evangelical Seminary"
+          },
+          {
+            "degree": "BA",
+            "institution": "St Pauls United Theological College",
+            "field": "Divinity"
+          }
+        ],
+        "website_url": "https://kisiiuniversity.ac.ke/about_adminstration"
+      },
+      "sources": [
+        "https://kisiiuniversity.ac.ke/about_adminstration",
+        "https://kisiiuniversity.ac.ke/board_/kisii-university-council/board_members",
+        "https://kisiiuniversity.ac.ke/storage/public/downloads/Kisii%20University%20Graduation%20Booklet%202025.pdf"
+      ]
+    },
+    {
+      "key": "council_member_scholastica_ndambuki",
+      "full_name": "Scholastica Ndambuki",
+      "source_url": "https://kisiiuniversity.ac.ke/about_adminstration",
+      "source_name": "Dr. Scholastica Ndambuki, PhD",
+      "photo_url": "https://kisiiuniversity.ac.ke/storage/staffprofiles/images/t6AzZENBPT70alMk5zRWqmD1l3PD2cdhoWd6U42K.jpg",
+      "cv_url": null,
+      "fields": {
+        "bio": "Member, University Council.",
+        "qualifications": [
+          {
+            "degree": "LLD",
+            "institution": "University of South Africa"
+          },
+          {
+            "degree": "LLM",
+            "institution": "University of South Africa"
+          },
+          {
+            "degree": "LLB",
+            "institution": "University of Nairobi"
+          }
+        ],
+        "website_url": "https://kisiiuniversity.ac.ke/about_adminstration"
+      },
+      "sources": [
+        "https://kisiiuniversity.ac.ke/about_adminstration",
+        "https://kisiiuniversity.ac.ke/board_/kisii-university-council/board_members",
+        "https://kisiiuniversity.ac.ke/storage/public/downloads/Kisii%20University%20Graduation%20Booklet%202025.pdf"
+      ]
+    },
+    {
+      "key": "council_member_elizabeth_mwangi",
+      "full_name": "Elizabeth Mwangi",
+      "source_url": "https://kisiiuniversity.ac.ke/about_adminstration",
+      "source_name": "Ms. Elizabeth Mwangi",
+      "photo_url": "https://kisiiuniversity.ac.ke/storage/staffprofiles/images/5JUui2YK9xB8OaBwiogJPCbE9SUOURkvlivvUwXB.jpg",
+      "cv_url": null,
+      "fields": {
+        "bio": "Member, University Council.",
+        "qualifications": [
+          {
+            "degree": "MBA",
+            "institution": "Africa Nazarene University"
+          },
+          {
+            "degree": "BA",
+            "institution": "Egerton University",
+            "field": "Business Management"
+          }
+        ],
+        "website_url": "https://kisiiuniversity.ac.ke/about_adminstration"
+      },
+      "sources": [
+        "https://kisiiuniversity.ac.ke/about_adminstration",
+        "https://kisiiuniversity.ac.ke/board_/kisii-university-council/board_members",
+        "https://kisiiuniversity.ac.ke/storage/public/downloads/Kisii%20University%20Graduation%20Booklet%202025.pdf"
+      ]
+    },
+    {
+      "key": "council_member_samson_muchelule",
+      "full_name": "Samson Eric Muchelule",
+      "source_url": "https://kisiiuniversity.ac.ke/about_adminstration",
+      "source_name": "Dr. Samson Muchelule, PhD",
+      "photo_url": "https://kisiiuniversity.ac.ke/storage/staffprofiles/images/kug5rnHGbwcbztKTS1HmSHeTnaEiXVwBBF8eas1g.jpg",
+      "cv_url": null,
+      "fields": {
+        "bio": "Member, University Council.",
+        "qualifications": [
+          {
+            "degree": "MBA",
+            "institution": "University of Nairobi",
+            "field": "Strategic Management"
+          },
+          {
+            "degree": "Bachelor of Veterinary Medicine",
+            "institution": "University of Nairobi"
+          },
+          {
+            "degree": "Diploma",
+            "field": "Sales Management and Marketing"
+          }
+        ],
+        "website_url": "https://kisiiuniversity.ac.ke/about_adminstration"
+      },
+      "sources": [
+        "https://kisiiuniversity.ac.ke/about_adminstration",
+        "https://kisiiuniversity.ac.ke/board_/kisii-university-council/board_members",
+        "https://kisiiuniversity.ac.ke/storage/public/downloads/Kisii%20University%20Graduation%20Booklet%202025.pdf"
+      ]
+    },
+    {
+      "key": "council_member_mwenda_makathimo",
+      "full_name": "Mwenda Makathimo",
+      "source_url": "https://kisiiuniversity.ac.ke/about_adminstration",
+      "source_name": "Dr. Mwenda Makathimo",
+      "photo_url": "https://kisiiuniversity.ac.ke/storage/staffprofiles/images/wPfZfLOdXWe8EXkoIDW7RnrxlGOkmPRexrVzD9fZ.png",
+      "cv_url": null,
+      "fields": {
+        "bio": "Member, University Council.",
+        "qualifications": [
+          {
+            "degree": "PhD",
+            "institution": "University of Nairobi",
+            "field": "Environmental Policy"
+          },
+          {
+            "degree": "MA",
+            "institution": "University of Nairobi",
+            "field": "Valuation and Property Management"
+          },
+          {
+            "degree": "BA",
+            "institution": "University of Nairobi",
+            "field": "Land Economics"
+          }
+        ],
+        "website_url": "https://kisiiuniversity.ac.ke/about_adminstration"
+      },
+      "sources": [
+        "https://kisiiuniversity.ac.ke/about_adminstration",
+        "https://kisiiuniversity.ac.ke/board_/kisii-university-council/board_members",
+        "https://kisiiuniversity.ac.ke/storage/public/downloads/Kisii%20University%20Graduation%20Booklet%202025.pdf"
+      ]
+    },
+    {
+      "key": "council_member_pamela_awuor_ochieng",
+      "full_name": "Pamela Awuor Ochieng",
+      "source_url": "https://kisiiuniversity.ac.ke/about_adminstration",
+      "source_name": "Dr. Pamela Awuor Ochieng",
+      "photo_url": "https://kisiiuniversity.ac.ke/storage/staffprofiles/images/wHD7Cilcu11Rn4RoF1MhGb0baJ5TvxFvGliARBVq.png",
+      "cv_url": null,
+      "fields": {
+        "bio": "Member, University Council.",
+        "qualifications": [
+          {
+            "degree": "PhD",
+            "institution": "Jomo Kenyatta University of Agriculture and Technology",
+            "field": "Business Administration"
+          },
+          {
+            "degree": "MBA",
+            "institution": "Kenyatta University",
+            "field": "Strategic Management"
+          },
+          {
+            "degree": "BEd",
+            "institution": "Kenyatta University",
+            "field": "Arts (French, Education and Business Studies)"
+          }
+        ],
+        "website_url": "https://kisiiuniversity.ac.ke/about_adminstration"
+      },
+      "sources": [
+        "https://kisiiuniversity.ac.ke/about_adminstration",
+        "https://kisiiuniversity.ac.ke/board_/kisii-university-council/board_members",
+        "https://kisiiuniversity.ac.ke/storage/public/downloads/Kisii%20University%20Graduation%20Booklet%202025.pdf"
+      ]
+    },
+    {
+      "key": "council_member_josphat_sawe",
+      "full_name": "Josphat Sowe",
+      "source_url": "https://kisiiuniversity.ac.ke/about_adminstration",
+      "source_name": "Josphat Sowe",
+      "photo_url": "https://kisiiuniversity.ac.ke/storage/staffprofiles/images/uJpY1KKJYPQvwm2yXiy2fsexCjx5VggkHsUUtfNj.jpg",
+      "cv_url": null,
+      "fields": {
+        "bio": "Member, University Council.",
+        "qualifications": [
+          {
+            "degree": "MEd",
+            "institution": "University of Eastern Africa, Baraton",
+            "field": "Administration"
+          },
+          {
+            "degree": "BEd",
+            "institution": "Catholic University of Eastern Africa",
+            "field": "Arts"
+          }
+        ],
+        "website_url": "https://kisiiuniversity.ac.ke/about_adminstration"
+      },
+      "sources": [
+        "https://kisiiuniversity.ac.ke/about_adminstration",
+        "https://kisiiuniversity.ac.ke/board_/kisii-university-council/board_members",
+        "https://kisiiuniversity.ac.ke/storage/public/downloads/Kisii%20University%20Graduation%20Booklet%202025.pdf"
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "role": "Registrar (REIRM)",
+      "reason": "The management page publishes no name or biography.",
+      "source_url": "https://kisiiuniversity.ac.ke/university_management_board"
+    }
+  ]
+}

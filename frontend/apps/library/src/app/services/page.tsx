@@ -1,23 +1,20 @@
-import Link from "next/link";
-import type { LibraryBranch, LibraryServiceRecord } from "@ksu/api-client";
 import {
   EditorialPageHero,
   EditorialSection,
   TextActionLink,
 } from "../../components/library-page-sections";
 import { LibraryFilterToolbar } from "../../components/library-filter-toolbar";
-import { LibraryActionLink, PrimaryLink, SecondaryLink, StatusMessage } from "../../components/library-ui";
+import { PrimaryLink, SecondaryLink, StatusMessage } from "../../components/library-ui";
 import { compactText, formatLabel, getLibraryServicesData } from "../../lib/library-public-data";
 import { ServiceAccordion, type ServiceAccordionItem } from "./service-accordion";
+import { ServicesRecordDisplay, type PublishedService } from "./services-record-display";
 
 export const metadata = {
   title: "Library Services",
   description: "Kisii University Library branches, contacts, regulations, and service information.",
 };
 
-export const dynamic = "force-dynamic";
-
-type PublishedService = LibraryServiceRecord & { branch: LibraryBranch };
+export const revalidate = 300;
 
 type ServicesPageProps = {
   searchParams?: Promise<{ q?: string; type?: string; branch?: string }>;
@@ -60,13 +57,11 @@ export default async function LibraryServicesPage({ searchParams }: ServicesPage
         <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20"><div><p className="text-base leading-8 text-muted-foreground">From borrowing and information literacy to research support and e-resource access, the Library helps you discover, evaluate, and use information with confidence.</p><div className="mt-7 flex flex-wrap gap-5"><TextActionLink href="/contact">Contact a branch</TextActionLink><TextActionLink href="/ask">Ask a librarian</TextActionLink></div></div><ServiceAccordion items={serviceItems} /></div>
       </EditorialSection></div>
 
-      <div id="branches-heading" className="scroll-mt-24"><EditorialSection eyebrow="Branches" title="Where services are available" body="Choose a branch for local contacts and visit planning.">
-        {branches.data.length === 0 ? <StatusMessage>No public library branches are available yet.</StatusMessage> : <div className="divide-y divide-border border-y border-border">{branches.data.map((branch) => { const count = allServices.filter((service) => service.branch.id === branch.id).length; return <div key={branch.id} className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between"><div><h3 className="text-lg font-semibold text-foreground">{branch.name}</h3><p className="mt-1 text-sm text-muted-foreground">{branch.address ?? branch.location ?? "Location being updated"} · {count} published service{count === 1 ? "" : "s"}</p></div><Link href="/contact#hours" className="text-sm font-semibold text-primary hover:text-secondary">View opening hours</Link></div>; })}</div>}
-      </EditorialSection></div>
-
-      <div id="regulations-heading" className="scroll-mt-24"><EditorialSection eyebrow="Policies" title="Know the guidance before you visit" body="Review active borrowing, access, conduct, and fee guidance published by the Library.">
-        <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:gap-20"><div className="divide-y divide-border border-y border-border">{regulations.data.length === 0 ? <StatusMessage>No active library regulations are available yet.</StatusMessage> : regulations.data.map((regulation) => <article key={regulation.id} className="py-5"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">{formatLabel(regulation.category ?? "Regulation")}</p><h3 className="mt-2 text-xl font-semibold text-foreground">{regulation.title ?? "Library regulation"}</h3><p className="mt-2 text-sm leading-7 text-muted-foreground">{compactText(regulation.content) || "Regulation details are being updated."}</p></article>)}</div><div className="border-l-4 border-secondary bg-surface-subtle p-6"><p className="text-sm font-semibold uppercase tracking-[0.16em] text-secondary">Need clarification?</p><h3 className="mt-3 text-2xl font-semibold text-foreground">Talk to the Library team.</h3><p className="mt-3 text-sm leading-7 text-muted-foreground">If a policy or service record does not answer your question, send the team the branch, resource, or deadline involved.</p><div className="mt-6 flex flex-wrap gap-3"><LibraryActionLink href="/ask">Ask a librarian</LibraryActionLink><LibraryActionLink href="/contact">Contact us</LibraryActionLink></div></div></div>
-      </EditorialSection></div>
+      <ServicesRecordDisplay
+        branches={branches.data}
+        services={allServices}
+        regulations={regulations.data}
+      />
     </main>
   );
 }

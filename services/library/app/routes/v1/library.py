@@ -9,16 +9,15 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.auth import TokenPayload
-from ksu_contracts.rbac import has_scope
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
 from ksu_common.cache import cached_public
-from ...services.cache import invalidate_library_caches
 from ksu_common.audit import audit_action
 
 from ...core.auth import (
     allowed_library_scope_ids,
     get_optional_user,
+    has_library_permission,
     require_library_scope,
     requires_scope,
 )
@@ -30,9 +29,17 @@ from ...schemas import (
     LibraryExternalLinkToggle,
     LibraryExternalLinkUpdate,
     LibraryFileCreate,
+    LibraryFileOut,
     LibraryHoursCreate,
+    LibraryHoursOut,
+    LibraryExternalLinkOut,
     LibraryOut,
     LibraryUpdate,
+    LibraryTodayStatus,
+    LibraryOutSnapshot,
+    LibraryHoursSnapshot,
+    LibraryExternalLinkSnapshot,
+    LibraryFileSnapshot,
 )
 from ...services import library as svc
 from ...services.media import attach_public_media
@@ -44,10 +51,11 @@ branches_router = APIRouter(prefix="/library/branches", tags=["Library Branches"
 
 
 async def invalidate_public_library_cache() -> None:
-    await invalidate_library_caches()
+    """Compatibility shim; cache invalidation runs after commit in app middleware."""
+    return None
 
 
-@branches_router.get("/")
+@branches_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryOutSnapshot]])
 @public_catalog_rate_limit
 async def list_libraries(
     request: Request,
@@ -59,7 +67,7 @@ async def list_libraries(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     allowed_library_ids = (
         allowed_library_scope_ids(user, "library.read") if is_writer else None
     )
@@ -72,12 +80,12 @@ async def list_libraries(
         per_page=per_page,
         include_total=include_total,
         load_options=selector.load_options,
-        library_ids=tuple(allowed_library_ids or ()),
+        library_ids=None if allowed_library_ids is None else tuple(allowed_library_ids),
     )
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@branches_router.get("/{library_id}")
+@branches_router.get("/{library_id}", response_model_exclude_unset=True, response_model=SuccessResponse[LibraryOutSnapshot])
 @public_catalog_rate_limit
 async def get_library(
     request: Request,
@@ -87,7 +95,7 @@ async def get_library(
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
     selector = FieldSelector(Library, fields, always_include={"id"})
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     if is_writer:
         require_library_scope(user, "library.read", library_id)
     library = (
@@ -98,7 +106,7 @@ async def get_library(
     return success(data=selector.apply(library))
 
 
-@branches_router.post("/")
+@branches_router.post("/", response_model=SuccessResponse[LibraryOut])
 @audit_action("library.create", target_type="Library", include_body=True)
 async def create_library(
     request: Request,
@@ -114,7 +122,7 @@ async def create_library(
     )
 
 
-@branches_router.patch("/{library_id}")
+@branches_router.patch("/{library_id}", response_model=SuccessResponse[LibraryOut])
 @audit_action(
     "library.update",
     target_type="Library",
@@ -155,7 +163,7 @@ hours_router = APIRouter(
 )
 
 
-@hours_router.put("/")
+@hours_router.put("/", response_model=SuccessResponse[list[LibraryHoursOut]])
 @audit_action("library.hours.set", target_type="Library", target_id_param="library_id")
 async def set_library_hours(
     request: Request,
@@ -170,7 +178,7 @@ async def set_library_hours(
     return success(data=hours)
 
 
-@hours_router.get("/")
+@hours_router.get("/", response_model=SuccessResponse[list[LibraryHoursOut]])
 @public_catalog_rate_limit
 @cached_public(timeout=300, vary_on=())
 async def get_library_hours(
@@ -182,7 +190,7 @@ async def get_library_hours(
     return success(data=hours)
 
 
-@hours_router.get("/today")
+@hours_router.get("/today", response_model=SuccessResponse[LibraryTodayStatus | None])
 @public_catalog_rate_limit
 @cached_public(timeout=60, vary_on=("timezone",))
 async def get_library_today_hours(
@@ -205,7 +213,7 @@ today_hours_router = APIRouter(
 )
 
 
-@today_hours_router.get("/today")
+@today_hours_router.get("/today", response_model=SuccessResponse[list[LibraryTodayStatus]])
 @public_catalog_rate_limit
 @cached_public(timeout=60, vary_on=("timezone",))
 async def list_today_hours(
@@ -224,7 +232,7 @@ links_router = APIRouter(
 )
 
 
-@links_router.get("/")
+@links_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryExternalLinkSnapshot]])
 @public_catalog_rate_limit
 async def list_external_links(
     request: Request,
@@ -234,7 +242,7 @@ async def list_external_links(
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
     active_only: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     if is_writer:
         require_library_scope(user, "library.read", library_id)
     if not is_writer:
@@ -248,7 +256,7 @@ async def list_external_links(
     return success(data=selector.apply(links))
 
 
-@links_router.post("/")
+@links_router.post("/", response_model=SuccessResponse[LibraryExternalLinkOut])
 @audit_action(
     "library.link.create", target_type="LibraryExternalLink", include_body=True
 )
@@ -265,7 +273,7 @@ async def create_external_link(
     return success(data=link, message="Link created")
 
 
-@links_router.patch("/{link_id}")
+@links_router.patch("/{link_id}", response_model=SuccessResponse[LibraryExternalLinkOut])
 @audit_action(
     "library.link.update", target_type="LibraryExternalLink", target_id_param="link_id"
 )
@@ -284,7 +292,7 @@ async def update_external_link(
     return success(data=link)
 
 
-@links_router.patch("/{link_id}/toggle")
+@links_router.patch("/{link_id}/toggle", response_model=SuccessResponse[LibraryExternalLinkOut])
 @audit_action(
     "library.link.toggle", target_type="LibraryExternalLink", target_id_param="link_id"
 )
@@ -328,7 +336,7 @@ files_router = APIRouter(
 )
 
 
-@files_router.get("/")
+@files_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryFileSnapshot]])
 @public_catalog_rate_limit
 async def list_library_files(
     request: Request,
@@ -337,9 +345,9 @@ async def list_library_files(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    if user is None or not has_scope(user.roles, "library.write"):
+    if user is None or not has_library_permission(user, "library.write"):
         await svc.get_public_library(db, library_id)
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     if is_writer:
         require_library_scope(user, "library.read", library_id)
     selector = FieldSelector(LibraryFile, fields, always_include={"id"})
@@ -348,7 +356,7 @@ async def list_library_files(
     return success(data=await attach_public_media(data))
 
 
-@files_router.post("/")
+@files_router.post("/", response_model=SuccessResponse[LibraryFileOut])
 @audit_action("library.file.create", target_type="LibraryFile", include_body=True)
 async def create_library_file(
     request: Request,

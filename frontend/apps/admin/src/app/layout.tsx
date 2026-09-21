@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     template: "%s | KSU Admin",
   },
   description: "Kisii University Administration Portal",
-  manifest: "/site.webmanifest",
+  manifest: "/manifests/admin.webmanifest",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },

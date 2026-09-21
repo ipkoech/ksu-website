@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { getStoredAccessToken } from "@ksu/auth";
+import { heriRequest } from "@/lib/api/heri";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { X } from "lucide-react";
-
-const API = process.env.NEXT_PUBLIC_HERI_API_URL ?? "http://localhost:8003/api/v1/heri";
 
 export function HeriMediaUpload({ onUploaded }: { onUploaded: () => void }) {
   const [file, setFile] = useState<File | null>(null);
@@ -19,13 +18,10 @@ export function HeriMediaUpload({ onUploaded }: { onUploaded: () => void }) {
     event.preventDefault(); if (!file) return;
     setBusy(true); setMessage(null);
     try {
-      const token = getStoredAccessToken();
-      const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-      const upload = await fetch(`${API}/admin/media/upload?folder=heri&filename=${encodeURIComponent(file.name)}`, { method: "POST", body: file, credentials: "include", headers: { "Content-Type": file.type || "application/octet-stream", ...authHeaders } });
-      if (!upload.ok) throw new Error((await upload.json().catch(() => ({}))).detail ?? "Upload failed");
-      const asset = await upload.json() as { id: string };
-      const patch = await fetch(`${API}/admin/media/${asset.id}`, { method: "PATCH", credentials: "include", headers: { "Content-Type": "application/json", ...authHeaders }, body: JSON.stringify({ alt_text: altText, caption, credit, focal_x: Number(focalX), focal_y: Number(focalY) }) });
-      if (!patch.ok) throw new Error("Upload succeeded, but metadata could not be saved");
+      const asset = await heriRequest<{ id: string }>(`/admin/media/upload?folder=heri&filename=${encodeURIComponent(file.name)}`, { method: "POST", body: file, headers: { "Content-Type": file.type || "application/octet-stream" } });
+      void revalidatePublicContent("heri", "media");
+      await heriRequest(`/admin/media/${asset.id}`, { method: "PATCH", body: JSON.stringify({ alt_text: altText, caption, credit, focal_x: Number(focalX), focal_y: Number(focalY) }) });
+      void revalidatePublicContent("heri", "media");
       setFile(null); setAltText(""); setCaption(""); setCredit(""); setFocalX("0.5"); setFocalY("0.5"); setMessage("Asset uploaded and metadata saved."); onUploaded();
     } catch (reason) { setMessage(reason instanceof Error ? reason.message : "Upload failed"); }
     finally { setBusy(false); }

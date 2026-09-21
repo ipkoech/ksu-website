@@ -233,9 +233,10 @@ export default function ResearchProjectsPage() {
 
   return (
     <EditableServiceResourcePage<ResearchProject, ResearchProjectPayload>
-      title="Research Projects"
+      title="Projects"
       description="Create, edit, retire, and inspect research projects from the research service."
       resourceKey="projects"
+      revalidateResearchCache
       backHref="/research"
       queryKey={["research", "projects"]}
       hideHeader

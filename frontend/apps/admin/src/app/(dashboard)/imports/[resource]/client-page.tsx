@@ -26,6 +26,7 @@ import {
   TableRow,
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 function statusVariant(status: ImportPreviewRow["status"]) {
   if (status === "valid") return "default";
@@ -126,6 +127,9 @@ export default function ImportClientPage() {
     if (!job || !jobId || handledJobId === jobId) return;
 
     if (job.status === "SUCCESS" && job.result) {
+      if (!resourceKey.startsWith("research-") && !resourceKey.startsWith("library-") && !resourceKey.startsWith("heri-")) {
+        void revalidatePublicContent("main", resourceKey);
+      }
       setCommitResult(job.result);
       setHandledJobId(jobId);
       toast.success(`Created ${job.result.created_rows} record${job.result.created_rows === 1 ? "" : "s"}`);
@@ -135,7 +139,7 @@ export default function ImportClientPage() {
       setHandledJobId(jobId);
       toast.error(job.error || "Import failed");
     }
-  }, [handledJobId, importJob.data, jobId]);
+  }, [handledJobId, importJob.data, jobId, resourceKey]);
 
   return (
     <PageTransition>

@@ -6,6 +6,9 @@ import { CountUp } from "@/components/home/motion-primitives";
 export interface HomeStat {
   value: string;
   label: string;
+  detail?: string;
+  href?: string;
+  linkLabel?: string;
 }
 
 /** Icons follow the band's reading order rather than the label text, which
@@ -37,6 +40,7 @@ function cellRules(index: number, count: number) {
     return cn(
       index % 2 === 1 && "border-l border-white/15",
       index >= 2 && "border-t border-white/15 lg:border-t-0",
+      index >= 4 && "lg:border-t lg:border-white/15",
       index % 4 !== 0 && "lg:border-l lg:border-white/15",
       index % 2 === 0 && "border-l-0",
       index % 4 === 0 && "lg:border-l-0",
@@ -60,7 +64,7 @@ function cellRules(index: number, count: number) {
  * carries into the partnership section.
  */
 export function HomeStatsBand({ stats }: { stats: HomeStat[] }) {
-  const shown = stats.slice(0, 4);
+  const shown = stats;
   if (shown.length === 0) return null;
 
   return (

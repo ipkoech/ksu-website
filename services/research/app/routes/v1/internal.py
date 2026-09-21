@@ -2,7 +2,8 @@
 
 import uuid
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request
+from ksu_common.actor_context import verify_actor_context
 from ksu_common.internal_client import internal_key_guard
 from ksu_common.schemas.responses import success
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...core.config import get_settings
 from ...core.database import get_db
 from ...schemas.base import JsonObject, SuccessEnvelope, SuccessEnvelopeWithMeta
+from ...schemas.partnership import InternalCenterPartnersRequest
 from ._fields import serialize_full_record
 from ...services import (
     CenterRelationshipService,
@@ -96,6 +98,7 @@ INTERNAL_IMPORT_SERVICES = {
 @router.post("/imports/{resource}", dependencies=[Depends(verify_internal_key)], response_model=SuccessEnvelope[JsonObject])
 async def create_internal_import(
     resource: str,
+    request: Request,
     payload: dict = Body(...),
     db: AsyncSession = Depends(get_db),
 ):
@@ -111,8 +114,15 @@ async def create_internal_import(
     unknown = sorted(set(payload) - allowed)
     if unknown:
         raise HTTPException(status_code=422, detail={"unknown_fields": unknown})
+    actor_id = "service:main"
+    context_header = request.headers.get("X-KSU-Actor-Context")
+    if context_header:
+        try:
+            actor_id = str(verify_actor_context(context_header, get_settings().INTERNAL_API_KEY)["actor_id"])
+        except ValueError as exc:
+            raise HTTPException(status_code=401, detail="Invalid actor context") from exc
     try:
-        item = await service.create(db, _InternalPayload(payload), actor_id="service:main")
+        item = await service.create(db, _InternalPayload(payload), actor_id=actor_id)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return success(data=serialize_full_record(service.model, item), message=f"{resource} created")
@@ -148,7 +158,10 @@ async def list_internal_partners(
             "id__in": partner_ids,
         },
     )
-    return success(data=result.items, meta=result.meta)
+    return success(
+        data=serialize_full_record(PartnerService.model, result.items),
+        meta=result.meta,
+    )
 
 
 @router.get("/partners/{slug}", dependencies=[Depends(verify_internal_key)], response_model=SuccessEnvelope[JsonObject])
@@ -184,3 +197,16 @@ async def list_internal_center_partners(
     db: AsyncSession = Depends(get_db),
 ):
     return success(data=await CenterRelationshipService.list_partners(db, center_id))
+
+
+@router.post(
+    "/center-partners",
+    dependencies=[Depends(verify_internal_key)],
+    response_model=SuccessEnvelope[list[JsonObject]],
+)
+async def list_internal_center_partner_links(
+    payload: InternalCenterPartnersRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Return public partner links for a bounded set of centers in one query."""
+    return success(data=await CenterRelationshipService.list_partner_links(db, payload.center_ids))

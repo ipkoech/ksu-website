@@ -11,8 +11,14 @@ import {
 import { SiteShell } from "../components/site-shell";
 import { Hero } from "../components/home/hero";
 import { PartnerMarquee } from "../components/home/partner-marquee";
+import {
+  PublicChairSummary,
+  PublicTeamPreview,
+  PublicUpdatesPreview,
+} from "../components/data/public-content";
 import { Reveal, RevealItem } from "../components/motion/reveal";
 import { withBasePath } from "../lib/base-path";
+import { markUncacheableIfFailed } from "../lib/server-fallback";
 import {
   getEvents,
   getChair,
@@ -22,6 +28,8 @@ import {
   getSite,
   getTeam,
 } from "../lib/api";
+
+export const revalidate = 300;
 
 const pillars = [
   {
@@ -96,11 +104,6 @@ const pathways = [
   },
 ];
 
-const newsTints = [
-  "from-heri-teal to-heri-ink",
-  "from-heri-blue to-heri-ink",
-  "from-heri-ink to-heri-teal",
-];
 
 export default async function HeriHomePage() {
   const [site, chair, news, team, partners, events, heroSlides] =
@@ -113,6 +116,15 @@ export default async function HeriHomePage() {
       getEvents(),
       getHeroSlides(),
     ]);
+  markUncacheableIfFailed([
+    site,
+    chair,
+    news,
+    team,
+    partners,
+    events,
+    heroSlides,
+  ]);
   const siteData = site.status === "fulfilled" ? site.value : null;
   const chairData = chair.status === "fulfilled" ? chair.value : null;
   const newsData = news.status === "fulfilled" ? news.value.slice(0, 3) : [];
@@ -121,6 +133,33 @@ export default async function HeriHomePage() {
     partners.status === "fulfilled" ? partners.value.slice(0, 12) : [];
   const eventData =
     events.status === "fulfilled" ? events.value.slice(0, 1) : [];
+  const chairAbout =
+    chairData?.about ??
+    siteData?.tagline ??
+    "Hosted by Kisii University, the Chair bridges research, policy and practice in language education and foundational literacy for Africa.";
+  const teamPreview = teamData.map(({ id, slug, name, role, photo_url }) => ({
+    id,
+    slug,
+    name,
+    role,
+    photo_url,
+  }));
+  const updatesPreview = [
+    ...newsData.map((item) => ({
+      id: item.id,
+      title: item.title,
+      summary: item.excerpt ?? "Research news and insights from the Chair.",
+      kind: "News" as const,
+      href: `/news-insights/${item.slug}`,
+    })),
+    ...eventData.map((item) => ({
+      id: item.id,
+      title: item.title,
+      summary: item.summary,
+      kind: "Event" as const,
+      href: "/events",
+    })),
+  ];
   const managedHeroSlides =
     heroSlides.status === "fulfilled"
       ? heroSlides.value
@@ -283,23 +322,7 @@ export default async function HeriHomePage() {
               Hosted at Kisii University
             </div>
           </Reveal>
-          <Reveal delay={0.1}>
-            <h2 className="max-w-xl text-3xl font-bold leading-tight text-heri-blue sm:text-4xl">
-              A Chair with a home, and a continental mandate
-            </h2>
-            <div className="mt-4 h-1 w-10 bg-heri-lime" />
-            <p className="mt-5 max-w-xl text-base leading-7 text-slate-600">
-              {chairData?.about ?? siteData?.tagline ??
-                "Hosted by Kisii University, the Chair bridges research, policy and practice in language education and foundational literacy for Africa."}
-            </p>
-            <Link
-              href="/about"
-              className="mt-7 inline-flex items-center gap-3 rounded-xl bg-heri-blue px-6 py-3.5 text-sm font-bold text-white transition hover:bg-heri-teal active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-heri-teal focus:ring-offset-2"
-            >
-              About the Chair
-              <ArrowRight className="size-4" />
-            </Link>
-          </Reveal>
+          <PublicChairSummary about={chairAbout} />
         </section>
 
         <section className="bg-slate-50 px-6 py-16">
@@ -339,109 +362,9 @@ export default async function HeriHomePage() {
             </div>
           </div>
         </section>
+        <PublicTeamPreview members={teamPreview} />
 
-        {teamData.length > 0 && (
-          <section className="mx-auto max-w-7xl px-6 py-16">
-            <Reveal className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <h2 className="text-3xl font-bold text-heri-blue sm:text-4xl">
-                  The people behind the research
-                </h2>
-                <div className="mt-3 h-1 w-10 bg-heri-lime" />
-              </div>
-              <Link
-                href="/team"
-                className="text-sm font-bold text-heri-teal transition hover:text-heri-blue"
-              >
-                Meet the team →
-              </Link>
-            </Reveal>
-            <div className="mt-9 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {teamData.map((member, index) => (
-                <RevealItem key={member.id} index={index}>
-                  <Link
-                    href={`/team/${member.slug}`}
-                    className="group block text-center focus:outline-none"
-                  >
-                    <div className="relative aspect-square overflow-hidden rounded-2xl bg-heri-cream ring-heri-teal transition group-focus:ring-2">
-                      {member.photo_url ? (
-                        <Image
-                          src={member.photo_url}
-                          alt={member.name}
-                          fill
-                          sizes="(max-width: 768px) 50vw, 25vw"
-                          unoptimized
-                          className="object-cover transition duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="grid size-full place-items-center text-6xl font-bold text-heri-teal">
-                          {member.name.slice(0, 1)}
-                        </div>
-                      )}
-                    </div>
-                    <h3 className="mt-4 font-bold text-heri-blue">
-                      {member.name}
-                    </h3>
-                    <p className="mt-1 text-xs text-heri-teal">{member.role}</p>
-                  </Link>
-                </RevealItem>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {(newsData.length > 0 || eventData.length > 0) && (
-          <section className="border-t border-slate-100 px-6 py-16">
-            <div className="mx-auto max-w-7xl">
-              <Reveal className="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                  <h2 className="text-3xl font-bold text-heri-blue sm:text-4xl">
-                    Latest news, events and stories
-                  </h2>
-                  <div className="mt-3 h-1 w-10 bg-heri-lime" />
-                </div>
-                <Link
-                  href="/news-insights"
-                  className="text-sm font-bold text-heri-teal transition hover:text-heri-blue"
-                >
-                  View all →
-                </Link>
-              </Reveal>
-              <div className="mt-9 grid gap-6 lg:grid-cols-3">
-                {[...newsData, ...eventData].slice(0, 3).map((item, index) => (
-                  <RevealItem key={item.id} index={index}>
-                    <article className="h-full overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-1 hover:shadow-lg">
-                      <div
-                        className={`h-2 bg-gradient-to-r ${newsTints[index % newsTints.length]}`}
-                      />
-                      <div className="p-6">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-heri-teal">
-                          {"excerpt" in item ? "News" : "Event"}
-                        </p>
-                        <h3 className="mt-3 text-xl font-bold leading-tight text-heri-blue">
-                          {item.title}
-                        </h3>
-                        <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
-                          {"excerpt" in item ? item.excerpt : item.summary}
-                        </p>
-                        <Link
-                          href={
-                            "excerpt" in item
-                              ? `/news-insights/${item.slug}`
-                              : "/events"
-                          }
-                          className="mt-5 inline-block text-sm font-bold text-heri-teal transition hover:text-heri-blue"
-                        >
-                          Read more →
-                        </Link>
-                      </div>
-                    </article>
-                  </RevealItem>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
+        <PublicUpdatesPreview items={updatesPreview} />
 
         <PartnerMarquee partners={partnerData} />
 

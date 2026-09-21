@@ -19,6 +19,9 @@
 .ksu-band-tight {
   padding-block: clamp(2.5rem, 5vw, 4rem);
 }
+.ksu-band-compact {
+  padding-block: clamp(1.25rem, 3.5vw, 2.75rem);
+}
 .ksu-band-top {
   padding-top: clamp(3.5rem, 7vw, 6.25rem);
 }

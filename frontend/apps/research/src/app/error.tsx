@@ -11,7 +11,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
 
   return (
     <main id="research-main" className="relative isolate grid min-h-[68vh] place-items-center overflow-hidden bg-[#002f6c] px-4 py-20 text-white">
-      <Image src="/images/research/research-innovation-hero.webp" alt="" fill priority sizes="100vw" className="object-cover opacity-25" />
+      <Image src="/images/research/verified/innovation-week-03.jpeg" alt="" fill priority sizes="100vw" className="object-cover opacity-25" />
       <div className="absolute inset-0 bg-gradient-to-br from-[#002f6c]/95 via-[#003d7c]/90 to-[#005baa]/75" />
       <section className="relative max-w-2xl text-center">
         <p className="font-semibold uppercase tracking-[0.24em] text-[#f9a34a]">Kisii University Research</p>

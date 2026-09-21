@@ -7,7 +7,6 @@ or publish.
 
 from __future__ import annotations
 
-import importlib.util
 import sys
 from pathlib import Path
 
@@ -99,7 +98,7 @@ def test_the_research_admin_may_review_and_publish():
     context = rpc.build_research_portal_context(_user("research-admin"))
     assert context.can_review
     assert context.can_publish
-    assert context.is_global
+    assert not context.is_global  # Role name does not grant explicit oversight.
 
 
 @pytest.mark.parametrize("role", ["research-farm", "research-sustainability"])

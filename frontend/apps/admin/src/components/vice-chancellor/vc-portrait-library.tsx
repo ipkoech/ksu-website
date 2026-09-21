@@ -32,6 +32,7 @@ import {
   type VcPortrait,
 } from "@ksu/api-client";
 import { MediaPicker } from "@/components/media";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 function message(error: unknown) {
   return error instanceof Error
@@ -63,6 +64,7 @@ function PortraitCard({
         id: portrait.id,
         data: { alt_text: altText.trim() || null },
       });
+      void revalidatePublicContent("main", "vice-chancellor");
       toast.success("Portrait description saved");
     } catch (error) {
       toast.error(message(error));
@@ -71,6 +73,7 @@ function PortraitCard({
   const makeActive = async () => {
     try {
       await select.mutateAsync(portrait.id);
+      void revalidatePublicContent("main", "vice-chancellor");
       toast.success(
         "Shared landing portrait selected. Publish the hub when ready.",
       );
@@ -87,6 +90,7 @@ function PortraitCard({
       return;
     try {
       await remove.mutateAsync(portrait.id);
+      void revalidatePublicContent("main", "vice-chancellor");
       toast.success("Portrait removed");
     } catch (error) {
       toast.error(message(error));
@@ -204,6 +208,7 @@ export function VcPortraitLibrary({ canManage }: { canManage: boolean }) {
         media_id: mediaId,
         display_order: portraits.length,
       });
+      void revalidatePublicContent("main", "vice-chancellor");
       setMediaId("");
       toast.success("Portrait added to the VC library");
     } catch (error) {
@@ -222,6 +227,7 @@ export function VcPortraitLibrary({ canManage }: { canManage: boolean }) {
           display_order: order,
         })),
       );
+      void revalidatePublicContent("main", "vice-chancellor");
     } catch (error) {
       toast.error(message(error));
     }

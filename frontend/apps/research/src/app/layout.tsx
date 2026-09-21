@@ -3,7 +3,7 @@ import { ksuBookman, ksuSans, ksuDisplay } from "@ksu/ui/fonts";
 import { AccessibilityInitScript, AccessibilityShell } from "@ksu/ui";
 import { PublicFooter } from "@ksu/ui/layout/public";
 import { Announcements } from "@ksu/ui/components";
-import { announcementsApi } from "@ksu/api-client";
+import { announcementsApi } from "@ksu/api-client/server";
 import { unstable_cache } from "next/cache";
 import { ResearchHeader } from "../components/research-header";
 import { getResearchSiteContext } from "../lib/research-site-context";
@@ -26,7 +26,7 @@ const researchFooterColumns = [
     links: [
       { label: "Projects", href: "/projects" },
       { label: "Publications", href: "/publications" },
-      { label: "Research Centers", href: "/centers" },
+      { label: "Centers", href: "/centers" },
       { label: "Expertise", href: "/expertise" },
       { label: "Community Impact", href: "/community-impact" },
     ],
@@ -48,7 +48,7 @@ const researchFooterColumns = [
       { label: "Scholarships", href: "/scholarships" },
       { label: "Training", href: "/training" },
       { label: "Mentorship", href: "/mentorship" },
-      { label: "Research Services", href: "/services" },
+      { label: "Services", href: "/services" },
     ],
   },
   {
@@ -100,15 +100,15 @@ export const metadata: Metadata = {
     siteName: "Kisii University Research",
     title: "KSU Research Portal",
     description: "Research, innovation, partnerships, and public impact at Kisii University.",
-    images: [{ url: "/images/research/research-home-hero.webp", alt: "Kisii University research and innovation" }],
+    images: [{ url: "/images/research/verified/multidisciplinary-conference-2026.jpg", alt: "Kisii University research and innovation" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "KSU Research Portal",
     description: "Research, innovation, partnerships, and public impact at Kisii University.",
-    images: ["/images/research/research-home-hero.webp"],
+    images: ["/images/research/verified/multidisciplinary-conference-2026.jpg"],
   },
-  manifest: "/site.webmanifest",
+  manifest: "/manifests/research.webmanifest",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },

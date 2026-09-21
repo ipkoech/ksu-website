@@ -21,6 +21,7 @@ import { useDeleteSliderGroup, useSliderGroups } from "@ksu/api-client";
 import type { SliderGroup } from "@ksu/api-client";
 import { toast } from "@ksu/ui";
 import { TableSearch } from "@/components/shared/table-search";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const getSliderGroupColumns = ({
     canDelete,
@@ -128,6 +129,7 @@ export default function SlidersPage() {
         if (!deleteTarget) return;
         try {
             await deleteSliderGroup.mutateAsync(deleteTarget.id);
+            void revalidatePublicContent("main", "sliders");
             toast.success("Slider group deleted successfully");
             setDeleteTarget(null);
         } catch {

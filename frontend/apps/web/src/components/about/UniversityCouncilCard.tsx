@@ -23,17 +23,30 @@ export function UniversityCouncilCard({
   const card = (
     <article
       className={`group relative overflow-hidden rounded-2xl ring-1 ring-primary/10 bg-white transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-xl ${
-        featured ? "mx-auto w-full max-w-[310px]" : secretary ? "mx-auto w-full max-w-[420px]" : "w-full"
+        featured
+          ? "mx-auto w-full max-w-[240px]"
+          : secretary
+            ? "mx-auto w-full max-w-[200px]"
+            : "w-full"
       }`}
     >
-      <div className={secretary ? "grid gap-0 sm:grid-cols-[8.5rem_minmax(0,1fr)]" : ""}>
-        <ImageCurtainReveal className={secretary ? "h-full min-h-36" : "aspect-[4/3]"} direction={featured ? "right" : "left"}>
+        <div className={secretary ? "grid h-full gap-0 sm:grid-cols-[8.5rem_minmax(0,1fr)]" : "h-full"}>
+        <ImageCurtainReveal
+          className={
+            secretary
+              ? "h-[150px]"
+              : featured
+                ? "h-[198px]"
+                : "h-[150px]"
+          }
+          direction={featured ? "right" : "left"}
+        >
           <PublicImage
             src={member.portrait?.url}
             alt={member.portrait?.alt || `${member.name}, ${member.role}`}
             ratio="profile"
             className="h-full w-full"
-            sizes={secretary ? "136px" : featured ? "310px" : "200px"}
+            sizes={secretary ? "200px" : featured ? "220px" : "200px"}
             imageClassName="object-cover object-top transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
           />
         </ImageCurtainReveal>

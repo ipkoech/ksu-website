@@ -1,0 +1,31 @@
+{
+  "captured_at": "2026-09-06",
+  "command": "python scripts/backend_contract_inventory.py .tmp/backend-contract-inventory-20260907",
+  "limitations": [
+    "This inventories effective route declarations and generated OpenAPI independently per service; it does not prove endpoint authorization, populated relationship serialization or consumer parsing.",
+    "The output is local application-construction evidence and does not represent deployed traffic."
+  ],
+  "result": "passed",
+  "services": {
+    "heri_africa": {
+      "effective_routes": 50,
+      "openapi_paths": 44,
+      "redirect_slashes": true
+    },
+    "library": {
+      "effective_routes": 143,
+      "openapi_paths": 89,
+      "redirect_slashes": true
+    },
+    "main": {
+      "effective_routes": 780,
+      "openapi_paths": 558,
+      "redirect_slashes": true
+    },
+    "research": {
+      "effective_routes": 368,
+      "openapi_paths": 267,
+      "redirect_slashes": true
+    }
+  }
+}

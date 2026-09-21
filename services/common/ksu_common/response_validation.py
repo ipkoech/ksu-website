@@ -15,6 +15,8 @@ from fastapi.routing import APIRoute
 from starlette.responses import FileResponse, Response, StreamingResponse
 from starlette.routing import request_response
 
+from .database import request_transaction
+
 ResponseModelExemption = Literal["file", "health", "internal", "metrics", "stream"]
 
 _EXEMPTION_ATTRIBUTE = "__response_model_exemption__"
@@ -193,6 +195,12 @@ def collect_response_model_coverage(
     invalid_exemptions: list[str] = []
     for inspection in _iter_route_inspections(routes):
         route = inspection.route
+        # A 204 endpoint has an intentionally empty response body. Requiring a
+        # Pydantic model here would either be impossible to serialize or would
+        # contradict the HTTP contract, so treat explicit no-content routes as
+        # covered by their status declaration.
+        if route.status_code == 204:
+            continue
         label = _route_label(route, inspection.path)
         if route.response_model is not None and _is_concrete_response_model(route.response_model):
             continue
@@ -341,7 +349,29 @@ class StrictResponseValidationRoute(APIRoute):
             # apply whether a route is registered directly or through any
             # number of APIRouter inclusions.
             self.endpoint = guarded_endpoint
-        return super().get_route_handler()
+        handler = super().get_route_handler()
+        if _is_response_class(self.response_class, StreamingResponse):
+            # Existing streaming callers can use their dependency while yielding
+            # chunks. Preserve their explicitly declared streaming boundary;
+            # ordinary JSON responses must finish persistence before headers.
+            return handler
+
+        @wraps(handler)
+        async def transactional_handler(request):
+            captured = False
+            async with request_transaction() as transaction:
+                response = await handler(request)
+                transaction.rollback_only = response.status_code >= 400
+                capture = request.scope.get("ksu.capture_audit")
+                if capture and transaction.session is not None and not transaction.rollback_only:
+                    await capture(transaction.session, request, response)
+                    captured = True
+            # Only suppress the post-response adapter after commit succeeds.
+            if captured:
+                request.scope["ksu.audit_committed"] = True
+            return response
+
+        return transactional_handler
 
     def _sync_response_bypass_endpoint(self) -> None:
         """Keep endpoint metadata used by middleware after application assembly."""
@@ -360,6 +390,10 @@ class StrictResponseValidationRoute(APIRoute):
 
     def _reject_raw_response_bypass(self, value: Any) -> None:
         if not _is_concrete_response_model(self.response_model) or not isinstance(value, Response):
+            return
+        if value.status_code >= 400:
+            # Error adapters have their own wire contract, not the success model.
+            # The transaction wrapper marks these responses rollback-only.
             return
         raise ResponseValidationError(
             errors=[

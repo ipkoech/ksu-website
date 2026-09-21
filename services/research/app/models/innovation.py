@@ -77,6 +77,7 @@ class Innovation(Base, SEOMixin, CoverImageRefMixin, AttachmentRefsMixin):
         nullable=True,
     )  # pending | filed | granted | licensed | open_source | trade_secret
     patent_number: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    copyright_number: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
     patent_filing_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
     patent_grant_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
     patent_countries: Mapped[Optional[list[str]]] = mapped_column(JSONB, nullable=True)

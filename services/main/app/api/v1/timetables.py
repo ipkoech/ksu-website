@@ -9,7 +9,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import selectinload
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import CurrentUser, DbSession
 from ...models import (
@@ -19,6 +19,12 @@ from ...models import (
 from ...schemas import (
     AcademicTimetableCreate, AcademicTimetableUpdate, ContentWorkflowActionRequest,
     TimetableSittingCreate, TimetableSittingUpdate, TimetableVenueCreate,
+)
+from ...schemas.timetable import (
+    AcademicTimetableSnapshot,
+    PublicTimetableItem,
+    TimetableSittingSnapshot,
+    TimetableVenueSnapshot,
 )
 from ...security.scopes import can_access_scope
 from ...services._base import apply_updates
@@ -45,7 +51,11 @@ def _load_timetable():
     )
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[PublicTimetableItem]],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("calendar_id", "programme_id", "timetable_type"))
 async def list_public_timetables(
     db: DbSession,
@@ -70,14 +80,23 @@ async def list_public_timetables(
     return success(data=data)
 
 
-@router.get("/venues")
+@router.get(
+    "/venues",
+    response_model=SuccessResponse[list[TimetableVenueSnapshot]],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=600)
 async def list_venues(db: DbSession):
     venues = (await db.execute(TimetableVenue.active_query().where(TimetableVenue.is_active.is_(True)).order_by(TimetableVenue.name))).scalars().all()
     return success(data=venues)
 
 
-@router.post("/venues", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/venues",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[TimetableVenueSnapshot],
+    response_model_exclude_unset=True,
+)
 async def create_venue(data: TimetableVenueCreate, db: DbSession, user: CurrentUser):
     await _require_manage(db, user)
     venue = TimetableVenue(**data.model_dump())
@@ -86,7 +105,12 @@ async def create_venue(data: TimetableVenueCreate, db: DbSession, user: CurrentU
     return success(data=venue, message="Timetable venue created")
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[AcademicTimetableSnapshot],
+    response_model_exclude_unset=True,
+)
 async def create_timetable(data: AcademicTimetableCreate, db: DbSession, user: CurrentUser):
     await _require_manage(db, user)
     if await AcademicCalendar.get_by_id(db, data.calendar_id) is None:
@@ -102,7 +126,11 @@ async def create_timetable(data: AcademicTimetableCreate, db: DbSession, user: C
     return success(data=record, message="Timetable created")
 
 
-@router.patch("/{timetable_id}")
+@router.patch(
+    "/{timetable_id}",
+    response_model=SuccessResponse[AcademicTimetableSnapshot],
+    response_model_exclude_unset=True,
+)
 async def update_timetable(timetable_id: uuid.UUID, data: AcademicTimetableUpdate, db: DbSession, user: CurrentUser):
     await _require_manage(db, user)
     record = await AcademicTimetable.get_by_id(db, timetable_id)
@@ -115,7 +143,12 @@ async def update_timetable(timetable_id: uuid.UUID, data: AcademicTimetableUpdat
     return success(data=record, message="Timetable updated")
 
 
-@router.post("/{timetable_id}/sittings", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{timetable_id}/sittings",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[TimetableSittingSnapshot],
+    response_model_exclude_unset=True,
+)
 async def create_sitting(timetable_id: uuid.UUID, data: TimetableSittingCreate, db: DbSession, user: CurrentUser):
     await _require_manage(db, user)
     timetable = await AcademicTimetable.get_by_id(db, timetable_id)
@@ -142,7 +175,11 @@ async def create_sitting(timetable_id: uuid.UUID, data: TimetableSittingCreate, 
     return success(data=sitting, message="Timetable sitting created")
 
 
-@router.patch("/{timetable_id}/sittings/{sitting_id}")
+@router.patch(
+    "/{timetable_id}/sittings/{sitting_id}",
+    response_model=SuccessResponse[TimetableSittingSnapshot],
+    response_model_exclude_unset=True,
+)
 async def update_sitting(
     timetable_id: uuid.UUID,
     sitting_id: uuid.UUID,
@@ -198,7 +235,11 @@ async def update_sitting(
     return success(data=sitting, message="Timetable sitting updated")
 
 
-@router.post("/{timetable_id}/workflow/{action}")
+@router.post(
+    "/{timetable_id}/workflow/{action}",
+    response_model=SuccessResponse[AcademicTimetableSnapshot],
+    response_model_exclude_unset=True,
+)
 async def transition_timetable(timetable_id: uuid.UUID, action: str, data: ContentWorkflowActionRequest, db: DbSession, user: CurrentUser):
     await _require_manage(db, user)
     timetable = await AcademicTimetable.get_by_id(db, timetable_id)

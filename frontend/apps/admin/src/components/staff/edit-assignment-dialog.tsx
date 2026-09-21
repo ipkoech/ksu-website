@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Button, ConfirmDialog, Input, RichTextEditor, richTextToPlainText, Switch, Label, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
 import { useUpdateStaffAssignment } from "@ksu/api-client";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 interface EditAssignmentDialogProps {
     assignment: any;
@@ -49,6 +50,7 @@ export function EditAssignmentDialog({ assignment, open, onOpenChange, onSuccess
     const performSubmit = async () => {
         try {
             await updateMutation.mutateAsync({ id: assignment.id, data: { ...formData, notes: richTextToPlainText(formData.notes) } });
+            void revalidatePublicContent("main", "people");
             toast.success("Assignment updated successfully");
             setConfirmOpen(false);
             onSuccess();

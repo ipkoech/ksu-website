@@ -1,5 +1,15 @@
-import { schoolsApi, programmesApi, intakesApi } from "@ksu/api-client";
+import "server-only";
+import {
+  schoolsApi,
+  programmesApi,
+  intakesApi,
+  type Intake,
+  type Programme,
+  type School,
+} from "@ksu/api-client/server";
 import { publicFileUrl } from "@/lib/public-media";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
+import { normalizePublicListResponse } from "@/lib/web-response-shapes";
 
 export interface SchoolCard {
   id: string;
@@ -33,8 +43,10 @@ export async function getSchools(): Promise<SchoolCard[]> {
       fields: "id,name,slug,code,cover_image_id",
       per_page: 8,
     });
+    const normalized = normalizePublicListResponse<School>(response);
+    if (!normalized) throw new Error("Invalid schools response");
 
-    return (response.data ?? []).map((school) => ({
+    return normalized.data.map((school) => ({
       id: school.id,
       name: school.name,
       slug: school.slug,
@@ -43,7 +55,7 @@ export async function getSchools(): Promise<SchoolCard[]> {
     }));
   } catch (error) {
     console.error("Failed to fetch schools:", error);
-    return [];
+    return uncachedPublicFallback([]);
   }
 }
 
@@ -54,8 +66,10 @@ export async function getActiveIntake(): Promise<ActiveIntake | null> {
       fields: "id,name,application_start,application_end,is_open",
       per_page: 1,
     });
+    const normalized = normalizePublicListResponse<Intake>(response);
+    if (!normalized) throw new Error("Invalid intake response");
 
-    const intake = response.data?.[0];
+    const intake = normalized.data[0];
     if (!intake) return null;
 
     return {
@@ -67,7 +81,7 @@ export async function getActiveIntake(): Promise<ActiveIntake | null> {
     };
   } catch (error) {
     console.error("Failed to fetch active intake:", error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -78,8 +92,10 @@ export async function getPostgraduateProgrammes(): Promise<ProgrammeCard[]> {
       fields: "id,name,slug,level,duration,cover_image_id,department_name",
       per_page: 10,
     });
+    const normalized = normalizePublicListResponse<Programme>(response);
+    if (!normalized) throw new Error("Invalid postgraduate programmes response");
 
-    return (response.data ?? []).map((programme) => ({
+    return normalized.data.map((programme) => ({
       id: programme.id,
       name: programme.name,
       slug: programme.slug,
@@ -90,7 +106,7 @@ export async function getPostgraduateProgrammes(): Promise<ProgrammeCard[]> {
     }));
   } catch (error) {
     console.error("Failed to fetch postgraduate programmes:", error);
-    return [];
+    return uncachedPublicFallback([]);
   }
 }
 
@@ -101,8 +117,10 @@ export async function getPhdProgrammes(): Promise<ProgrammeCard[]> {
       fields: "id,name,slug,level,duration,cover_image_id,department_name",
       per_page: 6,
     });
+    const normalized = normalizePublicListResponse<Programme>(response);
+    if (!normalized) throw new Error("Invalid PhD programmes response");
 
-    return (response.data ?? []).map((programme) => ({
+    return normalized.data.map((programme) => ({
       id: programme.id,
       name: programme.name,
       slug: programme.slug,
@@ -113,7 +131,7 @@ export async function getPhdProgrammes(): Promise<ProgrammeCard[]> {
     }));
   } catch (error) {
     console.error("Failed to fetch PhD programmes:", error);
-    return [];
+    return uncachedPublicFallback([]);
   }
 }
 
@@ -123,9 +141,11 @@ export async function getFeaturedProgrammes(): Promise<ProgrammeCard[]> {
       fields: "id,name,slug,level,duration,cover_image_id,department_name",
       per_page: 8,
     });
+    const normalized = normalizePublicListResponse<Programme>(response);
+    if (!normalized) throw new Error("Invalid featured programmes response");
 
     // Shuffle the programmes for variety
-    const programmes = response.data ?? [];
+    const programmes = normalized.data;
     const shuffled = [...programmes].sort(() => Math.random() - 0.5);
 
     return shuffled.map((programme) => ({
@@ -139,6 +159,6 @@ export async function getFeaturedProgrammes(): Promise<ProgrammeCard[]> {
     }));
   } catch (error) {
     console.error("Failed to fetch featured programmes:", error);
-    return [];
+    return uncachedPublicFallback([]);
   }
 }

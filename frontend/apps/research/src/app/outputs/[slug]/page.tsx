@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import {
   ResearchDetailHero,
   ResearchDetailSidebar,
@@ -11,7 +10,6 @@ import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import {
   compactText,
   formatDate,
-  generateSlugParams,
   getOutputBySlug,
 } from "../../../lib/research-public-data";
 import {
@@ -23,15 +21,12 @@ import {
 import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getOutputBySlug(slug);
-  return researchRecordMetadata(data, { fallbackTitle: "Research output", pathname: "/outputs/" + slug });
-}
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.outputs.list);
+  return researchRecordMetadata(data, { fallbackTitle: "Output", pathname: "/outputs/" + slug });
 }
 
 export default async function OutputDetailPage({
@@ -85,7 +80,7 @@ export default async function OutputDetailPage({
             href: compactText(href),
           })),
         ]}
-        imageSrc={compactText(output.cover_image_url) || "/images/research/research-projects-hero.svg"}
+        imageSrc={compactText(output.cover_image_url) || "/images/research/verified/multidisciplinary-conference-2026.jpg"}
         imageAlt="Research output, dataset, toolkit, or report detail"
       />
 

@@ -2,35 +2,56 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from ksu_common.auth import TokenPayload
-from ksu_common.internal_client import get_integration_pool, internal_headers
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...core.auth import authorize_permission, require_permission
-from ...core.config import get_settings
+from ...core.auth import authorize_permission, get_current_user, require_permission, require_resource_permission
 from ...core.database import get_db
 from ...models.audit import AuditLog
-from ...models.content import SiteSettings
-from ...models.partners import Partner
 from ...services.admin_resources import (
     READ_ONLY_RESOURCES,
     model_for_resource,
     writable_fields,
+    validated_values,
+    require_local_fields,
+    reject_protected_fields,
 )
 from ...services.audit import record_audit
-from ...services.workflow import WorkflowError, WorkflowService
+from ...services import partner_sync
+from ...services.relationships import require_theme_unlinked, validate_theme_reference
+from ...services.workflow import lock_record, require_editable, transition_record, transition_values, validate_section_values
+from ...schemas.operations import AuditRecordResponse, DynamicResourceResponse, PartnerSyncResponse
+from ksu_common.schemas.pagination import PaginatedResponse
 
 router = APIRouter(prefix="/admin", tags=["HERI Admin CRUD"])
+PUBLIC_CONFIGURATION_RESOURCES = frozenset({
+    "site-settings", "navigation", "hero-slides", "footer", "chair-profiles",
+    "team", "impact-metrics",
+})
 
 
-@router.post("/{resource}/{record_id}/transition")
+def _require_visibility_authority(user, record, values):
+    changes = {
+        key: value for key, value in values.items()
+        if key in {"is_active", "is_visible"} and (record is None or value != getattr(record, key))
+    }
+    if changes and not authorize_permission(user, "heri.content.publish").allowed:
+        raise HTTPException(403, "Publishing authority is required to change public visibility")
+
+
+def _require_public_resource_authority(user, resource):
+    if resource in PUBLIC_CONFIGURATION_RESOURCES and not authorize_permission(user, "heri.content.publish").allowed:
+        raise HTTPException(403, "Publishing authority is required to change public configuration")
+
+
+@router.post("/{resource}/{record_id}/transition", response_model=DynamicResourceResponse)
 async def transition_resource(
     resource: str,
     record_id: UUID,
     payload: dict[str, object],
     request: Request,
     db: AsyncSession = Depends(get_db),
-    user: TokenPayload = Depends(require_permission("heri.content.write")),
+    user: TokenPayload = Depends(get_current_user),
 ):
     """Apply the shared draft/review/publish workflow to any status-bearing resource."""
     try:
@@ -39,131 +60,23 @@ async def transition_resource(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     if resource in READ_ONLY_RESOURCES or not hasattr(model, "status"):
         raise HTTPException(status_code=422, detail="Resource does not support editorial workflow")
-    record = await db.get(model, record_id)
-    target = str(payload.get("status", ""))
-    if record is None or record.deleted_at is not None:
-        raise HTTPException(status_code=404, detail="Record not found")
-    current = getattr(record, "status")
-    current_value = getattr(current, "value", str(current))
-    try:
-        required = WorkflowService().transition_permission(current_value, target)
-    except WorkflowError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    if not authorize_permission(user, required).allowed:
-        raise HTTPException(status_code=403, detail="Insufficient privileges for this workflow transition")
-    before = {"status": current_value}
-    try:
-        record.status = model.status.type.enum_class(target)
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail="Invalid workflow status") from exc
-    await record_audit(
-        db, action="transition", entity_type=resource, entity_id=str(record.id),
-        actor_id=str(user.sub), previous_value=before,
-        new_value={"status": target, "note": payload.get("note")},
+    return await transition_record(
+        db, model, record_id, str(payload.get("status", "")), actor=user,
+        entity_type=resource, note=payload.get("note"),
+        scheduled_at=payload.get("scheduled_at"),
         ip_address=request.client.host if request.client else None,
     )
-    return record
 
 
-@router.post("/partners/sync")
-async def sync_partners_from_research(request: Request, db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(require_permission("heri.content.write"))):
-    """Refresh HERI partner projections from the canonical Research Service."""
-    settings = get_settings()
-    try:
-        internal_headers(settings.RESEARCH_SERVICE_API_KEY)
-    except RuntimeError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Research integration is not configured",
-        ) from exc
-    base = settings.RESEARCH_SERVICE_URL.rstrip("/")
-    pool = get_integration_pool()
-    response = await pool.request_internal(
-        "research-heri-partner-sync",
-        base,
-        "GET",
-        "/api/v1/internal/partners",
-        api_key=settings.RESEARCH_SERVICE_API_KEY,
-        timeout=15.0,
-        params={"page": 1, "per_page": 100},
+@router.post("/partners/sync", response_model=PartnerSyncResponse)
+async def sync_partners_from_research(request: Request, db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(require_permission("heri.integrations.sync"))):
+    return await partner_sync.sync_partners(
+        db, actor=user, ip_address=request.client.host if request.client else None,
     )
-    response.raise_for_status()
-    payload = response.json()
-    center_by_partner: dict[str, tuple[str, str]] = {}
-    centers_response = await pool.request_internal(
-        "research-heri-partner-sync",
-        base,
-        "GET",
-        "/api/v1/internal/centers",
-        api_key=settings.RESEARCH_SERVICE_API_KEY,
-        timeout=15.0,
-        params={"page": 1, "per_page": 100},
-    )
-    if centers_response.is_success:
-        centers_payload = centers_response.json()
-        centers = centers_payload.get("data", centers_payload if isinstance(centers_payload, list) else [])
-        for center in centers:
-            center_id = center.get("id")
-            if not center_id:
-                continue
-            links_response = await pool.request_internal(
-                "research-heri-partner-sync",
-                base,
-                "GET",
-                f"/api/v1/internal/centers/{center_id}/partners",
-                api_key=settings.RESEARCH_SERVICE_API_KEY,
-                timeout=15.0,
-            )
-            if not links_response.is_success:
-                continue
-            links_payload = links_response.json()
-            links = links_payload.get("data", links_payload if isinstance(links_payload, list) else [])
-            for partner in links:
-                if partner.get("id"):
-                    center_by_partner[str(partner["id"])] = (str(center_id), str(center.get("slug") or ""))
-    source_records = payload.get("data", payload if isinstance(payload, list) else [])
-    center_slugs = {slug for _, slug in center_by_partner.values() if slug}
-    if len(center_slugs) == 1:
-        settings_record = (await db.execute(select(SiteSettings).order_by(SiteSettings.created_at.asc()))).scalars().first()
-        if settings_record is not None and not settings_record.research_center_slug:
-            settings_record.research_center_slug = next(iter(center_slugs))
-    created = updated = 0
-    for source in source_records:
-        try:
-            source_id = UUID(str(source.get("id")))
-        except (TypeError, ValueError):
-            continue
-        record = (await db.execute(select(Partner).where(Partner.research_partner_id == source_id))).scalar_one_or_none()
-        values = {
-            "research_partner_id": source_id,
-            "slug": source.get("slug") or f"partner-{str(source_id)[:8]}",
-            "name": source.get("name") or "Unnamed partner",
-            "description": source.get("about") or source.get("description") or "",
-            "about": source.get("about"),
-            "logo_url": source.get("logo_url") or source.get("logo_image_url"),
-            "website_url": source.get("website") or source.get("website_url"),
-            "country": source.get("country"),
-            "partner_type": source.get("partner_type"),
-            "partnership_level": source.get("partnership_level"),
-            "relationship_status": source.get("status") or "active",
-            "research_center_id": (center_by_partner.get(str(source_id)) or (None, None))[0],
-            "research_center_slug": (center_by_partner.get(str(source_id)) or (None, None))[1],
-            "is_active": source.get("is_active", True),
-            "is_featured": source.get("is_featured", False),
-        }
-        if record is None:
-            db.add(Partner(**values))
-            created += 1
-        else:
-            for key, value in values.items():
-                setattr(record, key, value)
-            updated += 1
-    await record_audit(db, action="sync", entity_type="partners", entity_id="bulk", actor_id=str(user.sub), new_value={"created": created, "updated": updated}, ip_address=request.client.host if request.client else None)
-    return {"created": created, "updated": updated, "total": created + updated}
 
 
-@router.get("/{resource}/{record_id}")
-async def get_resource(resource: str, record_id: UUID, db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.read"))):
+@router.get("/{resource}/{record_id}", response_model=DynamicResourceResponse)
+async def get_resource(resource: str, record_id: UUID, db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_resource_permission("read"))):
     try:
         model = model_for_resource(resource)
     except ValueError as exc:
@@ -174,8 +87,8 @@ async def get_resource(resource: str, record_id: UUID, db: AsyncSession = Depend
     return record
 
 
-@router.get("/{resource}/{record_id}/audit")
-async def list_resource_audit(resource: str, record_id: UUID, db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.read"))):
+@router.get("/{resource}/{record_id}/audit", response_model=list[AuditRecordResponse])
+async def list_resource_audit(resource: str, record_id: UUID, db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_resource_permission("read"))):
     """Return the immutable change history used by the HERI revision panel."""
     try:
         model_for_resource(resource)
@@ -184,18 +97,21 @@ async def list_resource_audit(resource: str, record_id: UUID, db: AsyncSession =
     return (await db.execute(select(AuditLog).where(AuditLog.entity_type == resource, AuditLog.entity_id == str(record_id)).order_by(AuditLog.created_at.desc()))).scalars().all()
 
 
-@router.post("/{resource}/{record_id}/restore")
-async def restore_resource(resource: str, record_id: UUID, payload: dict[str, object], request: Request, db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(require_permission("heri.content.write"))):
+@router.post("/{resource}/{record_id}/restore", response_model=DynamicResourceResponse)
+async def restore_resource(resource: str, record_id: UUID, payload: dict[str, object], request: Request, db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(require_resource_permission("write"))):
     """Restore the changed fields captured by an audit entry and record the restore itself."""
     try:
         model = model_for_resource(resource)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    record = await db.get(model, record_id)
+    record = await lock_record(db, model, record_id)
+    if resource in READ_ONLY_RESOURCES:
+        raise HTTPException(405, "Resource is read-only")
     audit_id = payload.get("audit_id")
     direction = str(payload.get("direction", "previous"))
     if record is None or record.deleted_at is not None or not audit_id or direction not in {"previous", "new"}:
         raise HTTPException(status_code=422, detail="A valid record, audit entry, and restore direction are required")
+    reject_protected_fields(model, payload, allow={"status"})
     try:
         audit_uuid = UUID(str(audit_id))
     except ValueError as exc:
@@ -204,9 +120,31 @@ async def restore_resource(resource: str, record_id: UUID, payload: dict[str, ob
     if audit is None or audit.entity_type != resource or audit.entity_id != str(record_id):
         raise HTTPException(status_code=404, detail="Audit entry not found")
     snapshot = audit.previous_value if direction == "previous" else audit.new_value
-    values = {key: value for key, value in (snapshot or {}).items() if key in writable_fields(model)}
+    values = validated_values(model, snapshot or {})
+    require_local_fields(record, values)
+    await validate_section_values(db, model, values, record=record)
+    await validate_theme_reference(db, model, values)
+    if values:
+        require_editable(record)
+    # Publication state is restored only through the same transition policy as
+    # the explicit transition endpoint. Generic content.write must not turn a
+    # historical snapshot into an unpublished/published bypass. Submission
+    # triage remains an explicit allowlist and therefore keeps its legacy
+    # status restore behavior.
+    workflow_status = (
+        (snapshot or {}).get("status")
+        if hasattr(model, "status") and "status" not in writable_fields(model)
+        else None
+    )
+    if workflow_status is not None:
+        target = str(getattr(workflow_status, "value", workflow_status))
+        if target != getattr(record.status, "value", str(record.status)):
+            values.update(transition_values(
+                record, target, actor=user,
+                scheduled_at=values.get("scheduled_at") if target == "scheduled" else None,
+            ))
     before = {key: getattr(record, key, None) for key in values}
-    if "status" in values and hasattr(model, "status"):
+    if "status" in values and hasattr(model, "status") and not isinstance(values["status"], model.status.type.enum_class):
         values["status"] = model.status.type.enum_class(values["status"])
     for key, value in values.items():
         setattr(record, key, value)
@@ -214,8 +152,8 @@ async def restore_resource(resource: str, record_id: UUID, payload: dict[str, ob
     return record
 
 
-@router.get("/{resource}")
-async def list_resource(resource: str, page: int = Query(1, ge=1), per_page: int = Query(25, ge=1, le=100), search: str | None = Query(None, min_length=1, max_length=120), status_filter: str | None = Query(None, alias="status"), db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.read"))):
+@router.get("/{resource}", response_model=PaginatedResponse[DynamicResourceResponse])
+async def list_resource(resource: str, page: int = Query(1, ge=1), per_page: int = Query(25, ge=1, le=100), search: str | None = Query(None, min_length=1, max_length=120), status_filter: str | None = Query(None, alias="status"), db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_resource_permission("read"))):
     try:
         model = model_for_resource(resource)
     except ValueError as exc:
@@ -232,15 +170,23 @@ async def list_resource(resource: str, page: int = Query(1, ge=1), per_page: int
     return {"data": records, "meta": {"page": page, "per_page": per_page, "total": total, "pages": max(1, (total + per_page - 1) // per_page)}}
 
 
-@router.post("/{resource}", status_code=status.HTTP_201_CREATED)
-async def create_resource(resource: str, payload: dict[str, object], request: Request, db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(require_permission("heri.content.write"))):
+@router.post("/{resource}", response_model=DynamicResourceResponse, status_code=status.HTTP_201_CREATED)
+async def create_resource(resource: str, payload: dict[str, object], request: Request, db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(require_resource_permission("write"))):
     try:
         model = model_for_resource(resource)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     if resource in READ_ONLY_RESOURCES:
         raise HTTPException(status_code=405, detail="Resource is read-only")
-    values = {key: value for key, value in payload.items() if key in writable_fields(model)}
+    _require_public_resource_authority(user, resource)
+    reject_protected_fields(model, payload)
+    values = validated_values(model, payload)
+    _require_visibility_authority(user, None, values)
+    await validate_section_values(db, model, values)
+    await validate_theme_reference(db, model, values)
+    from ...models.content import PublicationStatus
+    if hasattr(model, "status") and getattr(model.status.type, "enum_class", None) is PublicationStatus:
+        values["status"] = PublicationStatus.DRAFT
     if "status" in values and hasattr(model, "status"):
         values["status"] = model.status.type.enum_class(values["status"])
     try:
@@ -248,22 +194,30 @@ async def create_resource(resource: str, payload: dict[str, object], request: Re
     except TypeError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     db.add(record)
+    await db.flush()
     await record_audit(db, action="create", entity_type=resource, entity_id=str(record.id), actor_id=str(user.sub), new_value=values, ip_address=request.client.host if request.client else None)
     return record
 
 
-@router.patch("/{resource}/{record_id}")
-async def update_resource(resource: str, record_id: UUID, payload: dict[str, object], request: Request, db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(require_permission("heri.content.write"))):
+@router.patch("/{resource}/{record_id}", response_model=DynamicResourceResponse)
+async def update_resource(resource: str, record_id: UUID, payload: dict[str, object], request: Request, db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(require_resource_permission("write"))):
     try:
         model = model_for_resource(resource)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     if resource in READ_ONLY_RESOURCES:
         raise HTTPException(status_code=405, detail="Resource is read-only")
-    record = await db.get(model, record_id)
+    _require_public_resource_authority(user, resource)
+    reject_protected_fields(model, payload)
+    record = await lock_record(db, model, record_id)
     if record is None or record.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Record not found")
-    values = {key: value for key, value in payload.items() if key in writable_fields(model)}
+    require_editable(record)
+    values = validated_values(model, payload)
+    _require_visibility_authority(user, record, values)
+    require_local_fields(record, values)
+    await validate_section_values(db, model, values, record=record)
+    await validate_theme_reference(db, model, values)
     if "status" in values and hasattr(model, "status"):
         values["status"] = model.status.type.enum_class(values["status"])
     before = {key: getattr(record, key, None) for key in values}
@@ -274,15 +228,17 @@ async def update_resource(resource: str, record_id: UUID, payload: dict[str, obj
 
 
 @router.delete("/{resource}/{record_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_resource(resource: str, record_id: UUID, request: Request, db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(require_permission("heri.content.write"))):
+async def delete_resource(resource: str, record_id: UUID, request: Request, db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(require_resource_permission("write"))):
     try:
         model = model_for_resource(resource)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     if resource in READ_ONLY_RESOURCES:
         raise HTTPException(status_code=405, detail="Resource is read-only")
-    record = await db.get(model, record_id)
+    record = await lock_record(db, model, record_id)
     if record is None or record.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Record not found")
+    require_editable(record, deleting=True)
+    await require_theme_unlinked(db, record)
     record.deleted_at = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
     await record_audit(db, action="soft_delete", entity_type=resource, entity_id=str(record.id), actor_id=str(user.sub), ip_address=request.client.host if request.client else None)

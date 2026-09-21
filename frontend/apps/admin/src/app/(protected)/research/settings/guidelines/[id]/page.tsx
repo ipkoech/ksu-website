@@ -7,7 +7,7 @@ import { SettingsOperationalDetail } from "../../_components/settings-operationa
 export default function ResearchGuidelineDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Guideline"
+      title="Guideline"
       description="View guideline content, document metadata, and review dates."
       resource={researchServiceApi.guidelines}
       backHref="/research/settings/guidelines"

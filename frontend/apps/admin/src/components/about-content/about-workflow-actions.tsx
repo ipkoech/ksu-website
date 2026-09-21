@@ -15,6 +15,7 @@ import {
   Textarea,
 } from "@ksu/ui/components";
 import { usePermissions } from "@/hooks/use-permissions";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import {
   aboutWorkflowApi,
   type AboutWorkflowAction,
@@ -75,6 +76,7 @@ export function AboutWorkflowActions({
     mutationFn: (definition: ActionDefinition) =>
       aboutWorkflowApi.transition(kind, id, definition.action, reason.trim()),
     onSuccess: async (_, definition) => {
+      void revalidatePublicContent("main", "about");
       toast.success(`${definition.label} completed`);
       setPendingAction(null);
       setReason("");

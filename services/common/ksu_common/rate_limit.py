@@ -35,7 +35,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
-from starlette.routing import Match
+from starlette.routing import compile_path
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from .cache import get_redis
@@ -78,20 +78,32 @@ def get_rate_limit_metrics() -> dict[str, int]:
     return dict(_rate_limit_health_metrics)
 
 
+def _parse_content_length(value: str | bytes) -> int:
+    # int() alone accepts signs, underscores and non-ASCII decimal digits.
+    if isinstance(value, bytes):
+        value = value.decode("ascii")
+    if not value or any(character < "0" or character > "9" for character in value):
+        raise ValueError("invalid content length")
+    return int(value)
+
+
 class RequestBodyLimitMiddleware:
     """Enforce route body limits before FastAPI reads or parses request data."""
 
     def __init__(self, app: ASGIApp, *, routes: Sequence[Any]) -> None:
         self.app = app
         self.routes = routes
+        from .response_validation import _iter_route_inspections
+
+        self._body_rules = [
+            (compile_path(item.path)[0], item.route.methods,
+             getattr(item.route.endpoint, "__max_body_bytes__", None))
+            for item in _iter_route_inspections(routes)
+        ]
 
     def _max_body_bytes(self, scope: Scope) -> int | None:
-        for route in self.routes:
-            max_body_bytes = getattr(getattr(route, "endpoint", None), "__max_body_bytes__", None)
-            if max_body_bytes is None:
-                continue
-            match, _ = route.matches(scope)
-            if match is Match.FULL:
+        for pattern, methods, max_body_bytes in self._body_rules:
+            if scope["method"] in methods and pattern.fullmatch(scope["path"]):
                 return max_body_bytes
         return None
 
@@ -120,7 +132,7 @@ class RequestBodyLimitMiddleware:
             if name.lower() != b"content-length":
                 continue
             try:
-                declared_size = int(value)
+                declared_size = _parse_content_length(value)
             except ValueError:
                 await self._send_error(
                     scope,
@@ -141,20 +153,32 @@ class RequestBodyLimitMiddleware:
                 return
 
         received_size = 0
+        exceeded = False
 
         async def limited_receive() -> Message:
-            nonlocal received_size
+            nonlocal received_size, exceeded
             message = await receive()
             if message["type"] == "http.request":
                 received_size += len(message.get("body", b""))
                 if received_size > max_body_bytes:
+                    exceeded = True
                     raise HTTPException(
                         status_code=status.HTTP_413_CONTENT_TOO_LARGE,
                         detail="Request body is too large",
                     )
             return message
 
-        await self.app(scope, limited_receive, send)
+        async def limited_send(message: Message) -> None:
+            if exceeded:
+                # Some body parsers translate receive exceptions to 400. Keep
+                # the transport's explicit size rejection and stop forwarding
+                # that parser response; no oversized body is buffered here.
+                if message["type"] == "http.response.start":
+                    await self._send_error(scope, receive, send, 413, "Request body is too large")
+                return
+            await send(message)
+
+        await self.app(scope, limited_receive, limited_send)
 
 
 def install_request_body_limit_middleware(app: FastAPI) -> None:
@@ -218,7 +242,7 @@ class RateLimiter:
         raw = f"{self.prefix}:{endpoint}:{identifier}"
         return f"ratelimit:{hashlib.sha256(raw.encode()).hexdigest()[:16]}"
 
-    def _record_backend_unavailable(self, endpoint: str) -> None:
+    def _record_backend_unavailable(self, endpoint: str, error: Exception) -> None:
         _rate_limit_health_metrics["backend_unavailable"] += 1
         logger.error(
             json.dumps(
@@ -227,10 +251,10 @@ class RateLimiter:
                     "metric": "rate_limit_backend_unavailable_total",
                     "prefix": self.prefix,
                     "endpoint": endpoint,
+                    "error_type": type(error).__name__,
                 },
                 separators=(",", ":"),
             ),
-            exc_info=True,
         )
 
     async def is_allowed(self, identifier: str, endpoint: str) -> tuple[bool, int, int]:
@@ -263,7 +287,7 @@ class RateLimiter:
             return True, remaining, 0
 
         except Exception as exc:
-            self._record_backend_unavailable(endpoint)
+            self._record_backend_unavailable(endpoint, exc)
             raise RateLimitUnavailable() from exc
 
     async def check(self, identifier: str, endpoint: str) -> dict[str, int]:
@@ -335,7 +359,7 @@ def rate_limit(
                 content_length = request.headers.get("content-length")
                 if content_length is not None:
                     try:
-                        declared_size = int(content_length)
+                        declared_size = _parse_content_length(content_length)
                     except ValueError as exc:
                         raise HTTPException(
                             status_code=status.HTTP_400_BAD_REQUEST,

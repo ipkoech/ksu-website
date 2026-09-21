@@ -73,6 +73,7 @@ import {
   Switch,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import {
   SchoolMediaPicker,
   schoolProfileDraftFrom,
@@ -645,6 +646,7 @@ export function SchoolProfileWorkspace() {
       return result;
     },
     onSuccess: async () => {
+      void revalidatePublicContent("main", "academic-schools");
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: schoolPortalQueryKeys.profile(school.id),

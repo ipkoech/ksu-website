@@ -7,11 +7,12 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ....deps import CurrentUser, DbSession, require_scope
 from ....models import Permission, Role
 from ....schemas import RoleCreate, RoleUpdate
+from ....schemas.rbac import PermissionSnapshot, RoleSnapshot
 from ....services import RBACService
 from .._fields import FieldSelection, FieldsDep, build_selector
 
@@ -26,7 +27,12 @@ class RoleCreatePayload(RoleCreate):
     permissions: list[str] = Field(default_factory=list)
 
 
-@router.get("", dependencies=[Depends(require_scope("roles.view"))])
+@router.get(
+    "",
+    response_model=SuccessResponse[list[RoleSnapshot]],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("roles.view"))],
+)
 async def list_roles(
     db: DbSession,
     _: CurrentUser,
@@ -47,7 +53,12 @@ async def list_roles(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{role_id}", dependencies=[Depends(require_scope("roles.view"))])
+@router.get(
+    "/{role_id}",
+    response_model=SuccessResponse[RoleSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("roles.view"))],
+)
 async def get_role(role_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(Role, fields)
     role = await RBACService.get_role(db, role_id)
@@ -56,7 +67,13 @@ async def get_role(role_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: Fi
     return success(data=selector.apply(role))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("roles.manage"))])
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[RoleSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("roles.manage"))],
+)
 async def create_role(data: RoleCreatePayload, db: DbSession, _: CurrentUser):
     role_data = data.model_dump(exclude={"permissions"})
     role = await RBACService.create_role(db, **role_data)
@@ -65,8 +82,18 @@ async def create_role(data: RoleCreatePayload, db: DbSession, _: CurrentUser):
     return success(data=role, message="Role created")
 
 
-@router.patch("/{role_id}", dependencies=[Depends(require_scope("roles.manage"))])
-@router.put("/{role_id}", dependencies=[Depends(require_scope("roles.manage"))])
+@router.patch(
+    "/{role_id}",
+    response_model=SuccessResponse[RoleSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("roles.manage"))],
+)
+@router.put(
+    "/{role_id}",
+    response_model=SuccessResponse[RoleSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("roles.manage"))],
+)
 async def update_role(role_id: uuid.UUID, data: RoleUpdate, db: DbSession, _: CurrentUser):
     role = await RBACService.get_role(db, role_id)
     if role is None:
@@ -83,7 +110,12 @@ async def delete_role(role_id: uuid.UUID, db: DbSession, _: CurrentUser):
     await RBACService.delete_role(db, role)
 
 
-@router.get("/{role_id}/permissions", dependencies=[Depends(require_scope("roles.view"))])
+@router.get(
+    "/{role_id}/permissions",
+    response_model=SuccessResponse[list[PermissionSnapshot]],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("roles.view"))],
+)
 async def get_role_permissions(role_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     role = await RBACService.get_role(db, role_id)
     if role is None:
@@ -93,7 +125,12 @@ async def get_role_permissions(role_id: uuid.UUID, db: DbSession, _: CurrentUser
     return success(data=selector.apply(permissions))
 
 
-@router.put("/{role_id}/permissions", dependencies=[Depends(require_scope("roles.manage"))])
+@router.put(
+    "/{role_id}/permissions",
+    response_model=SuccessResponse[RoleSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("roles.manage"))],
+)
 async def update_role_permissions(role_id: uuid.UUID, data: RolePermissionsUpdatePayload, db: DbSession, _: CurrentUser):
     role = await RBACService.get_role(db, role_id)
     if role is None:

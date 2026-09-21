@@ -1,4 +1,5 @@
-import { mainApi, schoolsApi, statsApi } from "@ksu/api-client";
+import "server-only";
+import { mainApi, schoolsApi, statsApi } from "@ksu/api-client/server";
 import type {
   Club,
   Department,
@@ -9,7 +10,7 @@ import type {
   PublicStatsResponse,
   School,
   StaffAssignment,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
 import type { Leader } from "@ksu/ui/components";
 import { getDean } from "@/lib/get-leadership";
 import {
@@ -21,6 +22,11 @@ import {
   getPublicEntityTeam,
   type PublicEntityTeam,
 } from "@/lib/public-team-data";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
+import {
+  normalizePublicListResponse,
+  normalizePublicRecordResponse,
+} from "@/lib/web-response-shapes";
 
 type SchoolResponse = {
   data?: School;
@@ -212,7 +218,9 @@ async function getSchoolBySlug(slug: string): Promise<School | null> {
       include: `departments:${departmentFields}`,
     });
 
-    return response.data ?? null;
+    const school = normalizePublicRecordResponse<School>(response);
+    if (school === undefined) throw new Error("Invalid school response");
+    return school;
   } catch {
     try {
       const response = await mainApi.get<SchoolResponse>(`/api/v1/schools/${slug}`, {
@@ -220,9 +228,11 @@ async function getSchoolBySlug(slug: string): Promise<School | null> {
         include: `departments:${departmentFields}`,
       });
 
-      return response.data ?? null;
+      const school = normalizePublicRecordResponse<School>(response);
+      if (school === undefined) throw new Error("Invalid school response");
+      return school;
     } catch {
-      return null;
+      return uncachedPublicFallback(null);
     }
   }
 }
@@ -230,9 +240,13 @@ async function getSchoolBySlug(slug: string): Promise<School | null> {
 async function getSchoolStats(slug: string): Promise<PublicStatsResponse | null> {
   try {
     const response = await statsApi.get({ scope: "school", slug });
-    return response.data ?? null;
+    const stats = normalizePublicRecordResponse<PublicStatsResponse>({
+      data: response.data,
+    });
+    if (stats === undefined) throw new Error("Invalid school stats response");
+    return stats;
   } catch {
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -241,9 +255,12 @@ async function getList<T>(
   params?: Record<string, string | number | boolean | undefined>,
 ): Promise<ListResponse<T>> {
   try {
-    return await mainApi.get<ListResponse<T>>(path, params);
+    const response = await mainApi.get<ListResponse<T>>(path, params);
+    const normalized = normalizePublicListResponse<T>(response);
+    if (!normalized) throw new Error("Invalid school related-list response");
+    return normalized;
   } catch {
-    return { data: [] };
+    return uncachedPublicFallback({ data: [] });
   }
 }
 

@@ -40,6 +40,9 @@ from sqlalchemy.orm.attributes import NO_VALUE
 
 T = TypeVar("T", bound=BaseModel)
 
+MAX_SELECTION_DEPTH = 8
+MAX_SELECTION_CHARACTERS = 16384
+
 
 # Never serialized into an API response, whatever the caller requests. Matched on
 # exact attribute name — substring matching would swallow innocent columns such as
@@ -66,6 +69,13 @@ SENSITIVE_FIELD_NAMES: frozenset[str] = frozenset(
         "continuation_token_hash",
         "secret",
         "mfa_secret",
+        "mfa_code",
+        "recovery_codes",
+        "otpauth_uri",
+        "mfa_pending_secret",
+        "mfa_pending_expires_at",
+        "mfa_last_counter",
+        "mfa_recovery_hashes",
         "mfa_enabled",
         "otp_secret",
         "totp_secret",
@@ -94,7 +104,7 @@ def scrub_sensitive(value: Any) -> Any:
             for key, item in value.items()
             if not (isinstance(key, str) and is_sensitive_field(key))
         }
-    if isinstance(value, list):
+    if isinstance(value, (list, tuple)):
         return [scrub_sensitive(item) for item in value]
     return value
 
@@ -183,6 +193,8 @@ def _default_nested_selection(always_include: set[str] | None = None) -> FieldSe
 
 
 def _add_selection(node: _SelectionNode, path: Sequence[str], fields: Sequence[str]) -> None:
+    if len(path) > MAX_SELECTION_DEPTH:
+        raise ValueError("Field selection exceeds maximum relationship depth of 8")
     current = node
     for segment in path:
         current = current.children.setdefault(segment, _SelectionNode())
@@ -233,6 +245,8 @@ def _process_paren_token(node: _SelectionNode, token: str, base_path: list[str] 
     content = content_part[:-1].strip()
 
     current_path = (base_path or []) + [name]
+    if len(current_path) > MAX_SELECTION_DEPTH:
+        raise ValueError("Field selection exceeds maximum relationship depth of 8")
     sub_tokens = _split_respecting_parens(content)
     direct_fields = []
 
@@ -263,6 +277,10 @@ def parse_field_selection(
         parse_field_selection(fields="id,title", include="author:id;editor")
         parse_field_selection(fields="id,title,author(id,name,books:id)")
     """
+    values = [fields] if isinstance(fields, str) else list(fields or [])
+    values += [include] if isinstance(include, str) else list(include or [])
+    if sum(len(value) for value in values) > MAX_SELECTION_CHARACTERS:
+        raise ValueError("Field selection exceeds maximum length of 16384 characters")
     root = _SelectionNode()
 
     field_list = [fields] if isinstance(fields, str) else (fields or [])
@@ -433,9 +451,15 @@ def _serialize_object_fields(
         if state is not None and key in state.attrs and state.attrs[key].loaded_value is NO_VALUE:
             continue
         try:
-            result[key] = getattr(data, key)
+            value = getattr(data, key)
         except AttributeError:
             continue
+        if key in relationship_names:
+            result[key] = apply_field_selection(
+                value, _default_nested_selection(always), always_include=always,
+            )
+        else:
+            result[key] = scrub_sensitive(value)
 
     for nested_key, nested_selection in selection.nested.items():
         if metadata is not None and nested_key not in relationship_names:
@@ -476,10 +500,12 @@ def _get_load_only_attributes(
     requested_columns = {
         field_name
         for field_name in (set(selection.fields) | (always_include or set()))
-        if field_name in metadata.column_names
+        if field_name in metadata.column_names and not is_sensitive_field(field_name)
     }
     if not requested_columns:
-        return ()
+        # Nested-only or unknown-only selections still need ORM identity, not
+        # every scalar column (which can include secrets and large JSON/text).
+        requested_columns = {column.key for column in sa_inspect(model_class).primary_key}
 
     return tuple(getattr(model_class, field_name) for field_name in requested_columns)
 

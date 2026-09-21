@@ -26,7 +26,6 @@ import {
   compactText,
   formatDate,
   formatLabel,
-  generateSlugParams,
   getProgramBySlug,
   getProgramScopedEvents,
   getProgramScopedNews,
@@ -45,16 +44,12 @@ import type {
   ResearchGenericRecord,
   ResearchProject,
   ResearchPublication,
-} from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+} from "@ksu/api-client/server";
 import { ProgramUpdatesSheet } from "./program-updates-sheet";
 import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.programs.list);
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -63,7 +58,7 @@ export async function generateMetadata({
 }) {
   const { slug } = await params;
   const { data } = await getProgramBySlug(slug);
-  return researchRecordMetadata(data, { fallbackTitle: "Research programme", pathname: "/programs/" + slug });
+  return researchRecordMetadata(data, { fallbackTitle: "Programme", pathname: "/programs/" + slug });
 }
 
 export default async function ProgramDetailPage({
@@ -712,7 +707,7 @@ function getProgramCoverImage(program: ResearchGenericRecord) {
     compactText(coverImage?.thumbnail_url) ||
     compactText(program.image_url) ||
     compactText(program.thumbnail_url) ||
-    "/images/research/research-projects-hero.webp"
+    "/images/research/verified/multidisciplinary-conference-2026.jpg"
   );
 }
 

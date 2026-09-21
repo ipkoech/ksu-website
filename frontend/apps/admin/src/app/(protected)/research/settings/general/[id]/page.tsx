@@ -6,7 +6,7 @@ import { ResearchAdminDetailPage } from "../../../_components/research-admin-det
 export default function ResearchGeneralSettingDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Setting"
+      title="Setting"
       description="View research configuration key, value, and status."
       resource={researchServiceApi.donationSettings}
       backHref="/research/settings/general"

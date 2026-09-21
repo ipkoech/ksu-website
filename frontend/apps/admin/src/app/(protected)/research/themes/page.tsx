@@ -54,7 +54,7 @@ const themeColumns: EditableRecordColumn<ResearchGenericRecord>[] = [
 export default function ResearchThemesPage() {
   return (
     <ResearchResourcePage
-      title="Research Themes"
+      title="Themes"
       description="Manage cross-cutting research themes used to classify projects and outputs."
       queryKey={["research", "themes"]}
       resource={researchServiceApi.themes}

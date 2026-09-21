@@ -3,6 +3,11 @@ import { Home, Search } from "lucide-react";
 import { Button } from "@ksu/ui/components";
 import { PageShell } from "@/components/site-shell";
 
+// The shared public shell reads request-time navigation/social data. Keep the
+// error page request-time rendered so a disconnected backend cannot make a
+// production build fail while prerendering Next's internal not-found route.
+export const dynamic = "force-dynamic";
+
 export default async function NotFound() {
   return (
     <PageShell>

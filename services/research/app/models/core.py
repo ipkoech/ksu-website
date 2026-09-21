@@ -118,6 +118,7 @@ class ResearchFarm(Base, SEOMixin, CoverImageRefMixin, AttachmentRefsMixin):
     """
 
     __tablename__ = "research_farms"
+    editorial_state: Mapped[str] = mapped_column(sa.String(16), nullable=False, server_default="draft")
 
     name: Mapped[str] = mapped_column(sa.String(255), nullable=False)
     slug: Mapped[str] = mapped_column(sa.String(128), unique=True, nullable=False, index=True)
@@ -273,6 +274,12 @@ class ResearchProject(Base, SEOMixin, CoverImageRefMixin, AttachmentRefsMixin):
 
     # Principal investigator
     pi_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
+
+    # Published register attribution when a Main person/school has not been linked.
+    principal_investigator_name: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    school_name: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    funder_name: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    source_references: Mapped[Optional[list[dict]]] = mapped_column(JSONB, nullable=True)
 
     project_type: Mapped[str] = mapped_column(
         sa.String(32),

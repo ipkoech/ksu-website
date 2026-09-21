@@ -1,7 +1,10 @@
 """Library ORM models."""
 
-from ksu_common.models.base import Base  # noqa: F401
+# Package-level imports register and re-export the service's ORM models.
+# ruff: noqa: F401
 
+from ksu_common.models.base import Base  # noqa: F401
+from .notification import notification_outbox
 from .library import Library, LibraryExternalLink, LibraryFile, LibraryHours
 from .resources import (
     LibraryCharge,
@@ -35,6 +38,10 @@ from .engagement import (
     SupportTicket,
 )
 
+from ksu_common.audit_relay import audit_relay_table
+
+audit_relay = audit_relay_table(Base.metadata, schema="library")
+
 __all__ = [
     "Base",
     # library
@@ -55,6 +62,14 @@ __all__ = [
     # services
     "LibraryService",
     "LibraryStatistics",
+    # assistant
+    "LibraryAssistantContext",
+    "LibraryAssistantContextSource",
+    "LibraryConversation",
+    "LibraryConversationMessage",
+    "LibraryConversationRecovery",
+    "LibraryEmailVerification",
+    "LibraryGuestSession",
     # engagement
     "LibraryInquiry",
     "SupportTicket",

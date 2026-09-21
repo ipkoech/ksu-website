@@ -406,12 +406,16 @@ class StoryContributorAccountRequestService:
         existing = result.scalar_one_or_none()
         if existing is not None:
             raise ValueError("A pending or approved contributor request already exists for this email")
-        request = StoryContributorAccountRequest(
+        # Normalize caller input once before constructing the ORM row.  The
+        # previous ``**data, email=...`` call passed duplicate keyword values
+        # and turned every valid public submission into HTTP 500.
+        payload = {
             **data,
-            email=email,
-            status="pending",
-            verification_token=secrets.token_urlsafe(32),
-        )
+            "email": email,
+            "status": "pending",
+            "verification_token": secrets.token_urlsafe(32),
+        }
+        request = StoryContributorAccountRequest(**payload)
         db.add(request)
         await db.flush()
         return request

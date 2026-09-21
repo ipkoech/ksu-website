@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { programmesApi } from "@ksu/api-client";
+import { programmesApi } from "@ksu/api-client/server";
 
 export const dynamic = "force-dynamic";
 

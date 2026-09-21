@@ -4,6 +4,8 @@ import { PublicImage } from "@/components/public/public-image";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { getPublicVcGallery } from "@/lib/vice-chancellor-data";
 
+export const revalidate = 300;
+
 export default async function ViceChancellorGalleryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const gallery = await getPublicVcGallery(slug);

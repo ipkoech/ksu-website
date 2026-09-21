@@ -3,11 +3,9 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { pageFromSearchParams } from "@ksu/ui/components";
 import { ResearchListPagination } from "../../components/research-list-pagination";
-import { Badge, FilledBadge, StatusMessage } from "../../components/research-ui";
+import { StatusMessage } from "../../components/research-ui";
 import { ResearchPortfolioHero } from "../../components/research-portfolio";
 import {
-  compactText,
-  formatLabel,
   getCenters,
   getPrograms,
   getProgramsFiltered,
@@ -16,16 +14,17 @@ import {
   filterRecordsByMonth,
   getListPageSize,
   getRecordMonths,
-  getRecordTitle,
   getRecordYears,
 } from "../../lib/research-page-model";
-import type { ResearchGenericRecord } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import { ProgramTableControls } from "./program-table-controls";
+import { ProgramsDisplay } from "../../components/research-record-displays";
+import { toResearchRecordDisplayDto } from "../../lib/research-formatters";
 
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Research Programs",
+  title: "Programs",
   description: "Institutional research programs and initiatives at Kisii University.",
 };
 
@@ -96,17 +95,18 @@ export default async function ProgramsPage({
     (params.month ? visiblePrograms.length : programs.total) / programs.perPage,
   );
   const errors = [programs.error, centers.error].filter(Boolean);
+  const programDisplayRecords = visiblePrograms.map((program) => toResearchRecordDisplayDto(program));
 
   return (
     <main id="research-main" className="min-h-screen bg-white text-foreground">
       <ResearchPortfolioHero
         eyebrow="Published program portfolio"
-        title="Research Programs"
+        title="Programs"
         body="Strategic research umbrellas coordinating projects, expertise, funding, and outputs around Kisii University priority areas."
         primary={{ label: "Explore programs", href: "#program-portfolio" }}
         secondary={{ label: "View projects", href: "/projects" }}
         illustration="programs"
-        imageSrc="/institutional-research-images/research-header1.jpg"
+        imageSrc="/images/research/headers/innovation-week-8197.jpg"
         immersive
       />
 
@@ -118,9 +118,9 @@ export default async function ProgramsPage({
           <div className="min-w-0">
             <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
               <div className="pt-1">
-                <h1 className="font-display text-3xl font-semibold leading-tight text-foreground lg:whitespace-nowrap">
+                <h2 className="font-display text-3xl font-semibold leading-tight text-foreground lg:whitespace-nowrap">
                   Program Portfolio
-                </h1>
+                </h2>
                 <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
                   Search, filter, sort, and open published research programs.
                 </p>
@@ -142,9 +142,7 @@ export default async function ProgramsPage({
             ))}
 
             {visiblePrograms.length > 0 ? (
-              <div className="mt-5">
-                <ProgramsTable programs={visiblePrograms} />
-              </div>
+              <div className="mt-5"><ProgramsDisplay programs={programDisplayRecords} /></div>
             ) : (
               <div className="mt-5">
                 <StatusMessage>
@@ -200,51 +198,6 @@ function ProgramFilters({
       sortValue={params.sort}
       sortOptions={sortOptions}
     />
-  );
-}
-
-function ProgramsTable({ programs }: { programs: ResearchGenericRecord[] }) {
-  return (
-    <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
-      <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-border bg-surface-subtle px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:grid">
-        <span>Program</span>
-        <span>Type</span>
-        <span>Status</span>
-      </div>
-      <div className="divide-y divide-border">
-        {programs.map((program) => (
-          <ProgramTableRow key={program.id} program={program} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ProgramTableRow({ program }: { program: ResearchGenericRecord }) {
-  const href = program.slug ? `/programs/${program.slug}` : "/programs";
-  const title = getRecordTitle(program, "Research program");
-
-  return (
-    <Link
-      href={href}
-      className="group grid gap-2 px-4 py-3 transition hover:bg-surface-subtle/80 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
-    >
-      <div className="min-w-0">
-        <h2 className="truncate text-sm font-semibold leading-6 text-foreground transition group-hover:text-primary">
-          {title}
-        </h2>
-        {program.code ? (
-          <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{compactText(program.code)}</p>
-        ) : null}
-      </div>
-      <div className="text-xs font-medium text-muted-foreground md:text-sm">
-        {program.program_type ? formatLabel(program.program_type) : "Program"}
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge>{formatLabel(program.status ?? (program.is_active === false ? "inactive" : "active"))}</Badge>
-        {program.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
-      </div>
-    </Link>
   );
 }
 

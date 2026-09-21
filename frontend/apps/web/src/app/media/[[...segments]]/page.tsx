@@ -20,6 +20,8 @@ function kindForSection(section: string): ContentKind {
   return section as ContentKind;
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function MediaRoutePage({
   params,
   searchParams,

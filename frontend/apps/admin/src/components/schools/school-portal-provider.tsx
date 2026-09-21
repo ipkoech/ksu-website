@@ -26,6 +26,10 @@ import {
   Mail,
   Newspaper,
   Users,
+  ClipboardList,
+  FileBarChart,
+  FolderOpen,
+  RefreshCw,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle, Skeleton } from "@ksu/ui/components";
 import { PortalShell } from "@/components/portals/portal-shell";
@@ -48,6 +52,10 @@ const SCHOOL_PORTAL_NAVIGATION = [
   { key: "inquiries", title: "Inquiries", href: "/schools/inquiries", icon: Mail },
   { key: "notifications", title: "Notifications", href: "/schools/notifications", icon: Bell },
   { key: "audit", title: "Audit Log", href: "/schools/audit", icon: History },
+  { key: "documents", title: "Documents & Evidence", href: "/schools/documents", icon: FolderOpen },
+  { key: "work_queue", title: "Work Queue", href: "/schools/work-queue", icon: ClipboardList },
+  { key: "reports", title: "Reports", href: "/schools/reports", icon: FileBarChart },
+  { key: "synchronization", title: "Synchronization", href: "/schools/synchronization", icon: RefreshCw },
 ] satisfies Array<{
   key: SchoolPortalNavigationKey;
   title: string;
@@ -112,7 +120,8 @@ export function SchoolPortalProvider({ children }: { children: ReactNode }) {
     () =>
       context
         ? SCHOOL_PORTAL_NAVIGATION.filter((item) =>
-            context.allowed_navigation.includes(item.key),
+            context.allowed_navigation.includes(item.key) ||
+            context.capabilities[`school.navigation.${item.key}`] === true,
           )
         : [],
     [context],

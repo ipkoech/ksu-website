@@ -18,6 +18,7 @@ import {
   useHeriResourceQuery,
   type HeriRecord,
 } from "@/lib/api/heri";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { HeriMediaPicker } from "./heri-media-picker";
 
 type Member = HeriRecord & {
@@ -102,6 +103,7 @@ export function TeamWorkspace() {
       return;
     try {
       await heriRequest(`/admin/team/${member.id}`, { method: "DELETE" });
+      void revalidatePublicContent("heri", "team");
       await query.refetch();
       toast.success("Team member deleted");
     } catch {

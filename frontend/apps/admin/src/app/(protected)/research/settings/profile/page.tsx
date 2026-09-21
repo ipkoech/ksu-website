@@ -52,6 +52,7 @@ import { EntityPicker } from "@/components/relationships/entity-picker";
 import { relationshipAdapters } from "@/components/relationships/relationship-adapters";
 import { ResearchSectionGuide } from "../../_components/research-guidance";
 import { ResearchSettingsWorkspaceHeader } from "../_components/settings-workspace";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 type FormValues = {
   wing: Record<string, any>;
@@ -147,6 +148,7 @@ export default function ResearchProfileSettingsPage() {
       publicResearchContextApi.update(payload, { fields: contextFields, include: contextInclude }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["research", "settings", "profile-context"] });
+      void revalidatePublicContent("research", "profile");
       toast.success("Research profile updated");
       setEditorOpen(false);
       setValues(null);
@@ -203,7 +205,7 @@ export default function ResearchProfileSettingsPage() {
     <div>
       <div className="space-y-4 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-background p-3">
-          <ResearchSectionGuide title="Research Settings" className="mr-auto" />
+          <ResearchSectionGuide title="Settings" className="mr-auto" />
           {profileActions.map((action) => {
             const Icon = action.icon;
             return (

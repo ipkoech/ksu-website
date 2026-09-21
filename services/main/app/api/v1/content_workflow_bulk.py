@@ -8,12 +8,13 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, status
 from pydantic import Field
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import CurrentUser, DbSession
 from ...schemas.base import BaseSchema
 from ...schemas.content_workflow import ContentWorkflowActionRequest
 from .content_workflow import run_content_workflow_action
+from ...schemas.public_api import BulkWorkflowResult
 
 router = APIRouter()
 
@@ -32,7 +33,11 @@ class BulkWorkflowRequest(BaseSchema):
     items: list[BulkWorkflowItem] = Field(min_length=1, max_length=MAX_BULK_ITEMS)
 
 
-@router.post("/bulk")
+@router.post(
+    "/bulk",
+    response_model=SuccessResponse[list[BulkWorkflowResult]],
+    response_model_exclude_unset=True,
+)
 async def run_bulk_content_workflow_action(data: BulkWorkflowRequest, db: DbSession, user: CurrentUser):
     """Apply one workflow action to many records, reporting per-item outcomes.
 

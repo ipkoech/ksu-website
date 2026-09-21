@@ -2,25 +2,27 @@
 
 from __future__ import annotations
 
+from ...core.auth import require_library_transfer
+from ...services.ownership import lock_owner, validate_transfer_destination
+
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.auth import TokenPayload
-from ksu_contracts.rbac import has_scope
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 from ksu_common.cache import cache_response
-from ...services.cache import invalidate_library_caches
 from ksu_common.audit import audit_action
 from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
 from ksu_common.rate_limit import rate_limit
 from ksu_common.rate_limit import RateLimiter
 
-from ...core.auth import get_optional_user, require_library_scope, requires_scope
+from ...core.auth import has_library_permission, get_optional_user, require_library_scope, requires_scope
 from ...core.database import get_db
 from ...models import (
     LibraryGuide,
@@ -54,8 +56,14 @@ from ...schemas import (
     SupportTicketCreate,
     SupportTicketOut,
     SupportTicketUpdate,
+    LibraryGuideSnapshot,
+    LibraryPolicyPageSnapshot,
+    LibrarySpecialistSnapshot,
+    LibraryWorkflowSnapshot,
+    LibraryRegulationSnapshot,
 )
 from ...services import engagement as svc
+from ...services.media import require_public_documents
 
 _LIBRARY_INQUIRY_EMAIL_LIMITER = RateLimiter(
     requests=10, window=3600, prefix="library:inquiries:email"
@@ -96,7 +104,7 @@ async def _find_duplicate_ticket(db: AsyncSession, data: SupportTicketCreate):
 inquiries_router = APIRouter(prefix="/library/inquiries", tags=["Library Inquiries"])
 
 
-@inquiries_router.get("/")
+@inquiries_router.get("/", response_model=SuccessResponse[list[LibraryInquiryOut]])
 @cache_response(
     timeout=60, vary_on=("library_id", "status", "page", "per_page", "include_total")
 )
@@ -125,7 +133,7 @@ async def list_inquiries(
     )
 
 
-@inquiries_router.get("/{inquiry_id}")
+@inquiries_router.get("/{inquiry_id}", response_model=SuccessResponse[LibraryInquiryOut])
 @cache_response(timeout=30, vary_on=())
 async def get_inquiry(
     request: Request,
@@ -138,7 +146,7 @@ async def get_inquiry(
     return success(data=LibraryInquiryOut.model_validate(inquiry).model_dump())
 
 
-@inquiries_router.post("/")
+@inquiries_router.post("/", response_model=SuccessResponse[LibraryInquiryOut])
 @rate_limit(
     requests=5,
     window=300,
@@ -179,7 +187,7 @@ async def submit_inquiry(
     )
 
 
-@inquiries_router.post("/{inquiry_id}/reply")
+@inquiries_router.post("/{inquiry_id}/reply", response_model=SuccessResponse[LibraryInquiryOut])
 @audit_action(
     "inquiry.reply", target_type="LibraryInquiry", target_id_param="inquiry_id"
 )
@@ -201,7 +209,7 @@ async def reply_to_inquiry(
     return success(data=LibraryInquiryOut.model_validate(inquiry).model_dump())
 
 
-@inquiries_router.patch("/{inquiry_id}")
+@inquiries_router.patch("/{inquiry_id}", response_model=SuccessResponse[LibraryInquiryOut])
 @audit_action(
     "inquiry.update", target_type="LibraryInquiry", target_id_param="inquiry_id"
 )
@@ -238,7 +246,7 @@ async def delete_inquiry(
 tickets_router = APIRouter(prefix="/library/tickets", tags=["Library Support Tickets"])
 
 
-@tickets_router.get("/")
+@tickets_router.get("/", response_model=SuccessResponse[list[SupportTicketOut]])
 @cache_response(
     timeout=60,
     vary_on=("status", "category", "assigned_to", "page", "per_page", "include_total"),
@@ -269,7 +277,7 @@ async def list_tickets(
     )
 
 
-@tickets_router.get("/{ticket_id}")
+@tickets_router.get("/{ticket_id}", response_model=SuccessResponse[SupportTicketOut])
 @cache_response(timeout=30, vary_on=())
 async def get_ticket(
     request: Request,
@@ -281,7 +289,7 @@ async def get_ticket(
     return success(data=SupportTicketOut.model_validate(ticket).model_dump())
 
 
-@tickets_router.post("/")
+@tickets_router.post("/", response_model=SuccessResponse[SupportTicketOut])
 @rate_limit(
     requests=5,
     window=300,
@@ -315,7 +323,7 @@ async def create_ticket(
     )
 
 
-@tickets_router.patch("/{ticket_id}")
+@tickets_router.patch("/{ticket_id}", response_model=SuccessResponse[SupportTicketOut])
 @audit_action("ticket.update", target_type="SupportTicket", target_id_param="ticket_id")
 async def update_ticket(
     request: Request,
@@ -347,10 +355,11 @@ regulations_router = APIRouter(
 
 
 async def invalidate_public_library_cache() -> None:
-    await invalidate_library_caches()
+    """Compatibility shim; cache invalidation runs after commit in app middleware."""
+    return None
 
 
-@regulations_router.get("/")
+@regulations_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryRegulationSnapshot]])
 async def list_regulations(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -363,7 +372,7 @@ async def list_regulations(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     if is_writer:
         require_library_scope(user, "library.read", library_id)
     result = await svc.list_regulations(
@@ -387,7 +396,7 @@ async def list_regulations(
     )
 
 
-@regulations_router.get("/{regulation_id}")
+@regulations_router.get("/{regulation_id}", response_model_exclude_unset=True, response_model=SuccessResponse[LibraryRegulationSnapshot])
 async def get_regulation(
     request: Request,
     regulation_id: uuid.UUID,
@@ -395,7 +404,7 @@ async def get_regulation(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     regulation = (
         await svc.get_regulation(db, regulation_id)
         if is_writer
@@ -408,7 +417,7 @@ async def get_regulation(
     return success(data=selector.apply(data))
 
 
-@regulations_router.post("/")
+@regulations_router.post("/", response_model=SuccessResponse[LibraryRegulationOut])
 @audit_action("regulation.create", target_type="LibraryRegulation", include_body=True)
 async def create_regulation(
     request: Request,
@@ -417,6 +426,10 @@ async def create_regulation(
     user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     require_library_scope(user, "library.write", data.library_id)
+    try:
+        await require_public_documents(data.document_id)
+    except (ValueError, httpx.HTTPError) as exc:
+        raise HTTPException(status_code=422, detail="Referenced document is unavailable or not public") from exc
     regulation = await svc.create_regulation(db, data)
     await invalidate_public_library_cache()
     return success(
@@ -425,7 +438,7 @@ async def create_regulation(
     )
 
 
-@regulations_router.patch("/{regulation_id}")
+@regulations_router.patch("/{regulation_id}", response_model=SuccessResponse[LibraryRegulationOut])
 @audit_action(
     "regulation.update",
     target_type="LibraryRegulation",
@@ -439,9 +452,16 @@ async def update_regulation(
     user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     existing = await svc.get_regulation(db, regulation_id)
+    await lock_owner(db, existing)
     require_library_scope(user, "library.write", existing.library_id)
+    try:
+        await require_public_documents(data.document_id)
+    except (ValueError, httpx.HTTPError) as exc:
+        raise HTTPException(status_code=422, detail="Referenced document is unavailable or not public") from exc
     if "library_id" in data.model_fields_set:
         require_library_scope(user, "library.write", data.library_id)
+        require_library_transfer(user, existing.library_id, data.library_id)
+        await validate_transfer_destination(db, existing.library_id, data.library_id)
     regulation = await svc.update_regulation(db, regulation_id, data)
     await invalidate_public_library_cache()
     return success(data=LibraryRegulationOut.model_validate(regulation).model_dump())
@@ -460,6 +480,7 @@ async def delete_regulation(
     user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     existing = await svc.get_regulation(db, regulation_id)
+    await lock_owner(db, existing)
     require_library_scope(user, "library.admin", existing.library_id)
     await svc.delete_regulation(db, regulation_id)
     await invalidate_public_library_cache()
@@ -472,7 +493,7 @@ specialists_router = APIRouter(
 )
 
 
-@specialists_router.get("/")
+@specialists_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibrarySpecialistSnapshot]])
 async def list_specialists(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -486,7 +507,7 @@ async def list_specialists(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     if is_writer:
         require_library_scope(user, "library.read", library_id)
     result = await svc.list_specialists(
@@ -505,7 +526,7 @@ async def list_specialists(
     return success(data=selector.apply(data), meta=result.meta)
 
 
-@specialists_router.post("/")
+@specialists_router.post("/", response_model=SuccessResponse[LibrarySpecialistOut])
 @audit_action("specialist.create", target_type="LibrarySpecialist", include_body=True)
 async def create_specialist(
     request: Request,
@@ -522,7 +543,7 @@ async def create_specialist(
     )
 
 
-@specialists_router.patch("/{specialist_id}")
+@specialists_router.patch("/{specialist_id}", response_model=SuccessResponse[LibrarySpecialistOut])
 @audit_action(
     "specialist.update",
     target_type="LibrarySpecialist",
@@ -536,9 +557,12 @@ async def update_specialist(
     user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     existing = await svc.get_specialist(db, specialist_id)
+    await lock_owner(db, existing)
     require_library_scope(user, "library.write", existing.library_id)
     if "library_id" in data.model_fields_set:
         require_library_scope(user, "library.write", data.library_id)
+        require_library_transfer(user, existing.library_id, data.library_id)
+        await validate_transfer_destination(db, existing.library_id, data.library_id)
     specialist = await svc.update_specialist(db, specialist_id, data)
     await invalidate_public_library_cache()
     return success(data=LibrarySpecialistOut.model_validate(specialist).model_dump())
@@ -557,6 +581,7 @@ async def delete_specialist(
     user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     existing = await svc.get_specialist(db, specialist_id)
+    await lock_owner(db, existing)
     require_library_scope(user, "library.admin", existing.library_id)
     await svc.delete_specialist(db, specialist_id)
     await invalidate_public_library_cache()
@@ -567,7 +592,7 @@ async def delete_specialist(
 guides_router = APIRouter(prefix="/library/guides", tags=["Library Guides"])
 
 
-@guides_router.get("/")
+@guides_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryGuideSnapshot]])
 async def list_guides(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -582,7 +607,7 @@ async def list_guides(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     if is_writer:
         require_library_scope(user, "library.read", library_id)
     result = await svc.list_guides(
@@ -602,7 +627,7 @@ async def list_guides(
     return success(data=selector.apply(data), meta=result.meta)
 
 
-@guides_router.get("/slug/{slug}")
+@guides_router.get("/slug/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[LibraryGuideSnapshot])
 async def get_guide_by_slug(
     request: Request,
     slug: str,
@@ -610,15 +635,15 @@ async def get_guide_by_slug(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     guide = await svc.get_guide_by_slug(db, slug, public_only=not is_writer)
     if is_writer:
         require_library_scope(user, "library.read", guide.library_id)
     selector = FieldSelector(LibraryGuide, fields, always_include={"id"})
-    return success(data=selector.apply(svc._guide_out(guide).model_dump(mode="json")))
+    return success(data=selector.apply(svc._guide_out(guide, public_only=not is_writer).model_dump(mode="json")))
 
 
-@guides_router.post("/")
+@guides_router.post("/", response_model=SuccessResponse[LibraryGuideOut])
 @audit_action("guide.create", target_type="LibraryGuide", include_body=True)
 async def create_guide(
     request: Request,
@@ -635,7 +660,7 @@ async def create_guide(
     )
 
 
-@guides_router.patch("/{guide_id}")
+@guides_router.patch("/{guide_id}", response_model=SuccessResponse[LibraryGuideOut])
 @audit_action("guide.update", target_type="LibraryGuide", target_id_param="guide_id")
 async def update_guide(
     request: Request,
@@ -645,9 +670,12 @@ async def update_guide(
     user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     existing = await svc.get_guide(db, guide_id)
+    await lock_owner(db, existing)
     require_library_scope(user, "library.write", existing.library_id)
     if "library_id" in data.model_fields_set:
         require_library_scope(user, "library.write", data.library_id)
+        require_library_transfer(user, existing.library_id, data.library_id)
+        await validate_transfer_destination(db, existing.library_id, data.library_id)
     guide = await svc.update_guide(db, guide_id, data)
     await invalidate_public_library_cache()
     return success(data=LibraryGuideOut.model_validate(guide).model_dump())
@@ -662,6 +690,7 @@ async def delete_guide(
     user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     existing = await svc.get_guide(db, guide_id)
+    await lock_owner(db, existing)
     require_library_scope(user, "library.admin", existing.library_id)
     await svc.delete_guide(db, guide_id)
     await invalidate_public_library_cache()
@@ -672,7 +701,7 @@ async def delete_guide(
 workflows_router = APIRouter(prefix="/library/workflows", tags=["Library Workflows"])
 
 
-@workflows_router.get("/")
+@workflows_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryWorkflowSnapshot]])
 async def list_workflows(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -684,7 +713,7 @@ async def list_workflows(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     if is_writer:
         require_library_scope(user, "library.read", library_id)
     result = await svc.list_workflows(
@@ -701,7 +730,7 @@ async def list_workflows(
     return success(data=selector.apply(data), meta=result.meta)
 
 
-@workflows_router.get("/slug/{slug}")
+@workflows_router.get("/slug/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[LibraryWorkflowSnapshot])
 async def get_workflow_by_slug(
     request: Request,
     slug: str,
@@ -709,15 +738,15 @@ async def get_workflow_by_slug(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     workflow = await svc.get_workflow_by_slug(db, slug, public_only=not is_writer)
     if is_writer:
         require_library_scope(user, "library.read", workflow.library_id)
     selector = FieldSelector(LibraryWorkflow, fields, always_include={"id"})
-    return success(data=selector.apply(svc._workflow_out(workflow).model_dump(mode="json")))
+    return success(data=selector.apply(svc._workflow_out(workflow, public_only=not is_writer).model_dump(mode="json")))
 
 
-@workflows_router.post("/")
+@workflows_router.post("/", response_model=SuccessResponse[LibraryWorkflowOut])
 @audit_action("workflow.create", target_type="LibraryWorkflow", include_body=True)
 async def create_workflow(
     request: Request,
@@ -734,7 +763,7 @@ async def create_workflow(
     )
 
 
-@workflows_router.patch("/{workflow_id}")
+@workflows_router.patch("/{workflow_id}", response_model=SuccessResponse[LibraryWorkflowOut])
 @audit_action(
     "workflow.update", target_type="LibraryWorkflow", target_id_param="workflow_id"
 )
@@ -746,9 +775,12 @@ async def update_workflow(
     user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     existing = await svc.get_workflow(db, workflow_id)
+    await lock_owner(db, existing)
     require_library_scope(user, "library.write", existing.library_id)
     if "library_id" in data.model_fields_set:
         require_library_scope(user, "library.write", data.library_id)
+        require_library_transfer(user, existing.library_id, data.library_id)
+        await validate_transfer_destination(db, existing.library_id, data.library_id)
     workflow = await svc.update_workflow(db, workflow_id, data)
     await invalidate_public_library_cache()
     return success(data=LibraryWorkflowOut.model_validate(workflow).model_dump())
@@ -765,6 +797,7 @@ async def delete_workflow(
     user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     existing = await svc.get_workflow(db, workflow_id)
+    await lock_owner(db, existing)
     require_library_scope(user, "library.admin", existing.library_id)
     await svc.delete_workflow(db, workflow_id)
     await invalidate_public_library_cache()
@@ -775,7 +808,7 @@ async def delete_workflow(
 policies_router = APIRouter(prefix="/library/policies", tags=["Library Policies"])
 
 
-@policies_router.get("/")
+@policies_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryPolicyPageSnapshot]])
 async def list_policies(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -788,7 +821,7 @@ async def list_policies(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     if is_writer:
         require_library_scope(user, "library.read", library_id)
     result = await svc.list_policies(
@@ -806,7 +839,7 @@ async def list_policies(
     return success(data=selector.apply(data), meta=result.meta)
 
 
-@policies_router.get("/slug/{slug}")
+@policies_router.get("/slug/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[LibraryPolicyPageSnapshot])
 async def get_policy_by_slug(
     request: Request,
     slug: str,
@@ -814,7 +847,7 @@ async def get_policy_by_slug(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     policy = await svc.get_policy_by_slug(db, slug, public_only=not is_writer)
     if is_writer:
         require_library_scope(user, "library.read", policy.library_id)
@@ -823,7 +856,7 @@ async def get_policy_by_slug(
     return success(data=selector.apply(data))
 
 
-@policies_router.post("/")
+@policies_router.post("/", response_model=SuccessResponse[LibraryPolicyPageOut])
 @audit_action("policy.create", target_type="LibraryPolicyPage", include_body=True)
 async def create_policy(
     request: Request,
@@ -840,7 +873,7 @@ async def create_policy(
     )
 
 
-@policies_router.patch("/{policy_id}")
+@policies_router.patch("/{policy_id}", response_model=SuccessResponse[LibraryPolicyPageOut])
 @audit_action(
     "policy.update", target_type="LibraryPolicyPage", target_id_param="policy_id"
 )
@@ -852,9 +885,12 @@ async def update_policy(
     user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     existing = await svc.get_policy(db, policy_id)
+    await lock_owner(db, existing)
     require_library_scope(user, "library.write", existing.library_id)
     if "library_id" in data.model_fields_set:
         require_library_scope(user, "library.write", data.library_id)
+        require_library_transfer(user, existing.library_id, data.library_id)
+        await validate_transfer_destination(db, existing.library_id, data.library_id)
     policy = await svc.update_policy(db, policy_id, data)
     await invalidate_public_library_cache()
     return success(data=LibraryPolicyPageOut.model_validate(policy).model_dump())
@@ -871,6 +907,7 @@ async def delete_policy(
     user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     existing = await svc.get_policy(db, policy_id)
+    await lock_owner(db, existing)
     require_library_scope(user, "library.admin", existing.library_id)
     await svc.delete_policy(db, policy_id)
     await invalidate_public_library_cache()

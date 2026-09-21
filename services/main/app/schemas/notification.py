@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import Field, model_validator
 
-from .base import BaseReadSchema, BaseSchema
+from .base import BaseReadSchema, BaseSchema, optional_snapshot
 
 
 class NotificationTemplateCreate(BaseSchema):
@@ -149,3 +149,56 @@ class NotificationPreferences(BaseSchema):
     email: bool = True
     sms: bool = False
     push: bool = False
+
+
+class NotificationSnapshot(BaseSchema):
+    """Field-selection-safe notification payload for authenticated clients."""
+
+    id: uuid.UUID | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    user_id: uuid.UUID | None = None
+    template_id: uuid.UUID | None = None
+    source_event_id: uuid.UUID | None = None
+    title: str | None = None
+    subject: str | None = None
+    message: str | None = None
+    notification_type: str | None = None
+    priority: str | None = None
+    action_url: str | None = None
+    scope_type: str | None = None
+    scope_id: uuid.UUID | None = None
+    channels: list[str] | None = None
+    payload: dict[str, Any] | None = None
+    is_read: bool | None = None
+    read_at: datetime | None = None
+    expires_at: datetime | None = None
+    dispatched_at: datetime | None = None
+    archived_at: datetime | None = None
+    deliveries: list[NotificationDeliveryRead] | None = None
+    template: dict[str, Any] | None = None
+    user: dict[str, Any] | None = None
+    deleted_at: datetime | None = None
+
+
+NotificationTemplateSnapshot = optional_snapshot(
+    "NotificationTemplateSnapshot", NotificationTemplateRead
+)
+NotificationDeliverySnapshot = optional_snapshot(
+    "NotificationDeliverySnapshot", NotificationDeliveryRead
+)
+NotificationSnapshotRead = optional_snapshot("NotificationSnapshotRead", NotificationRead)
+
+
+__all__ = [
+    "NotificationTemplateCreate",
+    "NotificationTemplateUpdate",
+    "NotificationTemplateRead",
+    "NotificationDeliveryRead",
+    "NotificationCreate",
+    "NotificationBroadcastCreate",
+    "NotificationUpdate",
+    "NotificationRead",
+    "NotificationPreferences",
+    "NotificationSnapshot",
+]

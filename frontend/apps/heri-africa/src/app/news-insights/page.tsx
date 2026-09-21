@@ -5,6 +5,7 @@ import { Reveal } from "../../components/motion/reveal";
 import { SiteShell } from "../../components/site-shell";
 import { getEvents, getNews, getOpportunities } from "../../lib/api";
 import { withBasePath } from "../../lib/base-path";
+import { markUncacheableIfFailed } from "../../lib/server-fallback";
 
 export const metadata: Metadata = {
   title: "News & Insights",
@@ -18,6 +19,11 @@ export const revalidate = 300;
 export default async function NewsInsightsPage() {
   const [newsResult, eventsResult, opportunitiesResult] =
     await Promise.allSettled([getNews(), getEvents(), getOpportunities()]);
+  markUncacheableIfFailed([
+    newsResult,
+    eventsResult,
+    opportunitiesResult,
+  ]);
   const news = newsResult.status === "fulfilled" ? newsResult.value : [];
   const events = eventsResult.status === "fulfilled" ? eventsResult.value : [];
   const opportunities =

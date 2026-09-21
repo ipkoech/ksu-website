@@ -30,6 +30,8 @@ interface ScrollRevealProps {
   once?: boolean;
   rootMargin?: string;
   as?: ElementType;
+  /** Preserve route-level verification markers through the motion primitive. */
+  "data-server-data-display"?: string;
 }
 
 const variantStyles: Record<AnimationVariant, { initial: string; animate: string }> = {
@@ -73,6 +75,7 @@ export function ScrollReveal({
   once = true,
   rootMargin = "0px 0px 12% 0px",
   as = "div",
+  "data-server-data-display": serverDataDisplay,
 }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(true);
@@ -135,8 +138,9 @@ export function ScrollReveal({
     {
       ref,
       "data-scroll-reveal": true,
+      "data-server-data-display": serverDataDisplay,
       className: cn(
-        prefersReducedMotion ? undefined : "transition-[opacity,transform] ease-[cubic-bezier(0.16,1,0.3,1)]",
+        prefersReducedMotion ? undefined : "transition-[opacity,transform] ease-in-out",
         "motion-reduce:!translate-x-0 motion-reduce:!translate-y-0 motion-reduce:!scale-100 motion-reduce:!opacity-100 motion-reduce:!transition-none",
         visible ? styles.animate : styles.initial,
         className
@@ -227,7 +231,7 @@ export function ScrollRevealGroup({
         key={index}
         data-scroll-reveal
         className={cn(
-          prefersReducedMotion ? undefined : "transition-[opacity,transform] ease-[cubic-bezier(0.16,1,0.3,1)]",
+          prefersReducedMotion ? undefined : "transition-[opacity,transform] ease-in-out",
           "motion-reduce:!translate-x-0 motion-reduce:!translate-y-0 motion-reduce:!scale-100 motion-reduce:!opacity-100 motion-reduce:!transition-none",
           visible ? styles.animate : styles.initial
         )}

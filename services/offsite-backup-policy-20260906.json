@@ -1,0 +1,17 @@
+{
+  "result": "passed",
+  "captured_at": "2026-09-06",
+  "command": "python scripts/validate_production_env.py --env production --service main",
+  "checks": {
+    "valid_config": "accepted absolute WAL and logical-backup off-host paths, archive mode on, off-site requirement true and retention 14",
+    "missing_backup_target": "rejected",
+    "offsite_requirement_false": "rejected",
+    "nonpositive_retention": "rejected",
+    "deploy_wrapper_production_override": "forces REQUIRE_OFFSITE_BACKUP=true when ENV_NAME=production"
+  },
+  "scope": "Static configuration and deploy-wrapper policy checks; no remote storage was modified.",
+  "limitations": [
+    "The path checks cannot prove that the mount is independent, encrypted, writable or retained by a remote storage provider.",
+    "A scheduled production backup and restore drill remain deployment gates."
+  ]
+}

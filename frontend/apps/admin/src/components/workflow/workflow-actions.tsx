@@ -18,6 +18,7 @@ import {
   type ContentWorkflowQueueItem,
 } from "@ksu/api-client";
 import { toast } from "@ksu/ui";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import {
   Button,
   Dialog,
@@ -123,6 +124,7 @@ export function WorkflowActions({
       setComments("");
       setScheduledFor("");
       onCompleted();
+      void revalidatePublicContent("main", item.content_type);
     },
     onError: () => toast.error("Workflow action could not be completed"),
   });

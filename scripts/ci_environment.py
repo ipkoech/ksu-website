@@ -104,7 +104,19 @@ def main() -> int:
     command = args.command[1:] if args.command[:1] == ["--"] else args.command
     if not command:
         parser.error("a command is required after the service name")
-    return subprocess.run(command, cwd=REPO, env=service_environment(args.service), check=False).returncode
+    environment = service_environment(args.service)
+    # Focused commands are commonly invoked from the repository root (for
+    # example, ``pytest services/library/tests/test_scope_filtering.py``). Put
+    # the selected app package first so this helper has the same import
+    # isolation as the full backend runner without changing the caller's cwd.
+    service_path = str(REPO / "services" / args.service)
+    common_path = str(REPO / "services" / "common")
+    contracts_path = str(REPO / "services" / "contracts")
+    existing_pythonpath = environment.get("PYTHONPATH")
+    environment["PYTHONPATH"] = os.pathsep.join(
+        path for path in (service_path, common_path, contracts_path, existing_pythonpath) if path
+    )
+    return subprocess.run(command, cwd=REPO, env=environment, check=False).returncode
 
 
 if __name__ == "__main__":

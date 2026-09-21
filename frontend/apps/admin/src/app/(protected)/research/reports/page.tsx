@@ -1,17 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BarChart3, Bot, Database, Download, FileText, FlaskConical, HandCoins, Leaf, LineChart, ScrollText } from "lucide-react";
 import { toast } from "sonner";
 import { researchServiceApi } from "@ksu/api-client";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ksu/ui/components";
 import { PageHeader } from "@/components/layout";
 import { ResearchSectionGuide } from "../_components/research-guidance";
+import { waitForResearchExportPoll } from "../_components/export-polling";
 
 const exportGroups = [
   {
-    title: "Research Portfolio",
+    title: "Portfolio",
     description: "Projects, centers, programs, themes, and partnerships.",
     icon: FlaskConical,
     resources: [
@@ -60,7 +61,7 @@ const exportGroups = [
 
 const standardReports = [
   {
-    title: "Research Portfolio Summary",
+    title: "Portfolio Summary",
     description: "A management view of active projects, programs, centers, and strategic themes.",
     href: "/research/projects",
     icon: BarChart3,
@@ -96,22 +97,33 @@ function downloadBlob(blob: Blob, filename: string) {
 
 function ExportButton({ resourceKey, label }: { resourceKey: string; label: string }) {
   const [isExporting, setIsExporting] = useState(false);
+  const exportAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => exportAbortRef.current?.abort(), []);
 
   const handleExport = async () => {
     setIsExporting(true);
+    const controller = new AbortController();
+    exportAbortRef.current?.abort();
+    exportAbortRef.current = controller;
     try {
-      const queued = await researchServiceApi.startExport(resourceKey, { format: "csv" });
+      const queued = await researchServiceApi.startExport(resourceKey, { format: "csv" }, { signal: controller.signal });
       toast.success("Export queued. Download will start when the file is ready.");
-      const job = await waitForExportJob(queued.data.job_id);
+      const job = await waitForExportJob(queued.data.job_id, controller.signal);
       if (job.status !== "SUCCESS") {
         throw new Error(job.error || "Research export failed");
       }
-      const blob = await researchServiceApi.downloadExportJob(queued.data.job_id);
+      const blob = await researchServiceApi.downloadExportJob(queued.data.job_id, { signal: controller.signal });
       downloadBlob(blob, `${resourceKey}-export.csv`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Research export failed");
+      if (!controller.signal.aborted) {
+        toast.error(error instanceof Error ? error.message : "Research export failed");
+      }
     } finally {
-      setIsExporting(false);
+      if (exportAbortRef.current === controller) {
+        exportAbortRef.current = null;
+        setIsExporting(false);
+      }
     }
   };
 
@@ -123,13 +135,13 @@ function ExportButton({ resourceKey, label }: { resourceKey: string; label: stri
   );
 }
 
-async function waitForExportJob(jobId: string) {
+async function waitForExportJob(jobId: string, signal: AbortSignal) {
   for (let attempt = 0; attempt < 180; attempt += 1) {
-    const response = await researchServiceApi.getExportJob(jobId);
+    const response = await researchServiceApi.getExportJob(jobId, { signal });
     if (!["PENDING", "STARTED", "RETRY"].includes(response.data.status)) {
       return response.data;
     }
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await waitForResearchExportPoll(signal);
   }
   throw new Error("Export is still processing. Check again shortly.");
 }
@@ -138,14 +150,14 @@ export default function ResearchReportsPage() {
   return (
     <div>
       <PageHeader
-        title="Research Reports"
+        title="Reports"
         description="Export research datasets and prepare standard reporting workflows for the research office."
         primaryAction={{ label: "Report Outputs", href: "/research/reports/outputs" }}
         secondaryActions={[{ label: "All Outputs", href: "/research/outputs", variant: "outline" as const }]}
       />
 
       <div className="space-y-6 p-6">
-        <ResearchSectionGuide title="Research Reports" />
+        <ResearchSectionGuide title="Reports" />
 
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="lg:col-span-2">

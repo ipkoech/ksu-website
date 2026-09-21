@@ -12,9 +12,17 @@ function normalizeRole(role: string) {
 }
 
 export function usePermissions() {
-  const { user } = useAuth();
+  const { user, activeService } = useAuth();
+
+  const serviceScopes = useMemo(() => {
+    if (!activeService) return [];
+    return user?.services.find((service) => service.service === activeService)?.scopes ?? [];
+  }, [activeService, user]);
 
   const permissions = useMemo(() => {
+    if (activeService) {
+      return new Set(serviceScopes.map(normalizePermission));
+    }
     if (!user?.permissions) return new Set<string>();
 
     const allPermissions = new Set<string>();
@@ -24,7 +32,7 @@ export function usePermissions() {
     });
 
     return allPermissions;
-  }, [user]);
+  }, [activeService, serviceScopes, user]);
 
   const equivalentScopes = (scope: string): string[] => {
     const normalized = normalizePermission(scope);

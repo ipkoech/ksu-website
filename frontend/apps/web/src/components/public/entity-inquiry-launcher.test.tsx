@@ -2,6 +2,7 @@ import "@testing-library/jest-dom/vitest";
 
 import React from "react";
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -32,8 +33,7 @@ describe("EntityInquiryLauncher", () => {
       unobserve() {}
       disconnect() {}
     };
-    document.body.innerHTML =
-      '<div id="ksu-contextual-action-slot"></div>';
+    document.body.innerHTML = '<div id="ksu-contextual-action-slot"></div>';
   });
 
   it("renders an icon-only launcher in the shared action dock", () => {
@@ -87,12 +87,13 @@ describe("EntityInquiryLauncher", () => {
   });
 
   it("announces success and clears a submitted draft", async () => {
-    vi.mocked(mainApi.post).mockResolvedValueOnce({
-      data: {
-        reference_number: "KSU-2026-001",
-        target_entity_name: "Kisii University",
-      },
-    });
+    let resolve!: (value: unknown) => void;
+    vi.mocked(mainApi.post).mockImplementationOnce(
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        }),
+    );
     render(<EntityInquiryLauncher target={target} />);
 
     fireEvent.click(
@@ -120,10 +121,25 @@ describe("EntityInquiryLauncher", () => {
     fireEvent.submit(
       screen.getByRole("button", { name: "Send message" }).closest("form")!,
     );
-
+    expect(screen.getByLabelText("Subject")).toBeDisabled();
+    fireEvent.submit(screen.getByLabelText("Subject").closest("form")!);
+    expect(mainApi.post).toHaveBeenCalledTimes(1);
     expect(
-      await screen.findByText("KSU-2026-001"),
-    ).toHaveAttribute("aria-label", "Reference number KSU-2026-001");
+      vi.mocked(mainApi.post).mock.calls[0]![2]!.headers!["Idempotency-Key"],
+    ).toMatch(/^[a-f0-9-]{36}$/);
+    await act(async () =>
+      resolve({
+        data: {
+          reference_number: "KSU-2026-001",
+          target_entity_name: "Kisii University",
+        },
+      }),
+    );
+
+    expect(await screen.findByText("KSU-2026-001")).toHaveAttribute(
+      "aria-label",
+      "Reference number KSU-2026-001",
+    );
     expect(screen.getByRole("status")).toHaveTextContent(
       "Message sent. Reference number KSU-2026-001.",
     );
@@ -150,5 +166,42 @@ describe("EntityInquiryLauncher", () => {
 
     expect(screen.getByLabelText("Your name")).toHaveFocus();
     expect(mainApi.post).not.toHaveBeenCalled();
+  });
+
+  it("aborts an in-flight inquiry when the launcher unmounts", () => {
+    let requestSignal: AbortSignal | null | undefined;
+    vi.mocked(mainApi.post).mockImplementationOnce((_path, _payload, options) => {
+      requestSignal = options?.signal;
+      return new Promise(() => {});
+    });
+    const view = render(<EntityInquiryLauncher target={target} />);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Send a message to Kisii University",
+      }),
+    );
+    fireEvent.change(screen.getByLabelText("Your name"), {
+      target: { value: "Amina" },
+    });
+    fireEvent.change(screen.getByLabelText("Email address"), {
+      target: { value: "amina@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Subject"), {
+      target: { value: "Support" },
+    });
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "Please help." },
+    });
+    fireEvent.click(
+      screen.getByText(
+        "I consent to Kisii University using these details to respond to this inquiry.",
+      ),
+    );
+    fireEvent.submit(screen.getByLabelText("Message").closest("form")!);
+
+    expect(requestSignal).toBeDefined();
+    view.unmount();
+    expect(requestSignal?.aborted).toBe(true);
   });
 });

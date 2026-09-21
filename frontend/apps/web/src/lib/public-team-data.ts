@@ -1,10 +1,20 @@
+import "server-only";
 import {
   mainApi,
   publicEntityApi,
   type PublicEntityTeam,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
+import { normalizePublicRecordResponse } from "@/lib/web-response-shapes";
+import type { AcademicOrganization } from "./public-team-types";
 
-export type { PublicEntityTeam } from "@ksu/api-client";
+export type {
+  AcademicOrganization,
+  AcademicOrganizationMember,
+  AcademicOrganizationTier,
+} from "./public-team-types";
+
+export type { PublicEntityTeam } from "@ksu/api-client/server";
 
 export type PublicTeamEntityType =
   | "school"
@@ -82,34 +92,6 @@ type PublicTeamResponse = {
   data?: PublicTeamData;
 };
 
-export type AcademicOrganizationMember = {
-  id: string;
-  name: string;
-  title?: string | null;
-  position?: string | null;
-  role?: string | null;
-  profile_url?: string | null;
-  photo_url?: string | null;
-  entity?: {
-    id?: string | null;
-    name?: string | null;
-    slug?: string | null;
-  } | null;
-};
-
-export type AcademicOrganizationTier = {
-  key: "dvc" | "registrar" | "deans" | string;
-  label: string;
-  members: AcademicOrganizationMember[];
-  count?: number;
-};
-
-export type AcademicOrganization = {
-  key: string;
-  label?: string | null;
-  tiers: AcademicOrganizationTier[];
-};
-
 type AcademicOrganizationResponse = {
   data?: AcademicOrganization | null;
 };
@@ -119,10 +101,12 @@ export async function getAcademicOrganization(): Promise<AcademicOrganization | 
     const response = await mainApi.get<AcademicOrganizationResponse>(
       "/api/v1/public/team/academic-organization",
     );
-    return response.data ?? null;
+    const normalized = normalizePublicRecordResponse<AcademicOrganization>(response);
+    if (normalized === undefined) throw new Error("Malformed academic organization response");
+    return normalized;
   } catch (error) {
     console.error("Failed to load academic organization:", error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -141,10 +125,16 @@ export async function getPublicTeam(
       },
     );
 
-    return response.data ?? null;
+    const normalized = normalizePublicRecordResponse<PublicTeamData>(response);
+    if (normalized === undefined) throw new Error("Malformed public team response");
+    if (normalized === null) return null;
+    if (!Array.isArray(normalized.assignments) || !isObjectRecord(normalized.persons)) {
+      throw new Error("Malformed public team collections");
+    }
+    return normalized;
   } catch (error) {
     console.error("Failed to load public team:", error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -159,9 +149,15 @@ export async function getPublicEntityTeam(
       entityType === "school"
         ? await publicEntityApi.schoolTeam(entityId)
         : await publicEntityApi.departmentTeam(entityId);
-    return response.data ?? null;
+    const normalized = normalizePublicRecordResponse<PublicEntityTeam>(response);
+    if (normalized === undefined) throw new Error("Malformed public entity team response");
+    return normalized;
   } catch (error) {
     console.error(`Failed to load public ${entityType} team:`, error);
-    return null;
+    return uncachedPublicFallback(null);
   }
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

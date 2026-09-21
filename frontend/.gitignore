@@ -47,3 +47,15 @@ coverage/
 
 # Windows
 Thumbs.db
+
+# Apps create local links to the shared frontend/public assets.
+/apps/*/public
+
+# Local visual audit captures; keep them out of the frontend source tree.
+/audit-*.png
+/header-*.png
+/support-page-*.png
+
+# App-level Playwright screenshots and results.
+/apps/admin/*.png
+/test-results/

@@ -10,6 +10,7 @@ import {
   SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
+import { LibraryRecordsDisplay, type LibraryRecordDto } from "../../components/library-records-display";
 import {
   compactText,
   formatLabel,
@@ -24,7 +25,7 @@ export const metadata = {
   description: "Kisii University Library repository and external access links.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export default async function LibraryRepositoriesPage() {
   const [{ groupedLinks, errors: linkErrors }, workflowData] = await Promise.all([
@@ -42,6 +43,16 @@ export default async function LibraryRepositoriesPage() {
       link.link_type,
     ),
   );
+  const repositoryLinkRecords: LibraryRecordDto[] = repositoryLinks.map((link) => ({
+    id: link.id,
+    icon: "database",
+    eyebrow: formatLabel(link.link_type),
+    title: link.label,
+    body: compactText(link.description) || "Access link details are maintained by the library team.",
+    meta: [link.branch.name, safeExternalUrl(link.url) ? "Verified URL" : "Link pending"],
+    href: safeExternalUrl(link.url),
+    action: "Open link",
+  }));
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
@@ -171,20 +182,7 @@ export default async function LibraryRepositoriesPage() {
           <StatusMessage>No repository or external access links are available yet.</StatusMessage>
         ) : (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="grid gap-4">
-              {repositoryLinks.map((link) => (
-                <CompactRecord
-                  key={link.id}
-                  icon="database"
-                  eyebrow={formatLabel(link.link_type)}
-                  title={link.label}
-                  body={compactText(link.description) || "Access link details are maintained by the library team."}
-                  meta={[link.branch.name, safeExternalUrl(link.url) ? "Verified URL" : "Link pending"]}
-                  href={safeExternalUrl(link.url) ?? undefined}
-                  action="Open link"
-                />
-              ))}
-            </div>
+            <LibraryRecordsDisplay records={repositoryLinkRecords} marker="library-repository-links" />
             <aside className="space-y-5">
               <MetricStrip
                 items={[

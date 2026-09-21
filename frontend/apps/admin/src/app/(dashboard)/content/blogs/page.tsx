@@ -22,6 +22,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@ksu/ui";
 import { useState } from "react";
 import { TableSearch } from "@/components/shared/table-search";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const getBlogColumns = ({
   canDelete,
@@ -123,6 +124,7 @@ export default function BlogsPage() {
     mutationFn: (id: string) => blogsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.blogs.all });
+      void revalidatePublicContent("main", "blogs");
       toast.success("Story deleted successfully");
     },
     onError: () => {

@@ -1,8 +1,6 @@
 import Link from "next/link";
-import type { ComponentProps } from "react";
 import type { LibrarySearchResult } from "@ksu/api-client";
 import {
-  CompactRecord,
   LibraryContentBand,
   LibrarySectionHeading,
   PillNav,
@@ -12,16 +10,16 @@ import {
 } from "../../components/library-ui";
 import {
   compactText,
-  formatLabel,
   getLibrarySearchData,
 } from "../../lib/library-public-data";
+import { LibrarySearchResultsDisplay, type SearchResultDto } from "./search-results-display";
 
 export const metadata = {
   title: "Search",
   description: "Search Kisii University Library catalog and electronic resources.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type SearchPageProps = {
   searchParams?: Promise<{
@@ -29,8 +27,6 @@ type SearchPageProps = {
     branch?: string;
   }>;
 };
-
-type CompactRecordIcon = ComponentProps<typeof CompactRecord>["icon"];
 
 export default async function LibrarySearchPage({ searchParams }: SearchPageProps) {
   const params = (await searchParams) ?? {};
@@ -79,6 +75,29 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
             access_type: item.access_type,
           },
         }));
+  const toDto = (item: LibrarySearchResult): SearchResultDto => ({
+    id: item.id,
+    type: item.type,
+    title: item.title,
+    description: compactText(item.description) || "",
+    libraryName: item.library_name ?? null,
+    url: item.url ?? null,
+    metadata: {
+      resourceType: valueAsText(item.metadata.resource_type),
+      status: valueAsText(item.metadata.status),
+      slug: valueAsText(item.metadata.slug),
+      workflowType: valueAsText(item.metadata.workflow_type),
+    },
+  });
+  const resultPanels = [
+    { title: "Catalog records", href: `/catalog?q=${encodeURIComponent(query)}`, results: catalogResults.map(toDto) },
+    { title: "Electronic resources", href: `/electronic?q=${encodeURIComponent(query)}`, results: electronicResults.map(toDto) },
+    { title: "Guides", href: `/guides?q=${encodeURIComponent(query)}`, results: groupedResults.guides.map(toDto) },
+    { title: "Specialists", href: `/specialists?q=${encodeURIComponent(query)}`, results: groupedResults.specialists.map(toDto) },
+    { title: "Workflows", href: "/services", results: groupedResults.workflows.map(toDto) },
+    { title: "Policies", href: "/policies", results: groupedResults.policies.map(toDto) },
+    { title: "Editorial content", href: "/news", results: editorial.data.map(toDto) },
+  ];
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
@@ -175,15 +194,7 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
           body={`${total} combined result${total === 1 ? "" : "s"} returned.`}
         />
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="grid gap-5 xl:grid-cols-2">
-            <UnifiedResultPanel title="Catalog records" href={`/catalog?q=${encodeURIComponent(query)}`} results={catalogResults} />
-            <UnifiedResultPanel title="Electronic resources" href={`/electronic?q=${encodeURIComponent(query)}`} results={electronicResults} />
-            <UnifiedResultPanel title="Guides" href={`/guides?q=${encodeURIComponent(query)}`} results={groupedResults.guides} />
-            <UnifiedResultPanel title="Specialists" href={`/specialists?q=${encodeURIComponent(query)}`} results={groupedResults.specialists} />
-            <UnifiedResultPanel title="Workflows" href="/services" results={groupedResults.workflows} />
-            <UnifiedResultPanel title="Policies" href="/policies" results={groupedResults.policies} />
-            <UnifiedResultPanel title="Editorial content" href="/news" results={editorial.data} />
-          </div>
+          <LibrarySearchResultsDisplay panels={resultPanels} />
           <SidePanel title="Quick access" eyebrow="Search">
             <div className="grid gap-3 text-sm">
               <Link href="/catalog" className="font-semibold text-primary">Advanced catalog</Link>
@@ -196,49 +207,6 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
         </div>
       </LibraryContentBand>
     </main>
-  );
-}
-
-function UnifiedResultPanel({
-  title,
-  href,
-  results,
-}: {
-  title: string;
-  href: string;
-  results: LibrarySearchResult[];
-}) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
-        <Link href={href} className="text-sm font-semibold text-primary">
-          Open
-        </Link>
-      </div>
-      <div className="mt-4 grid gap-3">
-        {results.length > 0 ? (
-          results.slice(0, 6).map((item) => (
-            <CompactRecord
-              key={`${item.type}-${item.id}`}
-              icon={iconForType(item.type)}
-              eyebrow={formatLabel(item.type)}
-              title={item.title}
-              body={compactText(item.description) || "Result details are being updated."}
-              meta={[
-                item.library_name,
-                formatMetadataValue(item.metadata.resource_type),
-                formatMetadataValue(item.metadata.status),
-              ]}
-              href={resultHref(item)}
-              action="Open result"
-            />
-          ))
-        ) : (
-          <p className="py-4 text-sm text-slate-600">No records available.</p>
-        )}
-      </div>
-    </section>
   );
 }
 
@@ -255,46 +223,6 @@ function groupUnifiedResults(results: LibrarySearchResult[]) {
   };
 }
 
-function resultHref(item: LibrarySearchResult) {
-  if (item.type === "workflow") {
-    return workflowHref(item.metadata.workflow_type) ?? item.url ?? null;
-  }
-  if (item.url) return item.url;
-  const slug = rawMetadataString(item.metadata.slug);
-  if (item.type === "guide" && slug) return `/guides/${slug}`;
-  if (item.type === "policy" && slug) return `/policies/${slug}`;
-  return null;
-}
-
-function workflowHref(workflowType: unknown) {
-  const type = rawMetadataString(workflowType);
-  if (type === "borrowing_access") return "/borrowing";
-  if (type === "remote_access") return "/remote-access";
-  if (type === "repository_deposit") return "/repositories";
-  if (type === "digital_scholarship") return "/digital-scholarship";
-  return null;
-}
-
-function iconForType(type: string): CompactRecordIcon {
-  if (type === "catalog" || type === "guide") return "book";
-  if (["database", "e_resource", "electronic", "workflow"].includes(type)) {
-    return "database";
-  }
-  if (type === "specialist") return "users";
-  if (type === "policy") return "shield";
-  return "file";
-}
-
-function formatMetadataValue(value: unknown) {
-  if (typeof value === "string" || typeof value === "number") {
-    return formatLabel(String(value));
-  }
-  return null;
-}
-
-function rawMetadataString(value: unknown) {
-  if (typeof value === "string" || typeof value === "number") {
-    return compactText(value);
-  }
-  return null;
+function valueAsText(value: unknown) {
+  return typeof value === "string" || typeof value === "number" ? compactText(value) : null;
 }

@@ -22,6 +22,7 @@ import {
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { Link2, Search, Unlink } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 export function RelatedRecordsGrid({ children }: { children: ReactNode }) {
   return <div className="grid gap-4 lg:grid-cols-2">{children}</div>;
@@ -131,6 +132,8 @@ export function BindableRecordsCard({
     mutationFn: bindRecord,
     onSuccess: async () => {
       await invalidate();
+      const resourceKey = typeof queryKey[1] === "string" ? queryKey[1] : undefined;
+      if (resourceKey) void revalidatePublicContent("research", resourceKey);
       setDialogOpen(false);
       toast.success(`${relationshipLabel} linked`);
     },
@@ -141,6 +144,8 @@ export function BindableRecordsCard({
     mutationFn: unbindRecord,
     onSuccess: async () => {
       await invalidate();
+      const resourceKey = typeof queryKey[1] === "string" ? queryKey[1] : undefined;
+      if (resourceKey) void revalidatePublicContent("research", resourceKey);
       toast.success(`${relationshipLabel} removed`);
     },
     onError: () => toast.error(`Failed to remove ${relationshipLabel.toLowerCase()}`),

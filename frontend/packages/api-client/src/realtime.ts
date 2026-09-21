@@ -1,5 +1,5 @@
-import { getStoredAccessToken } from "./auth-tokens";
-import { getMainApiBaseUrl, getResearchApiBaseUrl } from "./service-urls";
+import { mainApi, researchApi } from "./client";
+import { getMainApiBaseUrl } from "./service-urls";
 
 export type RealtimeNotification = {
   id: string;
@@ -63,35 +63,8 @@ export type ResearchRealtimeConfig = {
 };
 
 export const realtimeApi = {
-  ticket: () => {
-    const token = getStoredAccessToken();
-    return fetch(new URL("/api/v1/realtime/ticket", getMainApiBaseUrl()), {
-      method: "POST",
-      credentials: "include",
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    }).then(async (response) => {
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.detail || error.message || "Realtime ticket request failed");
-      }
-      return response.json() as Promise<{
-        data: { ticket: string; expires_in: number };
-      }>;
-    });
-  },
-  researchConfig: () => {
-    const token = getStoredAccessToken();
-    return fetch(new URL("/api/v1/realtime/research/config", getResearchApiBaseUrl()), {
-      credentials: "include",
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    }).then(async (response) => {
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.detail || error.message || "Realtime config request failed");
-      }
-      return response.json() as Promise<{ data: ResearchRealtimeConfig }>;
-    });
-  },
+  ticket: () => mainApi.post<{ data: { ticket: string; expires_in: number } }>("/api/v1/realtime/ticket"),
+  researchConfig: () => researchApi.get<{ data: ResearchRealtimeConfig }>("/api/v1/realtime/research/config"),
 };
 
 type Listener = (event: RealtimeEvent) => void;
@@ -106,15 +79,21 @@ export class RealtimeClient {
   private listeners = new Set<Listener>();
   private statusListeners = new Set<StatusListener>();
   private seenEventIds = new Set<string>();
-  private readonly cursorStorageKey = "ksu:realtime:last-event-id";
 
   constructor(
     private readonly options: {
       baseUrl?: string;
       maxReconnectDelayMs?: number;
       ticketProvider?: () => Promise<{ ticket: string; expires_in: number }>;
+      /** Scope resume cursors when one browser serves multiple accounts. */
+      cursorStorageKey?: string;
     } = {}
-  ) {}
+  ) {
+    this.cursorStorageKey =
+      options.cursorStorageKey ?? "ksu:realtime:last-event-id";
+  }
+
+  private readonly cursorStorageKey: string;
 
   connect() {
     if (typeof window === "undefined") return;

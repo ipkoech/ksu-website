@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import heriLogo from "../../public/logos/heri-africa-logo.svg";
 import { withBasePath } from "../lib/base-path";
 
 type NavItem = {
@@ -78,7 +77,7 @@ export function SiteHeader() {
             </span>
             <span className="flex min-w-0 items-center gap-2">
               <Image
-                src={heriLogo}
+                src={withBasePath("/logos/heri-africa-logo.svg")}
                 alt="HERI Africa — Harnessing Education Research for Impact in Africa"
                 className="h-16 w-auto shrink-0"
                 priority

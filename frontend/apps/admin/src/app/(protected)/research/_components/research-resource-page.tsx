@@ -37,13 +37,15 @@ import {
   type ResearchGenericRecord,
 } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
   getResearchFieldHelp,
   getResearchGuidance,
   ResearchSectionGuide,
 } from "./research-guidance";
+import { waitForResearchExportPoll } from "./export-polling";
+import { inferResearchRevalidationResource } from "./research-revalidation";
 
 type ResourceApi = {
   list: (params?: Record<string, string | number | boolean | undefined>) => Promise<{
@@ -228,6 +230,9 @@ export function ResearchBulkActions({
   const resolvedExportResource = exportResource ?? resourceKey;
   const [isExporting, setIsExporting] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const exportAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => exportAbortRef.current?.abort(), []);
 
   const handleTemplateDownload = async () => {
     if (!resolvedImportResource) return;
@@ -242,19 +247,27 @@ export function ResearchBulkActions({
   const handleExportDownload = async () => {
     if (!resolvedExportResource) return;
     setIsExporting(true);
+    const controller = new AbortController();
+    exportAbortRef.current?.abort();
+    exportAbortRef.current = controller;
     try {
-      const queued = await researchServiceApi.startExport(resolvedExportResource, { format: "csv" });
+      const queued = await researchServiceApi.startExport(resolvedExportResource, { format: "csv" }, { signal: controller.signal });
       toast.success("Export queued. Download will start when the file is ready.");
-      const job = await waitForExportJob(queued.data.job_id);
+      const job = await waitForExportJob(queued.data.job_id, controller.signal);
       if (job.status !== "SUCCESS") {
         throw new Error(job.error || "Research export failed");
       }
-      const blob = await researchServiceApi.downloadExportJob(queued.data.job_id);
+      const blob = await researchServiceApi.downloadExportJob(queued.data.job_id, { signal: controller.signal });
       downloadBlob(blob, `${resolvedExportResource}-export.csv`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Research export failed");
+      if (!controller.signal.aborted) {
+        toast.error(error instanceof Error ? error.message : "Research export failed");
+      }
     } finally {
-      setIsExporting(false);
+      if (exportAbortRef.current === controller) {
+        exportAbortRef.current = null;
+        setIsExporting(false);
+      }
     }
   };
 
@@ -733,13 +746,13 @@ export function ResearchResourceAuditPreview({
   );
 }
 
-async function waitForExportJob(jobId: string) {
+async function waitForExportJob(jobId: string, signal: AbortSignal) {
   for (let attempt = 0; attempt < 180; attempt += 1) {
-    const response = await researchServiceApi.getExportJob(jobId);
+    const response = await researchServiceApi.getExportJob(jobId, { signal });
     if (!["PENDING", "STARTED", "RETRY"].includes(response.data.status)) {
       return response.data;
     }
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await waitForResearchExportPoll(signal);
   }
   throw new Error("Export is still processing. Check again shortly.");
 }
@@ -856,7 +869,8 @@ export function ResearchResourcePage({
       }
       emptyMessage={emptyMessage}
       emptyState={guidance?.emptyState}
-      resourceKey={importResource}
+      resourceKey={importResource ?? inferResearchRevalidationResource(queryKey)}
+      revalidateResearchCache
       buildPayload={(values, editingRecord) => ({
         ...defaults,
         ...(buildPayload ? buildPayload(values, editingRecord) : values),

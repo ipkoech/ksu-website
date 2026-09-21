@@ -1,25 +1,4 @@
-import {
-  Award,
-  BarChart3,
-  BookOpen,
-  Briefcase,
-  Building2,
-  ClipboardList,
-  FlaskConical,
-  Globe,
-  GraduationCap,
-  Heart,
-  HeartHandshake,
-  Lightbulb,
-  Mail,
-  Newspaper,
-  Rocket,
-  Star,
-  Target,
-  TrendingUp,
-  Users,
-  Zap,
-} from "lucide-react";
+import { BookOpen, FlaskConical, HeartHandshake, Lightbulb, Mail, Newspaper } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export type NavSubItem = {
@@ -45,299 +24,282 @@ export type NavSection = {
 
 export const researchNavConfig: NavSection[] = [
   {
-    title: "Research",
+    title: "About",
+    href: "/about",
+    icon: Mail,
+    description: "Overview, Team, Centers.",
+    activePaths: ["/about", "/team", "/centers"],
+    columns: [
+  {
+    "heading": "About",
+    "items": [
+      {
+        "title": "Overview",
+        "href": "/about",
+        "description": ""
+      },
+      {
+        "title": "Team",
+        "href": "/team",
+        "description": ""
+      },
+      {
+        "title": "Centers",
+        "href": "/centers",
+        "description": ""
+      }
+    ]
+  }
+],
+  },
+  {
+    title: "Discovery",
     href: "/projects",
     icon: FlaskConical,
-    description:
-      "Research programmes, projects, centers, facilities, expertise, and outputs.",
-    activePaths: [
-      "/projects",
-      "/programs",
-      "/centers",
-      "/facilities",
-      "/expertise",
-      "/publications",
-      "/outputs",
-    ],
+    description: "Projects, Programs, Publications, Outputs, Facilities, Expertise.",
+    activePaths: ["/projects", "/programs", "/publications", "/outputs", "/facilities", "/expertise"],
     columns: [
+  {
+    "heading": "Discover",
+    "items": [
       {
-        heading: "Research & Discovery",
-        items: [
-          {
-            title: "Research Programs",
-            href: "/programs",
-            description: "Multi-year institutional initiatives.",
-          },
-          {
-            title: "Highlights & Breakthroughs",
-            href: "/projects",
-            description: "Featured projects and discoveries.",
-          },
-          {
-            title: "Facilities & Labs",
-            href: "/facilities",
-            description: "Research infrastructure and resources.",
-          },
-          {
-            title: "Researchers & Innovators",
-            href: "/expertise",
-            description: "Find research contacts and specialists.",
-          },
-          {
-            title: "Publications",
-            href: "/publications",
-            description: "Articles, journals, papers, and research records.",
-          },
-          {
-            title: "Research Outputs",
-            href: "/outputs",
-            description:
-              "Repository outputs, reports, briefs, and documents.",
-          },
-        ],
+        "title": "Projects",
+        "href": "/projects",
+        "description": ""
       },
-    ],
+      {
+        "title": "Programs",
+        "href": "/programs",
+        "description": ""
+      },
+      {
+        "title": "Publications",
+        "href": "/publications",
+        "description": ""
+      },
+      {
+        "title": "Outputs",
+        "href": "/outputs",
+        "description": ""
+      },
+      {
+        "title": "Facilities",
+        "href": "/facilities",
+        "description": ""
+      },
+      {
+        "title": "Expertise",
+        "href": "/expertise",
+        "description": ""
+      }
+    ]
+  }
+],
   },
   {
-    title: "Innovation & Partnerships",
+    title: "Innovation",
     href: "/innovations",
     icon: Lightbulb,
-    description:
-      "IP, startups, commercialization, partners, donors, and collaborations.",
-    activePaths: ["/innovations", "/startups", "/incubation", "/competitions", "/technology-transfer", "/partners"],
+    description: "Innovations, Startups, Incubation, Competitions, Technology Transfer, Partners, How to Partner, Partner Stories.",
+    activePaths: ["/innovations", "/startups", "/incubation", "/competitions", "/technology-transfer", "/partners", "/partners/how-to-partner", "/partners/stories"],
     columns: [
+  {
+    "heading": "Innovation",
+    "items": [
       {
-        heading: "Innovation",
-        items: [
-          {
-            title: "Intellectual Property",
-            href: "/innovations",
-            description: "IP licensing, patents, and inventions.",
-            icon: Zap,
-          },
-          {
-            title: "Startups & Incubation",
-            href: "/startups",
-            description: "Support for entrepreneurs and ventures.",
-            icon: Rocket,
-          },
-          {
-            title: "Incubation Support",
-            href: "/incubation",
-            description: "Cohorts, mentorship, and venture support.",
-            icon: Users,
-          },
-          {
-            title: "Competitions & Hackathons",
-            href: "/competitions",
-            description: "Innovation challenges and prizes.",
-            icon: Award,
-          },
-          {
-            title: "Technology Transfer",
-            href: "/technology-transfer",
-            description: "Licensing, disclosures, and transfer cases.",
-            icon: Briefcase,
-          },
-          {
-            title: "Innovation Ecosystem",
-            href: "/partners",
-            description: "Partners that help ideas reach the market.",
-            icon: Globe,
-          },
-        ],
+        "title": "Innovations",
+        "href": "/innovations",
+        "description": ""
       },
       {
-        heading: "Partner Engagement",
-        items: [
-          {
-            title: "How to Partner",
-            href: "/partners/how-to-partner",
-            description: "Collaboration routes and engagement process.",
-            icon: Building2,
-          },
-          {
-            title: "Case Studies & Testimonials",
-            href: "/partners/stories",
-            description: "Published partner-linked work and outcomes.",
-            icon: Star,
-          },
-          {
-            title: "Partner Directory",
-            href: "/partners",
-            description: "Corporate, community, and institutional partners.",
-            icon: Globe,
-          },
-        ],
+        "title": "Startups",
+        "href": "/startups",
+        "description": ""
       },
-    ],
+      {
+        "title": "Incubation",
+        "href": "/incubation",
+        "description": ""
+      },
+      {
+        "title": "Competitions",
+        "href": "/competitions",
+        "description": ""
+      },
+      {
+        "title": "Technology Transfer",
+        "href": "/technology-transfer",
+        "description": ""
+      }
+    ]
   },
   {
-    title: "Community & Impact",
+    "heading": "Partnerships",
+    "items": [
+      {
+        "title": "Partners",
+        "href": "/partners",
+        "description": ""
+      },
+      {
+        "title": "How to Partner",
+        "href": "/partners/how-to-partner",
+        "description": ""
+      },
+      {
+        "title": "Partner Stories",
+        "href": "/partners/stories",
+        "description": ""
+      }
+    ]
+  }
+],
+  },
+  {
+    title: "Impact",
     href: "/community-impact",
     icon: HeartHandshake,
-    description:
-      "Community initiatives, impact metrics, consultancies, and mentorship.",
-    activePaths: [
-      "/community-impact",
-      "/impact-metrics",
-      "/consultancies",
-      "/mentorship",
-    ],
+    description: "Community Impact, Impact Metrics, Sustainability, University Farm.",
+    activePaths: ["/community-impact", "/impact-metrics", "/sustainability", "/farm"],
     columns: [
+  {
+    "heading": "Impact",
+    "items": [
       {
-        heading: "Community Engagement",
-        items: [
-          {
-            title: "Community Initiatives",
-            href: "/community-impact",
-            description: "Outreach projects and local impact.",
-            icon: Users,
-          },
-          {
-            title: "Extension Programs",
-            href: "/community-impact",
-            description: "Knowledge transfer and community service.",
-            icon: HeartHandshake,
-          },
-        ],
+        "title": "Community Impact",
+        "href": "/community-impact",
+        "description": ""
       },
       {
-        heading: "Impact & Support",
-        items: [
-          {
-            title: "Impact Overview",
-            href: "/impact-metrics",
-            description: "Social and economic contribution.",
-            icon: Target,
-          },
-          {
-            title: "Metrics & Data",
-            href: "/impact-metrics",
-            description: "Performance dashboard.",
-            icon: BarChart3,
-          },
-          {
-            title: "Consultancies",
-            href: "/consultancies",
-            description: "Professional expert services.",
-            icon: Briefcase,
-          },
-          {
-            title: "Mentorship",
-            href: "/mentorship",
-            description: "Mentor and mentee programme details.",
-            icon: GraduationCap,
-          },
-        ],
+        "title": "Impact Metrics",
+        "href": "/impact-metrics",
+        "description": ""
       },
-    ],
+      {
+        "title": "Sustainability",
+        "href": "/sustainability",
+        "description": ""
+      },
+      {
+        "title": "University Farm",
+        "href": "/farm",
+        "description": ""
+      }
+    ]
+  }
+],
   },
   {
-    title: "Resources & Tools",
-    href: "/resources-tools",
-    icon: ClipboardList,
-    description: "Policies, templates, guides, forms, and research resources.",
-    activePaths: [
-      "/resources-tools",
-      "/outputs",
-      "/forms",
-      "/guidelines",
-      "/services",
-    ],
-    columns: [
-      {
-        heading: "Resources",
-        items: [
-          {
-            title: "Resource Library",
-            href: "/resources-tools",
-            description: "Policies, templates, reports, and guides.",
-            icon: BookOpen,
-          },
-          {
-            title: "Forms & Templates",
-            href: "/forms",
-            description: "Ethics, booking, and collaboration forms.",
-            icon: ClipboardList,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    title: "Funding",
+    title: "Support",
     href: "/funding",
-    icon: Rocket,
-    description: "Grant calls, scholarships, endowments, and training.",
-    activePaths: [
-      "/funding",
-      "/capacity",
-      "/scholarships",
-      "/endowments",
-      "/training",
-    ],
+    icon: BookOpen,
+    description: "Funding Opportunities, Scholarships, Endowments, Training, Mentorship, Capacity Building, Services, Consultancies, Resources & Tools, Forms & Templates, Guidelines.",
+    activePaths: ["/funding", "/scholarships", "/endowments", "/training", "/mentorship", "/capacity", "/services", "/consultancies", "/resources-tools", "/forms", "/guidelines"],
     columns: [
+  {
+    "heading": "Funding",
+    "items": [
       {
-        heading: "Funding",
-        items: [
-          {
-            title: "Scholarships",
-            href: "/scholarships",
-            description: "Student funding and awards.",
-            icon: GraduationCap,
-          },
-          {
-            title: "Funding Opportunities",
-            href: "/funding",
-            description: "Grants and calls for proposals.",
-            icon: Award,
-          },
-          {
-            title: "Endowment Funds",
-            href: "/endowments",
-            description: "Permanent funding initiatives.",
-            icon: Heart,
-          },
-          {
-            title: "Training Programs",
-            href: "/training",
-            description: "Workshops, webinars, and bootcamps.",
-            icon: BookOpen,
-          },
-          {
-            title: "Capacity Building",
-            href: "/capacity",
-            description: "Training and development.",
-            icon: TrendingUp,
-          },
-        ],
+        "title": "Funding Opportunities",
+        "href": "/funding",
+        "description": ""
       },
-    ],
+      {
+        "title": "Scholarships",
+        "href": "/scholarships",
+        "description": ""
+      },
+      {
+        "title": "Endowments",
+        "href": "/endowments",
+        "description": ""
+      }
+    ]
+  },
+  {
+    "heading": "Development",
+    "items": [
+      {
+        "title": "Training",
+        "href": "/training",
+        "description": ""
+      },
+      {
+        "title": "Mentorship",
+        "href": "/mentorship",
+        "description": ""
+      },
+      {
+        "title": "Capacity Building",
+        "href": "/capacity",
+        "description": ""
+      },
+      {
+        "title": "Services",
+        "href": "/services",
+        "description": ""
+      },
+      {
+        "title": "Consultancies",
+        "href": "/consultancies",
+        "description": ""
+      }
+    ]
+  },
+  {
+    "heading": "Resources",
+    "items": [
+      {
+        "title": "Resources & Tools",
+        "href": "/resources-tools",
+        "description": ""
+      },
+      {
+        "title": "Forms & Templates",
+        "href": "/forms",
+        "description": ""
+      },
+      {
+        "title": "Guidelines",
+        "href": "/guidelines",
+        "description": ""
+      }
+    ]
+  }
+],
   },
   {
     title: "News & Events",
     href: "/news",
     icon: Newspaper,
-    description: "Research news, events, announcements, and gallery highlights.",
-    activePaths: ["/news"],
-    columns: [],
+    description: "News, Events.",
+    activePaths: ["/news", "/events"],
+    columns: [
+  {
+    "heading": "Updates",
+    "items": [
+      {
+        "title": "News",
+        "href": "/news",
+        "description": ""
+      },
+      {
+        "title": "Events",
+        "href": "/events",
+        "description": ""
+      }
+    ]
+  }
+],
   },
   {
-    title: "About",
-    href: "/about",
+    title: "Contact Us",
+    href: "/connect",
     icon: Mail,
-    description: "Research office mandate, leadership, team, governance, and contacts.",
-    activePaths: ["/about"],
+    description: "Contact the research office.",
+    activePaths: ["/connect"],
     columns: [],
   },
 ];
 
-export const popularSearches = [
-  "Publications",
-  "Grants",
-  "Research Centers",
-  "Innovation",
-  "Partnerships",
-  "Projects",
-];
+export const popularSearches = ["Publications", "Grants", "Centers", "Innovation", "Partnerships", "Projects"];

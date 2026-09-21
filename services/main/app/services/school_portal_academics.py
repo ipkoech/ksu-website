@@ -230,13 +230,12 @@ async def create_school_department(
         await ensure_person_in_school(
             db, school_id=context.school.id, person_id=payload["head_id"]
         )
-    department = await DepartmentService.create(
-        db,
-        **payload,
-        school_id=context.school.id,
-        wing_id=None,
-        is_active=True,
-    )
+    try:
+        department = await DepartmentService.create(
+            db, **payload, school_id=context.school.id, wing_id=None, is_active=True,
+        )
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
     if coordinator_id:
         await _sync_postgraduate_coordinator(
             db, context, department, coordinator_id
@@ -299,7 +298,10 @@ async def update_school_department(
         )
     coordinator_supplied = "postgraduate_coordinator_id" in payload
     coordinator_id = payload.get("postgraduate_coordinator_id")
-    updated = await DepartmentService.update(db, department, **payload)
+    try:
+        updated = await DepartmentService.update(db, department, **payload)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
     if coordinator_supplied:
         await _sync_postgraduate_coordinator(
             db, context, department, coordinator_id
@@ -331,7 +333,8 @@ async def department_dependency_count(
         if model is StaffAssignment:
             query = query.where(model.entity_type == "department")
         counts.append(int((await db.execute(query)).scalar_one()))
-    return sum(counts)
+    children = await db.scalar(select(func.count(Department.id)).where(Department.parent_department_id == department_id))
+    return sum(counts) + int(children or 0)
 
 
 async def delete_school_department(
@@ -343,6 +346,12 @@ async def delete_school_department(
     department = await get_school_record_or_404(
         db, Department, department_id, school_id=context.school.id
     )
+    from .department_hierarchy import lock_hierarchy, require_no_active_children
+    await lock_hierarchy(db)
+    try:
+        await require_no_active_children(db, department.id)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
     dependencies = await department_dependency_count(db, department.id)
     if dependencies or department.is_public:
         department.is_active = False

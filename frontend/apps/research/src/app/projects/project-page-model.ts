@@ -1,5 +1,5 @@
-import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
-import { compactText, formatDate } from "../../lib/research-public-data";
+import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client/server";
+import { compactText, formatDate } from "../../lib/research-formatters";
 
 type MonthOption = {
   value: string;
@@ -31,7 +31,6 @@ export function getProjectYears(projects: Array<Partial<ResearchProject>>) {
     .sort((a, b) => b - a)
     .map(String);
 }
-
 export function getProjectMonths(
   projects: Array<Partial<ResearchProject>>,
   selectedYear?: string,
@@ -77,6 +76,10 @@ export function getVisibleProjectStorySections(
 ): StorySection[] {
   return [
     {
+      title: "Overview",
+      body: compactText(project.abstract),
+    },
+    {
       title: "Background",
       body: compactText(project.background),
     },
@@ -108,6 +111,7 @@ export function getProjectTimelineLabel(project: Partial<ResearchProject>) {
     .filter(Boolean)
     .join(" - ");
 
+  if (project.source_references?.length) return range;
   return range || formatDate(project.updated_at) || formatDate(project.created_at);
 }
 

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { X, SlidersHorizontal, RotateCcw } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./sheet";
 import { Button } from "./button";
 import { Badge } from "./badge";
 import { cn } from "../../lib/utils";
@@ -86,7 +86,12 @@ export function FilterDrawerSheet({
         )}
       >
         <SheetHeader className="flex-row items-center justify-between border-b border-border px-6 py-4">
-          <SheetTitle className="text-base font-semibold">{title}</SheetTitle>
+          <div>
+            <SheetTitle className="text-base font-semibold">{title}</SheetTitle>
+            <SheetDescription className="sr-only">
+              Adjust filters for this list.
+            </SheetDescription>
+          </div>
           <div className="flex items-center gap-2">
             {showReset && onReset ? (
               <Button

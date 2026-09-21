@@ -2,11 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Search, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { buildLibrarySearchHref } from "../lib/library-home";
-import { HeroParallaxMedia, MaskedWords, RiseIn } from "./library-motion";
+import {
+  HeroParallaxMedia,
+  MaskedWords,
+  RiseIn,
+  useStableReducedMotion,
+} from "./library-motion";
 
 const searchTypes = [
   { label: "Everything", value: "everything" },
@@ -17,7 +22,7 @@ const searchTypes = [
 
 export function LibrarySearchHero() {
   const router = useRouter();
-  const reduce = useReducedMotion();
+  const reduce = useStableReducedMotion();
   const [query, setQuery] = useState("");
   const [type, setType] = useState("everything");
 
@@ -71,7 +76,7 @@ export function LibrarySearchHero() {
                 </div>
                 <button
                   type="submit"
-                  className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-secondary px-6 text-sm font-semibold text-white transition hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary/30 active:scale-[0.98]"
+                  className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[hsl(var(--secondary-deep))] px-6 text-sm font-semibold text-white transition hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary/30 active:scale-[0.98]"
                 >
                   Search
                   <ArrowRight

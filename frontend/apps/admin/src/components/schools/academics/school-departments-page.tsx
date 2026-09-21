@@ -52,6 +52,7 @@ import {
 } from "@ksu/ui/components";
 import { MediaPicker } from "@/components/media/media-picker";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { SchoolImportDialog } from "@/components/schools/imports/school-import-dialog";
 import { SchoolTeamSelect } from "@/components/schools/shared/school-reference-selectors";
 import {
@@ -243,12 +244,12 @@ function DepartmentDialog({
   }, [department, open]);
   const mutation = useMutation({
     mutationFn: () => department ? schoolPortalApi.departments.update(department.id, values) : schoolPortalApi.departments.create(values),
-    onSuccess: async () => { await onSaved(); onOpenChange(false); },
+    onSuccess: async () => { void revalidatePublicContent("main", "academic-departments"); await onSaved(); onOpenChange(false); },
     onError: (caught) => setError(caught instanceof Error ? caught.message : "Unable to save department."),
   });
   const deactivate = useMutation({
     mutationFn: () => schoolPortalApi.departments.update(department!.id, { is_active: false }),
-    onSuccess: async () => { await onSaved(); onOpenChange(false); },
+    onSuccess: async () => { void revalidatePublicContent("main", "academic-departments"); await onSaved(); onOpenChange(false); },
   });
 
   return (

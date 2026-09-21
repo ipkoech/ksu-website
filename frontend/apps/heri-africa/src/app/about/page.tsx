@@ -12,8 +12,14 @@ import {
 } from "lucide-react";
 import { SiteShell } from "../../components/site-shell";
 import { Reveal, RevealItem } from "../../components/motion/reveal";
+import {
+  ChairAboutDisplay,
+  ChairMissionDisplay,
+  ChairVisionDisplay,
+} from "../../components/data/chair-profile-display";
 import { withBasePath } from "../../lib/base-path";
 import { getChair } from "../../lib/api";
+import { uncachedFallback } from "../../lib/server-fallback";
 
 export const metadata: Metadata = {
   title: "About the Research Chair",
@@ -69,8 +75,10 @@ const approaches = [
   ],
 ] as const;
 
+export const revalidate = 300;
+
 export default async function AboutPage() {
-  const chair = await getChair().catch(() => null);
+  const chair = await getChair().catch(() => uncachedFallback(null));
   return (
     <SiteShell>
       <main className="bg-white">
@@ -117,9 +125,9 @@ export default async function AboutPage() {
             <h2 className="mt-4 text-4xl font-bold text-heri-blue">
               Who We Are
             </h2>
-            <p className="mt-5 text-base leading-7 text-slate-600">
-              {chair?.about ?? "The HERI Africa Language Education Research Chair at Kisii University advances Africa-led research in language education and foundational literacy. We produce rigorous evidence, inform policy, strengthen practice and build capacity across the continent."}
-            </p>
+            <ChairAboutDisplay
+              about={chair?.about ?? "The HERI Africa Language Education Research Chair at Kisii University advances Africa-led research in language education and foundational literacy. We produce rigorous evidence, inform policy, strengthen practice and build capacity across the continent."}
+            />
             <p className="mt-5 text-base leading-7 text-slate-600">
               Our work is grounded in the belief that children learn best in and
               through the languages they understand, and that strong language
@@ -234,9 +242,9 @@ export default async function AboutPage() {
                     Our Vision
                   </h2>
                   <div className="mt-3 h-1 w-10 bg-heri-lime" />
-                  <p className="mt-5 text-sm leading-6 text-slate-600">
-                    {chair?.vision ?? "To be a leading Africa-led Centre of Excellence in language education research, advancing foundational literacy, educational transformation, and global societal impact."}
-                  </p>
+                  <ChairVisionDisplay
+                    vision={chair?.vision ?? "To be a leading Africa-led Centre of Excellence in language education research, advancing foundational literacy, educational transformation, and global societal impact."}
+                  />
                 </div>
               </article>
             </RevealItem>
@@ -248,9 +256,9 @@ export default async function AboutPage() {
                     Our Mission
                   </h2>
                   <div className="mt-3 h-1 w-10 bg-heri-lime" />
-                  <p className="mt-5 text-sm leading-6 text-slate-600">
-                    {chair?.mission ?? "To advance impactful, policy-responsive, and practice-oriented research in language education and foundational literacy for educational transformation in Africa and beyond."}
-                  </p>
+                  <ChairMissionDisplay
+                    mission={chair?.mission ?? "To advance impactful, policy-responsive, and practice-oriented research in language education and foundational literacy for educational transformation in Africa and beyond."}
+                  />
                 </div>
               </article>
             </RevealItem>

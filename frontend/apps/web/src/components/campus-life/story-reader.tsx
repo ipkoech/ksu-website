@@ -192,7 +192,7 @@ export function StoryReader({
     );
   }
 
-  const hub = hubForCategory(story.category);
+  const _hub = hubForCategory(story.category);
   const { standfirst, body } = openingFor(story, storyBlocks(story));
   const more = relatedStories(story, stories);
   // Two of the source documents carry a real byline. The rest are authored by

@@ -16,11 +16,16 @@ export function DonationForm({
   currency: string;
   amounts: number[];
   givingOptions: GivingOption[];
-  action: (prevState: DonationFormState, formData: FormData) => Promise<DonationFormState>;
+  action: (
+    prevState: DonationFormState,
+    formData: FormData,
+  ) => Promise<DonationFormState>;
 }) {
   const [state, formAction, isPending] = useActionState(action, null);
   const presetAmounts = amounts.slice(0, 4);
-  const [selectedAmount, setSelectedAmount] = useState(presetAmounts[1] ?? presetAmounts[0]);
+  const [selectedAmount, setSelectedAmount] = useState(
+    presetAmounts[1] ?? presetAmounts[0],
+  );
   const [customAmount, setCustomAmount] = useState("");
   const [donationType, setDonationType] = useState("one_time");
   const [isTribute, setIsTribute] = useState(false);
@@ -29,6 +34,7 @@ export function DonationForm({
   return (
     <form
       action={formAction}
+      data-server-data-display="web-support-settings"
       className="rounded-md border border-border bg-white p-5 shadow-sm sm:p-6"
       aria-describedby={state?.error ? "donation-form-error" : undefined}
     >
@@ -76,9 +82,15 @@ export function DonationForm({
             className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
         </label>
-        <p aria-live="polite" className="mt-2 text-xs font-semibold text-muted-foreground">
+        <p
+          aria-live="polite"
+          className="mt-2 text-xs font-semibold text-muted-foreground"
+        >
           Giving {currency}{" "}
-          {(usingCustomAmount ? Number(customAmount) || 0 : selectedAmount).toLocaleString()}
+          {(usingCustomAmount
+            ? Number(customAmount) || 0
+            : selectedAmount
+          ).toLocaleString()}
         </p>
       </fieldset>
 
@@ -143,11 +155,29 @@ export function DonationForm({
       </label>
 
       <div className="mt-6 border-t border-border pt-5">
-        <h3 className="text-base font-semibold text-foreground">Donor details</h3>
+        <h3 className="text-base font-semibold text-foreground">
+          Donor details
+        </h3>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <InputField name="display_name" label="Name" placeholder="Your name" required />
-          <InputField name="email" label="Email" placeholder="you@example.com" type="email" required />
-          <InputField name="phone" label="Phone" placeholder="Phone number" type="tel" />
+          <InputField
+            name="display_name"
+            label="Name"
+            placeholder="Your name"
+            required
+          />
+          <InputField
+            name="email"
+            label="Email"
+            placeholder="you@example.com"
+            type="email"
+            required
+          />
+          <InputField
+            name="phone"
+            label="Phone"
+            placeholder="Phone number"
+            type="tel"
+          />
           <label>
             <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
               Donor type
@@ -172,7 +202,11 @@ export function DonationForm({
           Additional details (organization, tribute, recognition)
         </summary>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <InputField name="organization_name" label="Organization" placeholder="Optional organization" />
+          <InputField
+            name="organization_name"
+            label="Organization"
+            placeholder="Optional organization"
+          />
           <label>
             <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
               Recognition
@@ -228,7 +262,11 @@ export function DonationForm({
                   <option value="in_memory">In memory</option>
                 </select>
               </label>
-              <InputField name="tribute_name" label="Tribute name" placeholder="Who is this gift for?" />
+              <InputField
+                name="tribute_name"
+                label="Tribute name"
+                placeholder="Who is this gift for?"
+              />
               <label className="sm:col-span-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                   Dedication
@@ -294,8 +332,110 @@ export function DonationForm({
         )}
       </button>
       <p className="mt-3 text-xs leading-5 text-muted-foreground">
-        Submitting records a pending gift with the advancement office. You will receive a reference
-        code and payment details to complete the gift; no money is taken through this form.
+        Submitting records a pending gift with the advancement office. You will
+        receive a reference code and payment details to complete the gift; no
+        money is taken through this form.
+      </p>
+    </form>
+  );
+}
+
+export function CompactDonationForm({
+  currency,
+  givingOptions,
+  action,
+}: {
+  currency: string;
+  givingOptions: GivingOption[];
+  action: (
+    prevState: DonationFormState,
+    formData: FormData,
+  ) => Promise<DonationFormState>;
+}) {
+  const [state, formAction, isPending] = useActionState(action, null);
+  return (
+    <form
+      action={formAction}
+      className="space-y-3"
+      aria-describedby={state?.error ? "compact-donation-error" : undefined}
+    >
+      <input type="hidden" name="currency" value={currency} />
+      <input type="hidden" name="preferred_payment_method" value="inquiry" />
+      <input type="hidden" name="donor_type" value="individual" />
+      <input type="hidden" name="donation_type" value="one_time" />
+      <label className="block">
+        <span className="text-sm font-medium text-foreground">Support</span>
+        <select
+          name="designation"
+          defaultValue={givingOptions[0]?.value}
+          className="mt-1.5 h-11 w-full rounded-md border border-border bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        >
+          {givingOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.title}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="block">
+        <span className="text-sm font-medium text-foreground">
+          Amount ({currency})
+        </span>
+        <input
+          name="custom_amount"
+          type="number"
+          min="1"
+          step="0.01"
+          required
+          placeholder="Enter an amount"
+          className="mt-1.5 h-11 w-full rounded-md border border-border bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </label>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <InputField
+          name="display_name"
+          label="Your name"
+          placeholder="Enter your full name"
+          required
+        />
+        <InputField
+          name="email"
+          label="Email address"
+          placeholder="Enter your email address"
+          type="email"
+          required
+        />
+      </div>
+      <label className="block">
+        <span className="text-sm font-medium text-foreground">
+          Optional note
+        </span>
+        <textarea
+          name="message"
+          rows={1}
+          placeholder="Add a note (optional)"
+          className="mt-1.5 w-full rounded-md border border-border bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </label>
+      {state?.error ? (
+        <p
+          id="compact-donation-error"
+          role="alert"
+          className="text-sm text-destructive"
+        >
+          {state.error}
+        </p>
+      ) : null}
+      <button
+        type="submit"
+        disabled={isPending}
+        className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-secondary px-5 py-3 text-sm font-semibold text-white transition hover:bg-secondary/90 disabled:opacity-60"
+      >
+        {isPending ? "Sending…" : "Get payment instructions"}
+      </button>
+      <p className="text-xs leading-5 text-muted-foreground">
+        We’ll send official payment instructions and a reference by email. Your
+        gift is confirmed after payment is verified.
       </p>
     </form>
   );

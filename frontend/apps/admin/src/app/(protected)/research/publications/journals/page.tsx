@@ -64,7 +64,7 @@ const journalColumns: Array<EditableRecordColumn<ResearchGenericRecord>> = [
 export default function ResearchJournalsPage() {
   return (
     <ResearchResourcePage
-      title="Research Journals"
+      title="Journals"
       description="Manage journals and publication venues used by research publications."
       queryKey={["research", "journals"]}
       resource={researchServiceApi.journals}

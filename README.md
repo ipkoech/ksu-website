@@ -12,6 +12,7 @@ frontend/apps/research Research portal
 frontend/apps/library  Library portal
 frontend/packages      Shared UI, auth, and API client packages
 services/              FastAPI backend services
+services/Dockerfile    Shared parameterized backend image builder
 services/main          Main institutional API
 services/research      Research API
 services/library       Library API
@@ -84,6 +85,15 @@ Run the local Docker Compose stack from the repository root:
 ```bash
 docker compose up --build
 ```
+
+Frontend services are profile-controlled. Start the complete local stack with:
+
+```bash
+docker compose --profile all up --build
+```
+
+The database and Redis containers also publish loopback-only development ports
+(`55432`, `56379`, and `56380`) for services run directly on the host.
 
 Core local services:
 

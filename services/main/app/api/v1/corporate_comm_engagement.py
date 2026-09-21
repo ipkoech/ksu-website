@@ -26,7 +26,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import CurrentUser, DbSession, user_has_scope
 from ...models import (
@@ -101,6 +101,89 @@ class CorporateCommSettingsUpdate(BaseModel):
     social_links: SocialLinks | None = None
 
 
+class CorporateCommSettingsResponse(BaseModel):
+    office_channels: OfficeChannels | None = None
+    social_links: SocialLinks | None = None
+    can_manage: bool
+
+
+class CorporateCommTeamMember(BaseModel):
+    id: str
+    full_name: str
+    email: str
+    last_login_at: datetime | None = None
+    roles: list[str] = Field(default_factory=list)
+
+
+class CorporateCommTeamResponse(BaseModel):
+    members: list[CorporateCommTeamMember] = Field(default_factory=list)
+
+
+class EngagementPeriod(BaseModel):
+    date_from: date
+    date_to: date
+
+
+class EngagementTypeCount(BaseModel):
+    key: str
+    label: str
+    views: int
+
+
+class EngagementTopContent(BaseModel):
+    entity_type: str | None = None
+    entity_id: str
+    title: str | None = None
+    slug: str | None = None
+    path: str | None = None
+    views: int
+    visitors: int
+
+
+class EngagementTrendPoint(BaseModel):
+    bucket: str
+    views: int
+    visitors: int
+
+
+class EngagementWebsite(BaseModel):
+    page_views: int
+    unique_visitors: int
+    views_by_type: list[EngagementTypeCount] = Field(default_factory=list)
+    top_content: list[EngagementTopContent] = Field(default_factory=list)
+    trend: list[EngagementTrendPoint] = Field(default_factory=list)
+
+
+class EngagementPlatformCount(BaseModel):
+    platform: str
+    posted: int = 0
+    failed: int = 0
+    pending: int = 0
+    total: int = 0
+
+
+class EngagementTotals(BaseModel):
+    posted: int = 0
+    failed: int = 0
+    pending: int = 0
+    total: int = 0
+
+
+class EngagementSocial(BaseModel):
+    totals: EngagementTotals
+    by_platform: list[EngagementPlatformCount] = Field(default_factory=list)
+    social_insights_available: bool
+    note: str
+
+
+class CorporateCommEngagementResponse(BaseModel):
+    period: EngagementPeriod
+    website: EngagementWebsite
+    social: EngagementSocial
+    social_insights_available: bool
+    note: str
+
+
 # ---------------------------------------------------------------------------
 # Authorization helpers
 # ---------------------------------------------------------------------------
@@ -131,7 +214,7 @@ def _model_or_none(model_cls, raw) -> dict | None:
         return None
 
 
-@settings_router.get("")
+@settings_router.get("", response_model=SuccessResponse[CorporateCommSettingsResponse])
 async def get_corporate_comm_settings(db: DbSession, user: CurrentUser):
     _require_portal_access(user)
     office = await SettingService.get_by_key(db, OFFICE_CHANNELS_KEY)
@@ -167,7 +250,7 @@ async def _upsert_setting(db, user, *, key: str, value: dict, description: str):
     return await SettingService.update(db, existing, updated_by_id=user.id, value=value)
 
 
-@settings_router.put("")
+@settings_router.put("", response_model=SuccessResponse[CorporateCommSettingsResponse])
 async def update_corporate_comm_settings(
     payload: CorporateCommSettingsUpdate,
     db: DbSession,
@@ -209,7 +292,7 @@ async def update_corporate_comm_settings(
     )
 
 
-@settings_router.get("/team")
+@settings_router.get("/team", response_model=SuccessResponse[CorporateCommTeamResponse])
 async def list_corporate_comm_team(db: DbSession, user: CurrentUser):
     """Read-only roster of users holding Corporate Communication roles.
 
@@ -303,7 +386,7 @@ def _delivery_bucket(status: str | None) -> DeliveryBucket:
     return "pending"
 
 
-@engagement_router.get("/engagement")
+@engagement_router.get("/engagement", response_model=SuccessResponse[CorporateCommEngagementResponse])
 async def get_corporate_communication_engagement(
     db: DbSession,
     user: CurrentUser,

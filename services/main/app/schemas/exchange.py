@@ -8,7 +8,7 @@ from datetime import date
 
 from pydantic import Field
 
-from .base import BaseReadSchema, BaseSchema, SlugStr, UrlStr
+from .base import BaseReadSchema, BaseSchema, SlugStr, UrlStr, optional_snapshot
 
 
 class ExchangeProgrammeCreate(BaseSchema):
@@ -82,6 +82,9 @@ class ExchangeProgrammeRead(BaseReadSchema):
     cover_image: dict[str, Any] | None = None
     school: dict[str, Any] | None = None
     is_accepting_applications: bool
+
+
+ExchangeProgrammeSnapshot = optional_snapshot("ExchangeProgrammeSnapshot", ExchangeProgrammeRead)
 
 
 __all__ = ["ExchangeProgrammeCreate", "ExchangeProgrammeUpdate", "ExchangeProgrammeRead"]

@@ -7,13 +7,14 @@ import uuid
 from fastapi import APIRouter, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession
 from ...models import Wing
 from ...security.scopes import can_access_scope
 from ...schemas import WingCreate, WingUpdate
+from ...schemas.organization import WingSnapshot
 from ...services import WingService
 
 router = APIRouter()
@@ -52,7 +53,7 @@ async def _require_wing_scope(
         )
 
 
-@router.get("/division/{division_id}")
+@router.get("/division/{division_id}", response_model_exclude_unset=True, response_model=SuccessResponse[list[WingSnapshot]])
 @cached_public(timeout=300, vary_on=("division_id", "is_active", "fields", "include"))
 async def list_wings_by_division(division_id: uuid.UUID, db: DbSession, is_active: bool | None = True, fields: FieldSelection = FieldsDep):
     selector = build_selector(Wing, fields)
@@ -60,7 +61,7 @@ async def list_wings_by_division(division_id: uuid.UUID, db: DbSession, is_activ
     return success(data=selector.apply(items))
 
 
-@router.get("/admin")
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[WingSnapshot]])
 async def list_admin_wings(
     db: DbSession,
     user: CurrentUser,
@@ -88,7 +89,7 @@ async def list_admin_wings(
     return success(data=selector.apply(items), meta=meta)
 
 
-@router.get("/slug/{slug}")
+@router.get("/slug/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[WingSnapshot])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_wing_by_slug(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Wing, fields)
@@ -98,7 +99,7 @@ async def get_wing_by_slug(slug: str, db: DbSession, fields: FieldSelection = Fi
     return success(data=selector.apply(wing))
 
 
-@router.get("/{wing_id}")
+@router.get("/{wing_id}", response_model_exclude_unset=True, response_model=SuccessResponse[WingSnapshot])
 @cached_public(timeout=300, vary_on=("wing_id", "fields", "include"))
 async def get_wing(wing_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Wing, fields)
@@ -108,7 +109,7 @@ async def get_wing(wing_id: uuid.UUID, db: DbSession, fields: FieldSelection = F
     return success(data=selector.apply(wing))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", response_model_exclude_unset=True, response_model=SuccessResponse[WingSnapshot], status_code=status.HTTP_201_CREATED)
 async def create_wing(data: WingCreate, db: DbSession, user: CurrentUser):
     if not await can_access_scope(db, user, "administration.manage_units", "division", data.division_id):
         raise HTTPException(
@@ -119,7 +120,7 @@ async def create_wing(data: WingCreate, db: DbSession, user: CurrentUser):
     return success(data=wing, message="Wing created")
 
 
-@router.patch("/{wing_id}")
+@router.patch("/{wing_id}", response_model_exclude_unset=True, response_model=SuccessResponse[WingSnapshot])
 async def update_wing(wing_id: uuid.UUID, data: WingUpdate, db: DbSession, user: CurrentUser):
     wing = await WingService.get_by_id(db, wing_id)
     if wing is None:

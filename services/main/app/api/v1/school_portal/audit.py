@@ -1,16 +1,17 @@
 """School-scoped audit trail endpoint."""
 
 from fastapi import APIRouter, HTTPException, Query
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ....deps import DbSession
 from ....services.audit import AuditService
 from ....services.school_portal_context import CurrentSchoolContext
+from ....schemas.audit import AuditLogRead
 
 router = APIRouter()
 
 
-@router.get("/audit")
+@router.get("/audit", response_model=SuccessResponse[list[AuditLogRead]])
 async def list_school_audit(
     db: DbSession,
     context: CurrentSchoolContext,

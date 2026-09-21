@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getStoredAccessToken } from "@ksu/auth";
+import { heriRequest } from "@/lib/api/heri";
 import { Activity, AlertTriangle, BarChart3, CheckCircle2, Clock3, FileText, Image as ImageIcon, Loader2, RefreshCw, Send, Users } from "lucide-react";
 import { Alert, AlertDescription, Button, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
 import { SchoolMetricGrid, SchoolWorkspace, SchoolWorkspaceHeader } from "@/components/schools/shared/school-workspace";
 
 type Summary = { published_articles: number; drafts_awaiting_review: number; scheduled_content: number; upcoming_events: number; new_submissions: number; publications: number; active_projects: number; team_members: number; partners: number; social_failures: number; total_articles: number; total_pages: number; published_pages: number; research_themes: number; featured_projects: number; upcoming_opportunities: number; media_assets: number; media_missing_alt_text: number; visible_page_sections: number; submissions_in_progress: number };
-const API = process.env.NEXT_PUBLIC_HERI_API_URL ?? "http://localhost:8003/api/v1/heri";
 const formatNumber = (value: number) => new Intl.NumberFormat("en-KE").format(value);
 
 export function HeriDashboardClient() {
@@ -18,10 +17,7 @@ export function HeriDashboardClient() {
   const load = useCallback(async () => {
     setRefreshing(true);
     try {
-      const token = getStoredAccessToken();
-      const response = await fetch(`${API}/admin/dashboard`, { credentials: "include", headers: token ? { Authorization: `Bearer ${token}` } : {} });
-      if (!response.ok) throw new Error("Unable to load live dashboard data");
-      setData(await response.json() as Summary); setError(null);
+      setData(await heriRequest<Summary>("/admin/dashboard")); setError(null);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to load dashboard"); }
     finally { setRefreshing(false); }
   }, []);

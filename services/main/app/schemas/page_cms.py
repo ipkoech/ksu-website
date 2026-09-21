@@ -17,13 +17,10 @@ from app.models import (
     PAGE_SECTION_STATUSES,
     PARTNERSHIP_CTA_SOURCES,
     SECTION_ITEM_TYPES,
-    SECTION_ITEM_STATUSES,
-    LIFE_AROUND_STUDIES_AUDIENCES,
-    LIFE_AROUND_STUDIES_SOURCE_TYPES,
 )
 from app.models.page_cms import SECTION_ITEM_REFERENCE_CONTENT_FIELDS, SECTION_ITEM_SOURCE_TYPES
 
-from .base import BaseReadSchema, BaseSchema
+from .base import BaseReadSchema, BaseSchema, optional_snapshot
 
 PAGE_SECTION_WORKFLOW_ACTIONS = ("submit", "approve", "request_changes", "publish", "archive", "unpublish")
 EDITORIAL_OVERRIDE_FIELDS = ("title", "subtitle", "summary", "cta_label", "cta_url", "badge", "image_media_id")
@@ -499,6 +496,10 @@ class PartnershipSpotlightCreate(BaseSchema):
         return self
 
 
+SectionItemSnapshot = optional_snapshot("SectionItemSnapshot", SectionItemRead)
+PageSectionSnapshot = optional_snapshot("PageSectionSnapshot", PageSectionRead)
+
+
 class PartnershipSpotlightUpdate(BaseSchema):
     model_config = ConfigDict(
         from_attributes=True,
@@ -578,6 +579,9 @@ class PartnershipSpotlightRead(BaseReadSchema):
     unpublished_at: datetime | None = None
     rejection_reason: str | None = None
     revision_notes: str | None = None
+
+
+PartnershipSpotlightSnapshot = optional_snapshot("PartnershipSpotlightSnapshot", PartnershipSpotlightRead)
 
 
 class PageSectionWorkflowAction(BaseSchema):

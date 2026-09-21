@@ -3,13 +3,15 @@
 import uuid
 
 from fastapi import APIRouter, Query, status
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ....deps import DbSession
 from ....schemas.school_portal_content import (
     SchoolContentAction,
     SchoolContentCreate,
     SchoolContentUpdate,
+    SchoolContentListItem,
+    SchoolContentRecordSnapshot,
 )
 from ....services.school_portal_content import (
     create_school_content,
@@ -24,7 +26,7 @@ from ....services.school_portal_context import CurrentSchoolContext
 router = APIRouter()
 
 
-@router.get("/content")
+@router.get("/content", response_model=SuccessResponse[list[SchoolContentListItem]], response_model_exclude_unset=True)
 async def list_content(
     db: DbSession,
     context: CurrentSchoolContext,
@@ -33,7 +35,7 @@ async def list_content(
     return success(data=await list_school_content(db, context, content_type))
 
 
-@router.post("/content", status_code=status.HTTP_201_CREATED)
+@router.post("/content", status_code=status.HTTP_201_CREATED, response_model=SuccessResponse[SchoolContentRecordSnapshot], response_model_exclude_unset=True)
 async def create_content(
     data: SchoolContentCreate,
     db: DbSession,
@@ -42,7 +44,7 @@ async def create_content(
     return success(data=await create_school_content(db, context, data))
 
 
-@router.get("/content/{content_type}/{content_id}")
+@router.get("/content/{content_type}/{content_id}", response_model=SuccessResponse[SchoolContentRecordSnapshot], response_model_exclude_unset=True)
 async def get_content(
     content_type: str,
     content_id: uuid.UUID,
@@ -52,7 +54,7 @@ async def get_content(
     return success(data=await get_school_content(db, context, content_type, content_id))
 
 
-@router.patch("/content/{content_type}/{content_id}")
+@router.patch("/content/{content_type}/{content_id}", response_model=SuccessResponse[SchoolContentRecordSnapshot], response_model_exclude_unset=True)
 async def patch_content(
     content_type: str,
     content_id: uuid.UUID,
@@ -80,7 +82,7 @@ async def delete_content(
     await delete_school_content(db, context, content_type, content_id)
 
 
-@router.post("/content/{content_type}/{content_id}/submit")
+@router.post("/content/{content_type}/{content_id}/submit", response_model=SuccessResponse[SchoolContentRecordSnapshot], response_model_exclude_unset=True)
 async def submit_content(
     content_type: str,
     content_id: uuid.UUID,
@@ -100,7 +102,7 @@ async def submit_content(
     )
 
 
-@router.post("/content/{content_type}/{content_id}/withdraw")
+@router.post("/content/{content_type}/{content_id}/withdraw", response_model=SuccessResponse[SchoolContentRecordSnapshot], response_model_exclude_unset=True)
 async def withdraw_content(
     content_type: str,
     content_id: uuid.UUID,

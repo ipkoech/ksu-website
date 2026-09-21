@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from ..models import LibraryAssistantContext
+
 import hashlib
 import hmac
 import secrets
@@ -10,7 +12,8 @@ from typing import Any
 from urllib.parse import quote
 
 from fastapi import HTTPException, status
-from ksu_common.internal_client import get_integration_pool
+from ksu_common.rate_limit import RateLimiter
+from .notification_outbox import enqueue_notification
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -73,20 +76,30 @@ async def create_guest_session(
 
 
 async def get_guest_session(
-    db: AsyncSession,
-    token: str,
+    db: AsyncSession, token: str, *, for_update: bool = False,
 ) -> LibraryGuestSession:
-    session = (
-        await db.execute(
-            select(LibraryGuestSession).where(
-                LibraryGuestSession.session_hash == hash_secret(token),
-                LibraryGuestSession.deleted_at.is_(None),
-            )
-        )
-    ).scalar_one_or_none()
+    query = select(LibraryGuestSession).where(
+        LibraryGuestSession.session_hash == hash_secret(token), LibraryGuestSession.deleted_at.is_(None),
+    )
+    if for_update:
+        query = query.with_for_update().execution_options(populate_existing=True)
+    session = (await db.execute(query)).scalar_one_or_none()
     if session is None or session.expires_at <= _now():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Guest session expired")
     return session
+
+
+async def _lock_guest(db, guest_session):
+    identifier = await db.scalar(select(LibraryGuestSession.id).where(
+        LibraryGuestSession.id == guest_session.id, LibraryGuestSession.deleted_at.is_(None),
+    ).with_for_update())
+    if identifier is None:
+        raise HTTPException(status_code=400, detail="Guest session expired")
+    await db.refresh(guest_session, attribute_names=["expires_at", "context_id", "page_context", "preview_messages"])
+    if guest_session.expires_at <= _now():
+        raise HTTPException(status_code=400, detail="Guest session expired")
+    if await db.scalar(select(LibraryConversation.id).where(LibraryConversation.guest_session_id == guest_session.id)):
+        raise HTTPException(status_code=409, detail="This guest conversation is already verified")
 
 
 async def request_verification(
@@ -97,6 +110,7 @@ async def request_verification(
     settings: Settings | None = None,
 ) -> None:
     settings = settings or get_settings()
+    await _lock_guest(db, guest_session)
     now = _now()
     email = str(data.email).strip().lower()
     existing = (
@@ -134,6 +148,7 @@ async def request_verification(
     db.add(verification)
     await db.flush()
     await send_verification_email(
+        db,
         email=email,
         token=token,
         code=code,
@@ -142,6 +157,7 @@ async def request_verification(
 
 
 async def send_verification_email(
+    db: AsyncSession,
     *,
     email: str,
     token: str,
@@ -161,16 +177,10 @@ async def send_verification_email(
         f"<p>Or enter this six-digit code: <strong>{code}</strong></p>"
         "<p>This link and code expire soon and can only be used once.</p>"
     )
-    response = await get_integration_pool().request_internal(
-        "main-library-verification-email",
-        settings.MAIN_SERVICE_URL.rstrip("/"),
-        "POST",
-        "/api/v1/internal/email/send",
-        api_key=settings.MAIN_SERVICE_API_KEY,
-        timeout=10,
-        json={"to_email": email, "subject": "Continue your Library conversation", "text_body": text, "html_body": html},
-    )
-    response.raise_for_status()
+    await enqueue_notification(db, {
+        "to_email": email, "subject": "Continue your Library conversation", "text_body": text, "html_body": html,
+    }, expires_at=_now() + timedelta(minutes=settings.EMAIL_VERIFICATION_TTL_MINUTES), settings=settings)
+
 
 
 async def confirm_verification(
@@ -181,12 +191,17 @@ async def confirm_verification(
     settings: Settings | None = None,
 ) -> tuple[LibraryConversation, str]:
     settings = settings or get_settings()
+    await RateLimiter(requests=settings.EMAIL_VERIFICATION_MAX_ATTEMPTS,
+                      window=settings.EMAIL_VERIFICATION_TTL_MINUTES * 60,
+                      prefix="library:verification-proof").check(str(guest_session.id), "confirm")
+    await _lock_guest(db, guest_session)
     verification = (
         await db.execute(
             select(LibraryEmailVerification).where(
                 LibraryEmailVerification.guest_session_id == guest_session.id,
                 LibraryEmailVerification.verified_at.is_(None),
-            ).order_by(LibraryEmailVerification.created_at.desc()).limit(1)
+                LibraryEmailVerification.deleted_at.is_(None),
+            ).order_by(LibraryEmailVerification.created_at.desc(), LibraryEmailVerification.id.desc()).limit(1).with_for_update().execution_options(populate_existing=True)
         )
     ).scalar_one_or_none()
     now = _now()
@@ -202,8 +217,17 @@ async def confirm_verification(
         await db.flush()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Verification expired or invalid")
 
+    library_id = None
+    if guest_session.context_id is not None:
+        owner = (await db.execute(select(LibraryAssistantContext.library_id).where(
+            LibraryAssistantContext.id == guest_session.context_id, LibraryAssistantContext.deleted_at.is_(None),
+        ))).one_or_none()
+        if owner is None:
+            raise HTTPException(status_code=409, detail="Assistant context is no longer available")
+        library_id = owner[0]
     continuation_token = create_guest_token()
     conversation = LibraryConversation(
+        library_id=library_id,
         context_id=guest_session.context_id,
         page_context=guest_session.page_context,
         guest_session_id=guest_session.id,
@@ -234,17 +258,14 @@ async def confirm_verification(
 async def get_conversation_by_continuation(
     db: AsyncSession,
     token: str,
+    *, for_update: bool = False,
 ) -> LibraryConversation:
-    conversation = (
-        await db.execute(
-            select(LibraryConversation)
-            .options(selectinload(LibraryConversation.messages))
-            .where(
-                LibraryConversation.continuation_token_hash == hash_secret(token),
-                LibraryConversation.deleted_at.is_(None),
-            )
-        )
-    ).scalars().unique().one_or_none()
+    query = select(LibraryConversation).options(selectinload(LibraryConversation.messages)).where(
+        LibraryConversation.continuation_token_hash == hash_secret(token), LibraryConversation.deleted_at.is_(None),
+    )
+    if for_update:
+        query = query.with_for_update().execution_options(populate_existing=True)
+    conversation = (await db.execute(query)).scalars().unique().one_or_none()
     if conversation is None or not conversation.continuation_expires_at or conversation.continuation_expires_at <= _now():
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Conversation access expired")
     return conversation

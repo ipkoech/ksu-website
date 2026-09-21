@@ -1,5 +1,4 @@
-import { cache } from "react";
-import { mainApi, resolveMainMediaUrl } from "@ksu/api-client";
+import { resolveMainMediaUrl } from "@ksu/api-client/media";
 
 export const HOMEPAGE_SECTION_LAYOUT_VARIANTS = [
   "hero_admissions",
@@ -76,7 +75,12 @@ export type HomepageSectionItem = {
   video_provider?: string | null;
   video_url?: string | null;
   video_duration_seconds?: number | null;
-  audience?: "all" | "prospective" | "current_student" | "visitor_partner" | null;
+  audience?:
+    | "all"
+    | "prospective"
+    | "current_student"
+    | "visitor_partner"
+    | null;
   source_type?: string | null;
   source_id?: string | null;
   is_featured?: boolean;
@@ -243,55 +247,21 @@ export type HomepageCompositionState = {
    */
   rawSections: HomepageSection[];
   hasRenderableSections: boolean;
-  error: unknown;
+  error: { code: string; message: string; status?: number } | null;
 };
 
-export const getComposedHomepage = cache(
-  async (): Promise<HomepageCompositionState> => {
-    try {
-      const response =
-        await mainApi.get<HomepageCompositionApiResponse>("/api/v1/homepage");
-      const composition = unwrapHomepageCompositionResponse(response);
-      if (!composition) {
-        return {
-          data: null,
-          sections: [],
-          rawSections: [],
-          hasRenderableSections: false,
-          error: null,
-        };
-      }
-
-      const sections = normalizeSections(composition.sections);
-      return {
-        data: { ...composition, sections },
-        sections,
-        rawSections: composition.sections ?? [],
-        hasRenderableSections: sections.length > 0,
-        error: null,
-      };
-    } catch (error) {
-      if (!isAbortError(error)) {
-        console.warn("Failed to load composed homepage", error);
-      }
-      return {
-        data: null,
-        sections: [],
-        rawSections: [],
-        hasRenderableSections: false,
-        error,
-      };
-    }
-  },
-);
-
 export function unwrapHomepageCompositionResponse(
-  response: HomepageCompositionApiResponse,
+  response: unknown,
 ): HomepageCompositionResponse | null {
   if (isHomepageCompositionResponse(response)) {
     return response;
   }
-  if (response.data && isHomepageCompositionResponse(response.data)) {
+  if (
+    response &&
+    typeof response === "object" &&
+    "data" in response &&
+    isHomepageCompositionResponse(response.data)
+  ) {
     return response.data;
   }
   return null;
@@ -366,7 +336,7 @@ export function mediaAlt(
   return media?.media?.alt_text || media?.media?.title || fallback;
 }
 
-function normalizeSections(sections: HomepageSection[] | undefined) {
+export function normalizeSections(sections: HomepageSection[] | undefined) {
   return (sections ?? [])
     .filter((section) => {
       const hasCopy = Boolean(
@@ -389,7 +359,7 @@ function normalizeSections(sections: HomepageSection[] | undefined) {
 }
 
 function isHomepageCompositionResponse(
-  value: HomepageCompositionApiResponse | null | undefined,
+  value: unknown,
 ): value is HomepageCompositionResponse {
   return (
     value !== null &&
@@ -399,12 +369,5 @@ function isHomepageCompositionResponse(
     "scope_type" in value &&
     Array.isArray((value as HomepageCompositionResponse).sections) &&
     Array.isArray((value as HomepageCompositionResponse).partnership_spotlights)
-  );
-}
-
-function isAbortError(error: unknown) {
-  return (
-    (error instanceof DOMException && error.name === "AbortError") ||
-    (error instanceof Error && error.name === "AbortError")
   );
 }

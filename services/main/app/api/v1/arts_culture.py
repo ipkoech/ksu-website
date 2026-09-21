@@ -7,18 +7,23 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import ArtsCulture
 from ...schemas import ArtsCultureCreate, ArtsCultureUpdate
+from ...schemas.student_life import ArtsCultureSnapshot
 from ...services import ArtsCultureService
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[ArtsCultureSnapshot]],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("page", "per_page", "category", "school_id", "club_id", "is_active", "fields", "include"))
 async def list_arts_culture(
     db: DbSession,
@@ -44,7 +49,11 @@ async def list_arts_culture(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{slug}")
+@router.get(
+    "/{slug}",
+    response_model=SuccessResponse[ArtsCultureSnapshot],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_arts_culture(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(ArtsCulture, fields)
@@ -54,13 +63,24 @@ async def get_arts_culture(slug: str, db: DbSession, fields: FieldSelection = Fi
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("student_life.manage_arts_culture"))])
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[ArtsCultureSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("student_life.manage_arts_culture"))],
+)
 async def create_arts_culture(data: ArtsCultureCreate, db: DbSession, _: CurrentUser):
     item = await ArtsCultureService.create(db, **data.model_dump())
     return success(data=item, message="Arts and culture item created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("student_life.manage_arts_culture"))])
+@router.patch(
+    "/{item_id}",
+    response_model=SuccessResponse[ArtsCultureSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("student_life.manage_arts_culture"))],
+)
 async def update_arts_culture(item_id: uuid.UUID, data: ArtsCultureUpdate, db: DbSession, _: CurrentUser):
     item = await ArtsCultureService.get_by_id(db, item_id)
     if item is None:

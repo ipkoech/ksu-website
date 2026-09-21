@@ -197,10 +197,24 @@ class WebhookService:
         await db.flush()
 
     @staticmethod
-    async def record_delivery(db: AsyncSession, item: Webhook, *, status_code: int) -> Webhook:
+    async def record_delivery(
+        db: AsyncSession,
+        item: Webhook,
+        *,
+        status_code: int | None,
+        failed: bool | None = None,
+    ) -> Webhook:
+        """Record one delivery outcome without owning the surrounding commit.
+
+        ``status_code`` is optional because transport failures can happen
+        before an HTTP response exists. Callers may provide ``failed`` when a
+        response was received but the delivery was rejected by policy.
+        """
+
         item.last_triggered_at = datetime.now(timezone.utc)
         item.last_status = status_code
-        item.failure_count = item.failure_count + 1 if status_code >= 400 else 0
+        is_failure = failed if failed is not None else status_code is None or status_code >= 400
+        item.failure_count = item.failure_count + 1 if is_failure else 0
         await db.flush()
         return item
 

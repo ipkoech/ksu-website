@@ -8,12 +8,17 @@ from typing import Annotated
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 from ksu_common.rate_limit import rate_limit
 
 from ...core.config import get_settings
 from ...core.database import get_db
-from ...schemas import LibraryAssistantAnswerRequest
+from ...schemas import (
+    LibraryAssistantAnswer,
+    LibraryAssistantAnswerRequest,
+    LibraryAssistantConversationOut,
+    LibraryAssistantMessageOut,
+)
 from ...services import assistant_conversations as conversations
 from ...services import assistant_identity as identity
 
@@ -33,7 +38,7 @@ def _set_cookie(response: Response, name: str, value: str, max_age: int) -> None
     )
 
 
-@router.post("/answer")
+@router.post("/answer", response_model=SuccessResponse[LibraryAssistantAnswer])
 @rate_limit(requests=3, window=600, prefix="library:assistant:ip", max_body_bytes=16 * 1024)
 async def answer_question(
     request: Request,
@@ -60,7 +65,7 @@ async def answer_question(
     return success(data=answer.model_dump(mode="json"))
 
 
-@router.get("/conversations")
+@router.get("/conversations", response_model=SuccessResponse[list[LibraryAssistantConversationOut]])
 async def list_conversations(
     db: Annotated[AsyncSession, Depends(get_db)],
     continuation_token: str | None = Cookie(None, alias=identity.CONTINUATION_COOKIE),
@@ -71,7 +76,7 @@ async def list_conversations(
     return success(data=[conversations._conversation_data(conversation, include_messages=False)])
 
 
-@router.get("/conversations/{conversation_id}")
+@router.get("/conversations/{conversation_id}", response_model=SuccessResponse[LibraryAssistantConversationOut])
 async def get_conversation(
     conversation_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -83,7 +88,7 @@ async def get_conversation(
     return success(data=conversations._conversation_data(conversation))
 
 
-@router.get("/conversations/{conversation_id}/messages")
+@router.get("/conversations/{conversation_id}/messages", response_model=SuccessResponse[list[LibraryAssistantMessageOut]])
 async def list_messages(
     conversation_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -95,7 +100,7 @@ async def list_messages(
     return success(data=[conversations._message_data(message) for message in conversation.messages])
 
 
-@router.post("/conversations/{conversation_id}/continue")
+@router.post("/conversations/{conversation_id}/continue", response_model=SuccessResponse[LibraryAssistantAnswer])
 @rate_limit(requests=20, window=600, prefix="library:assistant:continue:ip", max_body_bytes=16 * 1024)
 async def continue_conversation(
     request: Request,

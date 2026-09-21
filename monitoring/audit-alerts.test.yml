@@ -1,0 +1,194 @@
+rule_files:
+  - alerts.yml
+evaluation_interval: 1m
+tests:
+  - name: missing heri observer is visible
+    interval: 1m
+    input_series:
+      - series: 'ksu_audit_relay_observed_at{service="research"}'
+        values: '0+60x7'
+      - series: 'ksu_audit_relay_observed_at{service="library"}'
+        values: '0+60x7'
+    promql_expr_test:
+      - expr: 'ALERTS{alertname="KsuAuditRelayObservationStale",alertstate="firing"}'
+        eval_time: 3m
+        exp_samples:
+          - labels: '{__name__="ALERTS",alertname="KsuAuditRelayObservationStale",alertstate="firing",component="audit",service="heri",severity="warning"}'
+            value: 1
+  - name: library lag and retained failures recover
+    interval: 1m
+    input_series:
+      - series: 'ksu_audit_relay_observed_at{service="research"}'
+        values: '0+60x7'
+      - series: 'ksu_audit_relay_observed_at{service="heri"}'
+        values: '0+60x7'
+      - series: 'ksu_audit_relay_observed_at{service="library"}'
+        values: '0+60x7'
+      - series: 'ksu_audit_relay_ready_age{service="library"}'
+        values: '180x3 0x3'
+      - series: 'ksu_audit_relay_retained_failure{service="library"}'
+        values: '1x3 0x3'
+    promql_expr_test:
+      - expr: 'count(ALERTS{alertname=~"KsuAuditRelay.*",service="library",alertstate="firing"})'
+        eval_time: 3m
+        exp_samples:
+          - labels: '{}'
+            value: 2
+      - expr: 'count(ALERTS{alertname=~"KsuAuditRelay.*",service="library",alertstate="firing"})'
+        eval_time: 5m
+        exp_samples: []
+  - name: missing library observer is not hidden by healthy research
+    interval: 1m
+    input_series:
+      - series: 'ksu_audit_relay_observed_at{service="research"}'
+        values: '0+60x7'
+      - series: 'ksu_audit_relay_observed_at{service="heri"}'
+        values: '0+60x7'
+    promql_expr_test:
+      - expr: 'ALERTS{alertname="KsuAuditRelayObservationStale",alertstate="firing"}'
+        eval_time: 3m
+        exp_samples:
+          - labels: '{__name__="ALERTS",alertname="KsuAuditRelayObservationStale",alertstate="firing",component="audit",service="library",severity="warning"}'
+            value: 1
+  - name: research relay lag and retained failures recover
+    interval: 1m
+    input_series:
+      - series: 'ksu_audit_relay_observed_at{service="library"}'
+        values: '0+60x7'
+      - series: 'ksu_audit_relay_ready_age{service="research"}'
+        values: '180x3 0x3'
+      - series: 'ksu_audit_relay_retained_failure{service="research"}'
+        values: '1x3 0x3'
+      - series: 'ksu_audit_relay_observed_at{service="research"}'
+        values: '0+60x7'
+      - series: 'ksu_audit_relay_observed_at{service="heri"}'
+        values: '0+60x7'
+    promql_expr_test:
+      - expr: 'count(ALERTS{alertname=~"KsuAuditRelay.*",alertstate="firing"})'
+        eval_time: 3m
+        exp_samples:
+          - labels: '{}'
+            value: 2
+      - expr: 'count(ALERTS{alertname=~"KsuAuditRelay.*",alertstate="firing"})'
+        eval_time: 5m
+        exp_samples: []
+  - name: first terminal audit failure alerts without counter baseline
+    interval: 1m
+    input_series:
+      - series: 'ksu_celery_task_last_failure_at{task="library.audit.persist"}'
+        values: '_ 60x20'
+      - series: 'ksu_celery_task_last_failure_at{task="main.audit.drain"}'
+        values: '60x20'
+    promql_expr_test:
+      - expr: 'count(ALERTS{alertname="KsuAuditDeliveryFailed",alertstate="firing"})'
+        eval_time: 1m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+      - expr: 'count(ALERTS{alertname="KsuAuditDeliveryFailed",alertstate="firing"})'
+        eval_time: 16m
+        exp_samples: []
+  - name: duplicate worker observations do not multiply queue backlog
+    interval: 1m
+    input_series:
+      - series: 'ksu_celery_queue_depth{queue="main.audit",instance="worker-1"}'
+        values: '60x12'
+      - series: 'ksu_celery_queue_depth{queue="main.audit",instance="worker-2"}'
+        values: '60x12'
+    promql_expr_test:
+      - expr: 'ALERTS{alertname="KsuCeleryQueueBacklog",alertstate="firing"}'
+        eval_time: 11m
+        exp_samples: []
+  - name: one available observation still detects real backlog
+    interval: 1m
+    input_series:
+      - series: 'ksu_celery_queue_depth{queue="main.audit",instance="worker-1"}'
+        values: '101x12'
+      - series: 'ksu_celery_queue_depth_scrape_success{instance="worker-2"}'
+        values: '0x12'
+    promql_expr_test:
+      - expr: 'count(ALERTS{alertname="KsuCeleryQueueBacklog",alertstate="firing"})'
+        eval_time: 9m
+        exp_samples: []
+      - expr: 'count(ALERTS{alertname="KsuCeleryQueueBacklog",alertstate="firing"})'
+        eval_time: 10m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+      - expr: 'count(ALERTS{alertname="KsuCeleryQueueMetricsUnavailable",alertstate="firing"})'
+        eval_time: 10m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+  - name: capture failure alerts without waiting for backlog
+    interval: 1m
+    input_series:
+      - series: 'ksu_audit_capture_failure_total{service="main",instance="api-1"}'
+        values: '0 0 1 1 1 1 1 1 1 1'
+    promql_expr_test:
+      - expr: 'count(ALERTS{alertname="KsuAuditCaptureFailure",alertstate="firing"})'
+        eval_time: 1m
+        exp_samples: []
+      - expr: 'count(ALERTS{alertname="KsuAuditCaptureFailure",alertstate="firing"})'
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+      - expr: 'count(ALERTS{alertname="KsuAuditCaptureFailure",alertstate="firing"})'
+        eval_time: 8m
+        exp_samples: []
+  - name: healthy audit delivery
+    interval: 1m
+    input_series:
+      - series: 'ksu_audit_relay_observed_at{service="library"}'
+        values: '0+60x10'
+      - series: 'ksu_audit_relay_observed_at{service="research"}'
+        values: '0+60x10'
+      - series: 'ksu_audit_relay_observed_at{service="heri"}'
+        values: '0+60x10'
+      - series: 'ksu_audit_pending_age{service="main"}'
+        values: '0x10'
+      - series: 'ksu_audit_retained_failure{service="main"}'
+        values: '0x10'
+      - series: 'ksu_audit_observed_at{service="main"}'
+        values: '0+60x10'
+    promql_expr_test:
+      - expr: 'ALERTS{alertname=~"KsuAudit.*",alertstate="firing"}'
+        eval_time: 5m
+        exp_samples: []
+  - name: lag and retained events fire after hold period
+    interval: 1m
+    input_series:
+      - series: 'ksu_audit_pending_age{service="main"}'
+        values: '180x10'
+      - series: 'ksu_audit_retained_failure{service="main"}'
+        values: '1x10'
+      - series: 'ksu_audit_observed_at{service="main"}'
+        values: '0+60x10'
+    promql_expr_test:
+      - expr: 'count(ALERTS{alertname=~"KsuAuditDeliveryLag|KsuAuditRetainedFailure",alertstate="firing"})'
+        eval_time: 1m
+        exp_samples: []
+      - expr: 'count(ALERTS{alertname=~"KsuAuditDeliveryLag|KsuAuditRetainedFailure",alertstate="firing"})'
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 2
+  - name: absent observation is visible
+    promql_expr_test:
+      - expr: 'count(ALERTS{alertname="KsuAuditObservationStale",alertstate="firing"})'
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+  - name: stale observation is visible
+    interval: 1m
+    input_series:
+      - series: 'ksu_audit_observed_at{service="main"}'
+        values: '0x10'
+    promql_expr_test:
+      - expr: 'count(ALERTS{alertname="KsuAuditObservationStale",alertstate="firing"})'
+        eval_time: 5m
+        exp_samples:
+          - labels: '{}'
+            value: 1

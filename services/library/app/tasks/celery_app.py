@@ -18,12 +18,28 @@ celery_app = create_celery_app(
         result_backend=settings.CELERY_RESULT_BACKEND or settings.REDIS_URL,
         default_queue="library.default",
         task_routes={
+            "library.notifications.deliver": {"queue": "library.default"},
             "library.maintenance.expire_reservations": {"queue": "library.maintenance"},
             "library.maintenance.mark_overdue_loans": {"queue": "library.maintenance"},
             "library.audit.persist": {"queue": "library.audit"},
+            "library.audit.relay": {"queue": "library.audit"},
+            "library.audit.observe": {"queue": "library.audit"},
         },
+        imports=("app.tasks.audit", "app.tasks.notifications"),
         shutdown_hooks=(database.engine.dispose,),
         beat_schedule={
+            "deliver-library-notifications": {
+                "task": "library.notifications.deliver", "schedule": 5.0,
+                "options": {"expires": 5},
+            },
+            "observe-pending-audits": {
+                "task": "library.audit.observe", "schedule": 30.0,
+                "options": {"expires": 30},
+            },
+            "relay-pending-audits": {
+                "task": "library.audit.relay", "schedule": 5.0,
+                "options": {"expires": 5},
+            },
             "expire-library-reservations-every-15-minutes": {
                 "task": "library.maintenance.expire_reservations",
                 "schedule": crontab(minute="*/15"),

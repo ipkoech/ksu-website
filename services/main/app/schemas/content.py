@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import ConfigDict, EmailStr, Field, field_validator, model_validator
 
-from .base import BaseReadSchema, BaseSchema, SlugStr
+from .base import BaseReadSchema, BaseSchema, SlugStr, optional_snapshot
 
 
 class ScopedContentCreate(BaseSchema):
@@ -161,6 +161,10 @@ class BlogRead(RichContentRead):
     is_featured: bool
 
 
+NewsSnapshot = optional_snapshot("NewsSnapshot", NewsRead)
+BlogSnapshot = optional_snapshot("BlogSnapshot", BlogRead)
+
+
 class StoryCreate(RichContentCreate):
     story_type: str = Field(default="article", max_length=64)
     category: str | None = Field(default=None, max_length=96)
@@ -237,6 +241,9 @@ class StoryRead(RichContentRead):
     featured_media: dict[str, Any] | None = None
 
 
+StorySnapshot = optional_snapshot("StorySnapshot", StoryRead)
+
+
 class StoryContributorAccountRequestCreate(BaseSchema):
     full_name: str = Field(min_length=2, max_length=255)
     email: EmailStr
@@ -294,6 +301,9 @@ class AnnouncementRead(RichContentRead):
     featured_media: dict[str, Any] | None = None
     audience: str
     youtube_url: str | None = None
+
+
+AnnouncementSnapshot = optional_snapshot("AnnouncementSnapshot", AnnouncementRead)
 
 
 class EventCreate(ScopedContentCreate):
@@ -375,6 +385,9 @@ class EventRead(ScopedContentRead):
     scope: ScopeSummary | None = None
 
 
+EventSnapshot = optional_snapshot("EventSnapshot", EventRead)
+
+
 class SliderGroupCreate(BaseSchema):
     name: str = Field(min_length=1, max_length=255)
     slug: SlugStr
@@ -426,6 +439,9 @@ class SliderGroupRead(BaseReadSchema):
     transition_effect: str | None = None
     sliders: list[dict[str, Any]] | None = None
     deleted_at: datetime | None = None
+
+
+SliderGroupSnapshot = optional_snapshot("SliderGroupSnapshot", SliderGroupRead)
 
 
 class SliderCreate(BaseSchema):
@@ -531,3 +547,6 @@ class SliderRead(BaseReadSchema):
     updated_by: dict[str, Any] | None = None
     display_order: int
     deleted_at: datetime | None = None
+
+
+SliderSnapshot = optional_snapshot("SliderSnapshot", SliderRead)

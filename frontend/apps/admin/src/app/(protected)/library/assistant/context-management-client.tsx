@@ -12,6 +12,7 @@ import {
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Textarea } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
 import { PageHeader } from "../../../../components/layout";
+import { revalidatePublicContent } from "../../../../lib/api/public-revalidation";
 
 const sourceTypes = ["branch", "catalog", "database", "download", "external_link", "guide", "specialist", "service", "staff", "workflow", "policy", "regulation"];
 
@@ -59,7 +60,10 @@ function toDraft(context: LibraryAssistantContext): ContextDraft {
 
 export function LibraryAssistantContextManagementClient() {
   const queryClient = useQueryClient();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // `undefined` means the first context has not been selected yet; `null` is
+  // reserved for the explicit "New" state so the synchronisation effect does
+  // not immediately replace a new draft with the first server record.
+  const [selectedId, setSelectedId] = useState<string | null | undefined>(undefined);
   const [draft, setDraft] = useState<ContextDraft>(emptyDraft);
   const query = useQuery({
     queryKey: ["library", "assistant", "contexts"],
@@ -68,11 +72,11 @@ export function LibraryAssistantContextManagementClient() {
   const contexts = useMemo(() => query.data?.data ?? [], [query.data]);
 
   useEffect(() => {
-    const selected = contexts.find((context) => context.id === selectedId) ?? contexts[0];
-    if (selected) {
-      setSelectedId(selected.id);
-      setDraft(toDraft(selected));
-    }
+    const selected = selectedId === null ? undefined : contexts.find((context) => context.id === selectedId) ?? contexts[0];
+    if (!selected) return;
+
+    setSelectedId((current) => current === selected.id ? current : selected.id);
+    setDraft((current) => current.id === selected.id ? current : toDraft(selected));
   }, [contexts, selectedId]);
 
   const saveMutation = useMutation({
@@ -80,6 +84,7 @@ export function LibraryAssistantContextManagementClient() {
       payload.id ? libraryServiceApi.assistantContexts.update(payload.id, payload.data) : libraryServiceApi.assistantContexts.create(payload.data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["library", "assistant", "contexts"] });
+      void revalidatePublicContent("library", "assistant");
       setSelectedId(response.data.id);
       setDraft(toDraft(response.data));
       toast.success("Assistant context saved");
@@ -90,6 +95,7 @@ export function LibraryAssistantContextManagementClient() {
     mutationFn: (id: string) => libraryServiceApi.assistantContexts.publish(id),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["library", "assistant", "contexts"] });
+      void revalidatePublicContent("library", "assistant");
       setDraft(toDraft(response.data));
       toast.success("Assistant context published");
     },
@@ -99,6 +105,7 @@ export function LibraryAssistantContextManagementClient() {
     mutationFn: (id: string) => libraryServiceApi.assistantContexts.archive(id),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["library", "assistant", "contexts"] });
+      void revalidatePublicContent("library", "assistant");
       setDraft(toDraft(response.data));
       toast.success("Assistant context archived");
     },

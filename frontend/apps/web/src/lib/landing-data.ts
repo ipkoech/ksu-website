@@ -1,3 +1,4 @@
+import "server-only";
 import {
   announcementsApi,
   resolveMainMediaUrl,
@@ -5,8 +6,10 @@ import {
   type Announcement,
   type Slider,
   type SliderGroup,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
 import { publicMediaUrl } from "@/lib/public-media";
+import { normalizePublicListResponse } from "@/lib/web-response-shapes";
 
 export type LandingAnnouncementVariant = "info" | "warning" | "urgent" | "success";
 
@@ -279,7 +282,9 @@ async function listMainSliders() {
     fields: sliderFields,
     include: sliderInclude,
   });
-  return (response.data ?? []) as SliderWithMedia[];
+  const normalized = normalizePublicListResponse<SliderWithMedia>(response);
+  if (!normalized) throw new Error("Invalid main slider response");
+  return normalized.data;
 }
 
 async function listGroupSliders(groupId: string) {
@@ -288,7 +293,9 @@ async function listGroupSliders(groupId: string) {
     fields: sliderFields,
     include: sliderInclude,
   });
-  return (response.data ?? []) as SliderWithMedia[];
+  const normalized = normalizePublicListResponse<SliderWithMedia>(response);
+  if (!normalized) throw new Error("Invalid slider-group response");
+  return normalized.data;
 }
 
 async function getLandingHeroGroup() {
@@ -296,13 +303,17 @@ async function getLandingHeroGroup() {
     is_main: true,
     fields: sliderGroupFields,
   });
-  const mainGroup = chooseHeroGroup(mainGroupsResponse.data ?? [], true);
+  const mainGroups = normalizePublicListResponse<SliderGroup>(mainGroupsResponse);
+  if (!mainGroups) throw new Error("Invalid main slider-group response");
+  const mainGroup = chooseHeroGroup(mainGroups.data, true);
   if (mainGroup) return mainGroup;
 
   const groupsResponse = await slidersApi.listGroups({
     fields: sliderGroupFields,
   });
-  return chooseHeroGroup(groupsResponse.data ?? [], false) ?? null;
+  const groups = normalizePublicListResponse<SliderGroup>(groupsResponse);
+  if (!groups) throw new Error("Invalid slider-group fallback response");
+  return chooseHeroGroup(groups.data, false) ?? null;
 }
 
 const MAIN_HERO_VIDEO_URL = "/videos/main-hero-1080.mp4";
@@ -347,7 +358,9 @@ export async function getLandingHeroData(): Promise<LandingHeroData> {
     if (!isAbortError(error)) {
       console.error("Failed to fetch landing sliders:", error);
     }
-    return { ...defaultHeroSettings, slides: [] };
+    // Keep an outage-shaped empty hero request-scoped so an ISR render cannot
+    // persist the fallback after the backend recovers.
+    return uncachedPublicFallback({ ...defaultHeroSettings, slides: [] });
   }
 }
 
@@ -363,7 +376,9 @@ async function listMainAnnouncements() {
     per_page: 5,
     fields: announcementFields,
   });
-  return response.data ?? [];
+  const normalized = normalizePublicListResponse<Announcement>(response);
+  if (!normalized) throw new Error("Invalid main announcement response");
+  return normalized.data;
 }
 
 async function listLatestAnnouncements() {
@@ -372,7 +387,9 @@ async function listLatestAnnouncements() {
     per_page: 5,
     fields: announcementFields,
   });
-  return response.data ?? [];
+  const normalized = normalizePublicListResponse<Announcement>(response);
+  if (!normalized) throw new Error("Invalid latest announcement response");
+  return normalized.data;
 }
 
 export async function getLandingAnnouncements(): Promise<LandingAnnouncement[]> {
@@ -384,6 +401,6 @@ export async function getLandingAnnouncements(): Promise<LandingAnnouncement[]> 
     if (!isAbortError(error)) {
       console.error("Failed to fetch landing announcements:", error);
     }
-    return [];
+    return uncachedPublicFallback([]);
   }
 }

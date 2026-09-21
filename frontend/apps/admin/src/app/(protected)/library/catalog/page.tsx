@@ -27,6 +27,7 @@ import {
 import { toast } from "@ksu/ui";
 import { libraryServiceApi, type LibraryResource } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const defaults = {
   title: "",
@@ -108,10 +109,12 @@ export default function LibraryCatalogPage() {
 
   const createResource = useMutation({
     mutationFn: libraryServiceApi.resources.create,
-    onSuccess: () =>
-      queryClient.invalidateQueries({
+    onSuccess: () => {
+      void revalidatePublicContent("library", "catalog");
+      return queryClient.invalidateQueries({
         queryKey: ["library", "resources", libraryId],
-      }),
+      });
+    },
   });
   const updateResource = useMutation({
     mutationFn: ({
@@ -121,17 +124,21 @@ export default function LibraryCatalogPage() {
       id: string;
       payload: Record<string, any>;
     }) => libraryServiceApi.resources.update(id, payload),
-    onSuccess: () =>
-      queryClient.invalidateQueries({
+    onSuccess: () => {
+      void revalidatePublicContent("library", "catalog");
+      return queryClient.invalidateQueries({
         queryKey: ["library", "resources", libraryId],
-      }),
+      });
+    },
   });
   const deleteResource = useMutation({
     mutationFn: libraryServiceApi.resources.delete,
-    onSuccess: () =>
-      queryClient.invalidateQueries({
+    onSuccess: () => {
+      void revalidatePublicContent("library", "catalog");
+      return queryClient.invalidateQueries({
         queryKey: ["library", "resources", libraryId],
-      }),
+      });
+    },
   });
 
   const edit = (resource: LibraryResource) => {

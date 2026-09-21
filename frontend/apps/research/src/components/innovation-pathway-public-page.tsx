@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 import {
   ArrowRight,
   Award,
@@ -18,12 +17,14 @@ import { pageFromSearchParams } from "@ksu/ui/components";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ProgramTableControls } from "../app/programs/program-table-controls";
 import { ResearchListPagination } from "./research-list-pagination";
-import { Badge, FilledBadge, StatusMessage } from "./research-ui";
+import { StatusMessage } from "./research-ui";
 import { ResearchPageHero } from "./research-page-hero";
 import {
-  compactText,
-  formatDate,
-  formatLabel,
+  PathwayRecordsDisplay,
+  type PathwayDisplayConfig,
+} from "./research-record-displays";
+import { toResearchRecordDisplayDto } from "../lib/research-formatters";
+import {
   getCompetitionEntriesFiltered,
   getIncubationRecordsFiltered,
   getInnovations,
@@ -35,7 +36,6 @@ import {
   filterRecordsByMonth,
   getListPageSize,
   getRecordMonths,
-  getRecordSummary,
   getRecordTitle,
   getRecordYears,
 } from "../lib/research-page-model";
@@ -102,7 +102,7 @@ export const startupPathwayConfig: PathwayPageConfig = {
   kind: "startups",
   path: "/startups",
   eyebrow: "Innovation & Partnerships",
-  title: "Research Startups",
+  title: "Startups",
   subtitle: "University innovations growing into ventures, services, and field-ready enterprises.",
   primaryAction: "Explore ventures",
   secondaryAction: "Partner with a startup",
@@ -280,6 +280,13 @@ export async function InnovationPathwayPublicPage({
     : visibleRecords;
   const totalPages = Math.ceil((params.month ? visibleRecords.length : records.total) / records.perPage);
   const context = buildContextMaps(innovations.data, partners.data, startups.data);
+  const pathwayDisplayConfig: PathwayDisplayConfig = {
+    kind: config.kind,
+    featuredLabel: config.featuredLabel,
+    allTitle: config.allTitle,
+    secondaryAction: config.secondaryAction,
+    secondaryHref: config.secondaryHref,
+  };
 
   return (
     <main id="research-main" className="min-h-screen bg-white text-foreground">
@@ -305,12 +312,6 @@ export async function InnovationPathwayPublicPage({
                 </div>
               ))}
 
-            {featuredRecord ? (
-              <div className="mt-4">
-                <PathwayFeaturedCard config={config} record={featuredRecord} context={context} />
-              </div>
-            ) : null}
-
             {visibleRecords.length > 0 ? (
               <>
                 <div className="mt-5 flex items-center justify-between gap-4">
@@ -321,18 +322,12 @@ export async function InnovationPathwayPublicPage({
                     {visibleRecords.length} shown
                   </p>
                 </div>
-                {cardRecords.length > 0 ? (
-                  <div className="mt-3 grid gap-4 lg:grid-cols-2">
-                    {cardRecords.map((record) => (
-                      <PathwayRecordCard
-                        key={record.id}
-                        config={config}
-                        record={record}
-                        context={context}
-                      />
-                    ))}
-                  </div>
-                ) : null}
+                <PathwayRecordsDisplay
+                  config={pathwayDisplayConfig}
+                  featuredRecord={featuredRecord ? toResearchRecordDisplayDto(featuredRecord) : undefined}
+                  cardRecords={cardRecords.map((record) => toResearchRecordDisplayDto(record))}
+                  context={context}
+                />
                 <ResearchListPagination
                   page={page}
                   totalPages={totalPages}
@@ -368,63 +363,9 @@ function PathwayHero({ config }: { config: PathwayPageConfig }) {
         { label: config.primaryAction, href: "#pathway-records" },
         { label: config.secondaryAction, href: config.secondaryHref, variant: "secondary" },
       ]}
-      imageSrc="/institutional-research-images/KSUInnovationWeek2025,April7,2026-7982.jpg"
+      imageSrc="/images/research/headers/innovation-week-8243.jpg"
       imageAlt={`Kisii University ${config.title}`}
     />
-  );
-}
-
-function HeroButton({ href, primary = false, children }: { href: string; primary?: boolean; children: ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className={
-        primary
-          ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-          : "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/45 bg-white/8 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15"
-      }
-    >
-      {children}
-      <ArrowRight aria-hidden className="h-4 w-4" />
-    </Link>
-  );
-}
-
-function PathwayHeroArt({ kind }: { kind: PathwayKind }) {
-  const isCompetition = kind === "competitions";
-  const isIncubation = kind === "incubation";
-  return (
-    <svg aria-hidden viewBox="0 0 1100 300" className="absolute right-0 top-1/2 hidden h-full w-[72%] -translate-y-1/2 opacity-90 lg:block" fill="none">
-      <g stroke="hsl(var(--secondary))" strokeOpacity="0.42" strokeWidth="1.5">
-        <circle cx="120" cy="150" r="70" />
-        <path d="M120 205V91M120 154c-31-9-50-31-57-66 38 2 61 22 57 66Zm0-8c29-13 49-38 56-73-38 5-61 28-56 73Z" />
-        {isCompetition ? (
-          <>
-            <path d="M430 70h94v34c0 39-20 65-47 75-27-10-47-36-47-75V70Z" />
-            <path d="M407 89h-42c2 48 31 67 72 69M547 89h42c-2 48-31 67-72 69M477 179v42M438 221h78" />
-          </>
-        ) : isIncubation ? (
-          <>
-            <rect x="360" y="74" width="210" height="126" rx="16" />
-            <path d="M390 110h58M390 140h110M390 170h78M530 112l28 28-28 28M480 112l-28 28 28 28" />
-          </>
-        ) : (
-          <>
-            <rect x="362" y="70" width="132" height="160" rx="16" />
-            <path d="M390 112h76M390 145h52M390 178h68M530 94h90M575 94v78M548 172h54" />
-          </>
-        )}
-        <rect x="716" y="58" width="124" height="170" rx="12" />
-        <path d="M742 92h58M742 122h72M742 152h48M742 184h64M798 209l16 16 34-44" />
-        <path d="M922 112c28-26 54-26 80 0 24-20 48-16 70 12M928 148l53 34 56-50" />
-      </g>
-      <g stroke="hsl(var(--success))" strokeOpacity="0.36">
-        <path d="M220 150h120M592 150h100M840 150h74M1018 130h70" />
-        {[220, 340, 592, 692, 840, 914, 1018, 1088].map((x, index) => (
-          <circle key={`${kind}-${x}`} cx={x} cy={index % 2 ? 130 : 150} r="7" fill="hsl(var(--brand-overlay))" stroke="hsl(var(--secondary))" />
-        ))}
-      </g>
-    </svg>
   );
 }
 
@@ -514,132 +455,6 @@ function pathwaySpecificFilters(kind: PathwayKind, params: PathwaySearchParams) 
   ];
 }
 
-function PathwayFeaturedCard({
-  config,
-  record,
-  context,
-}: {
-  config: PathwayPageConfig;
-  record: ResearchGenericRecord;
-  context: ContextMaps;
-}) {
-  return (
-    <article className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
-      <div className="grid lg:grid-cols-[250px_minmax(0,1fr)_310px]">
-        <PathwayVisual config={config} featured label={config.featuredLabel} />
-        <div className="border-y border-border p-5 lg:border-x lg:border-y-0">
-          <div className="flex flex-wrap gap-2">
-            {primaryBadge(config.kind, record) ? <Badge>{primaryBadge(config.kind, record)}</Badge> : null}
-            {secondaryBadge(config.kind, record) ? <FilledBadge>{secondaryBadge(config.kind, record)}</FilledBadge> : null}
-          </div>
-          <h2 className="mt-3 font-display text-2xl font-semibold leading-tight text-foreground">
-            {getRecordTitle(record, config.allTitle)}
-          </h2>
-          <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
-            {pathwaySummary(config.kind, record)}
-          </p>
-          <PathwayProgress kind={config.kind} record={record} className="mt-7" />
-        </div>
-        <div className="grid content-between gap-4 p-5">
-          <dl className="divide-y divide-border text-sm">
-            {featureFacts(config.kind, record, context).map((fact) => (
-              <StoryFact key={fact.label} {...fact} />
-            ))}
-          </dl>
-          <Link
-            href={config.secondaryHref}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-          >
-            {config.secondaryAction}
-            <ArrowRight aria-hidden className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function PathwayRecordCard({
-  config,
-  record,
-  context,
-}: {
-  config: PathwayPageConfig;
-  record: ResearchGenericRecord;
-  context: ContextMaps;
-}) {
-  return (
-    <article className="grid min-h-[158px] overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:border-primary/30 hover:shadow-md sm:grid-cols-[112px_minmax(0,1fr)_170px]">
-      <PathwayVisual config={config} />
-      <div className="min-w-0 border-y border-border p-4 sm:border-x sm:border-y-0">
-        <div className="flex flex-wrap gap-1.5">
-          {primaryBadge(config.kind, record) ? <Badge>{primaryBadge(config.kind, record)}</Badge> : null}
-          {secondaryBadge(config.kind, record) ? <FilledBadge>{secondaryBadge(config.kind, record)}</FilledBadge> : null}
-        </div>
-        <h3 className="mt-2 line-clamp-2 font-display text-base font-semibold leading-6 text-foreground">
-          {getRecordTitle(record, config.allTitle)}
-        </h3>
-        <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-          {pathwaySummary(config.kind, record)}
-        </p>
-        <PathwayProgress kind={config.kind} record={record} compact className="mt-3" />
-      </div>
-      <div className="grid content-between gap-3 p-4 text-xs">
-        <div className="space-y-3">
-          <MiniMeta label="Innovation" value={context.innovations.get(record.innovation_id) ?? ""} />
-          <MiniMeta label="Partner" value={context.partners.get(record.partner_id) ?? ""} />
-          {config.kind !== "startups" ? <MiniMeta label="Startup" value={context.startups.get(record.startup_id) ?? ""} /> : null}
-        </div>
-        <span className="font-semibold text-primary">{formatLabel(record.status) || "Active"}</span>
-      </div>
-    </article>
-  );
-}
-
-function PathwayVisual({ config, featured = false, label }: { config: PathwayPageConfig; featured?: boolean; label?: string }) {
-  const Icon = config.heroIcon;
-  return (
-    <div className={`relative min-h-[118px] overflow-hidden bg-[linear-gradient(135deg,hsl(var(--brand-overlay)),hsl(var(--primary)/.62))] ${featured ? "lg:min-h-[230px]" : ""}`}>
-      {label ? (
-        <span className="absolute left-3 top-3 z-10 rounded-md bg-primary px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white">
-          {label}
-        </span>
-      ) : null}
-      <div aria-hidden className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:24px_24px]" />
-      <div className="absolute inset-0 grid place-items-center">
-        <span className={`${featured ? "h-20 w-20" : "h-14 w-14"} grid place-items-center rounded-full border border-secondary/45 bg-white/10 text-secondary backdrop-blur`}>
-          <Icon aria-hidden className={featured ? "h-10 w-10" : "h-7 w-7"} />
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function PathwayProgress({ kind, record, compact = false, className = "" }: { kind: PathwayKind; record: ResearchGenericRecord; compact?: boolean; className?: string }) {
-  const steps = progressSteps(kind);
-  const activeIndex = activeProgressIndex(kind, record);
-  return (
-    <div className={`grid grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] items-start gap-2 ${className}`}>
-      {steps.map((step, index) => {
-        const active = index === activeIndex;
-        return (
-          <div key={step} className="contents">
-            <div className="grid justify-items-center gap-1">
-              <span className={`${compact ? "h-6 w-6" : "h-9 w-9"} grid place-items-center rounded-full border text-[10px] font-bold ${active ? "border-primary bg-primary text-white" : "border-border bg-white text-muted-foreground"}`}>
-                {index + 1}
-              </span>
-              <span className={`${compact ? "text-[9px]" : "text-[11px]"} text-center font-semibold text-muted-foreground`}>
-                {step}
-              </span>
-            </div>
-            {index < steps.length - 1 ? <span className="mt-2 text-center text-xs font-semibold text-muted-foreground/70">→</span> : null}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 function PathwayAside({ config }: { config: PathwayPageConfig }) {
   return (
     <aside className="grid gap-4 xl:sticky xl:top-24">
@@ -696,16 +511,16 @@ function PathwayAside({ config }: { config: PathwayPageConfig }) {
 }
 
 type ContextMaps = {
-  innovations: Map<unknown, string>;
-  partners: Map<unknown, string>;
-  startups: Map<unknown, string>;
+  innovations: Record<string, string>;
+  partners: Record<string, string>;
+  startups: Record<string, string>;
 };
 
 function buildContextMaps(innovations: ResearchGenericRecord[], partners: ResearchGenericRecord[], startups: ResearchGenericRecord[]): ContextMaps {
   return {
-    innovations: new Map(innovations.map((item) => [item.id, getRecordTitle(item, "Innovation")])),
-    partners: new Map(partners.map((item) => [item.id, getRecordTitle(item, "Partner")])),
-    startups: new Map(startups.map((item) => [item.id, getRecordTitle(item, "Startup")])),
+    innovations: Object.fromEntries(innovations.map((item) => [String(item.id), getRecordTitle(item, "Innovation")])),
+    partners: Object.fromEntries(partners.map((item) => [String(item.id), getRecordTitle(item, "Partner")])),
+    startups: Object.fromEntries(startups.map((item) => [String(item.id), getRecordTitle(item, "Startup")])),
   };
 }
 
@@ -768,130 +583,4 @@ function getActiveFlags(value?: string) {
   if (value === "inactive") return { isActive: false };
   if (value === "featured") return { isActive: true, isFeatured: true };
   return { isActive: true };
-}
-
-function primaryBadge(kind: PathwayKind, record: ResearchGenericRecord) {
-  if (kind === "startups") return formatLabel(record.venture_stage);
-  if (kind === "incubation") return formatLabel(record.incubation_type);
-  if (kind === "technology-transfer") return formatLabel(record.case_type);
-  return formatLabel(record.entry_type);
-}
-
-function secondaryBadge(kind: PathwayKind, record: ResearchGenericRecord) {
-  if (kind === "startups") return formatLabel(record.registration_status);
-  if (kind === "incubation") return formatLabel(record.stage);
-  if (kind === "technology-transfer") return formatLabel(record.transfer_status);
-  return formatLabel(record.entry_status);
-}
-
-function pathwaySummary(kind: PathwayKind, record: ResearchGenericRecord) {
-  if (kind === "startups") {
-    return getRecordSummary(record) || compactText(record.solution) || compactText(record.market) || compactText(record.problem);
-  }
-  if (kind === "incubation") {
-    return getRecordSummary(record) || compactText(record.support_received) || compactText(record.outcomes) || compactText(record.next_steps);
-  }
-  if (kind === "technology-transfer") {
-    return getRecordSummary(record) || compactText(record.public_benefit) || compactText(record.next_steps) || compactText(record.agreement_reference);
-  }
-  return getRecordSummary(record) || compactText(record.pitch_summary) || compactText(record.judges_feedback) || compactText(record.award);
-}
-
-function featureFacts(kind: PathwayKind, record: ResearchGenericRecord, context: ContextMaps) {
-  if (kind === "startups") {
-    return [
-      { label: "Sector", value: compactText(record.sector) },
-      { label: "Registration", value: formatLabel(record.registration_status) },
-      { label: "Linked innovation", value: context.innovations.get(record.innovation_id) ?? "" },
-      { label: "Partner", value: context.partners.get(record.partner_id) ?? "" },
-      { label: "Funding raised", value: money(record.funding_raised, record.currency) },
-    ].filter((fact) => fact.value);
-  }
-  if (kind === "incubation") {
-    return [
-      { label: "Programme", value: compactText(record.program_name) },
-      { label: "Cohort", value: compactText(record.cohort) },
-      { label: "Timeline", value: [formatDate(record.start_date), formatDate(record.end_date)].filter(Boolean).join(" - ") },
-      { label: "Startup", value: context.startups.get(record.startup_id) ?? "" },
-      { label: "Mentors", value: mentorCount(record.mentor_ids) },
-    ].filter((fact) => fact.value);
-  }
-  if (kind === "technology-transfer") {
-    return [
-      { label: "Case type", value: formatLabel(record.case_type) },
-      { label: "Transfer status", value: formatLabel(record.transfer_status) },
-      { label: "Agreement date", value: formatDate(record.agreement_date) || formatDate(record.disclosure_date) },
-      { label: "IP reference", value: compactText(record.ip_reference) || compactText(record.agreement_reference) },
-      { label: "Partner", value: context.partners.get(record.partner_id) ?? "" },
-      { label: "Revenue generated", value: money(record.revenue_generated, record.currency) },
-    ].filter((fact) => fact.value);
-  }
-  return [
-    { label: "Competition", value: compactText(record.competition_name) },
-    { label: "Event date", value: formatDate(record.event_date) },
-    { label: "Result", value: [formatLabel(record.entry_status), compactText(record.award), compactText(record.position)].filter(Boolean).join(" · ") },
-    { label: "Startup", value: context.startups.get(record.startup_id) ?? "" },
-    { label: "Innovation", value: context.innovations.get(record.innovation_id) ?? "" },
-  ].filter((fact) => fact.value);
-}
-
-function progressSteps(kind: PathwayKind) {
-  if (kind === "startups") return ["Idea", "Registered", "Pilot", "Market"];
-  if (kind === "incubation") return ["Intake", "Mentor", "Demo", "Scale"];
-  if (kind === "technology-transfer") return ["Disclose", "Protect", "License", "Deploy"];
-  return ["Submitted", "Shortlist", "Final", "Award"];
-}
-
-function activeProgressIndex(kind: PathwayKind, record: ResearchGenericRecord) {
-  const value = compactText(
-    kind === "startups"
-      ? record.venture_stage
-      : kind === "incubation"
-        ? record.stage
-        : kind === "technology-transfer"
-          ? record.transfer_status
-          : record.entry_status,
-  ).toLowerCase();
-  if (/(deploy|implemented|transferred|closed)/.test(value)) return 3;
-  if (/(license|licensed)/.test(value)) return 2;
-  if (/(protect|protected|review)/.test(value)) return 1;
-  if (/(market|scal|winner|award|completed)/.test(value)) return 3;
-  if (/(pilot|demo|final|presented)/.test(value)) return 2;
-  if (/(register|mentor|active|short)/.test(value)) return 1;
-  return 0;
-}
-
-function StoryFact({ label, value }: { label: string; value: string }) {
-  if (!value) return null;
-  return (
-    <div className="py-3 first:pt-0">
-      <dt className="font-semibold text-primary">{label}</dt>
-      <dd className="mt-1 line-clamp-2 leading-5 text-muted-foreground">{value}</dd>
-    </div>
-  );
-}
-
-function MiniMeta({ label, value }: { label: string; value: string }) {
-  if (!value) return null;
-  return (
-    <div>
-      <p className="font-semibold text-primary">{label}</p>
-      <p className="mt-0.5 line-clamp-2 leading-4 text-muted-foreground">{value}</p>
-    </div>
-  );
-}
-
-function mentorCount(value: unknown) {
-  if (!Array.isArray(value) || value.length === 0) return "";
-  return `${value.length} ${value.length === 1 ? "mentor" : "mentors"}`;
-}
-
-function money(value: unknown, currency: unknown) {
-  const amount = Number(value);
-  if (!Number.isFinite(amount) || amount <= 0) return "";
-  const currencyText =
-    typeof currency === "string" || typeof currency === "number"
-      ? compactText(currency)
-      : "";
-  return `${currencyText || "KES"} ${new Intl.NumberFormat("en").format(amount)}`;
 }

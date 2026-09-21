@@ -1,3 +1,4 @@
+import "server-only";
 import {
   divisionsApi,
   mainApi,
@@ -9,7 +10,7 @@ import {
   type PaginatedResponse,
   type School,
   type Wing,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
 import {
   getScopedEntityMedia,
   type EntityMediaRecord,
@@ -19,6 +20,11 @@ import {
   getPublicPersonProfile,
   type PublicPersonProfile,
 } from "@/lib/public-person-data";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
+import {
+  normalizePublicListResponse,
+  normalizePublicRecordResponse,
+} from "@/lib/web-response-shapes";
 
 type ListResponse<T> = {
   data?: T[];
@@ -220,10 +226,13 @@ async function safeList<T>(
   request: Promise<ListResponse<T> | PaginatedResponse<T>>,
 ): Promise<ListResponse<T> | PaginatedResponse<T>> {
   try {
-    return await request;
+    const response = await request;
+    const normalized = normalizePublicListResponse<T>(response);
+    if (!normalized) throw new Error("Malformed administration list response");
+    return normalized;
   } catch (error) {
     console.error("Failed to load administration detail list:", error);
-    return { data: [] };
+    return uncachedPublicFallback({ data: [] });
   }
 }
 
@@ -298,7 +307,9 @@ export async function getAdministrationDivisionDetailData(
   slug: string,
 ): Promise<AdministrationOfficeDetailData | null> {
   try {
-    const division = (await divisionsApi.getBySlug(slug, { fields: divisionFields })).data;
+    const division = normalizePublicRecordResponse<Division>(
+      await divisionsApi.getBySlug(slug, { fields: divisionFields }),
+    );
     if (!division?.id) return null;
 
     const wingsResponse = await safeList<Wing>(
@@ -343,7 +354,7 @@ export async function getAdministrationDivisionDetailData(
     };
   } catch (error) {
     console.error("Failed to load division detail:", error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -351,10 +362,12 @@ export async function getAdministrationDirectorateDetailData(
   slug: string,
 ): Promise<AdministrationOfficeDetailData | null> {
   try {
-    const wing = (await wingsApi.getBySlug(slug, {
-      fields: wingFields,
-      include: "division:id,name,slug,code",
-    })).data as WingWithDivision | undefined;
+    const wing = normalizePublicRecordResponse<WingWithDivision>(
+      await wingsApi.getBySlug(slug, {
+        fields: wingFields,
+        include: "division:id,name,slug,code",
+      }),
+    );
     if (!wing?.id) return null;
 
     const [departmentsResponse, schoolsResponse, team, documents, updates] = await Promise.all([
@@ -411,6 +424,6 @@ export async function getAdministrationDirectorateDetailData(
     };
   } catch (error) {
     console.error("Failed to load directorate detail:", error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }

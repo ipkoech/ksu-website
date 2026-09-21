@@ -1,20 +1,35 @@
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { cn } from "@ksu/ui/lib/utils";
 import { focusVisibleStyles } from "@ksu/ui/motion";
 import { PublicImage } from "@/components/public/public-image";
 import { CountUp, Reveal } from "@/components/home/motion-primitives";
+import { PartnerLogoRail } from "@/components/home/partners-marquee";
+import type { HomePartner } from "@/lib/homepage-data";
 
 export interface ResearchMeasure {
   id: string;
   value: string;
   label: string;
+  href?: string | null;
 }
 
 export interface ResearchProjectCard {
   id: string;
   title: string;
   summary?: string | null;
+  impact?: string | null;
   status?: string | null;
+  imageUrl?: string | null;
+  imageAlt?: string | null;
   href: string;
+}
+
+export interface ResearchThemeCard {
+  id: string;
+  title: string;
+  summary?: string | null;
+  href: string;
+  kind?: "theme" | "project";
 }
 
 export interface ResearchSpotlightContent {
@@ -23,27 +38,42 @@ export interface ResearchSpotlightContent {
   summary?: string | null;
   imageUrl?: string | null;
   imageAlt?: string;
-  /**
-   * University-wide figures from the research service's stats endpoint. These
-   * describe the whole research portfolio, never one project.
-   */
+  /** University-wide figures from the public research stats endpoint. */
   measures?: ResearchMeasure[];
+  /** Active research themes, used for the compact discovery row. */
+  themes?: ResearchThemeCard[];
   /** The research office's featured projects, in its own order. */
   projects?: ResearchProjectCard[];
-  /** Goes to the research portal's index, not to any single project. */
+  /** Strategic partners displayed as the closing rail of this section. */
+  partners?: HomePartner[];
+  /** Goes to the research portal's index, not to a single project. */
   cta: { label: string; href: string };
+}
+
+function isExternalHref(href: string) {
+  return /^https?:\/\//i.test(href);
+}
+
+function linkTarget(href: string) {
+  return isExternalHref(href)
+    ? { target: "_blank" as const, rel: "noopener noreferrer" }
+    : {};
+}
+
+function statLinkLabel(label: string) {
+  const normalized = label.toLowerCase();
+  if (normalized.includes("centre")) return "View centres";
+  if (normalized.includes("project")) return "View projects";
+  if (normalized.includes("publication")) return "View publications";
+  return "View details";
 }
 
 /**
  * The University's research, on the homepage.
  *
- * Two things share this band and must not be confused: the figures describe
- * the whole research portfolio, and the cards below are individual featured
- * projects. An earlier version stacked portfolio-wide numbers directly under
- * one project's title, which read as that project's results. The heading now
- * owns the figures and each project stands in its own card.
- *
- * Renders nothing when the research service has no content to show.
+ * The layout is intentionally height-conscious: one fixed-height featured
+ * project row carries the story, three compact metric cards carry the scale,
+ * and a short discovery row carries themes or additional projects.
  */
 export function ResearchHighlightsSection({
   spotlight,
@@ -54,166 +84,253 @@ export function ResearchHighlightsSection({
 
   const measures = (spotlight.measures ?? []).slice(0, 3);
   const projects = spotlight.projects ?? [];
-  const external = /^https?:\/\//.test(spotlight.cta.href);
+  const featuredProject = projects[0] ?? null;
+  const themeCards =
+    spotlight.themes?.slice(0, 3).map((theme) => ({
+      ...theme,
+      kind: theme.kind ?? ("theme" as const),
+    })) ?? [];
+  const discoveryCards =
+    themeCards.length > 0
+      ? themeCards
+      : projects.slice(1, 4).map((project) => ({
+          id: project.id,
+          title: project.title,
+          summary: project.impact ?? project.summary,
+          href: project.href,
+          kind: "project" as const,
+        }));
+
+  const featureHref = featuredProject?.href ?? spotlight.cta.href;
+  const featureImage =
+    featuredProject?.imageUrl ??
+    spotlight.imageUrl ??
+    "/images/research/research-impact-bg.png";
+  const featureAlt =
+    featuredProject?.imageAlt ??
+    spotlight.imageAlt ??
+    "Kisii University research in the field";
+  const featureTitle = featuredProject?.title ?? "Research at Kisii University";
+  const featureSummary =
+    featuredProject?.impact ??
+    featuredProject?.summary ??
+    spotlight.summary ??
+    "Research that turns local knowledge into practical solutions for communities.";
 
   return (
     <section
       id="research-spotlight"
       aria-labelledby="research-spotlight-heading"
-      className="relative isolate overflow-hidden bg-[hsl(var(--surface-page))] py-20 text-white lg:py-28"
+      className="ksu-band-tight relative isolate overflow-hidden bg-[hsl(var(--surface-page))] text-foreground"
     >
-      {/* `research-impact-bg` is the section's own ground, spanning the full
-          width behind everything rather than sitting as a panel on one side.
-          It is light artwork, so the gradients below pool brand ink where the
-          type sits and let the illustration read where it does not. */}
-      <div className="absolute inset-0 -z-10">
-        <PublicImage
-          src="/images/research/research-impact-bg.png"
-          alt=""
-          ratio="fill"
-          className="absolute inset-0 h-full w-full bg-transparent"
-          imageClassName="object-cover object-center"
-          sizes="100vw"
-        />
-        {/* Ink pooled at the left, where the copy sits, clearing by the middle
-            so the artwork still reads on the right. */}
-        <div
-          className="absolute inset-0 bg-[linear-gradient(100deg,hsl(var(--brand-overlay)/0.96)_0%,hsl(var(--brand-overlay)/0.90)_30%,hsl(var(--brand-overlay)/0.55)_52%,hsl(var(--brand-overlay)/0.12)_72%,transparent_100%)]"
-          aria-hidden
-        />
-        {/* The cards need a legible ground of their own across the full width,
-            which the angled wash alone does not give them on the right. */}
-        {projects.length > 0 ? (
-          <div
-            className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(to_top,hsl(var(--brand-overlay)/0.93),transparent)]"
-            aria-hidden
-          />
-        ) : null}
-        {/* Short fades top and bottom so the band joins its neighbours
-            without a hard seam. */}
-        <div
-          className="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(to_bottom,hsl(var(--surface-page)),transparent)]"
-          aria-hidden
-        />
-        <div
-          className="absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(to_top,hsl(var(--surface-page)),transparent)]"
-          aria-hidden
-        />
-      </div>
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_88%_8%,hsl(var(--gold)/0.13),transparent_24%),linear-gradient(135deg,hsl(var(--surface-page))_0%,hsl(var(--surface-page))_68%,hsl(var(--accent)/0.24)_100%)]"
+        aria-hidden
+      />
 
       <div className="ksu-shell relative">
-        <Reveal className="max-w-[46rem] lg:max-w-[40rem]">
-          <h2 id="research-spotlight-heading" className="ksu-l-h2 font-normal">
-            {spotlight.title}
-          </h2>
-
-          {spotlight.summary ? (
-            <p className="mt-5 max-w-[52ch] text-white/80">
-              {spotlight.summary}
+        <Reveal
+          as="header"
+          className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"
+        >
+          <div className="max-w-[48rem]">
+            <p className="ksu-l-small font-semibold uppercase tracking-[0.18em] text-[hsl(var(--gold-dark))]">
+              Research &amp; Innovation
             </p>
-          ) : null}
+            <h2
+              id="research-spotlight-heading"
+              className="ksu-l-h2 mt-2 max-w-[44rem] font-normal text-brand-overlay"
+            >
+              {spotlight.title}
+            </h2>
+            {spotlight.summary ? (
+              <p className="mt-3 line-clamp-2 max-w-[58ch] text-sm leading-6 text-muted-foreground">
+                {spotlight.summary}
+              </p>
+            ) : null}
+          </div>
 
-          {/* Attached to the heading, so these read as the University's
-              figures rather than any one project's. */}
-          {measures.length > 0 ? (
-            <dl className="mt-10 grid max-w-[38rem] gap-6 sm:grid-cols-3">
-              {measures.map((measure, index) => (
-                <div
-                  key={measure.id}
-                  className={cn(
-                    "min-w-0",
-                    index > 0 && "sm:border-l sm:border-white/20 sm:pl-6",
-                  )}
-                >
-                  <dt className="sr-only">{measure.label}</dt>
-                  <dd>
-                    <span className="ksu-l-card block font-medium text-white">
-                      <CountUp value={measure.value} />
-                    </span>
-                    <span className="ksu-l-small mt-1 block text-white/65">
-                      {measure.label}
-                    </span>
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          ) : null}
+          <a
+            href={spotlight.cta.href}
+            {...linkTarget(spotlight.cta.href)}
+            className={cn(
+              "group inline-flex min-h-10 w-fit shrink-0 items-center gap-2 rounded-lg bg-secondary px-5 py-2.5 text-sm font-semibold text-white transition-[background-color,transform] duration-200 hover:-translate-y-0.5 hover:bg-[hsl(var(--secondary))]/90",
+              focusVisibleStyles.primary,
+            )}
+          >
+            {spotlight.cta.label}
+            <ArrowUpRight
+              className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              aria-hidden
+            />
+          </a>
         </Reveal>
 
-        {projects.length > 0 ? (
-          <>
-            <Reveal delay={0.1}>
-              <h3 className="ksu-l-card mt-14 font-normal text-[hsl(var(--gold-light))]">
-                Featured projects
-              </h3>
-            </Reveal>
-            <ul
+        <div className="mt-7 grid gap-3 lg:grid-cols-[minmax(0,1.42fr)_minmax(17rem,0.58fr)]">
+          <Reveal className="min-w-0">
+            <a
+              href={featureHref}
+              {...linkTarget(featureHref)}
               className={cn(
-                "mt-6 grid gap-5 sm:grid-cols-2",
-                projects.length > 2 && "lg:grid-cols-3",
+                "group grid min-h-[17.5rem] overflow-hidden rounded-2xl bg-brand-overlay text-white shadow-[0_18px_45px_hsl(var(--brand-overlay)/0.12)] transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_55px_hsl(var(--brand-overlay)/0.2)] sm:h-[18rem] sm:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:h-[19rem]",
+                focusVisibleStyles.primary,
               )}
             >
-              {projects.map((project, index) => (
-                <Reveal key={project.id} as="li" delay={0.14 + index * 0.06}>
+              <div className="relative min-h-[12rem] overflow-hidden sm:min-h-0">
+                <PublicImage
+                  src={featureImage}
+                  alt={featureAlt}
+                  ratio="fill"
+                  className="absolute inset-0 h-full w-full bg-brand-overlay"
+                  imageClassName="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                  sizes="(min-width: 1024px) 32vw, (min-width: 640px) 42vw, 100vw"
+                  /* Research sits below the hero; lazy loading avoids a
+                     preload hint for an image the visitor may not reach. */
+                  priority={false}
+                />
+                <div
+                  className="absolute inset-0 bg-[linear-gradient(180deg,transparent_45%,hsl(var(--brand-overlay)/0.38)_100%)]"
+                  aria-hidden
+                />
+              </div>
+
+              <div className="flex min-h-0 flex-col p-5 sm:p-6">
+                <span className="ksu-l-small inline-flex w-fit rounded-full bg-[hsl(var(--gold))] px-3 py-1 font-semibold text-brand-overlay">
+                  Featured project
+                </span>
+                <h3 className="mt-4 line-clamp-2 text-[clamp(1.35rem,1.8vw,2rem)] font-medium leading-[1.1] tracking-[-0.02em]">
+                  {featureTitle}
+                </h3>
+                <p className="mt-3 line-clamp-4 text-sm leading-6 text-white/75">
+                  {featureSummary}
+                </p>
+                <span className="mt-auto inline-flex items-center gap-2 pt-4 text-sm font-semibold text-[hsl(var(--gold-light))]">
+                  View project
+                  <ArrowRight
+                    className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
+                    aria-hidden
+                  />
+                </span>
+              </div>
+            </a>
+          </Reveal>
+
+          <dl className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            {measures.map((measure, index) => {
+              const href = measure.href || spotlight.cta.href;
+              return (
+                <Reveal key={measure.id} delay={0.06 + index * 0.05} as="div">
+                  <dt className="sr-only">{measure.label}</dt>
+                  <dd className="h-full">
+                    <a
+                      href={href}
+                      {...linkTarget(href)}
+                      className={cn(
+                        "group flex min-h-[6.25rem] h-full items-center justify-between gap-4 rounded-2xl border border-border/70 bg-white/90 px-4 py-4 shadow-[0_10px_28px_hsl(var(--brand-overlay)/0.06)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-[hsl(var(--gold-dark))]/55 hover:shadow-[0_14px_30px_hsl(var(--brand-overlay)/0.1)] sm:min-h-[7.25rem] lg:min-h-0",
+                        focusVisibleStyles.primary,
+                      )}
+                    >
+                      <span className="min-w-0">
+                        <span className="block text-[clamp(1.7rem,3vw,2.45rem)] font-medium leading-none tracking-[-0.03em] text-brand-overlay">
+                          <CountUp value={measure.value} />
+                        </span>
+                        <span className="mt-2 block text-sm font-medium text-muted-foreground">
+                          {measure.label}
+                        </span>
+                      </span>
+                      <span className="hidden shrink-0 items-center gap-1 text-right text-xs font-semibold text-brand-overlay/75 sm:flex lg:flex">
+                        {statLinkLabel(measure.label)}
+                        <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+                      </span>
+                    </a>
+                  </dd>
+                </Reveal>
+              );
+            })}
+          </dl>
+        </div>
+
+        {discoveryCards.length > 0 ? (
+          <div className="mt-8">
+            <Reveal
+              as="header"
+              className="flex items-end justify-between gap-4 border-b border-border/70 pb-3"
+            >
+              <h3 className="ksu-l-card font-medium text-brand-overlay">
+                Research themes
+              </h3>
+              <span className="hidden text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:block">
+                Different disciplines. Brighter communities.
+              </span>
+            </Reveal>
+
+            <ul className="mt-3 grid gap-3 md:grid-cols-3">
+              {discoveryCards.map((card, index) => (
+                <Reveal key={card.id} as="li" delay={0.08 + index * 0.05}>
                   <a
-                    href={project.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={card.href}
+                    {...linkTarget(card.href)}
                     className={cn(
-                      // Whole card is the target, so it stays one tap on a phone.
-                      "group flex h-full flex-col rounded-2xl border border-white/20 bg-[hsl(var(--brand-overlay)/0.55)] p-6 backdrop-blur-sm transition-[background-color,border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[hsl(var(--gold-light))]/60 hover:bg-[hsl(var(--brand-overlay)/0.75)]",
+                      "group flex min-h-[8.5rem] h-full flex-col rounded-2xl border border-border/70 bg-white/75 p-5 transition-[border-color,background-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[hsl(var(--gold-dark))]/55 hover:bg-white",
                       focusVisibleStyles.primary,
                     )}
                   >
-                    {project.status ? (
-                      <span className="ksu-l-small mb-3 inline-flex w-fit items-center rounded-full border border-white/25 px-3 py-1 capitalize text-white/75">
-                        {project.status}
-                      </span>
-                    ) : null}
-                    <span className="ksu-l-card font-normal text-white">
-                      {project.title}
+                    <span className="ksu-l-small font-semibold uppercase tracking-[0.14em] text-[hsl(var(--gold-dark))]">
+                      {card.kind === "project" ? "Featured project" : "Research theme"}
                     </span>
-                    {project.summary ? (
-                      <span className="ksu-l-small mt-3 text-white/70">
-                        {project.summary}
+                    <span className="mt-2 line-clamp-2 text-lg font-medium leading-tight text-brand-overlay">
+                      {card.title}
+                    </span>
+                    {card.summary ? (
+                      <span className="mt-2 line-clamp-2 text-sm leading-5 text-muted-foreground">
+                        {card.summary}
                       </span>
                     ) : null}
-                    <span
-                      className="ksu-l-small mt-auto pt-5 text-[hsl(var(--gold-light))]"
-                      aria-hidden
-                    >
-                      Read the project{" "}
-                      <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
-                        →
-                      </span>
+                    <span className="mt-auto inline-flex items-center gap-1 pt-3 text-xs font-semibold text-brand-overlay">
+                      {card.kind === "project" ? "View project" : "Explore theme"}
+                      <ArrowRight
+                        className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1"
+                        aria-hidden
+                      />
                     </span>
                   </a>
                 </Reveal>
               ))}
             </ul>
-          </>
+          </div>
         ) : null}
 
-        <Reveal delay={0.2}>
-          <a
-            href={spotlight.cta.href}
-            {...(external
-              ? { target: "_blank", rel: "noopener noreferrer" }
-              : {})}
-            className={cn(
-              "group mt-12 inline-flex min-h-11 items-center gap-2 rounded-lg bg-secondary px-7 py-3 font-medium text-white transition-[background-color,transform] duration-200 hover:bg-[hsl(var(--secondary))]/90 active:scale-[0.99]",
-              focusVisibleStyles.primary,
-            )}
-          >
-            {spotlight.cta.label}
-            <span
-              className="transition-transform duration-300 group-hover:translate-x-1"
-              aria-hidden
+        {spotlight.partners && spotlight.partners.length > 0 ? (
+          <div className="mt-8 border-t border-border/70 pt-5">
+            <Reveal
+              as="div"
+              className="flex flex-wrap items-center justify-between gap-3"
             >
-              →
-            </span>
-          </a>
-        </Reveal>
+              <div>
+                <p className="ksu-l-small font-semibold uppercase tracking-[0.16em] text-[hsl(var(--gold-dark))]">
+                  Strategic partners
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Research and learning, shared across borders.
+                </p>
+              </div>
+              <a
+                href="/contact"
+                className={cn(
+                  "group inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-brand-overlay",
+                  focusVisibleStyles.primary,
+                )}
+              >
+                Partner with Kisii
+                <ArrowUpRight
+                  className="h-3.5 w-3.5 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                  aria-hidden
+                />
+              </a>
+            </Reveal>
+            <PartnerLogoRail partners={spotlight.partners} compact />
+          </div>
+        ) : null}
       </div>
     </section>
   );

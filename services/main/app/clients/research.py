@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from typing import Any
+from fastapi import HTTPException
 
 from ksu_common.internal_client import get_integration_pool
 
@@ -17,10 +18,14 @@ class ResearchClient:
         base_url: str,
         authorization: str | None,
         request_id: str | None,
+        idempotency_key: str | None = None,
+        selected_school: str | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.authorization = authorization
         self.request_id = request_id
+        self.idempotency_key = idempotency_key
+        self.selected_school = selected_school
 
     @property
     def headers(self) -> dict[str, str]:
@@ -43,11 +48,24 @@ class ResearchClient:
             method,
             path,
             auth_headers=self.headers,
+            headers={key: value for key, value in {
+                "Idempotency-Key": self.idempotency_key,
+                "X-School-ID": self.selected_school,
+            }.items() if value},
             request_id=self.request_id,
             params=params,
             json=json,
         )
-        response.raise_for_status()
+        if response.is_error:
+            try:
+                payload = response.json()
+                detail = payload.get("detail", payload.get("message", "Research request failed"))
+            except (ValueError, AttributeError):
+                detail = "Research request failed"
+            raise HTTPException(response.status_code, detail, headers={
+                key: response.headers[key] for key in ("Retry-After", "WWW-Authenticate")
+                if key in response.headers
+            })
         return response.json()
 
     async def _request(

@@ -9,7 +9,7 @@ import { RelatedRecordsCard } from "../../../_components/research-detail-relatio
 export default function ResearchBoardDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Board"
+      title="Board"
       description="View research board mandate, officers, membership, and audit history from the governance service."
       resource={{
         list: (params) => governanceApi.listBoards({ page: 1, per_page: 100, parent_entity_type: "research", ...params }),

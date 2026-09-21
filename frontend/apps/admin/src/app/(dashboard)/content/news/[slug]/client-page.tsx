@@ -38,6 +38,7 @@ import {
 import { toast } from "@ksu/ui";
 import { useCreateNews, useNews, useUpdateNews } from "@ksu/api-client";
 import type { News } from "@ksu/api-client";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const newsSchema = z
   .object({
@@ -238,6 +239,7 @@ export default function NewsFormPage() {
         }
         toast.success("News article updated successfully");
       }
+      void revalidatePublicContent("main", "news");
       router.push("/content/news");
     } catch {
       toast.error(isNew ? "Failed to create news article" : "Failed to update news article");

@@ -13,9 +13,14 @@ import {
 import { AmbientPageBackground } from "@ksu/ui/components";
 import { MiniHeader, PublicFooter, PublicHeader } from "@ksu/ui/layout/public";
 import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
-import { mainApi, storiesApi, type Media } from "@ksu/api-client";
+import {
+  ApiClientError,
+  mainApi,
+  storiesApi,
+  type Media,
+} from "@ksu/api-client/server";
 import { PublicImage } from "@/components/public/public-image";
-import { getHomepageData } from "@/lib/homepage-data";
+import { getSiteChromeData } from "@/lib/homepage-data";
 import { getNavData } from "@/lib/nav-data";
 import {
   heriAfricaFrontendUrl,
@@ -23,6 +28,7 @@ import {
   researchFrontendUrl,
 } from "@/lib/service-urls";
 import { publicFileUrl, publicMediaUrl } from "@/lib/public-media";
+import { nullIfNotFound, publicFallback } from "@/lib/public-fetch";
 
 export const revalidate = 300;
 
@@ -33,7 +39,7 @@ export default async function StoryDetailPage({
 }) {
   const { slug } = await params;
   const [homepage, megaMenuData, storyResponse] = await Promise.all([
-    getHomepageData(),
+    getSiteChromeData(),
     getNavData(),
     storiesApi
       .getBySlug(slug, {
@@ -42,10 +48,22 @@ export default async function StoryDetailPage({
         include:
           "featured_media(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
       })
-      .catch(() => null),
+      .catch(nullIfNotFound),
   ]);
-  const story = storyResponse?.data;
-  if (!story) notFound();
+  if (!storyResponse) notFound();
+  const story = storyResponse.data;
+  if (
+    !story ||
+    typeof story.id !== "string" ||
+    typeof story.title !== "string" ||
+    typeof story.slug !== "string"
+  )
+    throw new ApiClientError(
+      "Invalid story response",
+      502,
+      undefined,
+      "INVALID_RESPONSE",
+    );
 
   const [relatedResponse, mediaResponse] = await Promise.all([
     storiesApi
@@ -58,7 +76,7 @@ export default async function StoryDetailPage({
         include:
           "featured_media(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
       })
-      .catch(() => ({ data: [] })),
+      .catch((error) => publicFallback(error, { data: [] })),
     mainApi
       .get<{
         data: Array<{
@@ -82,7 +100,7 @@ export default async function StoryDetailPage({
         entity_id: story.id,
         per_page: 50,
       })
-      .catch(() => ({ data: [] })),
+      .catch((error) => publicFallback(error, { data: [] })),
   ]);
 
   const imageUrl =

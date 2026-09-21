@@ -3,15 +3,16 @@
 import * as React from "react";
 import { AlertTriangle } from "lucide-react";
 import {
-  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Input,
-} from "../ui";
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { useDialogAction } from "./use-dialog-action";
 
 export interface DeleteConfirmDialogProps {
   open: boolean;
@@ -39,6 +40,13 @@ export function DeleteConfirmDialog({
   const [confirmation, setConfirmation] = React.useState("");
   const needsTypedConfirmation = requireConfirmation ?? itemCount > 1;
   const canConfirm = !needsTypedConfirmation || confirmation === itemName;
+  const confirmationId = React.useId();
+  const action = useDialogAction({
+    open,
+    onAction: onConfirm,
+    pending: isDeleting,
+    disabled: !canConfirm,
+  });
 
   React.useEffect(() => {
     if (!open) {
@@ -47,39 +55,58 @@ export function DeleteConfirmDialog({
   }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => !isDeleting && onOpenChange(nextOpen)}>
-      <DialogContent className="sm:max-w-lg">
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => action.canDismiss() && onOpenChange(nextOpen)}
+    >
+      <DialogContent className="sm:max-w-lg" aria-busy={action.pending}>
         <DialogHeader>
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
             <AlertTriangle className="h-6 w-6" />
           </div>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            {description ?? (
-              itemCount > 1
+            {description ??
+              (itemCount > 1
                 ? `This will permanently delete ${itemCount} items.`
-                : `This will permanently delete ${itemName}.`
-            )}
+                : `This will permanently delete ${itemName}.`)}
           </DialogDescription>
         </DialogHeader>
         {needsTypedConfirmation ? (
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Type <span className="font-medium text-foreground">{itemName}</span> to confirm.
+            <p id={confirmationId} className="text-sm text-muted-foreground">
+              Type{" "}
+              <span className="font-medium text-foreground">{itemName}</span> to
+              confirm.
             </p>
-            <Input value={confirmation} onChange={(event) => setConfirmation(event.target.value)} />
+            <Input
+              aria-labelledby={confirmationId}
+              value={confirmation}
+              onChange={(event) => setConfirmation(event.target.value)}
+              disabled={action.pending}
+            />
           </div>
         ) : null}
+        {action.failed ? (
+          <p role="alert" className="text-sm text-destructive">
+            Unable to delete this item. Please try again.
+          </p>
+        ) : null}
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isDeleting}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={action.pending}
+          >
             Cancel
           </Button>
           <Button
             type="button"
             variant="destructive"
-            loading={isDeleting}
+            loading={action.pending}
             disabled={!canConfirm}
-            onClick={onConfirm}
+            onClick={action.run}
           >
             Delete
           </Button>

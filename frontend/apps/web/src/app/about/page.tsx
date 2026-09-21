@@ -9,6 +9,8 @@ export const metadata = {
   description: "Discover Kisii University’s identity, purpose, history and institutional profile.",
 };
 
+export const revalidate = 300;
+
 export default async function AboutPage({ searchParams }: { searchParams: Promise<{ history?: string }> }) {
   const [data, facts, params] = await Promise.all([getPublicAboutData(), getPublicFactsData(), searchParams]);
   if (!data) notFound();

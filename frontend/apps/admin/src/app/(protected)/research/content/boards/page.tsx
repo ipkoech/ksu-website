@@ -59,7 +59,7 @@ export default function ResearchBoardsPage() {
 
   return (
     <EditableServiceResourcePage<BoardRecord, Record<string, any>>
-      title="Research Boards"
+      title="Boards"
       description="Manage governance boards attached to the research portal."
       backHref="/research/content"
       queryKey={["research", "content", "boards"]}
@@ -78,7 +78,7 @@ export default function ResearchBoardsPage() {
         { label: "Recently updated", sort: "updated_at", order: "desc" },
         { label: "Name A-Z", sort: "name", order: "asc" },
       ]}
-      toolbarSlot={<ResearchSectionGuide title="Research Content" className="sm:ml-auto" />}
+      toolbarSlot={<ResearchSectionGuide title="Content" className="sm:ml-auto" />}
       renderMobileRecord={BoardMobileRecord}
       fields={withResearchFieldHelp([
         { name: "name", label: "Name", required: true },
@@ -122,6 +122,7 @@ export default function ResearchBoardsPage() {
       canEdit={canManage}
       canDelete={canManage}
       resourceKey="content"
+      revalidateResearchCache
     />
   );
 }

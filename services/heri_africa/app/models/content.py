@@ -91,7 +91,7 @@ class ResearchTheme(UUIDMixin, Base):
     slug: Mapped[str] = mapped_column(String(180), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(255))
     description: Mapped[str] = mapped_column(Text, default="")
-    status: Mapped[PublicationStatus] = mapped_column(Enum(PublicationStatus), default=PublicationStatus.PUBLISHED, index=True)
+    status: Mapped[PublicationStatus] = mapped_column(Enum(PublicationStatus), default=PublicationStatus.DRAFT, index=True)
 
 
 class ResearchProject(UUIDMixin, Base):

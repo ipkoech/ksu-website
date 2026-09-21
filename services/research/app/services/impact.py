@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
+from fastapi import HTTPException, status
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,7 +21,7 @@ from ..models import (
     sustainability_stories,
     sustainability_training,
 )
-from ._crud import build_simple_service
+from ._crud import apply_public_visibility, build_simple_service
 
 StoryService = build_simple_service(SuccessStory, "title", "summary", "impact", "story_type", "location")
 MetricService = build_simple_service(ImpactMetric, "name", "code", "description", "category", "metric_type")
@@ -43,6 +44,9 @@ def _brief(item: Any, *extra_fields: str) -> dict[str, Any]:
 
 
 async def _related_many(db: AsyncSession, statement, *extra_fields: str) -> list[dict[str, Any]]:
+    entity = next((item.get("entity") for item in statement.column_descriptions if item.get("entity") is not None), None)
+    if entity is not None:
+        statement = apply_public_visibility(entity, statement)
     result = await db.execute(statement)
     return [_brief(item, *extra_fields) for item in result.scalars().all()]
 
@@ -51,12 +55,22 @@ class SustainabilityRelationshipService:
     """Manage existing M:N sustainability relationship tables."""
 
     @staticmethod
-    async def _ensure_sustainability(db: AsyncSession, sustainability_id: uuid.UUID) -> Sustainability:
+    async def _ensure_sustainability(db: AsyncSession, sustainability_id: uuid.UUID, *, public: bool = False) -> Sustainability:
+        if public:
+            statement = apply_public_visibility(
+                Sustainability,
+                Sustainability.active_query().where(Sustainability.id == sustainability_id),
+            )
+            result = await db.execute(statement)
+            sustainability = result.scalar_one_or_none()
+            if sustainability is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sustainability record not found")
+            return sustainability
         return await Sustainability.get_or_raise(db, sustainability_id, error_message="Sustainability record not found")
 
     @staticmethod
     async def list_projects(db: AsyncSession, sustainability_id: uuid.UUID) -> list[dict[str, Any]]:
-        await SustainabilityRelationshipService._ensure_sustainability(db, sustainability_id)
+        await SustainabilityRelationshipService._ensure_sustainability(db, sustainability_id, public=True)
         return await _related_many(
             db,
             ResearchProject.active_query()
@@ -88,7 +102,7 @@ class SustainabilityRelationshipService:
 
     @staticmethod
     async def list_partners(db: AsyncSession, sustainability_id: uuid.UUID) -> list[dict[str, Any]]:
-        await SustainabilityRelationshipService._ensure_sustainability(db, sustainability_id)
+        await SustainabilityRelationshipService._ensure_sustainability(db, sustainability_id, public=True)
         return await _related_many(
             db,
             Partner.active_query()
@@ -121,7 +135,7 @@ class SustainabilityRelationshipService:
 
     @staticmethod
     async def list_training(db: AsyncSession, sustainability_id: uuid.UUID) -> list[dict[str, Any]]:
-        await SustainabilityRelationshipService._ensure_sustainability(db, sustainability_id)
+        await SustainabilityRelationshipService._ensure_sustainability(db, sustainability_id, public=True)
         return await _related_many(
             db,
             TrainingProgram.active_query()
@@ -154,7 +168,7 @@ class SustainabilityRelationshipService:
 
     @staticmethod
     async def list_stories(db: AsyncSession, sustainability_id: uuid.UUID) -> list[dict[str, Any]]:
-        await SustainabilityRelationshipService._ensure_sustainability(db, sustainability_id)
+        await SustainabilityRelationshipService._ensure_sustainability(db, sustainability_id, public=True)
         return await _related_many(
             db,
             SuccessStory.active_query()

@@ -9,11 +9,10 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.auth import TokenPayload
-from ksu_contracts.rbac import has_scope
-from ksu_common.schemas.responses import success
+from ...core.auth import has_library_permission
+from ksu_common.schemas.responses import SuccessResponse, success
 from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
 from ksu_common.cache import cache_response
-from ...services.cache import invalidate_library_caches
 from ksu_common.audit import audit_action
 from ksu_common.rate_limit import rate_limit
 
@@ -29,6 +28,11 @@ from ...schemas import (
     LibraryReservationUpdate,
     LibraryResourceCreate,
     LibraryResourceUpdate,
+    LibraryResourceOut,
+    LibraryResourceSnapshot,
+    LibraryLoanOut,
+    LibraryReservationOut,
+    LibraryChargeOut,
 )
 from ...services import resources as svc
 
@@ -38,10 +42,11 @@ resources_router = APIRouter(prefix="/library/resources", tags=["Library Resourc
 
 
 async def invalidate_public_library_cache() -> None:
-    await invalidate_library_caches()
+    """Compatibility shim; cache invalidation runs after commit in app middleware."""
+    return None
 
 
-@resources_router.get("/")
+@resources_router.get("/", response_model_exclude_unset=True, response_model=SuccessResponse[list[LibraryResourceSnapshot]])
 async def list_resources(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -55,7 +60,7 @@ async def list_resources(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     if is_writer:
         require_library_scope(user, "library.read", library_id)
     selector = FieldSelector(LibraryResource, fields, always_include={"id"})
@@ -74,7 +79,7 @@ async def list_resources(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@resources_router.get("/{resource_id}")
+@resources_router.get("/{resource_id}", response_model_exclude_unset=True, response_model=SuccessResponse[LibraryResourceSnapshot])
 async def get_resource(
     request: Request,
     resource_id: uuid.UUID,
@@ -82,7 +87,7 @@ async def get_resource(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     selector = FieldSelector(LibraryResource, fields, always_include={"id"})
     resource = await svc.get_resource(
         db,
@@ -95,7 +100,7 @@ async def get_resource(
     return success(data=selector.apply(resource))
 
 
-@resources_router.post("/")
+@resources_router.post("/", response_model=SuccessResponse[LibraryResourceOut])
 @audit_action("resource.create", target_type="LibraryResource", include_body=True)
 async def create_resource(
     request: Request,
@@ -109,7 +114,7 @@ async def create_resource(
     return success(data=resource, message="Resource created")
 
 
-@resources_router.patch("/{resource_id}")
+@resources_router.patch("/{resource_id}", response_model=SuccessResponse[LibraryResourceOut])
 @audit_action(
     "resource.update", target_type="LibraryResource", target_id_param="resource_id"
 )
@@ -148,7 +153,7 @@ async def delete_resource(
 loans_router = APIRouter(prefix="/library/loans", tags=["Library Loans"])
 
 
-@loans_router.get("/")
+@loans_router.get("/", response_model=SuccessResponse[list[LibraryLoanOut]])
 @cache_response(
     timeout=60,
     vary_on=("library_id", "resource_id", "status", "page", "per_page", "include_total"),
@@ -169,10 +174,10 @@ async def list_loans(
     elif resource_id is not None:
         library_id = await svc.get_resource_library_id(db, resource_id)
         require_library_scope(user, "library.read", library_id)
-    elif has_scope(user.roles, "library.write"):
+    elif has_library_permission(user, "library.write"):
         require_library_scope(user, "library.read", None)
     person_id: Optional[uuid.UUID] = None
-    if not has_scope(user.roles, "library.write"):
+    if not has_library_permission(user, "library.write"):
         person_id = uuid.UUID(user.sub)
     result = await svc.list_loans(
         db,
@@ -187,7 +192,7 @@ async def list_loans(
     return success(data=result.items, meta=result.meta)
 
 
-@loans_router.get("/{loan_id}")
+@loans_router.get("/{loan_id}", response_model=SuccessResponse[LibraryLoanOut])
 @cache_response(timeout=30, vary_on=())
 async def get_loan(
     request: Request,
@@ -196,12 +201,12 @@ async def get_loan(
     user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
 ):
     loan = await svc.get_loan(db, loan_id)
-    if has_scope(user.roles, "library.write") and loan.resource is not None:
+    if has_library_permission(user, "library.write") and loan.resource is not None:
         require_library_scope(user, "library.read", loan.resource.library_id)
     return success(data=loan)
 
 
-@loans_router.post("/")
+@loans_router.post("/", response_model=SuccessResponse[LibraryLoanOut])
 @audit_action("loan.issue", target_type="LibraryLoan", include_body=True)
 async def issue_loan(
     request: Request,
@@ -216,7 +221,7 @@ async def issue_loan(
     return success(data=loan, message="Loan issued")
 
 
-@loans_router.patch("/{loan_id}")
+@loans_router.patch("/{loan_id}", response_model=SuccessResponse[LibraryLoanOut])
 @audit_action("loan.return", target_type="LibraryLoan", target_id_param="loan_id")
 async def return_loan(
     request: Request,
@@ -232,7 +237,7 @@ async def return_loan(
     return success(data=loan)
 
 
-@loans_router.post("/{loan_id}/renew")
+@loans_router.post("/{loan_id}/renew", response_model=SuccessResponse[LibraryLoanOut])
 @rate_limit(requests=5, window=60, by_user=True)
 @audit_action("loan.renew", target_type="LibraryLoan", target_id_param="loan_id")
 async def renew_loan(
@@ -242,9 +247,9 @@ async def renew_loan(
     user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
 ):
     loan = await svc.get_loan(db, loan_id)
-    if has_scope(user.roles, "library.write") and loan.resource is not None:
+    if has_library_permission(user, "library.write") and loan.resource is not None:
         require_library_scope(user, "library.read", loan.resource.library_id)
-    if not has_scope(user.roles, "library.write"):
+    if not has_library_permission(user, "library.write"):
         if str(loan.borrower_person_id) != user.sub:
             from fastapi import HTTPException, status
 
@@ -264,7 +269,7 @@ reservations_router = APIRouter(
 )
 
 
-@reservations_router.get("/")
+@reservations_router.get("/", response_model=SuccessResponse[list[LibraryReservationOut]])
 @cache_response(
     timeout=60,
     vary_on=("library_id", "resource_id", "status", "page", "per_page", "include_total"),
@@ -285,10 +290,10 @@ async def list_reservations(
     elif resource_id is not None:
         library_id = await svc.get_resource_library_id(db, resource_id)
         require_library_scope(user, "library.read", library_id)
-    elif has_scope(user.roles, "library.write"):
+    elif has_library_permission(user, "library.write"):
         require_library_scope(user, "library.read", None)
     person_id: Optional[uuid.UUID] = None
-    if not has_scope(user.roles, "library.write"):
+    if not has_library_permission(user, "library.write"):
         person_id = uuid.UUID(user.sub)
     result = await svc.list_reservations(
         db,
@@ -303,7 +308,7 @@ async def list_reservations(
     return success(data=result.items, meta=result.meta)
 
 
-@reservations_router.post("/")
+@reservations_router.post("/", response_model=SuccessResponse[LibraryReservationOut])
 @rate_limit(requests=10, window=60, by_user=True)
 @audit_action(
     "reservation.create", target_type="LibraryResourceReservation", include_body=True
@@ -315,16 +320,16 @@ async def create_reservation(
     user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
 ):
     library_id = await svc.get_resource_library_id(db, data.resource_id)
-    if has_scope(user.roles, "library.write"):
+    if has_library_permission(user, "library.write"):
         require_library_scope(user, "library.write", library_id)
-    if not has_scope(user.roles, "library.write"):
+    if not has_library_permission(user, "library.write"):
         data = data.model_copy(update={"requester_person_id": uuid.UUID(user.sub)})
     reservation = await svc.create_reservation(db, data)
     await invalidate_public_library_cache()
     return success(data=reservation, message="Reservation created")
 
 
-@reservations_router.patch("/{reservation_id}")
+@reservations_router.patch("/{reservation_id}", response_model=SuccessResponse[LibraryReservationOut])
 @audit_action(
     "reservation.update",
     target_type="LibraryResourceReservation",
@@ -356,14 +361,14 @@ async def cancel_reservation(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
 ):
-    if has_scope(user.roles, "library.write"):
+    if has_library_permission(user, "library.write"):
         library_id = await svc.get_reservation_library_id(db, reservation_id)
         require_library_scope(user, "library.write", library_id)
     await svc.cancel_reservation(
         db,
         reservation_id,
         uuid.UUID(user.sub),
-        require_owner=not has_scope(user.roles, "library.write"),
+        require_owner=not has_library_permission(user, "library.write"),
     )
     await invalidate_public_library_cache()
 
@@ -373,7 +378,7 @@ async def cancel_reservation(
 charges_router = APIRouter(prefix="/library/charges", tags=["Library Charges"])
 
 
-@charges_router.get("/")
+@charges_router.get("/", response_model=SuccessResponse[list[LibraryChargeOut]])
 async def list_charges(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -381,7 +386,7 @@ async def list_charges(
     library_id: uuid.UUID = Query(...),
     active_only: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library.write")
+    is_writer = user is not None and has_library_permission(user, "library.write")
     if is_writer:
         require_library_scope(user, "library.read", library_id)
     charges = await svc.list_charges(
@@ -393,7 +398,7 @@ async def list_charges(
     return success(data=charges)
 
 
-@charges_router.post("/")
+@charges_router.post("/", response_model=SuccessResponse[LibraryChargeOut])
 @audit_action("charge.create", target_type="LibraryCharge", include_body=True)
 async def create_charge(
     request: Request,
@@ -407,7 +412,7 @@ async def create_charge(
     return success(data=charge, message="Charge created")
 
 
-@charges_router.patch("/{charge_id}")
+@charges_router.patch("/{charge_id}", response_model=SuccessResponse[LibraryChargeOut])
 @audit_action("charge.update", target_type="LibraryCharge", target_id_param="charge_id")
 async def update_charge(
     request: Request,

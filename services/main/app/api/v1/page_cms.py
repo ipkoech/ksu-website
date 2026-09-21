@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import CurrentUser, DbSession, require_scope, user_has_scope
 from ...models import Media, MediaLink, PageSection, PartnershipSpotlight, SectionItem
@@ -23,6 +23,12 @@ from ...schemas import (
 )
 from ...schemas.page_cms import (
     PagePreviewResponse,
+    PageCompositionResponse,
+    PageSectionSnapshot,
+    PartnershipSpotlightSnapshot,
+    SectionDefinitionRead,
+    SectionItemSnapshot,
+    PageCmsSourceSummary,
     PageSectionReorderRequest,
     PageValidationResponse,
     SectionItemReorderRequest,
@@ -513,13 +519,13 @@ def _workflow_action_scope(action: str) -> str:
     return "update"
 
 
-@router.get("/page-section-definitions")
+@router.get("/page-section-definitions", response_model=SuccessResponse[list[SectionDefinitionRead]])
 async def list_page_cms_definitions(user: CurrentUser):
     _authorize_page_section_admin_list_access(user)
     return success(data=serialize_section_definitions())
 
 
-@router.get("/page-section-sources/{source_type}")
+@router.get("/page-section-sources/{source_type}", response_model=SuccessResponse[list[PageCmsSourceSummary]])
 async def search_page_cms_sources(
     source_type: str,
     db: DbSession,
@@ -581,7 +587,7 @@ async def search_page_cms_sources(
     return success(data=result.items, meta=result.meta)
 
 
-@router.get("/pages/{page_key}")
+@router.get("/pages/{page_key}", response_model=SuccessResponse[PageCompositionResponse])
 async def get_page_composition(
     page_key: str,
     db: DbSession,
@@ -592,7 +598,7 @@ async def get_page_composition(
     return success(data=composition)
 
 
-@router.get("/homepage")
+@router.get("/homepage", response_model=SuccessResponse[PageCompositionResponse])
 async def get_homepage(
     db: DbSession,
     scope_type: str = Query("university"),
@@ -627,7 +633,7 @@ async def _compose_authorized_page_preview(
     )
 
 
-@router.get("/pages/{page_key}/preview")
+@router.get("/pages/{page_key}/preview", response_model=SuccessResponse[PagePreviewResponse])
 async def get_page_preview(
     page_key: str,
     db: DbSession,
@@ -645,7 +651,7 @@ async def get_page_preview(
     return success(data=composition.model_dump(mode="json"))
 
 
-@router.get("/pages/{page_key}/validate")
+@router.get("/pages/{page_key}/validate", response_model=SuccessResponse[PageValidationResponse])
 async def validate_page(
     page_key: str,
     db: DbSession,
@@ -669,7 +675,7 @@ async def validate_page(
     return success(data=validation.model_dump(mode="json"))
 
 
-@router.get("/page-sections/admin")
+@router.get("/page-sections/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[PageSectionSnapshot]])
 async def list_admin_page_sections(
     db: DbSession,
     user: CurrentUser,
@@ -696,7 +702,7 @@ async def list_admin_page_sections(
     return success(data=result.items, meta=result.meta)
 
 
-@router.get("/page-sections/{section_id}")
+@router.get("/page-sections/{section_id}", response_model_exclude_unset=True, response_model=SuccessResponse[PageSectionSnapshot])
 async def get_admin_page_section(
     section_id: uuid.UUID,
     db: DbSession,
@@ -711,7 +717,7 @@ async def get_admin_page_section(
     return success(data=item)
 
 
-@router.post("/page-sections", status_code=status.HTTP_201_CREATED)
+@router.post("/page-sections", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[PageSectionSnapshot])
 async def create_page_section(data: PageSectionCreate, db: DbSession, user: CurrentUser):
     payload = data.model_dump()
     await _require_page_section_access(
@@ -745,7 +751,7 @@ async def create_page_section(data: PageSectionCreate, db: DbSession, user: Curr
     return success(data=item, message="Page section created")
 
 
-@router.patch("/page-sections/{section_id}")
+@router.patch("/page-sections/{section_id}", response_model_exclude_unset=True, response_model=SuccessResponse[PageSectionSnapshot])
 async def update_page_section(
     section_id: uuid.UUID,
     data: PageSectionUpdate,
@@ -831,7 +837,7 @@ async def update_page_section(
     return success(data=item, message="Page section updated")
 
 
-@router.patch("/pages/{page_key}/sections/reorder")
+@router.patch("/pages/{page_key}/sections/reorder", response_model_exclude_unset=True, response_model=SuccessResponse[list[PageSectionSnapshot]])
 async def reorder_page_sections(
     page_key: str,
     data: PageSectionReorderRequest,
@@ -866,7 +872,7 @@ async def reorder_page_sections(
     return success(data=sections, message="Page sections reordered")
 
 
-@router.post("/page-sections/{section_id}/items", status_code=status.HTTP_201_CREATED)
+@router.post("/page-sections/{section_id}/items", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[SectionItemSnapshot])
 async def create_section_item(
     section_id: uuid.UUID,
     data: SectionItemCreate,
@@ -896,7 +902,7 @@ async def create_section_item(
     return success(data=item, message="Section item created")
 
 
-@router.patch("/page-sections/{section_id}/items/reorder")
+@router.patch("/page-sections/{section_id}/items/reorder", response_model_exclude_unset=True, response_model=SuccessResponse[list[SectionItemSnapshot]])
 async def reorder_section_items(
     section_id: uuid.UUID,
     data: SectionItemReorderRequest,
@@ -942,7 +948,7 @@ async def reorder_section_items(
     return success(data=items, message="Section items reordered")
 
 
-@router.post("/page-sections/{section_id}/{action}")
+@router.post("/page-sections/{section_id}/{action}", response_model_exclude_unset=True, response_model=SuccessResponse[PageSectionSnapshot])
 async def run_page_section_workflow_action(
     section_id: uuid.UUID,
     action: str,
@@ -977,7 +983,7 @@ async def run_page_section_workflow_action(
     return success(data=item, message="Page section updated")
 
 
-@router.patch("/section-items/{item_id}")
+@router.patch("/section-items/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[SectionItemSnapshot])
 async def update_section_item(
     item_id: uuid.UUID,
     data: SectionItemUpdate,
@@ -1059,6 +1065,8 @@ async def update_section_item(
 @router.post(
     "/partnership-spotlights",
     status_code=status.HTTP_201_CREATED,
+    response_model_exclude_unset=True,
+    response_model=SuccessResponse[PartnershipSpotlightSnapshot],
     dependencies=[Depends(PARTNERSHIP_SPOTLIGHT_MANAGE_SCOPE)],
 )
 async def create_partnership_spotlight(
@@ -1080,6 +1088,8 @@ async def create_partnership_spotlight(
 
 @router.patch(
     "/partnership-spotlights/{spotlight_id}",
+    response_model_exclude_unset=True,
+    response_model=SuccessResponse[PartnershipSpotlightSnapshot],
     dependencies=[Depends(PARTNERSHIP_SPOTLIGHT_MANAGE_SCOPE)],
 )
 async def update_partnership_spotlight(
@@ -1102,6 +1112,8 @@ async def update_partnership_spotlight(
 
 @router.post(
     "/partnership-spotlights/{spotlight_id}/{action}",
+    response_model_exclude_unset=True,
+    response_model=SuccessResponse[PartnershipSpotlightSnapshot],
 )
 async def run_partnership_spotlight_workflow_action(
     spotlight_id: uuid.UUID,
@@ -1122,6 +1134,8 @@ async def run_partnership_spotlight_workflow_action(
 
 @router.get(
     "/partnership-spotlights/admin",
+    response_model_exclude_unset=True,
+    response_model=SuccessResponse[list[PartnershipSpotlightSnapshot]],
     dependencies=[Depends(PARTNERSHIP_SPOTLIGHT_MANAGE_SCOPE)],
 )
 async def list_admin_partnership_spotlights(
@@ -1143,6 +1157,8 @@ async def list_admin_partnership_spotlights(
 
 @router.get(
     "/partnership-spotlights/{spotlight_id}",
+    response_model_exclude_unset=True,
+    response_model=SuccessResponse[PartnershipSpotlightSnapshot],
     dependencies=[Depends(PARTNERSHIP_SPOTLIGHT_MANAGE_SCOPE)],
 )
 async def get_admin_partnership_spotlight(

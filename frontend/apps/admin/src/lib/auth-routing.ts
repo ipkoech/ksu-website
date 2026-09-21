@@ -46,6 +46,10 @@ const broaderPortalRoles = new Set(
 
 export const staffProfileHref = "/settings/profile";
 
+export function isSafeInternalPath(value: string | null | undefined): value is string {
+  return Boolean(value && value.startsWith("/") && !value.startsWith("//") && !value.includes("\\"));
+}
+
 const serviceFallbacks: Record<Service, string> = {
   main: "/admin",
   research: "/research",
@@ -94,7 +98,7 @@ export function resolvePostLoginDestination(user: User, redirect?: string | null
   const requiredDestination = requiredRoleDestination(user);
   if (requiredDestination) return requiredDestination;
 
-  if (redirect?.startsWith("/")) {
+  if (isSafeInternalPath(redirect)) {
     return { href: redirect, service: null };
   }
 
@@ -127,7 +131,7 @@ export function resolvePortalAccessDestination(
   const requiredDestination = requiredRoleDestination(user);
   if (requiredDestination) return requiredDestination;
 
-  if (redirect?.startsWith("/")) {
+  if (isSafeInternalPath(redirect)) {
     return { href: redirect, service: null };
   }
 

@@ -20,6 +20,7 @@ import {
   useHeriResourceQuery,
   type HeriRecord,
 } from "@/lib/api/heri";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { HeriMediaPicker } from "./heri-media-picker";
 
 type Slide = HeriRecord & {
@@ -129,6 +130,7 @@ export function HeroSlidesWorkspace() {
       return;
     try {
       await heriRequest(`/admin/hero-slides/${slide.id}`, { method: "DELETE" });
+      void revalidatePublicContent("heri", "hero-slides");
       await query.refetch();
       toast.success("Hero slide deleted");
     } catch {

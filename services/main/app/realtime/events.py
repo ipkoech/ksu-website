@@ -4,23 +4,24 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..security.role_assignments import is_role_assignment_current
+from ksu_common.auth import TokenPayload
+from ksu_contracts.rbac import AuthorizationScope, authorize_permission
+from ..services.auth import _active_scope_grants
 
 
 def rooms_for_user(user) -> set[str]:
     rooms = {f"user:{user.id}"}
-    permissions: set[str] = set()
-    for assignment in getattr(user, "role_assignments", ()) or ():
-        if not is_role_assignment_current(assignment):
-            continue
-        if getattr(assignment, "scope_type", None) == "school" and assignment.scope_id:
-            rooms.add(f"school:{assignment.scope_id}")
-        role = getattr(assignment, "role", None)
-        for item in getattr(role, "role_permissions", ()) or ():
-            permission = getattr(item, "permission", None)
-            if permission and getattr(permission, "is_active", True):
-                permissions.add(str(permission.name).replace(":", "."))
-    if {"content.review", "content.publish", "content.manage"}.intersection(permissions):
+    grants = getattr(user, "_realtime_scope_grants", None)
+    if grants is None:
+        grants = _active_scope_grants(user)
+    actor = TokenPayload(str(user.id), "realtime", raw={"scope_grants": grants})
+    for grant in grants:
+        if grant.get("scope_type") == "school" and grant.get("scope_id") and authorize_permission(
+            grant.get("permissions", []), "school.content.view"
+        ).allowed:
+            rooms.add(f"school:{grant['scope_id']}")
+    if any(authorize_permission(actor, permission, AuthorizationScope("global")).allowed
+           for permission in ("content.review", "content.publish")):
         rooms.add("portal:cocms")
     return rooms
 

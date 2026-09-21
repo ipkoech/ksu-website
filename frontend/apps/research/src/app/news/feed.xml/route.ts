@@ -1,4 +1,5 @@
-import { researchServiceApi } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client/server";
+import { unstable_noStore as noStore } from "next/cache";
 import { researchSiteUrl } from "../../../config/institution";
 
 export async function GET() {
@@ -55,9 +56,15 @@ export async function GET() {
       headers: { "Content-Type": "application/rss+xml" },
     });
   } catch {
+    noStore();
     return new Response(
       `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Kisii University Research News</title></channel></rss>`,
-      { headers: { "Content-Type": "application/rss+xml" } },
+      {
+        headers: {
+          "Content-Type": "application/rss+xml",
+          "Cache-Control": "no-store",
+        },
+      },
     );
   }
 }

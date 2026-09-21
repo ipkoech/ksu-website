@@ -5,6 +5,7 @@ import {
   getProjectMonths,
   getProjectYears,
   getVisibleProjectStorySections,
+  getProjectTimelineLabel,
 } from "./project-page-model";
 
 const records = [
@@ -25,6 +26,19 @@ const records = [
 
 test("project year options are derived from backend dates", () => {
   assert.deepEqual(getProjectYears(records), ["2026", "2025"]);
+});
+
+test("imported source narratives are visible without invented project dates", () => {
+  const project = {
+    abstract: "The Responsible Computing Challenge embeds ethical computing in curricula.",
+    source_references: [{ document: "Ongoing Projects.docx", row: 19 }],
+    created_at: "2026-09-08",
+    updated_at: "2026-09-08",
+  } as any;
+  assert.deepEqual(getVisibleProjectStorySections(project), [
+    { title: "Overview", body: project.abstract },
+  ]);
+  assert.equal(getProjectTimelineLabel(project), "");
 });
 
 test("project month options are derived for the selected year", () => {

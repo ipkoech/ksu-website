@@ -24,8 +24,12 @@ import {
   SchoolActivityPanel,
   SchoolAttentionPanel,
   SchoolDistributionPanel,
-  SchoolQuickActions,
   SchoolRecentActivity,
+  SchoolDataFreshnessPanel,
+  SchoolPortfolioPanel,
+  SchoolPeoplePanel,
+  SchoolDocumentsPanel,
+  SchoolQuickActions,
 } from "./school-dashboard-panels";
 import { SchoolStatCard } from "./school-stat-card";
 
@@ -127,6 +131,7 @@ export function SchoolDashboard() {
         range={range}
         fetching={dashboardQuery.isFetching}
         onRangeChange={changeRange}
+        onRefresh={() => void dashboardQuery.refetch()}
       />
 
       {dashboardQuery.error ? (
@@ -161,7 +166,7 @@ export function SchoolDashboard() {
 
       <section className="grid items-stretch gap-4 xl:grid-cols-12">
         <div className="xl:col-span-4"><SchoolRecentActivity items={dashboard.recent_activity} /></div>
-        <div className="xl:col-span-4"><SchoolQuickActions actions={dashboard.quick_actions} /></div>
+        <div className="xl:col-span-4"><SchoolDataFreshnessPanel generatedAt={dashboard.generated_at} /></div>
         <div className="xl:col-span-4">
           <SchoolDistributionPanel
             title="Inquiry status"
@@ -172,6 +177,13 @@ export function SchoolDashboard() {
           />
         </div>
       </section>
+
+      <section aria-label="School operations" className="grid items-stretch gap-4 xl:grid-cols-12"><div className="xl:col-span-4"><SchoolPortfolioPanel dashboard={dashboard} /></div><div className="xl:col-span-4"><SchoolPeoplePanel dashboard={dashboard} /></div><div className="xl:col-span-4"><SchoolDocumentsPanel dashboard={dashboard} /></div></section>
+
+      <section aria-label="Quick actions" className="grid items-stretch gap-4 xl:grid-cols-12">
+        <div className="xl:col-span-12"><SchoolQuickActions actions={dashboard.quick_actions} /></div>
+      </section>
+
 
       <footer className="flex flex-col gap-1 border-t pt-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <span>Dashboard generated {new Date(dashboard.generated_at).toLocaleString()}</span>

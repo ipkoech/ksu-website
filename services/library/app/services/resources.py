@@ -30,6 +30,7 @@ from ..schemas import (
     LibraryReservationOut,
     LibraryReservationUpdate,
     LibraryResourceCreate,
+    LibraryResourceOut,
     LibraryResourceUpdate,
 )
 
@@ -138,8 +139,22 @@ async def _lock_resource_for_update(
             LibraryResource.deleted_at.is_(None),
         )
         .with_for_update()
+        .execution_options(populate_existing=True)
     )
     return result.scalar_one_or_none()
+
+
+async def _lock_loan_for_update(db: AsyncSession, loan_id: uuid.UUID) -> LibraryLoan:
+    result = await db.execute(
+        sa.select(LibraryLoan)
+        .where(LibraryLoan.id == loan_id, LibraryLoan.deleted_at.is_(None))
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    loan = result.scalar_one_or_none()
+    if loan is None:
+        raise ValueError(f"Loan {loan_id} not found")
+    return loan
 
 
 async def _load_loan_detail(db: AsyncSession, loan_id: uuid.UUID) -> LibraryLoanOut:
@@ -234,7 +249,7 @@ async def create_resource(
 
     resource = LibraryResource(**data.model_dump())
     db.add(resource)
-    await db.commit()
+    await db.flush()
     await db.refresh(resource)
     return LibraryResourceOut.model_validate(resource)
 
@@ -246,7 +261,7 @@ async def update_resource(
     resource = await get_resource_entity(db, resource_id)
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(resource, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(resource)
     return LibraryResourceOut.model_validate(resource)
 
@@ -255,7 +270,7 @@ async def delete_resource(db: AsyncSession, resource_id: uuid.UUID) -> None:
     """Soft-delete a library resource."""
     resource = await get_resource_entity(db, resource_id)
     resource.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 # ── LibraryLoan ───────────────────────────────────────────────────────────────
@@ -278,7 +293,7 @@ async def issue_loan(db: AsyncSession, data: LibraryLoanCreate) -> LibraryLoanOu
 
     loan = LibraryLoan(**data.model_dump())
     db.add(loan)
-    await db.commit()
+    await db.flush()
     return await _load_loan_detail(db, loan.id)
 
 
@@ -286,9 +301,7 @@ async def return_loan(
     db: AsyncSession, loan_id: uuid.UUID, data: LibraryLoanUpdate
 ) -> LibraryLoanOut:
     """Process a loan return."""
-    loan = await LibraryLoan.get_or_raise(
-        db, loan_id, error_message=f"Loan {loan_id} not found"
-    )
+    loan = await _lock_loan_for_update(db, loan_id)
 
     if loan.status == "returned":
         raise ValueError("Loan has already been returned")
@@ -307,15 +320,13 @@ async def return_loan(
         if resource.status == "on_loan" and resource.available_copies > 0:
             resource.status = "available"
 
-    await db.commit()
+    await db.flush()
     return await _load_loan_detail(db, loan.id)
 
 
 async def renew_loan(db: AsyncSession, loan_id: uuid.UUID) -> LibraryLoanOut:
     """Renew an active loan."""
-    loan = await LibraryLoan.get_or_raise(
-        db, loan_id, error_message=f"Loan {loan_id} not found"
-    )
+    loan = await _lock_loan_for_update(db, loan_id)
 
     if loan.status != "active":
         raise ValueError("Only active loans can be renewed")
@@ -333,7 +344,7 @@ async def renew_loan(db: AsyncSession, loan_id: uuid.UUID) -> LibraryLoanOut:
     loan.due_at = loan.due_at + timedelta(days=extension_days)
     loan.renewals_count += 1
 
-    await db.commit()
+    await db.flush()
     return await _load_loan_detail(db, loan.id)
 
 
@@ -386,7 +397,7 @@ async def list_loans(
         per_page=per_page,
         include_total=include_total,
     )
-    result.items = [LibraryLoanOut.model_validate(l) for l in result.items]
+    result.items = [LibraryLoanOut.model_validate(loan) for loan in result.items]
     return result
 
 
@@ -403,13 +414,12 @@ async def create_reservation(
         raise ValueError(f"Library resource {data.resource_id} not found")
 
     count_result = await db.execute(
-        sa.select(sa.func.count()).where(
+        sa.select(sa.func.coalesce(sa.func.max(LibraryResourceReservation.queue_position), 0)).where(
             LibraryResourceReservation.resource_id == data.resource_id,
-            LibraryResourceReservation.status == "pending",
+            LibraryResourceReservation.status.in_(["pending", "ready"]),
         )
     )
-    pending_count = count_result.scalar_one()
-    queue_position = pending_count + 1
+    queue_position = count_result.scalar_one() + 1
 
     reservation = LibraryResourceReservation(
         resource_id=data.resource_id,
@@ -420,8 +430,24 @@ async def create_reservation(
         status="pending",
     )
     db.add(reservation)
-    await db.commit()
+    await db.flush()
     return await _load_reservation_detail(db, reservation.id)
+
+
+async def _lock_reservation(db, reservation_id):
+    resource_id = await db.scalar(sa.select(LibraryResourceReservation.resource_id).where(
+        LibraryResourceReservation.id == reservation_id,
+        LibraryResourceReservation.deleted_at.is_(None),
+    ))
+    if resource_id is None or await _lock_resource_for_update(db, resource_id) is None:
+        raise ValueError(f"Reservation {reservation_id} not found")
+    reservation = await db.scalar(sa.select(LibraryResourceReservation).where(
+        LibraryResourceReservation.id == reservation_id,
+        LibraryResourceReservation.deleted_at.is_(None),
+    ).with_for_update().execution_options(populate_existing=True))
+    if reservation is None:
+        raise ValueError(f"Reservation {reservation_id} not found")
+    return reservation
 
 
 async def cancel_reservation(
@@ -432,9 +458,7 @@ async def cancel_reservation(
     require_owner: bool = True,
 ) -> None:
     """Cancel a reservation."""
-    reservation = await LibraryResourceReservation.get_or_raise(
-        db, reservation_id, error_message=f"Reservation {reservation_id} not found"
-    )
+    reservation = await _lock_reservation(db, reservation_id)
 
     if require_owner and reservation.requester_person_id != person_id:
         raise PermissionError("You can only cancel your own reservations")
@@ -444,7 +468,7 @@ async def cancel_reservation(
         )
 
     reservation.status = "cancelled"
-    await db.commit()
+    await db.flush()
 
 
 async def update_reservation(
@@ -453,14 +477,38 @@ async def update_reservation(
     data: LibraryReservationUpdate,
 ) -> LibraryReservationOut:
     """Update a reservation status and staff-managed hold metadata."""
-    reservation = await LibraryResourceReservation.get_or_raise(
-        db, reservation_id, error_message=f"Reservation {reservation_id} not found"
-    )
+    reservation = await _lock_reservation(db, reservation_id)
+    changes = data.model_dump(exclude_unset=True)
+    transitions = {
+        "pending": {"ready", "cancelled", "expired"},
+        "ready": {"collected", "cancelled", "expired"},
+        "collected": set(), "cancelled": set(), "expired": set(),
+    }
+    target = changes.get("status", reservation.status)
+    if target not in transitions or (
+        target != reservation.status and target not in transitions.get(reservation.status, set())
+    ):
+        raise ValueError(f"Cannot change reservation status from '{reservation.status}' to '{target}'")
+    if "queue_position" in changes:
+        position = changes["queue_position"]
+        if position is None or position < 1:
+            raise ValueError("Queue position must be positive")
+        if target in {"pending", "ready"}:
+            duplicate = await db.scalar(sa.select(LibraryResourceReservation.id).where(
+                LibraryResourceReservation.resource_id == reservation.resource_id,
+                LibraryResourceReservation.id != reservation.id,
+                LibraryResourceReservation.status.in_(["pending", "ready"]),
+                LibraryResourceReservation.queue_position == position,
+            ).limit(1))
+            if duplicate is not None:
+                raise ValueError("Queue position is already occupied")
+    if target == "ready" and reservation.status == "pending":
+        changes["ready_at"] = changes.get("ready_at") or datetime.now(timezone.utc)
 
-    for field, value in data.model_dump(exclude_unset=True).items():
+    for field, value in changes.items():
         setattr(reservation, field, value)
 
-    await db.commit()
+    await db.flush()
     return await _load_reservation_detail(db, reservation.id)
 
 
@@ -536,7 +584,7 @@ async def create_charge(
     """Create a library charge entry."""
     charge = LibraryCharge(**data.model_dump())
     db.add(charge)
-    await db.commit()
+    await db.flush()
     await db.refresh(charge)
     return LibraryChargeOut.model_validate(charge)
 
@@ -550,7 +598,7 @@ async def update_charge(
     )
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(charge, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(charge)
     return LibraryChargeOut.model_validate(charge)
 
@@ -561,4 +609,4 @@ async def delete_charge(db: AsyncSession, charge_id: uuid.UUID) -> None:
         db, charge_id, error_message=f"Library charge {charge_id} not found"
     )
     charge.soft_delete()
-    await db.commit()
+    await db.flush()

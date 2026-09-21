@@ -2,17 +2,27 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Coroutine
+from collections.abc import Awaitable, Callable, Coroutine
 from dataclasses import dataclass, field
 from typing import Any
 
 import jwt
-from fastapi import Cookie, Depends, HTTPException, status
+from fastapi import Cookie, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from .security import decode_key_material, decode_token
 
-_bearer = HTTPBearer(auto_error=False)
+class StrictHTTPBearer(HTTPBearer):
+    """An explicitly supplied malformed header must never fall back to cookies."""
+
+    async def __call__(self, request: Request) -> HTTPAuthorizationCredentials | None:
+        credentials = await super().__call__(request)
+        if credentials is None and "authorization" in request.headers:
+            return HTTPAuthorizationCredentials(scheme="Bearer", credentials="invalid")
+        return credentials
+
+
+_bearer = StrictHTTPBearer(auto_error=False)
 _bearer_dependency = Depends(_bearer)
 
 
@@ -45,6 +55,7 @@ def build_user_dependencies(
     audience: str,
     key_id: str,
     algorithm: str = "RS256",
+    validate_identity: Callable[[str, TokenPayload], Awaitable[TokenPayload]] | None = None,
 ) -> UserDependencies:
     """Bind JWT verification dependencies to explicit service configuration."""
 
@@ -53,6 +64,7 @@ def build_user_dependencies(
     async def get_current_user(
         credentials: HTTPAuthorizationCredentials | None = _bearer_dependency,
         access_cookie: str | None = Cookie(default=None, alias="ksu_access"),
+        legacy_access_cookie: str | None = Cookie(default=None, alias="access_token"),
     ) -> TokenPayload:
         exc = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -60,6 +72,8 @@ def build_user_dependencies(
             headers={"WWW-Authenticate": "Bearer"},
         )
         token = credentials.credentials if credentials else access_cookie if isinstance(access_cookie, str) else None
+        if not token and isinstance(legacy_access_cookie, str):
+            token = legacy_access_cookie
         if not token:
             raise exc
         try:
@@ -74,21 +88,23 @@ def build_user_dependencies(
             )
         except jwt.PyJWTError as error:
             raise exc from error
-        return TokenPayload(
+        verified = TokenPayload(
             sub=payload["sub"],
             jti=payload["jti"],
             roles=payload.get("roles", []),
             raw=payload,
         )
+        return await validate_identity(token, verified) if validate_identity else verified
 
     async def get_optional_user(
         credentials: HTTPAuthorizationCredentials | None = _bearer_dependency,
         access_cookie: str | None = Cookie(default=None, alias="ksu_access"),
+        legacy_access_cookie: str | None = Cookie(default=None, alias="access_token"),
     ) -> TokenPayload | None:
-        if not credentials and not isinstance(access_cookie, str):
+        if not credentials and not isinstance(access_cookie, str) and not isinstance(legacy_access_cookie, str):
             return None
         try:
-            return await get_current_user(credentials, access_cookie)
+            return await get_current_user(credentials, access_cookie, legacy_access_cookie)
         except HTTPException:
             return None
 

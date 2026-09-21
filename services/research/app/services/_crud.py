@@ -17,6 +17,48 @@ from .references import MainReferenceValidator
 M = TypeVar("M")
 
 
+def apply_public_visibility(model: type[Any], query):
+    """Apply public visibility rules to a query built for any model."""
+
+    now = datetime.now(timezone.utc)
+    today = date.today()
+    if hasattr(model, "editorial_state"):
+        query = query.where(model.editorial_state == "published")
+
+    def temporal_value(column):
+        try:
+            column_type = column.property.columns[0].type
+        except (AttributeError, IndexError):
+            return now
+        return now if isinstance(column_type, sa.DateTime) else today
+
+    if hasattr(model, "is_public"):
+        query = query.where(getattr(model, "is_public").is_(True))
+    if hasattr(model, "is_active"):
+        query = query.where(getattr(model, "is_active").is_(True))
+    if hasattr(model, "status"):
+        query = query.where(getattr(model, "status").in_(CRUDService.public_statuses))
+    if hasattr(model, "published_at"):
+        published_at = getattr(model, "published_at")
+        query = query.where(or_(published_at.is_(None), published_at <= temporal_value(published_at)))
+    if hasattr(model, "starts_at"):
+        starts_at = getattr(model, "starts_at")
+        query = query.where(or_(starts_at.is_(None), starts_at <= now))
+    if hasattr(model, "ends_at"):
+        ends_at = getattr(model, "ends_at")
+        query = query.where(or_(ends_at.is_(None), ends_at >= now))
+    if hasattr(model, "expires_at"):
+        expires_at = getattr(model, "expires_at")
+        query = query.where(or_(expires_at.is_(None), expires_at >= now))
+    if hasattr(model, "publish_date"):
+        publish_date = getattr(model, "publish_date")
+        query = query.where(or_(publish_date.is_(None), publish_date <= temporal_value(publish_date)))
+    if hasattr(model, "expiry_date"):
+        expiry_date = getattr(model, "expiry_date")
+        query = query.where(or_(expiry_date.is_(None), expiry_date >= temporal_value(expiry_date)))
+    return query
+
+
 class CRUDService(Generic[M]):
     model: type[M]
     search_fields: tuple[str, ...] = ()
@@ -50,6 +92,17 @@ class CRUDService(Generic[M]):
     @classmethod
     def _apply_filters(cls, query, filters: dict[str, Any] | None = None):
         for key, value in (filters or {}).items():
+            if key == "__domain_any__":
+                alternatives = []
+                for domain in value:
+                    if any(not hasattr(cls.model, column) for column in domain):
+                        raise ValueError("Unknown domain ownership column")
+                    alternatives.append(sa.and_(sa.true(), *(
+                        getattr(cls.model, column) == expected
+                        for column, expected in domain.items()
+                    )))
+                query = query.where(sa.or_(sa.false(), *alternatives))
+                continue
             if value is None:
                 continue
             if key == "has_grant" and hasattr(cls.model, "grant_id"):
@@ -121,42 +174,8 @@ class CRUDService(Generic[M]):
 
     @classmethod
     def _apply_public_visibility(cls, query):
-        """Apply the public website visibility contract for models that expose those fields."""
-        now = datetime.now(timezone.utc)
-        today = date.today()
-
-        def temporal_value(column):
-            try:
-                column_type = column.property.columns[0].type
-            except (AttributeError, IndexError):
-                return now
-            return now if isinstance(column_type, sa.DateTime) else today
-
-        if hasattr(cls.model, "is_public"):
-            query = query.where(getattr(cls.model, "is_public").is_(True))
-        if hasattr(cls.model, "is_active"):
-            query = query.where(getattr(cls.model, "is_active").is_(True))
-        if hasattr(cls.model, "status"):
-            query = query.where(getattr(cls.model, "status").in_(cls.public_statuses))
-        if hasattr(cls.model, "published_at"):
-            published_at = getattr(cls.model, "published_at")
-            query = query.where(or_(published_at.is_(None), published_at <= temporal_value(published_at)))
-        if hasattr(cls.model, "starts_at"):
-            starts_at = getattr(cls.model, "starts_at")
-            query = query.where(or_(starts_at.is_(None), starts_at <= now))
-        if hasattr(cls.model, "ends_at"):
-            ends_at = getattr(cls.model, "ends_at")
-            query = query.where(or_(ends_at.is_(None), ends_at >= now))
-        if hasattr(cls.model, "expires_at"):
-            expires_at = getattr(cls.model, "expires_at")
-            query = query.where(or_(expires_at.is_(None), expires_at >= now))
-        if hasattr(cls.model, "publish_date"):
-            publish_date = getattr(cls.model, "publish_date")
-            query = query.where(or_(publish_date.is_(None), publish_date <= temporal_value(publish_date)))
-        if hasattr(cls.model, "expiry_date"):
-            expiry_date = getattr(cls.model, "expiry_date")
-            query = query.where(or_(expiry_date.is_(None), expiry_date >= temporal_value(expiry_date)))
-        return query
+        """Apply the public website visibility contract for this model."""
+        return apply_public_visibility(cls.model, query)
 
     @classmethod
     async def list(

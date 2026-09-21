@@ -1,24 +1,20 @@
 import { notFound } from "next/navigation";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordPanel } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { ResearchStoryAccordion } from "../../../components/research-rich-text";
-import { compactText, generateSlugParams, getServiceBySlug } from "../../../lib/research-public-data";
+import { compactText, getServiceBySlug } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTimelineLabel, getRecordTitle } from "../../../lib/research-page-model";
 
 import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getServiceBySlug(slug);
-  return researchRecordMetadata(data, { fallbackTitle: "Research support service", pathname: "/services/" + slug });
-}
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.services.list);
+  return researchRecordMetadata(data, { fallbackTitle: "Support service", pathname: "/services/" + slug });
 }
 
 export default async function ServiceDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -36,7 +32,7 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
   const title = getRecordTitle(service, "Research support service");
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchDetailHero eyebrow="Research Support" title={title} body={getRecordSummary(service)} breadcrumbs={[{ label: "Home", href: "/" }, { label: "Services", href: "/services" }, { label: title }]} labels={[service.service_type, service.category, service.status, service.is_free ? "free" : null, service.is_featured ? "featured" : null]} facts={[{ label: "Turnaround", value: service.turnaround_time }, { label: "Cost", value: service.is_free ? "Free" : compactText(service.fee_structure) }, { label: "Email", value: service.contact_email }, { label: "Updated", value: getRecordTimelineLabel(service) }]} actions={[{ label: "Back to services", href: "/services", variant: "secondary" }, ...(compactText(service.request_url) ? [{ label: "Request service", href: compactText(service.request_url) }] : [])]} imageSrc="/images/research/research-about-hero.svg" imageAlt="Research support access and request information" />
+      <ResearchDetailHero eyebrow="Research Support" title={title} body={getRecordSummary(service)} breadcrumbs={[{ label: "Home", href: "/" }, { label: "Services", href: "/services" }, { label: title }]} labels={[service.service_type, service.category, service.status, service.is_free ? "free" : null, service.is_featured ? "featured" : null]} facts={[{ label: "Turnaround", value: service.turnaround_time }, { label: "Cost", value: service.is_free ? "Free" : compactText(service.fee_structure) }, { label: "Email", value: service.contact_email }, { label: "Updated", value: getRecordTimelineLabel(service) }]} actions={[{ label: "Back to services", href: "/services", variant: "secondary" }, ...(compactText(service.request_url) ? [{ label: "Request service", href: compactText(service.request_url) }] : [])]} imageSrc="/images/research/verified/multidisciplinary-conference-2026.jpg" imageAlt="Research support access and request information" />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
       <ResearchSection eyebrow="Service Story" title="Scope, request path, and delivery" body="Published service fields are arranged into action-focused sections so the page stays compact while preserving the full backend record." tone="white">
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">

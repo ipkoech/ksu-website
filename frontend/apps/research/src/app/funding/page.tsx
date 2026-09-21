@@ -29,7 +29,7 @@ import {
   getRecordYears,
   getListPageSize,
 } from "../../lib/research-page-model";
-import type { ResearchGenericRecord, ResearchGrant } from "@ksu/api-client";
+import type { ResearchGenericRecord, ResearchGrant } from "@ksu/api-client/server";
 import {
   ArrowRight,
   ExternalLink,

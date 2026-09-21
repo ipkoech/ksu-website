@@ -118,6 +118,7 @@ class MultiprocessMetricsSink:
     def __init__(self) -> None:
         self._counters: dict[str, tuple[Any, tuple[str, ...]]] = {}
         self._histograms: dict[str, tuple[Any, tuple[str, ...]]] = {}
+        self._gauges: dict[str, tuple[Any, tuple[str, ...]]] = {}
         self._lock = Lock()
 
     @staticmethod
@@ -154,6 +155,20 @@ class MultiprocessMetricsSink:
     def increment(self, name: str, value: int, *, tags: dict[str, str]) -> None:
         metric, label_names = self._counter(name, tags)
         metric.labels(**{label: tags.get(label, "") for label in label_names}).inc(value)
+
+    def gauge(self, name: str, value: float, *, tags: dict[str, str]) -> None:
+        from prometheus_client import Gauge
+
+        base_name = _prometheus_base_name(name)
+        with self._lock:
+            current = self._gauges.get(base_name)
+            if current is None:
+                label_names = self._labels(tags)
+                current = (Gauge(base_name, f"KSU {base_name}", label_names,
+                                 multiprocess_mode="livemostrecent"), label_names)
+                self._gauges[base_name] = current
+        metric, label_names = current
+        metric.labels(**{label: tags.get(label, "") for label in label_names}).set(value)
 
     def observe_latency(self, name: str, duration_ms: float, *, tags: dict[str, str]) -> None:
         metric, label_names = self._histogram(name, tags)
@@ -201,15 +216,13 @@ class QueueDepthCollector:
             for queue in self.queues:
                 try:
                     value = float(redis_client.llen(queue))
-                except Exception:
-                    logger.exception("celery queue depth collection failed", extra={"queue": queue})
-                    value = 0.0
+                except Exception as exc:
+                    logger.warning("celery queue depth collection failed", extra={"queue": queue, "error_type": type(exc).__name__})
                     success = 0.0
+                    continue
                 depth.add_metric([queue], value)
-        except Exception:
-            logger.exception("celery queue depth Redis connection failed")
-            for queue in self.queues:
-                depth.add_metric([queue], 0.0)
+        except Exception as exc:
+            logger.warning("celery queue depth Redis connection failed", extra={"error_type": type(exc).__name__})
             success = 0.0
 
         scrape_success = GaugeMetricFamily(

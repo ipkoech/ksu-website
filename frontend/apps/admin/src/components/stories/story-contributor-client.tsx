@@ -19,6 +19,7 @@ import {
   richTextToPlainText,
   sanitizeRichText,
 } from "@ksu/ui/components";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 type ViewMode = "dashboard" | "list" | "new" | "edit";
 type LoadState = "idle" | "loading" | "ready" | "error";
@@ -84,6 +85,7 @@ export function StoryContributorClient({
 
   async function submitWorkflow(story: Story, action: ContentWorkflowAction) {
     await contentWorkflowApi.action(workflowItem(story), action, {});
+    void revalidatePublicContent("main", "stories");
   }
 
   async function handleSubmit(
@@ -99,6 +101,7 @@ export function StoryContributorClient({
     try {
       if (mode === "new") {
         const response = await storiesApi.submitDraft(payload);
+        void revalidatePublicContent("main", "stories");
         if (intent === "submit") {
           await submitWorkflow(response.data, "submit");
         }
@@ -127,6 +130,10 @@ export function StoryContributorClient({
             consent_to_publish: payload.consent_to_publish,
           })
         : { data: editingStory };
+
+      if (updateResponse.data !== editingStory) {
+        void revalidatePublicContent("main", "stories");
+      }
 
       if (intent === "submit") {
         await submitWorkflow(updateResponse.data, "submit");

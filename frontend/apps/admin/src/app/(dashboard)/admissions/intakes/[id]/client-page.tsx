@@ -9,6 +9,7 @@ import { MediaPicker } from "@/components/media";
 import { AcademicCalendarPicker } from "@/components/relationships";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { hasChangedPayload, pickChangedPayloadWithRecord, type PayloadFieldMap } from "@/lib/changed-fields";
 import { Button, Card, CardContent, CardHeader, CardTitle, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, Switch } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
@@ -129,6 +130,7 @@ export default function IntakeEditorPage() {
     try {
       if (isNew) {
         await createIntake.mutateAsync(payload);
+        void revalidatePublicContent("main", "admissions");
         toast.success("Intake created successfully");
       } else {
         const patch = pickChangedPayloadWithRecord(payload, form.formState.dirtyFields as Record<string, unknown>, intakePayloadFieldMap, intake);
@@ -137,6 +139,7 @@ export default function IntakeEditorPage() {
           return;
         }
         await updateIntake.mutateAsync({ id: intake!.id, data: patch });
+        void revalidatePublicContent("main", "admissions");
         toast.success("Intake updated successfully");
       }
       router.push("/admissions/intakes");

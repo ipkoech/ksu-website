@@ -40,6 +40,7 @@ export interface AuthState {
 export interface LoginCredentials {
   email: string;
   password: string;
+  mfa_code?: string;
 }
 
 export interface AuthResponse {

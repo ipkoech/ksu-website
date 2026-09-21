@@ -55,6 +55,7 @@ export function Hero({ slides: provided }: { slides?: HeroSlideView[] }) {
     <section
       aria-label="HERI Africa highlights"
       className="relative overflow-hidden bg-heri-ink text-white"
+      data-server-data-display="heri-hero"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}

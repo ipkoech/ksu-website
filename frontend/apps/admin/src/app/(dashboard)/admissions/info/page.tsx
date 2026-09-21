@@ -29,6 +29,7 @@ import { TableSearch } from "@/components/shared/table-search";
 import { useDeleteConfirm } from "@/hooks/use-delete-confirm";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PageTransition } from "@/lib/animations";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const contentTypes = [
   "all",
@@ -161,6 +162,7 @@ export default function AdmissionInfoPage() {
   const handleDelete = (item: AdmissionInfo) => {
     confirmDelete(item.title, async () => {
       await deleteAdmissionInfo.mutateAsync(item.id);
+      void revalidatePublicContent("main", "admissions");
       toast.success("Admission information deleted successfully");
     });
   };

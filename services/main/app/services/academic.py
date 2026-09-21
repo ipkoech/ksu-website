@@ -16,6 +16,7 @@ from ..helpers.slug import unique_slug
 from ..models import Campus, Department, DepartmentService as DepartmentServiceModel, Person, School, StaffAssignment
 from ..models.staff import HIERARCHY_LEVEL_HEAD
 from ._base import apply_updates, ilike_any, paginate_query
+from .department_hierarchy import HIERARCHY_FIELDS, lock_hierarchy, require_no_active_children, validate_parent
 
 
 class CampusService:
@@ -197,6 +198,8 @@ class DepartmentService:
 
     @staticmethod
     async def create(db: AsyncSession, **data) -> Department:
+        await lock_hierarchy(db)
+        await validate_parent(db, data.get("id"), data)
         head_id = data.get("head_id")
         if not data.get("slug") and data.get("name"):
             data["slug"] = await unique_slug(db, Department, data["name"])
@@ -210,6 +213,20 @@ class DepartmentService:
 
     @staticmethod
     async def update(db: AsyncSession, department: Department, **data) -> Department:
+        if HIERARCHY_FIELDS.intersection(data) or "is_active" in data:
+            previous = {field: getattr(department, field) for field in HIERARCHY_FIELDS}
+            previous_active = department.is_active
+            await lock_hierarchy(db)
+            await db.refresh(department, attribute_names=[*HIERARCHY_FIELDS, "is_active"])
+            if previous_active != department.is_active or any(previous[field] != getattr(department, field) for field in HIERARCHY_FIELDS):
+                raise ValueError("Department hierarchy changed; reload before editing")
+            proposed = {field: data.get(field, getattr(department, field)) for field in HIERARCHY_FIELDS}
+            if any(proposed[field] != previous[field] for field in HIERARCHY_FIELDS) or (data.get("is_active") is True and not previous_active):
+                await validate_parent(db, department.id, proposed)
+            if any(proposed[field] != previous[field] for field in ("school_id", "wing_id")):
+                await require_no_active_children(db, department.id, include_inactive=True)
+            if data.get("is_active") is False:
+                await require_no_active_children(db, department.id)
         head_id_was_provided = "head_id" in data
         if data.get("name") and not data.get("slug"):
             data["slug"] = await unique_slug(db, Department, data["name"], exclude_id=department.id)
@@ -303,6 +320,8 @@ class DepartmentService:
 
     @staticmethod
     async def delete(db: AsyncSession, department: Department) -> None:
+        await lock_hierarchy(db)
+        await require_no_active_children(db, department.id)
         department.is_active = False
         await db.flush()
 
@@ -319,8 +338,12 @@ class DepartmentService:
         is_active: bool | None = True,
         is_public: bool | None = True,
         load_options: Sequence = (),
+        authorization_predicate=None,
     ) -> PaginatedResult:
         query = select(Department).options(selectinload(Department.services)).order_by(Department.display_order.asc(), Department.name.asc())
+        if authorization_predicate is not None:
+            query = query.where(authorization_predicate)
+        query = query.order_by(Department.id.asc())
         if load_options:
             query = query.options(*load_options)
         if school_id:

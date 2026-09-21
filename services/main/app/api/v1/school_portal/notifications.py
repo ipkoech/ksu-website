@@ -3,11 +3,17 @@
 import uuid
 
 from fastapi import APIRouter, HTTPException, Query
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ....deps import DbSession
 from ....services import NotificationService
 from ....services.school_portal_context import CurrentSchoolContext
+from ....schemas.notification import NotificationSnapshot
+from ....schemas.base import BaseSchema
+
+
+class NotificationUpdateCount(BaseSchema):
+    updated: int
 
 router = APIRouter()
 
@@ -33,7 +39,7 @@ async def _notification_for_school(
     return notification
 
 
-@router.get("/notifications")
+@router.get("/notifications", response_model=SuccessResponse[list[NotificationSnapshot]], response_model_exclude_unset=True)
 async def list_school_notifications(
     db: DbSession,
     context: CurrentSchoolContext,
@@ -54,7 +60,7 @@ async def list_school_notifications(
     return success(data=result.items, meta=result.meta)
 
 
-@router.patch("/notifications/{notification_id}/read")
+@router.patch("/notifications/{notification_id}/read", response_model=SuccessResponse[NotificationSnapshot], response_model_exclude_unset=True)
 async def mark_school_notification_read(
     notification_id: uuid.UUID,
     db: DbSession,
@@ -65,7 +71,7 @@ async def mark_school_notification_read(
     return success(data=await NotificationService.mark_as_read(db, notification))
 
 
-@router.post("/notifications/read-all")
+@router.post("/notifications/read-all", response_model=SuccessResponse[NotificationUpdateCount])
 async def mark_all_school_notifications_read(
     db: DbSession,
     context: CurrentSchoolContext,
@@ -80,7 +86,7 @@ async def mark_all_school_notifications_read(
     return success(data={"updated": count})
 
 
-@router.post("/notifications/{notification_id}/archive")
+@router.post("/notifications/{notification_id}/archive", response_model=SuccessResponse[NotificationSnapshot], response_model_exclude_unset=True)
 async def archive_school_notification(
     notification_id: uuid.UUID,
     db: DbSession,

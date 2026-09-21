@@ -33,6 +33,7 @@ class NewsAdminResponse(NewsCreate):
 class TransitionRequest(BaseModel):
     status: str
     note: str | None = Field(default=None, max_length=2000)
+    scheduled_at: datetime | None = None
 
 
 class EventCreate(BaseModel):
@@ -46,8 +47,25 @@ class EventCreate(BaseModel):
     registration_url: str | None = None
 
 
+class EventAdminResponse(EventCreate):
+    """The existing admin event wire shape with generated/publishing fields."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    status: str
+    scheduled_at: datetime | None = None
+    event_type: str | None = None
+    featured_image_url: str | None = None
+    is_virtual: bool = False
+    virtual_url: str | None = None
+    is_featured: bool = False
+    position: int = 0
+
+
 NewsCreate.model_rebuild()
 NewsUpdate.model_rebuild()
 NewsAdminResponse.model_rebuild()
 TransitionRequest.model_rebuild()
 EventCreate.model_rebuild()
+EventAdminResponse.model_rebuild()

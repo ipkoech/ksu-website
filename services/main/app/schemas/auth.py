@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 from pydantic import EmailStr, Field, field_validator, model_validator
 
-from .base import BaseReadSchema, BaseSchema, PhoneStr, UrlStr
+from .base import BaseReadSchema, BaseSchema, PhoneStr, UrlStr, optional_snapshot
 
 
 def _normalize_email(value: str) -> str:
@@ -29,7 +29,7 @@ def _validate_password(value: str) -> str:
 
 def _reject_unsupported_mfa(value: object) -> object:
     if isinstance(value, dict) and "mfa_enabled" in value:
-        raise ValueError("MFA enrollment is not supported; mfa_enabled cannot be set")
+        raise ValueError("Use MFA enrollment endpoints; mfa_enabled cannot be set")
     return value
 
 
@@ -37,6 +37,7 @@ class UserLogin(BaseSchema):
     email: EmailStr
     password: str = Field(min_length=8, max_length=255)
     token_transport: Literal["cookie", "bearer"] = "cookie"
+    mfa_code: str | None = Field(default=None, min_length=6, max_length=64, repr=False)
 
     @field_validator("email", mode="before")
     @classmethod
@@ -192,3 +193,57 @@ class TokenResponse(BaseSchema):
 class CookieAuthResponse(BaseSchema):
     authenticated: bool = True
     token_type: Literal["cookie"] = "cookie"
+
+
+class AuthUserResponse(BaseSchema):
+    """Computed user fields exposed by the authenticated ``/me`` endpoint."""
+
+    id: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    full_name: str | None = None
+    avatar_url: str | None = None
+    push_tokens: list[str] | None = None
+    is_active: bool | None = None
+    is_verified: bool | None = None
+    service_memberships: list[str] | None = None
+    must_change_password: bool | None = None
+    last_login_at: str | None = None
+    failed_login_attempts: int | None = None
+    locked_until: str | None = None
+    email_verified_at: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    person_id: str | None = None
+    roles: list[str] | None = None
+    permissions: list[str] | None = None
+
+
+class UserSnapshot(BaseSchema):
+    """Field-selection-safe user payload for administrative list/detail routes."""
+
+    id: uuid.UUID | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    email: EmailStr | None = None
+    phone: str | None = None
+    full_name: str | None = None
+    avatar_url: str | None = None
+    push_tokens: list[str] | None = None
+    is_active: bool | None = None
+    is_verified: bool | None = None
+    service_memberships: list[str] | None = None
+    must_change_password: bool | None = None
+    last_login_at: datetime | None = None
+    failed_login_attempts: int | None = None
+    locked_until: datetime | None = None
+    email_verified_at: datetime | None = None
+    roles: list[str] | None = None
+    notifications: list[dict[str, Any]] | None = None
+    person: dict[str, Any] | None = None
+    role_assignments: list[dict[str, Any]] | None = None
+    sessions: list[dict[str, Any]] | None = None
+    person_id: uuid.UUID | None = None
+
+
+SessionSnapshot = optional_snapshot("SessionSnapshot", SessionRead)

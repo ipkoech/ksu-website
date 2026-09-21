@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 const inquiryRequests = [
   {
     id: "research",
-    title: "Research inquiry",
+    title: "Inquiry",
     body: "For project collaboration, publications, facilities, and research office support.",
     subject: "Research Inquiry",
     terms: ["research", "reirm", "directorate", "office"],
@@ -150,7 +150,7 @@ function ConnectMasthead({
   ];
 
   return (
-    <ResearchPageHero eyebrow="Connect & Engage" title="Reach research teams, partners, and programmes" description="Find inquiry routes, mentorship records, donation stories, media channels, and cross-service research pathways." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Connect & Engage" }]} actions={[{ label: "Start an inquiry", href: "/connect#get-in-touch" }, { label: "Donate", href: "/donate", variant: "secondary" }]} imageSrc="/institutional-research-images/KSUGreenLandscapingWithoutWMJuly2026-3976.jpg" imageAlt="Kisii University research engagement">
+    <ResearchPageHero eyebrow="Connect & Engage" title="Reach research teams, partners, and programmes" description="Find inquiry routes, mentorship records, donation stories, media channels, and cross-service research pathways." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Connect & Engage" }]} actions={[{ label: "Start an inquiry", href: "/connect#get-in-touch" }, { label: "Donate", href: "/donate", variant: "secondary" }]} imageSrc="/images/research/headers/innovation-week-8173.jpg" imageAlt="Kisii University research engagement">
       <ResearchPageHeroStats facts={stats} />
     </ResearchPageHero>
   );

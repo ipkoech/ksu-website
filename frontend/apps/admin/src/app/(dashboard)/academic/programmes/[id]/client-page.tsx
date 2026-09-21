@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { hasChangedPayload, pickChangedPayloadWithRecord, type PayloadFieldMap } from "@/lib/changed-fields";
 import { richTextToEditorValue, richTextToPayloadValue } from "@/lib/rich-text-form";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import {
   Button,
   Card,
@@ -278,6 +279,7 @@ export default function ProgrammeFormPage() {
     try {
       if (isNew) {
         await createProgramme.mutateAsync(payload);
+        void revalidatePublicContent("main", "academic-programmes");
         toast.success("Programme created successfully");
       } else {
         const patch = pickChangedPayloadWithRecord(payload, form.formState.dirtyFields as Record<string, unknown>, programmePayloadFieldMap, programme);
@@ -287,6 +289,7 @@ export default function ProgrammeFormPage() {
         }
         const response = await updateProgramme.mutateAsync({ id: programme!.id, data: patch });
         form.reset(programmeValues(response.data));
+        void revalidatePublicContent("main", "academic-programmes");
         toast.success("Programme updated successfully");
       }
       router.push(listHref);
@@ -308,6 +311,7 @@ export default function ProgrammeFormPage() {
         is_lead: tutorForm.is_lead,
       },
     });
+    void revalidatePublicContent("main", "academic-programmes");
     toast.success("Programme tutor attached");
     setTutorForm({ person_id: "", role: "programme_tutor", is_lead: false });
     setConfirmAction(null);
@@ -328,6 +332,7 @@ export default function ProgrammeFormPage() {
         is_active: intakeForm.is_active,
       },
     });
+    void revalidatePublicContent("main", "academic-programmes");
     toast.success("Programme intake attached");
     setIntakeForm({ intake_id: "", slots_available: "", application_deadline: "", is_active: true });
     setConfirmAction(null);

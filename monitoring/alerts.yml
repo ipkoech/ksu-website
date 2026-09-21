@@ -1,6 +1,75 @@
 groups:
   - name: ksu-availability
     rules:
+      - alert: KsuAuditCaptureFailure
+        expr: sum by (service) (increase(ksu_audit_capture_failure_total[5m])) > 0
+        labels:
+          severity: critical
+          component: audit
+        annotations:
+          summary: "Audit capture failed before durable staging"
+          description: "A request audit could not be staged. Check API capture-error logs and database availability; an empty pending queue does not imply complete delivery."
+
+      - alert: KsuAuditRetainedFailure
+        expr: ksu_audit_retained_failure{service="main"} > 0
+        for: 2m
+        labels:
+          severity: warning
+          component: audit
+        annotations:
+          summary: "Main audit events require repair"
+          description: "Inspect retained audit_outbox events and repair the underlying cause before clearing failure markers. Do not discard the events."
+
+      - alert: KsuAuditDeliveryLag
+        expr: ksu_audit_pending_age{service="main"} > 120
+        for: 2m
+        labels:
+          severity: warning
+          component: audit
+        annotations:
+          summary: "Main audit delivery is falling behind"
+          description: "The oldest pending audit has exceeded two minutes for two minutes. Check the audit worker and PostgreSQL before increasing concurrency."
+
+      - alert: KsuAuditObservationStale
+        expr: (time() - ksu_audit_observed_at{service="main"} > 120) or absent(ksu_audit_observed_at{service="main"})
+        for: 2m
+        labels:
+          severity: warning
+          component: audit
+        annotations:
+          summary: "Main audit observation has stopped"
+          description: "Check Beat and the dedicated audit consumer; the last successful observation is stale."
+
+      - alert: KsuAuditRelayLag
+        expr: ksu_audit_relay_ready_age{service=~"research|library|heri"} > 120
+        for: 2m
+        labels:
+          severity: warning
+          component: audit
+        annotations:
+          summary: "{{ $labels.service }} audit relay is falling behind"
+          description: "Eligible events have waited over two minutes. This excludes active leases and receiver cooldowns. Check the dedicated worker and Main receiver."
+
+      - alert: KsuAuditRelayRetainedFailure
+        expr: ksu_audit_relay_retained_failure{service=~"research|library|heri"} > 0
+        for: 2m
+        labels:
+          severity: warning
+          component: audit
+        annotations:
+          summary: "{{ $labels.service }} audit events require repair"
+          description: "Inspect service-owned audit_relay records and correct the cause before replay. Preserve event IDs."
+
+      - alert: KsuAuditRelayObservationStale
+        expr: (time() - ksu_audit_relay_observed_at{service=~"research|library|heri"} > 120) or absent(ksu_audit_relay_observed_at{service="research"}) or absent(ksu_audit_relay_observed_at{service="library"}) or absent(ksu_audit_relay_observed_at{service="heri"})
+        for: 2m
+        labels:
+          severity: warning
+          component: audit
+        annotations:
+          summary: "{{ $labels.service }} audit relay observation has stopped"
+          description: "Check the service scheduler and dedicated audit worker; observations are stale or absent."
+
       - alert: KsuHttpServiceDown
         expr: up{job="ksu-http-services"} == 0
         for: 2m
@@ -92,7 +161,7 @@ groups:
   - name: ksu-workers-and-data
     rules:
       - alert: KsuCeleryQueueBacklog
-        expr: sum by (queue) (ksu_celery_queue_depth) > 100
+        expr: max by (queue) (ksu_celery_queue_depth) > 100
         for: 10m
         labels:
           severity: warning
@@ -120,6 +189,15 @@ groups:
         annotations:
           summary: "KSU Celery task failures are elevated"
           description: "Task {{ $labels.task }} has failed more than five times in fifteen minutes."
+
+      - alert: KsuAuditDeliveryFailed
+        expr: time() - ksu_celery_task_last_failure_at{task=~"(main|research|library|heri)\\.audit\\.persist"} < 900
+        labels:
+          severity: critical
+          component: worker
+        annotations:
+          summary: "KSU audit delivery failed"
+          description: "Task {{ $labels.task }} had a terminal failure within fifteen minutes. Investigate delivery and recover the source event where available."
 
       - alert: KsuPostgresConnectionUtilizationHigh
         expr: ksu_postgres_connection_utilization_connection_utilization_ratio > 0.80

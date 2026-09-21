@@ -6,10 +6,11 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
+from sqlalchemy.orm import selectinload
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import DbSession
 from ...helpers.storage import get_media_public_url
@@ -24,6 +25,7 @@ from ...models import (
     Wing,
 )
 from ...services import PersonService
+from ...schemas.person import PersonSnapshot
 
 router = APIRouter()
 
@@ -39,9 +41,11 @@ PUBLIC_PERSON_FIELDS = (
     "email",
     "phone",
     "photo_id",
+    "external_avatar_url",
     "bio",
     "full_bio",
     "qualifications",
+    "skills",
     "department_id",
     "academic_rank",
     "specialization",
@@ -155,9 +159,9 @@ async def _person_photo_url(db: DbSession, person: Person) -> str | None:
     if photo is None and person.photo_id:
         result = await db.execute(select(Media).where(Media.id == person.photo_id))
         photo = result.scalar_one_or_none()
-    if photo is None:
-        return None
-    return get_media_public_url(photo)
+    from ...helpers.person_photo import imported_person_photo
+
+    return get_media_public_url(photo) or imported_person_photo(person.external_avatar_url)
 
 
 async def _person_cv_url(db: DbSession, person: Person) -> str | None:
@@ -184,13 +188,60 @@ async def _safe_person_payload(db: DbSession, person: Person) -> dict[str, Any]:
         and assignment.is_public
         and assignment.deleted_at is None
     ]
+    payload["work_experience"] = [
+        {
+            "id": experience.id,
+            "organization": experience.organization,
+            "designation": experience.designation,
+            "assignment": experience.assignment,
+            "start_date": experience.start_date,
+            "end_date": experience.end_date,
+            "source_status": experience.source_status,
+        }
+        for experience in person.work_experience
+        if experience.deleted_at is None
+    ]
     return payload
 
 
-@router.get("/{person_id}")
-@cached_public(timeout=300, vary_on=("person_id",))
-async def get_public_person(person_id: uuid.UUID, db: DbSession):
-    person = await PersonService.get_by_id(db, person_id)
+@router.get(
+    "/{person_identifier}",
+    response_model=SuccessResponse[PersonSnapshot],
+    response_model_exclude_unset=True,
+)
+@cached_public(timeout=300, vary_on=("person_identifier",))
+async def get_public_person(person_identifier: str, db: DbSession):
+    identifier = person_identifier.strip()
+    person = None
+    try:
+        person = await PersonService.get_by_id(
+            db, uuid.UUID(identifier),
+            load_options=(selectinload(Person.cv_file), selectinload(Person.work_experience)),
+        )
+    except ValueError:
+        normalized_slug = identifier.lower().strip("-")
+        slug_expression = func.trim(
+            func.btrim(
+                func.regexp_replace(func.lower(Person.full_name), r"[^a-z0-9]+", "-", "g"),
+                "-",
+            )
+        )
+        result = await db.execute(
+            select(Person)
+            .options(
+                selectinload(Person.assignments), selectinload(Person.photo),
+                selectinload(Person.cv_file), selectinload(Person.work_experience),
+            )
+            .where(
+                or_(
+                    Person.slug == identifier,
+                    func.lower(Person.full_name) == identifier.lower().replace("-", " "),
+                    slug_expression == normalized_slug,
+                )
+            )
+            .limit(1)
+        )
+        person = result.scalar_one_or_none()
     if (
         person is None
         or person.deleted_at is not None

@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import Field
 
-from .base import BaseReadSchema, BaseSchema, SlugStr
+from .base import BaseReadSchema, BaseSchema, SlugStr, optional_snapshot
 from ..models.media import MEDIA_ATTACHMENT_ROLES
 
 
@@ -184,3 +184,8 @@ class MediaLinkRead(BaseReadSchema):
     approved_at: datetime | None = None
     published_at: datetime | None = None
     deleted_at: datetime | None = None
+
+
+MediaSnapshot = optional_snapshot("MediaSnapshot", MediaRead)
+MediaFolderSnapshot = optional_snapshot("MediaFolderSnapshot", MediaFolderRead)
+MediaLinkSnapshot = optional_snapshot("MediaLinkSnapshot", MediaLinkRead)

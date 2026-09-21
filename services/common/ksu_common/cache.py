@@ -144,17 +144,19 @@ def _build_cache_key(
     user_id: str | None = None,
 ) -> str:
     """Build a unique cache key from request path and query params."""
-    parts = [prefix, request.url.path]
+    parts = [os.getenv("SERVICE_NAME", "default"), prefix, request.url.path]
 
     if user_id:
         parts.append(f"user:{user_id}")
 
     params = request.query_params
-    keys = sorted(vary_on or params.keys())
+    # `vary_on` remains a supported hint, but cannot exclude a transport input
+    # which may affect filtering, field selection or relationship expansion.
+    keys = sorted(set(vary_on) | set(params.keys()))
     for key in keys:
-        value = params.get(key)
-        if value is not None:
-            parts.append(f"{key}:{value}")
+        values = params.getlist(key)
+        if values:
+            parts.append(json.dumps([key, values], separators=(",", ":")))
 
     key_str = "|".join(parts)
     key_hash = hashlib.sha256(key_str.encode()).hexdigest()[:16]
@@ -357,7 +359,7 @@ def _build_function_cache_key(
         "current_user",
         "_",
     }
-    parts = [prefix, f"{func.__module__}.{func.__qualname__}"]
+    parts = [os.getenv("SERVICE_NAME", "default"), prefix, f"{func.__module__}.{func.__qualname__}"]
 
     if user_id:
         parts.append(f"user:{user_id}")
@@ -368,7 +370,7 @@ def _build_function_cache_key(
     except (TypeError, ValueError):
         values = kwargs
 
-    keys = sorted(vary_on or values.keys())
+    keys = sorted(set(vary_on) | set(values.keys()))
     for key in keys:
         if key in ignored_names or key not in values:
             continue
@@ -409,6 +411,20 @@ def cached_public(
             if request is None:
                 context = get_cache_context()
                 request = context.get("request") if context else None
+
+            if request is not None and (
+                request.headers.get("authorization")
+                or any(request.cookies.get(name) for name in ("ksu_access", "access_token", "ksu_refresh"))
+            ):
+                # Optional-identity endpoints may return privileged views. Never
+                # read or publish those through a shared anonymous cache entry.
+                return await func(*args, **kwargs)
+            bound = inspect.signature(func).bind_partial(*args, **kwargs).arguments
+            if any(
+                getattr(bound.get(name), "sub", None)
+                for name in ("user", "_user", "current_user", "_")
+            ):
+                return await func(*args, **kwargs)
 
             try:
                 client = await get_redis()
@@ -455,8 +471,24 @@ def cache_response(
                 context = get_cache_context()
                 request = context.get("request") if context else None
 
-            user = kwargs.get("user") or kwargs.get("_user")
+            bound = inspect.signature(func).bind_partial(*args, **kwargs).arguments
+            user = bound.get("user") or bound.get("_user") or bound.get("current_user")
             user_id = getattr(user, "sub", None) if user else None
+            if not user_id:
+                # Unknown identity must never collapse into a shared private key.
+                return await func(*args, **kwargs)
+            # A cache hit skips record checks in the handler. Partition entries
+            # by verified authorization claims as well as subject, so changed
+            # grants and replacement sessions cannot reuse old authority.
+            identity = {
+                "sub": str(user_id),
+                "roles": getattr(user, "roles", []),
+                "permissions": getattr(user, "permissions", []),
+                "claims": getattr(user, "raw", {}),
+            }
+            user_id = hashlib.sha256(
+                json.dumps(identity, sort_keys=True, default=str).encode()
+            ).hexdigest()
 
             try:
                 client = await get_redis()
@@ -485,11 +517,15 @@ async def invalidate_cache(pattern: str = "cache:*") -> int:
     try:
         client = await get_redis()
         keys = []
+        deleted = 0
         async for key in client.scan_iter(match=pattern):
             keys.append(key)
+            if len(keys) == 256:
+                deleted += await client.delete(*keys)
+                keys.clear()
         if keys:
-            return await client.delete(*keys)
-        return 0
+            deleted += await client.delete(*keys)
+        return deleted
     except redis.RedisError:
         return 0
 

@@ -77,6 +77,26 @@ def validate(values: dict[str, str], environment: str, service: str | None) -> l
         errors.append("DEBUG must be disabled outside development")
     if values.get("JWT_ALGORITHM") != "RS256":
         errors.append("JWT_ALGORITHM must be RS256 outside development")
+    if environment == "production":
+        if values.get("POSTGRES_ARCHIVE_MODE", "").lower() != "on":
+            errors.append("POSTGRES_ARCHIVE_MODE must be on in production")
+        archive_command = values.get("POSTGRES_ARCHIVE_COMMAND", "")
+        if not archive_command or "%p" not in archive_command or "%f" not in archive_command:
+            errors.append("POSTGRES_ARCHIVE_COMMAND must archive PostgreSQL %p and %f")
+        archive_host_dir = values.get("POSTGRES_WAL_ARCHIVE_HOST_DIR", "")
+        if not archive_host_dir or is_placeholder(archive_host_dir) or not archive_host_dir.startswith("/"):
+            errors.append("POSTGRES_WAL_ARCHIVE_HOST_DIR must be an absolute managed off-host path")
+        backup_offsite_dir = values.get("BACKUP_OFFSITE_DIR", "")
+        if not backup_offsite_dir or is_placeholder(backup_offsite_dir) or not backup_offsite_dir.startswith("/"):
+            errors.append("BACKUP_OFFSITE_DIR must be an absolute managed off-host path")
+        if values.get("REQUIRE_OFFSITE_BACKUP", "").lower() != "true":
+            errors.append("REQUIRE_OFFSITE_BACKUP must be true in production")
+        retention_days = values.get("BACKUP_RETENTION_DAYS", "")
+        try:
+            if int(retention_days) < 1:
+                raise ValueError
+        except (TypeError, ValueError):
+            errors.append("BACKUP_RETENTION_DAYS must be a positive integer in production")
     return errors
 
 

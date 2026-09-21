@@ -1,0 +1,57 @@
+{
+  "captured_at": "2026-09-06",
+  "command": "python .tmp/prometheus_scrape_probe.py",
+  "limitations": [
+    "This verifies application metrics exposition for all four API processes directly; no Prometheus server was running to verify scrape scheduling or rule evaluation.",
+    "Worker, PostgreSQL-exporter and Redis-exporter targets were not scraped in this local probe.",
+    "External Alertmanager delivery, deployed network discovery and authentication remain staging gates.",
+    "The metrics endpoint probe does not exercise database or Redis-backed business routes."
+  ],
+  "prometheus_config": "monitoring/prometheus.yml",
+  "scrape": {
+    "all_content_type_prometheus": true,
+    "all_status_200": true,
+    "method": "direct HTTP GET",
+    "path": "/metrics",
+    "ports": {
+      "heri_africa": 18183,
+      "library": 18182,
+      "main": 18180,
+      "research": 18181
+    },
+    "targets": {
+      "heri_africa": {
+        "bytes": 985,
+        "content_type": "text/plain; version=0.0.4; charset=utf-8",
+        "has_http_request_metric": false,
+        "metric_lines": 9,
+        "port": 18183,
+        "status": 200
+      },
+      "library": {
+        "bytes": 965,
+        "content_type": "text/plain; version=0.0.4; charset=utf-8",
+        "has_http_request_metric": false,
+        "metric_lines": 9,
+        "port": 18182,
+        "status": 200
+      },
+      "main": {
+        "bytes": 950,
+        "content_type": "text/plain; version=0.0.4; charset=utf-8",
+        "has_http_request_metric": false,
+        "metric_lines": 9,
+        "port": 18180,
+        "status": 200
+      },
+      "research": {
+        "bytes": 970,
+        "content_type": "text/plain; version=0.0.4; charset=utf-8",
+        "has_http_request_metric": false,
+        "metric_lines": 9,
+        "port": 18181,
+        "status": 200
+      }
+    }
+  }
+}

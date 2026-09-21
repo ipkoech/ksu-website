@@ -11,6 +11,7 @@ import { toast } from "@ksu/ui";
 import { faqsApi, queryKeys } from "@ksu/api-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const faqSchema = z.object({
     question: z.string().min(1, "Question is required"),
@@ -40,6 +41,7 @@ export default function FAQFormPage() {
         mutationFn: (data: Partial<FAQFormValues>) => faqsApi.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.faqs.all });
+            void revalidatePublicContent("main", "faqs");
             toast.success("FAQ created successfully");
             router.push("/support/faqs");
         },
@@ -54,6 +56,7 @@ export default function FAQFormPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.faqs.all });
             queryClient.invalidateQueries({ queryKey: queryKeys.faqs.detail(id) });
+            void revalidatePublicContent("main", "faqs");
             toast.success("FAQ updated successfully");
             router.push("/support/faqs");
         },

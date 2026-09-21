@@ -60,23 +60,23 @@ export function LibraryFooter({
               <p className="font-[family-name:var(--font-display)] text-lg font-bold uppercase leading-tight">
                 Kisii University
               </p>
-              <p className="text-sm font-semibold text-white/75">Library</p>
+              <p className="text-sm font-semibold text-white">Library</p>
             </div>
           </div>
-          <ul className="mt-6 space-y-3 text-sm text-white/80">
+          <ul className="mt-6 space-y-3 text-sm text-white">
             <li className="flex items-center gap-2">
-              <MapPin aria-hidden className="h-4 w-4 shrink-0 text-secondary" />
+              <MapPin aria-hidden className="h-4 w-4 shrink-0 text-white" />
               {contactInfo.address}
             </li>
             <li>
               <a href={`tel:${contactInfo.phone}`} className="flex items-center gap-2 transition hover:text-white">
-                <Phone aria-hidden className="h-4 w-4 shrink-0 text-secondary" />
+                <Phone aria-hidden className="h-4 w-4 shrink-0 text-white" />
                 {contactInfo.phone}
               </a>
             </li>
             <li>
               <a href={`mailto:${contactInfo.email}`} className="flex items-center gap-2 transition hover:text-white">
-                <Mail aria-hidden className="h-4 w-4 shrink-0 text-secondary" />
+                <Mail aria-hidden className="h-4 w-4 shrink-0 text-white" />
                 {contactInfo.email}
               </a>
             </li>
@@ -84,7 +84,7 @@ export function LibraryFooter({
         </div>
         {footerColumns.map((column) => (
           <nav key={column.title} aria-label={column.title}>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white">
               {column.title}
             </p>
             <ul className="mt-5 space-y-3 text-sm">
@@ -95,14 +95,14 @@ export function LibraryFooter({
                       href={link.href}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-white/80 transition hover:text-white"
+                      className="text-white transition hover:text-white"
                     >
                       {link.label}
                     </a>
                   </li>
                 ) : (
                   <li key={link.label}>
-                    <Link href={link.href} className="text-white/80 transition hover:text-white">
+                    <Link href={link.href} className="text-white transition hover:text-white">
                       {link.label}
                     </Link>
                   </li>
@@ -112,7 +112,7 @@ export function LibraryFooter({
           </nav>
         ))}
       </div>
-      <div className="border-t border-white/10 px-4 py-5 text-center text-xs text-white/60 sm:px-6 lg:px-8">
+      <div className="border-t border-white/10 px-4 py-5 text-center text-xs text-white sm:px-6 lg:px-8">
         © {new Date().getFullYear()} Kisii University Library. All rights reserved.
       </div>
     </footer>

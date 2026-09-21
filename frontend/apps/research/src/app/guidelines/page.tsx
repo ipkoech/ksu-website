@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ResearchPageHero, ResearchPageHeroStats } from "../../components/research-page-hero";
 import Link from "next/link";
-import type { ResearchGenericRecord } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
 import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { getResearchRecordDownloadHref } from "../../lib/research-downloads";
@@ -13,7 +13,7 @@ import { ResearchListPagination } from "../../components/research-list-paginatio
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Research Guidelines",
+  title: "Guidelines",
   description: "Research guidelines, grant guidance, policies, and procedures.",
 };
 
@@ -56,7 +56,7 @@ export default async function GuidelinesPage({ searchParams }: { searchParams?: 
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <GuidelinesMasthead resultCount={visibleGuidelines.length} publishedCount={allGuidelines.data.length} grantGuidanceCount={grantGuidelines.data.length} categoriesCount={categories.length} />
-      <ResearchSection eyebrow="Document Control" title="Research guidelines" body="Search first, then use the filter menu for document type, active state, status, year, month, category, and sort order." tone="white">
+      <ResearchSection eyebrow="Document Control" title="Guidelines" body="Search first, then use the filter menu for document type, active state, status, year, month, category, and sort order." tone="white">
         <GuidelineFilters params={params} categories={categories} years={years} months={months} />
         {[guidelines.error, allGuidelines.error, grantGuidelines.error].filter(Boolean).map((error, i) => <div key={i} className="mt-5"><StatusMessage tone="error">{error}</StatusMessage></div>)}
         {visibleGuidelines.length ? (
@@ -82,7 +82,7 @@ function GuidelinesMasthead({ resultCount, publishedCount, grantGuidanceCount, c
     { label: "Categories", value: categoriesCount },
   ];
 
-  return <ResearchPageHero eyebrow="Research Support" title="Controlled documents for research policy, procedure, grant work, and compliance" description="Scan active guidance by version, effective date, review window, status, and mandatory flag." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Guidelines" }]} actions={[{ label: "Open forms", href: "/forms" }, { label: "View funding", href: "/funding", variant: "secondary" }]} imageSrc="/institutional-research-images/KSUGreenLandscapingWithoutWMJuly2026-9057.jpg" imageAlt="Kisii University research policy and guidance"><ResearchPageHeroStats facts={stats} /></ResearchPageHero>;
+  return <ResearchPageHero eyebrow="Research Support" title="Controlled documents for research policy, procedure, grant work, and compliance" description="Scan active guidance by version, effective date, review window, status, and mandatory flag." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Guidelines" }]} actions={[{ label: "Open forms", href: "/forms" }, { label: "View funding", href: "/funding", variant: "secondary" }]} imageSrc="/images/research/headers/innovation-week-8040.jpg" imageAlt="Kisii University research policy and guidance"><ResearchPageHeroStats facts={stats} /></ResearchPageHero>;
 }
 
 function GuidelineFilters({ params, categories, years, months }: { params: GuidelineParams; categories: string[]; years: string[]; months: Array<{ value: string; label: string }> }) {

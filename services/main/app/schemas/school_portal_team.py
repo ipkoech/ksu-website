@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import ConfigDict, EmailStr, Field, model_validator
@@ -91,12 +91,52 @@ class SchoolTeamImportRequest(BaseSchema):
     idempotency_key: str = Field(min_length=8, max_length=128)
 
 
+class SchoolTeamImportJobRead(BaseSchema):
+    job_id: str
+    status: str
+
+
+class SchoolTeamPersonOptionRead(BaseSchema):
+    photo_url: str | None = None
+    id: uuid.UUID
+    full_name: str
+    email: str | None = None
+    employee_number: str | None = None
+    department: dict[str, object] | None = None
+
+
+class SchoolTeamAssignmentRead(BaseSchema):
+    photo_url: str | None = None
+    id: uuid.UUID
+    person_id: uuid.UUID
+    full_name: str | None = None
+    title: str | None = None
+    role: str
+    department_id: uuid.UUID | None = None
+    department: dict[str, object] | None = None
+    email: str | None = None
+    phone: str | None = None
+    employee_number: str | None = None
+    is_primary: bool
+    is_public: bool
+    is_active: bool
+    display_order: int
+    portal_role: str | None = None
+    user_id: uuid.UUID | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    created_at: datetime | None = None
+
+
 __all__ = [
     "SchoolPortalRole",
+    "SchoolTeamAssignmentRead",
     "SchoolTeamImportRequest",
+    "SchoolTeamImportJobRead",
     "SchoolTeamLifecycleRequest",
     "SchoolTeamMemberCreate",
     "SchoolTeamMemberUpdate",
+    "SchoolTeamPersonOptionRead",
     "SchoolTeamRole",
     "SchoolTeamTransferRequest",
 ]

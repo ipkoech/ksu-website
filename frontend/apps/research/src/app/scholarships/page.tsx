@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { ResearchGenericRecord } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
 import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { FundingIllustratedHero, formatMoney, getDeadlineState, DeadlineStatusBadge, fundingIcons } from "../../components/funding-ui";
@@ -12,7 +12,7 @@ import { ResearchListPagination } from "../../components/research-list-paginatio
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Research Scholarships",
+  title: "Scholarships",
   description: "Research scholarship calls and student funding opportunities.",
 };
 
@@ -91,7 +91,7 @@ function ScholarshipsMasthead({ resultCount, publishedCount, typeCount, statusCo
   return (
     <FundingIllustratedHero
       eyebrow="Funding / Support"
-      title="Research Scholarships"
+      title="Scholarships"
       body="Compare eligibility, award value, coverage, deadlines, funders, and direct application paths from published scholarship records."
       tone="scholarship"
       actions={[

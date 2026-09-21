@@ -57,12 +57,12 @@ export function ResearchPortfolioHero({
 
 function getPortfolioHeroImage(illustration: PortfolioHeroIllustration) {
   if (illustration === "projects" || illustration === "programs" || illustration === "outputs") {
-    return "/institutional-research-images/KSUInnovationWeek2025,April7,2026-8210.jpg";
+    return "/images/research/headers/innovation-week-8246.jpg";
   }
   if (illustration === "publications" || illustration === "expertise") {
-    return "/institutional-research-images/KSUGreenLandscapingWithoutWMJuly2026-3944.jpg";
+    return "/images/research/headers/innovation-week-8020.jpg";
   }
-  return "/institutional-research-images/KSUGreenLandscapingWithoutWMJuly2026-3942.jpg";
+  return "/images/research/headers/innovation-week-8263.jpg";
 }
 
 function HeroIllustration({ variant }: { variant: PortfolioHeroIllustration }) {

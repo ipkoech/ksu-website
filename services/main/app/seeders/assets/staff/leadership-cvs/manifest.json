@@ -1,0 +1,30 @@
+[
+  {
+    "key": "vice_chancellor",
+    "filename": "vice_chancellor.pdf",
+    "source_url": "https://kisiiuniversity.ac.ke/storage/public/downloads//CV%20Nathan%20Ogechi.pdf",
+    "file_size": 582368,
+    "sha256": "31038429ab9e43e73423e51e34b23ca6b1003323706d8aa4a48011472e53558b"
+  },
+  {
+    "key": "dvc_arsa",
+    "filename": "dvc_arsa.pdf",
+    "source_url": "https://kisiiuniversity.ac.ke/storage/public/downloads//Prof.%20Fredrick%20Wanyama%20CV.pdf",
+    "file_size": 733769,
+    "sha256": "c82f29fc6f1ece2711ad01ea088ee98bc76fefd4137d2f7ab2a547e354b21011"
+  },
+  {
+    "key": "dvc_apf",
+    "filename": "dvc_apf.pdf",
+    "source_url": "https://kisiiuniversity.ac.ke/storage/public/downloads//Prof.%20Nathan%20Oyaro%20CV.pdf",
+    "file_size": 359158,
+    "sha256": "538b1f2b120c58fe24a5d4cfad389da4d31347f37f9c1d558f9709747e18be07"
+  },
+  {
+    "key": "finance_officer",
+    "filename": "finance_officer.pdf",
+    "source_url": "https://kisiiuniversity.ac.ke/storage/public/downloads//CURRICULUM%20VITAE%20MWANGI%202018.pdf",
+    "file_size": 257588,
+    "sha256": "c668972fa523497a11af83db86e9a2e54777d1a6690232c8407b30c6ff1cb868"
+  }
+]

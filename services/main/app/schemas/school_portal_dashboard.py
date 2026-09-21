@@ -76,6 +76,24 @@ class DashboardQuickAction(BaseSchema):
     href: str
 
 
+class SchoolWorkQueueItem(BaseSchema):
+    """An actionable item exposed by the authenticated school workspace."""
+
+    id: str
+    title: str
+    count: int
+    priority: Literal["info", "warning", "critical"]
+    status: Literal["open", "in_progress", "resolved", "reopened"] = "open"
+    href: str
+    source: str
+
+
+class SchoolWorkQueueResponse(BaseSchema):
+    range: DashboardRange
+    generated_at: datetime
+    items: list[SchoolWorkQueueItem]
+
+
 class DashboardProfileCompleteness(BaseSchema):
     percent: int = Field(ge=0, le=100)
     completed_fields: int
@@ -110,5 +128,7 @@ __all__ = [
     "DashboardRange",
     "DashboardSummaryCard",
     "DashboardTrendPoint",
+    "SchoolWorkQueueItem",
+    "SchoolWorkQueueResponse",
     "SchoolPortalDashboardResponse",
 ]

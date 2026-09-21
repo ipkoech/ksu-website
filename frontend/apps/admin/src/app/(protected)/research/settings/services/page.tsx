@@ -57,7 +57,7 @@ const serviceColumns: EditableRecordColumn<ResearchGenericRecord>[] = [
 export default function ResearchServicesPage() {
   return (
     <ResearchResourcePage
-      title="Research Administration Services"
+      title="Administration Services"
       description="Manage research support services, access steps, and service contacts."
       queryKey={["research", "services"]}
       resource={researchServiceApi.services}

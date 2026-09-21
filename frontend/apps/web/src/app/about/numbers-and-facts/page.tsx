@@ -8,6 +8,8 @@ export const metadata = {
   description: "Verified institutional facts about Kisii University by reporting year.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function NumbersAndFactsRoute({ searchParams }: { searchParams: Promise<{ year?: string }> }) {
   const params = await searchParams;
   const parsedYear = params.year ? Number(params.year) : undefined;

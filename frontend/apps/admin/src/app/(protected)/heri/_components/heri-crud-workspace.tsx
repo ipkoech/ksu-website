@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { usePermissions } from "@/hooks/use-permissions";
-import { getStoredAccessToken } from "@ksu/auth";
 import {
   History,
   Loader2,
@@ -31,7 +30,8 @@ import {
   RichTextEditor,
   RichTextRenderer,
 } from "@ksu/ui/components";
-import { useHeriPartnerSync, useHeriResourceMutation, useHeriResourceQuery } from "@/lib/api/heri";
+import { heriRequest, useHeriPartnerSync, useHeriResourceMutation, useHeriResourceQuery } from "@/lib/api/heri";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { HeriMediaPicker } from "./heri-media-picker";
 
 type RecordValue =
@@ -74,8 +74,6 @@ type Config = {
   workflow?: boolean;
 };
 
-const API =
-  process.env.NEXT_PUBLIC_HERI_API_URL ?? "http://localhost:8003/api/v1/heri";
 const statuses = [
   "draft",
   "in_review",
@@ -86,22 +84,7 @@ const statuses = [
 ];
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getStoredAccessToken();
-  const response = await fetch(`${API}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init?.headers ?? {}),
-    },
-  });
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.detail ?? `Request failed (${response.status})`);
-  }
-  if (response.status === 204) return undefined as T;
-  return response.json() as Promise<T>;
+  return heriRequest<T>(path, init);
 }
 
 function display(value: RecordValue) {
@@ -254,6 +237,7 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
       await request(`/admin/${config.resource}/${record.id}`, {
         method: "DELETE",
       });
+      void revalidatePublicContent("heri", config.resource);
       toast.success("Record deleted");
       await load();
     } catch (reason) {
@@ -276,6 +260,7 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
           request(`/admin/${config.resource}/${id}`, { method: "DELETE" }),
         ),
       );
+      void revalidatePublicContent("heri", config.resource);
       toast.success(
         `${selectedIds.size} record${selectedIds.size === 1 ? "" : "s"} deleted`,
       );
@@ -293,7 +278,7 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
   const syncPartners = async () => {
     try {
       const result = await partnerSync.mutateAsync();
-      toast.success(`Synced ${result.total} partners (${result.created} new, ${result.updated} updated)`);
+      toast.success(`Synced ${result.total} partners (${result.created} new, ${result.updated} updated, ${result.deactivated ?? 0} deactivated)`);
       await load();
     } catch (reason) {
       toast.error(reason instanceof Error ? reason.message : "Unable to sync partners");
@@ -317,6 +302,7 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
           }),
         ),
       );
+      void revalidatePublicContent("heri", config.resource);
       toast.success(`${selectedIds.size} workflow records updated`);
       await load();
     } catch (reason) {
@@ -365,6 +351,7 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
           note: "Updated from HERI admin workspace",
         }),
       });
+      void revalidatePublicContent("heri", config.resource);
       await load();
     } catch (reason) {
       toast.error(reason instanceof Error ? reason.message : "Unable to update workflow");

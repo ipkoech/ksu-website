@@ -30,6 +30,7 @@ import {
   Textarea,
 } from "@ksu/ui/components";
 import { MediaPicker } from "@/components/media/media-picker";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
 import {
   ContentWorkflowPanel,
@@ -157,6 +158,7 @@ export function ContentEditorSheet({
         : (await schoolPortalApi.content.create(contentType, payload)).data;
     },
     onSuccess: async (saved) => {
+      void revalidatePublicContent("main", "school-content");
       setCurrentRecord(saved);
       localStorage.removeItem(recoveryKey);
       await Promise.all([
@@ -170,6 +172,7 @@ export function ContentEditorSheet({
     mutationFn: ({ action, comments }: { action: "submit" | "withdraw"; comments: string }) =>
       schoolPortalApi.content.action(contentType, currentRecord!.id, action, comments),
     onSuccess: async (response) => {
+      void revalidatePublicContent("main", "school-content");
       setCurrentRecord(response.data);
       await onSaved();
     },

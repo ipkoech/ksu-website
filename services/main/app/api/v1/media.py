@@ -8,12 +8,13 @@ from types import SimpleNamespace
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy import select
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import Media, MediaFolder, MediaLink, PageSection
 from ...security.scopes import can_access_scope
 from ...schemas import MediaFolderCreate, MediaFolderUpdate, MediaLinkCreate, MediaLinkUpdate, MediaUpdate
+from ...schemas.media import MediaFolderSnapshot, MediaLinkSnapshot, MediaSnapshot
 from ...services import ContentWorkflowService, MediaService
 from ._fields import FieldSelection, FieldsDep, build_selector
 from .page_cms import _require_page_authoring_edit, _require_page_section_access
@@ -215,7 +216,11 @@ def _is_workflow_managed_link(link: MediaLink) -> bool:
     )
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[MediaSnapshot]],
+    response_model_exclude_unset=True,
+)
 async def list_media(
     db: DbSession,
     user: CurrentUser,
@@ -248,7 +253,12 @@ async def list_media(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.post("/upload", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/upload",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[MediaSnapshot],
+    response_model_exclude_unset=True,
+)
 async def upload_media(
     db: DbSession,
     user: CurrentUser,
@@ -310,10 +320,24 @@ async def upload_media(
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return success(data=media, message="Media uploaded")
+    # Re-read through the same bounded serializer used by GET /media/{id}.
+    # The upload transaction may leave relationship attributes unloaded; handing
+    # the ORM instance directly to response validation would trigger async lazy
+    # loads after the request session is closed.
+    persisted = await MediaService.get_by_id(db, media.id)
+    if persisted is None:
+        raise HTTPException(status_code=500, detail="Uploaded media could not be reloaded")
+    return success(
+        data=build_selector(Media, FieldSelection(fields=())).apply(persisted),
+        message="Media uploaded",
+    )
 
 
-@router.get("/folders")
+@router.get(
+    "/folders",
+    response_model=SuccessResponse[list[MediaFolderSnapshot]],
+    response_model_exclude_unset=True,
+)
 async def list_folders(
     db: DbSession,
     user: CurrentUser,
@@ -334,7 +358,12 @@ async def list_folders(
     return success(data=selector.apply(folders))
 
 
-@router.post("/folders", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/folders",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[MediaFolderSnapshot],
+    response_model_exclude_unset=True,
+)
 async def create_folder(data: MediaFolderCreate, db: DbSession, user: CurrentUser):
     await _require_media_folder_scope(
         db,
@@ -347,7 +376,11 @@ async def create_folder(data: MediaFolderCreate, db: DbSession, user: CurrentUse
     return success(data=folder, message="Folder created")
 
 
-@router.get("/folders/{folder_id}")
+@router.get(
+    "/folders/{folder_id}",
+    response_model=SuccessResponse[MediaFolderSnapshot],
+    response_model_exclude_unset=True,
+)
 async def get_folder(folder_id: uuid.UUID, db: DbSession, user: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(MediaFolder, fields)
     folder = await MediaService.get_authorized_folder_by_id(db, folder_id, user, load_options=selector.load_options)
@@ -356,7 +389,11 @@ async def get_folder(folder_id: uuid.UUID, db: DbSession, user: CurrentUser, fie
     return success(data=selector.apply(folder))
 
 
-@router.patch("/folders/{folder_id}")
+@router.patch(
+    "/folders/{folder_id}",
+    response_model=SuccessResponse[MediaFolderSnapshot],
+    response_model_exclude_unset=True,
+)
 async def update_folder(folder_id: uuid.UUID, data: MediaFolderUpdate, db: DbSession, user: CurrentUser):
     folder = await MediaService.get_folder_by_id(db, folder_id)
     if folder is None:
@@ -399,7 +436,11 @@ async def delete_folder(folder_id: uuid.UUID, db: DbSession, user: CurrentUser):
     await MediaService.delete_folder(db, folder)
 
 
-@router.get("/links")
+@router.get(
+    "/links",
+    response_model=SuccessResponse[list[MediaLinkSnapshot]],
+    response_model_exclude_unset=True,
+)
 async def list_media_links(
     db: DbSession,
     user: CurrentUser,
@@ -419,7 +460,12 @@ async def list_media_links(
     return success(data=[MediaService.serialize_link(link) for link in links])
 
 
-@router.post("/links", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/links",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[MediaLinkSnapshot],
+    response_model_exclude_unset=True,
+)
 async def create_media_link(data: MediaLinkCreate, db: DbSession, user: CurrentUser):
     scope_type, scope_id = await _authorized_media_entity_scope(
         db,
@@ -454,7 +500,11 @@ async def create_media_link(data: MediaLinkCreate, db: DbSession, user: CurrentU
     return success(data=MediaService.serialize_link(link), message="Media linked")
 
 
-@router.get("/links/{link_id}")
+@router.get(
+    "/links/{link_id}",
+    response_model=SuccessResponse[MediaLinkSnapshot],
+    response_model_exclude_unset=True,
+)
 async def get_media_link(link_id: uuid.UUID, db: DbSession, user: CurrentUser, fields: FieldSelection = FieldsDep):
     link = await MediaService.get_authorized_link_by_id(db, link_id, user, load_options=())
     if link is None:
@@ -462,7 +512,11 @@ async def get_media_link(link_id: uuid.UUID, db: DbSession, user: CurrentUser, f
     return success(data=MediaService.serialize_link(link))
 
 
-@router.patch("/links/{link_id}")
+@router.patch(
+    "/links/{link_id}",
+    response_model=SuccessResponse[MediaLinkSnapshot],
+    response_model_exclude_unset=True,
+)
 async def update_media_link(link_id: uuid.UUID, data: MediaLinkUpdate, db: DbSession, user: CurrentUser):
     snapshot = await MediaService.get_link_parent_snapshot(db, link_id)
     if snapshot is None:
@@ -561,7 +615,11 @@ async def delete_media_link(link_id: uuid.UUID, db: DbSession, user: CurrentUser
     await MediaService.delete_link(db, link)
 
 
-@router.get("/{media_id}")
+@router.get(
+    "/{media_id}",
+    response_model=SuccessResponse[MediaSnapshot],
+    response_model_exclude_unset=True,
+)
 async def get_media(media_id: uuid.UUID, db: DbSession, user: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(Media, fields)
     media = await MediaService.get_authorized_by_id(db, media_id, user, load_options=selector.load_options)
@@ -570,7 +628,12 @@ async def get_media(media_id: uuid.UUID, db: DbSession, user: CurrentUser, field
     return success(data=selector.apply(media))
 
 
-@router.patch("/{media_id}", dependencies=[Depends(require_scope("media.manage"))])
+@router.patch(
+    "/{media_id}",
+    response_model=SuccessResponse[MediaSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("media.manage"))],
+)
 async def update_media(media_id: uuid.UUID, data: MediaUpdate, db: DbSession, user: CurrentUser):
     media = await MediaService.get_authorized_by_id(db, media_id, user)
     if media is None:

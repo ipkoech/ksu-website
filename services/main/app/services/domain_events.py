@@ -7,8 +7,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import event as sqlalchemy_event
-from sqlalchemy.orm import Session
+from ksu_common.after_commit import defer_after_commit
 
 from ..core.config import get_settings
 from ..models.outbox_event import OutboxEvent
@@ -27,24 +26,17 @@ def enqueue_celery_after_commit(
     *,
     args: list[Any] | None = None,
     kwargs: dict[str, Any] | None = None,
+    recoverable: bool = False,
 ) -> None:
     """Schedule a Celery task only after the surrounding transaction commits."""
-    info = getattr(db, "info", None)
-    if info is not None:
-        info.setdefault("celery_after_commit", []).append(
-            (task_name, list(args or []), dict(kwargs or {}))
-        )
+    task_args, task_kwargs = list(args or []), dict(kwargs or {})
 
+    def dispatch() -> None:
+        from ..tasks.celery_app import celery_app
 
-@sqlalchemy_event.listens_for(Session, "after_commit")
-def _dispatch_after_commit(session: Session) -> None:
-    tasks = session.info.pop("celery_after_commit", [])
-    if not tasks:
-        return
-    from ..tasks.celery_app import celery_app
+        celery_app.send_task(task_name, args=task_args, kwargs=task_kwargs)
 
-    for task_name, args, kwargs in tasks:
-        celery_app.send_task(task_name, args=args, kwargs=kwargs)
+    defer_after_commit(db, dispatch, recoverable=recoverable)
 
 
 def enqueue_domain_event(
@@ -96,6 +88,39 @@ def enqueue_domain_event(
         db,
         "main.outbox.publish_one",
         args=[str(event.id)],
+        recoverable=True,
+    )
+    return event
+
+
+def enqueue_email_event(
+    db: AsyncSession,
+    *,
+    event_type: str,
+    user_id: uuid.UUID,
+    payload: dict[str, Any],
+) -> OutboxEvent:
+    """Persist a critical email delivery request in the transactional outbox."""
+    event = OutboxEvent(
+        id=uuid.uuid4(),
+        event_type=event_type,
+        event_version=1,
+        occurred_at=datetime.now(timezone.utc),
+        scope_type="main",
+        scope_id=user_id,
+        actor_id=None,
+        resource_type="auth_email",
+        resource_id=user_id,
+        payload=payload,
+        delivery_status="pending",
+        publish_attempts=0,
+    )
+    db.add(event)
+    enqueue_celery_after_commit(
+        db,
+        "main.outbox.publish_one",
+        args=[str(event.id)],
+        recoverable=True,
     )
     return event
 
@@ -119,6 +144,7 @@ def domain_event_envelope(event: OutboxEvent) -> DomainEventEnvelope:
 
 __all__ = [
     "domain_event_envelope",
+    "enqueue_email_event",
     "enqueue_celery_after_commit",
     "enqueue_domain_event",
 ]

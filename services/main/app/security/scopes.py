@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -142,6 +143,10 @@ CLUB_ASSIGNMENT_PERMISSIONS = frozenset(
 )
 
 SCHOOL_PORTAL_PERMISSION_NAMES = (
+    "school.integrations.programmes.preview",
+    "school.integrations.lecturers.preview",
+    "school.integrations.lecturers.sync",
+    "school.integrations.programmes.sync",
     "school.audit.view",
     "school.content.bulk",
     "school.content.manage",
@@ -264,6 +269,13 @@ def user_scoped_grants(user: User) -> list[ScopedGrant]:
     for assignment in getattr(person, "assignments", []) or []:
         if getattr(assignment, "status", "active") != "active":
             continue
+        today = datetime.now(timezone.utc).date()
+        if getattr(assignment, "deleted_at", None) is not None:
+            continue
+        if getattr(assignment, "start_date", None) and assignment.start_date > today:
+            continue
+        if getattr(assignment, "end_date", None) and assignment.end_date < today:
+            continue
         scope_type = normalize_scope_type(getattr(assignment, "entity_type", None))
         role = normalize_assignment_role(getattr(assignment, "role", None))
         permissions = assignment_permissions(scope_type, role)
@@ -281,6 +293,8 @@ def user_scoped_grants(user: User) -> list[ScopedGrant]:
 
 
 def grant_has_permission(grant: ScopedGrant, permission: str) -> bool:
+    if grant.scope_type in {"global", "university"} and "platform.admin" in grant.permissions:
+        return authorize_permission(["*"], permission).allowed
     return authorize_permission(grant.permissions, permission).allowed
 
 
@@ -305,7 +319,7 @@ async def default_scope_contains(
         return True
     if grant_scope_type == "university":
         return True
-    if grant_scope_type == target_scope_type and grant_scope_id == target_scope_id:
+    if grant_scope_type == target_scope_type and grant_scope_id is not None and grant_scope_id == target_scope_id:
         return True
     if grant_scope_id is None or target_scope_id is None or db is None:
         return False
@@ -371,7 +385,8 @@ async def authorize_scope(
     target_scope_type = normalize_scope_type(target_scope_type)
     permission_decision: AuthorizationDecision | None = None
     for grant in user_scoped_grants(user):
-        decision = authorize_permission(grant.permissions, permission)
+        decision = authorize_permission(["*"] if grant.scope_type in {"global", "university"}
+                                        and "platform.admin" in grant.permissions else grant.permissions, permission)
         if not decision.allowed:
             continue
         permission_decision = decision

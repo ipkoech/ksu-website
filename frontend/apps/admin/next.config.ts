@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 import path from "node:path";
+import { createRequire } from "node:module";
+
+const { ensureSharedPublic } = createRequire(path.join(__dirname, "package.json"))(
+  "../../scripts/shared-public.cjs",
+);
+
+ensureSharedPublic(__dirname);
 
 const basePath = process.env.NEXT_BASE_PATH || "";
 

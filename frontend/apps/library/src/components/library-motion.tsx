@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   motion,
@@ -14,13 +14,29 @@ import {
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
 /**
+ * Keep the first client render identical to the server render. Framer Motion's
+ * media-query hook can resolve the user's preference before hydration, which
+ * otherwise changes initial styles or branches in the first client tree.
+ */
+export function useStableReducedMotion() {
+  const preference = useReducedMotion();
+  const [reduce, setReduce] = useState(false);
+
+  useEffect(() => {
+    setReduce(preference === true);
+  }, [preference]);
+
+  return reduce;
+}
+
+/**
  * Hero background: slow settle-in zoom on load plus a gentle downward
  * parallax as the hero scrolls away. Bleeds past its box so the parallax
  * never exposes an edge.
  */
 export function HeroParallaxMedia({ src }: { src: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useStableReducedMotion();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"],
@@ -59,7 +75,7 @@ export function MaskedWords({
   delay?: number;
   className?: string;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useStableReducedMotion();
   const words = text.split(" ");
 
   return (
@@ -101,7 +117,7 @@ export function RiseIn({
   delay?: number;
   className?: string;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useStableReducedMotion();
   return (
     <motion.div
       className={className}
@@ -124,7 +140,7 @@ export function Reveal({
   delay?: number;
   className?: string;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useStableReducedMotion();
   return (
     <motion.div
       className={className}
@@ -165,7 +181,7 @@ export function StaggerItem({
   children: ReactNode;
   className?: string;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useStableReducedMotion();
   return (
     <motion.div
       className={className}
@@ -192,7 +208,7 @@ export function CountUp({
   className?: string;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useStableReducedMotion();
   const inView = useInView(ref, { once: true, margin: "-15% 0px" });
   const spring = useSpring(0, { stiffness: 55, damping: 22 });
   const display = useTransform(spring, (current) =>
@@ -226,7 +242,7 @@ export function ParallaxFigure({
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useStableReducedMotion();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],

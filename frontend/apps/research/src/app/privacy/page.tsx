@@ -1,3 +1,4 @@
+import { ResearchPageHero } from "../../components/research-page-hero";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck } from "lucide-react";
@@ -5,7 +6,8 @@ import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "Kisii University Research Portal data privacy and information handling policy.",
+  description:
+    "Kisii University Research Portal data privacy and information handling policy.",
 };
 
 const sections = [
@@ -18,7 +20,7 @@ const sections = [
     body: "Information is used for the purpose for which it was collected, including research support, grant and project administration, event coordination, resource access, partner engagement, communications, and compliance with university and legal obligations. Kisii University does not sell personal information to third parties.",
   },
   {
-    title: "Research records and confidentiality",
+    title: "Records and confidentiality",
     body: "Research records may include proposal, ethics, grant, publication, collaboration, and innovation information. Access to confidential or restricted records is managed according to university policy, applicable approvals, and relevant legal or funder requirements.",
   },
   {
@@ -37,7 +39,10 @@ const sections = [
 
 export default function PrivacyPage() {
   return (
-    <main id="research-main" className="min-h-screen bg-[hsl(var(--surface-muted))]">
+    <main
+      id="research-main"
+      className="min-h-screen bg-[hsl(var(--surface-muted))]"
+    >
       <LegalMasthead
         eyebrow="Privacy Policy"
         title="Data privacy and information handling"
@@ -48,7 +53,10 @@ export default function PrivacyPage() {
       <article className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <ScrollRevealGroup className="space-y-8" staggerDelay={90}>
           {sections.map((section) => (
-            <section key={section.title} className="rounded-lg border border-border bg-white p-6 shadow-sm">
+            <section
+              key={section.title}
+              className="rounded-lg border border-border bg-white p-6 shadow-sm"
+            >
               <h2 className="font-display text-2xl font-semibold text-foreground">
                 {section.title}
               </h2>
@@ -100,23 +108,12 @@ function LegalMasthead({
   current: string;
 }) {
   return (
-    <section className="border-b border-border bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-10 xl:px-10 2xl:px-12">
-      <ScrollReveal className="mx-auto max-w-[1680px]">
-        <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
-          <Link href="/" className="transition hover:text-primary">Home</Link>
-          <span className="text-muted-foreground/60">/</span>
-          <span className="text-foreground">{current}</span>
-        </nav>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
-          {eyebrow}
-        </p>
-        <h1 className="mt-3 max-w-5xl font-display text-4xl font-semibold leading-tight text-foreground">
-          {title}
-        </h1>
-        <p className="mt-4 max-w-4xl text-base leading-8 text-muted-foreground">
-          {body}
-        </p>
-      </ScrollReveal>
-    </section>
+    <ResearchPageHero
+      eyebrow={eyebrow}
+      title={current}
+      description={body}
+      breadcrumbs={[{ label: "Home", href: "/" }, { label: current }]}
+      imageSrc="/images/research/headers/innovation-week-8040.jpg"
+    />
   );
 }

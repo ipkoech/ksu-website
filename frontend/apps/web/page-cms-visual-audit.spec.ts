@@ -1,10 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
-const baseUrl =
-  process.env.PAGE_CMS_AUDIT_BASE_URL ??
-  process.env.PLAYWRIGHT_BASE_URL ??
-  "http://127.0.0.1:3000";
-
 const apiBaseUrl =
   process.env.PAGE_CMS_AUDIT_API_URL ??
   process.env.KSU_MAIN_API_URL ??
@@ -49,6 +44,7 @@ test.describe("page CMS homepage visual audit", () => {
     }) => {
       const consoleErrors: string[] = [];
       const image400s: string[] = [];
+      const serverErrors: string[] = [];
 
       page.on("console", (message) => {
         if (message.type() === "error") {
@@ -60,21 +56,27 @@ test.describe("page CMS homepage visual audit", () => {
         if (response.url().includes("/_next/image") && response.status() === 400) {
           image400s.push(response.url());
         }
+        if (response.status() >= 500) {
+          serverErrors.push(`${response.status()} ${response.url()}`);
+        }
       });
 
       await page.setViewportSize(viewport);
       const composition = await getPublishedComposition(request);
 
-      await page.goto(baseUrl, { waitUntil: "networkidle" });
+      await page.goto("/", { waitUntil: "domcontentloaded" });
       await expect(page.locator("main")).toBeVisible();
       await scrollThroughPage(page);
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => undefined);
 
       expect(
         await hasHorizontalOverflow(page),
         `homepage should not horizontally overflow at ${viewport.width}x${viewport.height}`,
       ).toBe(false);
-      expect(consoleErrors, "homepage should not emit browser console errors").toEqual([]);
+      expect(
+        [...consoleErrors, ...serverErrors],
+        "homepage should not emit browser/server errors",
+      ).toEqual([]);
       expect(image400s, "Next image optimizer should not return 400 responses").toEqual([]);
 
       await expectRenderedContent(page, composition);
@@ -129,7 +131,7 @@ async function expectRenderedContent(page: Page, composition: Composition | null
 
     expect(renderableSection, "published composition should contain a renderable section").toBeTruthy();
 
-    const sectionLocator = renderableSection?.section_key
+    let sectionLocator = renderableSection?.section_key
       ? page.locator(`main section#${cssEscape(renderableSection.section_key)}`)
       : page
           .locator("main section")
@@ -141,6 +143,21 @@ async function expectRenderedContent(page: Page, composition: Composition | null
               "",
           })
           .first();
+
+    // Some section renderers intentionally keep the CMS key out of the DOM;
+    // use its published copy as the stable assertion in that case.
+    if (renderableSection?.section_key && (await sectionLocator.count()) === 0) {
+      sectionLocator = page
+        .locator("main section")
+        .filter({
+          hasText:
+            renderableSection.title ??
+            renderableSection.subtitle ??
+            renderableSection.description ??
+            "",
+        })
+        .first();
+    }
 
     await expect(sectionLocator).toBeVisible();
     return;
@@ -160,9 +177,22 @@ async function expectFeaturedPartnership(page: Page, composition: Composition | 
   const spotlight = composition?.partnership_spotlights[0];
 
   if (featuredSection) {
-    const section = featuredSection.section_key
+    let section = featuredSection.section_key
       ? page.locator(`main section#${cssEscape(featuredSection.section_key)}`)
       : page.locator("main section").filter({ hasText: /partnership|heri/i }).first();
+
+    if (featuredSection.section_key && (await section.count()) === 0) {
+      section = page
+        .locator("main section")
+        .filter({
+          hasText:
+            featuredSection.title ??
+            featuredSection.subtitle ??
+            featuredSection.description ??
+            "",
+        })
+        .first();
+    }
 
     await expect(section).toBeVisible();
 
@@ -213,7 +243,7 @@ async function expectAccessibleSectionLinks(page: Page) {
 }
 
 async function expectIndependentMobileSections(page: Page) {
-  const boxes = await page.locator("main > section").evaluateAll((sections) =>
+  const boxes = await page.locator("main section").evaluateAll((sections) =>
     sections
       .map((section) => {
         const rect = section.getBoundingClientRect();

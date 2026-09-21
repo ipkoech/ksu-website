@@ -13,6 +13,7 @@ from typing import Any, Awaitable, Callable, Iterator
 
 from fastapi import APIRouter, HTTPException, Request, params as fastapi_params, status
 from fastapi.responses import StreamingResponse
+from ksu_common.response_validation import allow_response_model_exemption
 
 from ...deps import CurrentUser, DbSession, user_has_scope
 from ._fields import MainFieldsQuery
@@ -221,7 +222,11 @@ def _value(item: Any, column: str) -> Any:
     return getattr(item, column, None)
 
 
-@router.get("/{resource}.csv")
+@router.get(
+    "/{resource}.csv",
+    response_class=StreamingResponse,
+)
+@allow_response_model_exemption("stream", path="/api/v1/exports/{resource}.csv")
 async def export_resource_csv(resource: str, request: Request, db: DbSession, user: CurrentUser):
     """Export a resource's admin listing (honoring the caller's filters) as CSV."""
     source = EXPORT_SOURCES.get(resource)

@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import DbSession
 from ...models import (
@@ -23,6 +23,7 @@ from ...models import (
     SportsFacility,
     StudentGovernance,
 )
+from ...schemas.campus_life import CampusLifeHomepageRead
 from ...services import HomepageCompositionService
 
 router = APIRouter()
@@ -77,7 +78,12 @@ def _record_payload(record: Any, *, href_prefix: str, description: str | None = 
         "office_location",
     ):
         if hasattr(record, key):
-            payload[key] = getattr(record, key)
+            value = getattr(record, key)
+            # ContactDirectory stores multiple phone numbers, while this
+            # compact composition contract exposes one display string.
+            if key == "phone" and isinstance(value, (list, tuple)):
+                value = ", ".join(str(phone) for phone in value if phone)
+            payload[key] = value
     if hasattr(record, "cover_image"):
         payload["cover_image"] = _media_payload(record.cover_image)
     return payload
@@ -88,7 +94,11 @@ async def _count(db: DbSession, model: Any, *conditions: Any) -> int:
     return int(result.scalar_one() or 0)
 
 
-@router.get("/homepage")
+@router.get(
+    "/homepage",
+    response_model=SuccessResponse[CampusLifeHomepageRead],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=180, vary_on=("audience",))
 async def get_life_around_studies_homepage(
     db: DbSession,
@@ -231,7 +241,17 @@ async def get_life_around_studies_homepage(
                 for item in faqs
             ],
             "contacts": [
-                {"id": str(item.id), "name": item.name, "contact_type": item.contact_type, "email": item.email, "phone": item.phone, "building": item.building, "room_number": item.room_number}
+                {
+                    "id": str(item.id),
+                    "name": item.name,
+                    "contact_type": item.contact_type,
+                    "email": item.email,
+                    "phone": ", ".join(str(phone) for phone in (item.phone or []) if phone)
+                    if isinstance(item.phone, (list, tuple))
+                    else item.phone,
+                    "building": item.building,
+                    "room_number": item.room_number,
+                }
                 for item in contacts
             ],
         }

@@ -10,6 +10,7 @@ import {
   useTransform,
 } from "framer-motion";
 import {
+  ArrowUpRight,
   CheckSquare,
   FileSearch,
   GraduationCap,
@@ -20,8 +21,14 @@ import {
 import { cn } from "@ksu/ui/lib/utils";
 import { focusVisibleStyles } from "@ksu/ui/motion";
 import { AmbientPageBackground } from "@ksu/ui";
-import { Reveal } from "@/components/home/motion-primitives";
+import {
+  Reveal,
+  RevealGroup,
+  RevealItem,
+} from "@/components/home/motion-primitives";
 import { IntakePanel } from "@/components/home/intake-panel";
+import { PublicImage } from "@/components/public/public-image";
+import { defaultUniversityImage } from "@/lib/default-imagery";
 import {
   ProgrammeSearchPanel,
   TopProgrammes,
@@ -120,70 +127,163 @@ export function ProgrammeJourney({
       intensity="soft"
       id="programme-finder"
       aria-labelledby="finder-heading"
-      className="overflow-hidden py-16 text-brand-overlay lg:py-20"
+      className="ksu-band-tight overflow-hidden text-brand-overlay"
     >
       <div className="ksu-shell relative">
-        <Reveal className="max-w-[46rem]">
+        <Reveal className="mx-auto max-w-[58rem] text-center">
+          <p className="ksu-eyebrow text-[hsl(var(--secondary-ink))]">
+            Kisii University
+          </p>
           <h2 id="finder-heading" className="ksu-l-h2 font-normal">
-            Find your programme and apply
+            Find your place at Kisii University
           </h2>
-          <p className="mt-3 max-w-[54ch] text-brand-overlay/70">
+          <p className="mx-auto mt-2 max-w-[54ch] text-brand-overlay/70">
             {subtitle?.trim() ||
-              "Search the full catalogue, then follow the five steps from choosing a programme to reporting on campus."}
+              "Great minds. A brighter tomorrow."}
           </p>
         </Reveal>
 
-        {/* The tool and the deadline, side by side. */}
-        <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-12">
-          <Reveal className="min-w-0">
-            <ProgrammeSearchPanel schools={schools} filters={filters} />
-            {topProgrammes.length > 0 ? (
-              <TopProgrammes programmes={topProgrammes} />
-            ) : null}
-          </Reveal>
-          <Reveal delay={0.1} className="min-w-0">
-            <IntakePanel intakes={intakes} />
-          </Reveal>
-        </div>
+        {/* One quiet shell keeps programme discovery, intake information, and
+            school browsing in the same visual story. */}
+        <div className="mt-6 rounded-[2rem] border border-[hsl(var(--brand-overlay)/0.09)] bg-white/90 p-2 shadow-[0_22px_60px_-36px_hsl(var(--brand-overlay)/0.48)] sm:p-3">
+          {/* The tool and the deadline, side by side. */}
+          <div className="grid items-stretch gap-3 lg:grid-cols-[minmax(0,1.72fr)_minmax(18rem,0.82fr)]">
+            <Reveal className="min-w-0 rounded-[1.5rem] bg-[hsl(var(--surface-muted))] p-4 sm:p-5 lg:p-6">
+              <h3 className="ksu-l-card font-normal">Search programmes</h3>
+              <p className="mt-1 text-sm text-brand-overlay/60">
+                Explore our programmes and find the right fit for your goals.
+              </p>
+              <div className="mt-4">
+                <ProgrammeSearchPanel
+                  schools={schools}
+                  filters={filters}
+                  inlineFilters
+                />
+              </div>
+              {topProgrammes.length > 0 ? (
+                <TopProgrammes programmes={topProgrammes} compact />
+              ) : null}
+            </Reveal>
+            <Reveal delay={0.1} className="min-w-0">
+              <IntakePanel intakes={intakes} compact />
+            </Reveal>
+          </div>
 
-        {/* The rail. */}
-        {/* `relative`: useScroll measures its target's offset, and warns when
-            that element is statically positioned. */}
-        <div ref={railRef} className="relative mt-14 lg:mt-16">
-          <h3 className="ksu-l-card font-normal">Your admissions pathway</h3>
+          <SchoolBrowser schools={schools} />
 
-          {/* Desktop: one horizontal line with the stages alternating above
-              and below it. Every marker lands on the line because each stage
-              is a 1fr / auto / 1fr column, so the auto row sits dead centre
-              whatever the copy above or below it does. */}
-          <ol className="relative mt-8 hidden grid-cols-5 lg:grid">
-            <span
-              className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-brand-overlay/12"
-              aria-hidden
-            />
-            <motion.span
-              className="pointer-events-none absolute inset-x-0 top-1/2 h-px origin-left -translate-y-1/2 bg-gradient-to-r from-primary via-primary/70 to-secondary"
-              style={{ scaleX }}
-              aria-hidden
-            />
-            {STAGES.map((stage, index) => (
-              <RailStage key={stage.title} stage={stage} index={index} />
-            ))}
-          </ol>
+          {/* The rail. */}
+          {/* `relative`: useScroll measures its target's offset, and warns when
+              that element is statically positioned. */}
+          <div ref={railRef} className="relative mt-6 border-t border-brand-overlay/8 pt-5 sm:mt-7 sm:pt-6">
+            <div className="flex items-baseline justify-between gap-4">
+              <h3 className="ksu-l-card font-normal">Your admissions pathway</h3>
+              <span className="ksu-l-small hidden text-brand-overlay/50 sm:inline">
+                From first search to campus
+              </span>
+            </div>
 
-          {/* Small screens: the same five stages as a compact vertical run. */}
-          <ol className="relative mt-6 lg:hidden">
-            <span
-              className="pointer-events-none absolute bottom-5 left-[1.1875rem] top-5 w-px bg-brand-overlay/12"
-              aria-hidden
-            />
-            {STAGES.map((stage, index) => (
-              <CompactStage key={stage.title} stage={stage} index={index} />
-            ))}
-          </ol>
+            {/* Desktop: one horizontal line with the stages alternating above
+                and below it. */}
+            <ol className="relative mt-5 hidden grid-cols-5 lg:grid">
+              <span
+                className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-brand-overlay/12"
+                aria-hidden
+              />
+              <motion.span
+                className="pointer-events-none absolute inset-x-0 top-1/2 h-px origin-left -translate-y-1/2 bg-gradient-to-r from-primary via-primary/70 to-secondary"
+                style={{ scaleX }}
+                aria-hidden
+              />
+              {STAGES.map((stage, index) => (
+                <RailStage key={stage.title} stage={stage} index={index} />
+              ))}
+            </ol>
+
+            {/* Small screens: the same five stages as a compact vertical run. */}
+            <ol className="relative mt-4 lg:hidden">
+              <span
+                className="pointer-events-none absolute bottom-5 left-[1.1875rem] top-5 w-px bg-brand-overlay/12"
+                aria-hidden
+              />
+              {STAGES.map((stage, index) => (
+                <CompactStage key={stage.title} stage={stage} index={index} />
+              ))}
+            </ol>
+          </div>
         </div>
       </div>
     </AmbientPageBackground>
+  );
+}
+
+function SchoolBrowser({ schools }: { schools: HomeSchoolCard[] }) {
+  if (schools.length === 0) return null;
+
+  return (
+    <div id="schools" className="mt-3 border-t border-brand-overlay/8 pt-5 sm:pt-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h3 id="schools-heading" className="ksu-l-card font-normal">
+            Browse by school
+          </h3>
+          <p className="mt-1 text-sm text-brand-overlay/60">
+            Discover our schools and the opportunities they offer.
+          </p>
+        </div>
+        <Link
+          href="/academics/schools"
+          className={cn(
+            "group inline-flex min-h-10 items-center gap-2 rounded-xl border border-brand-overlay/12 px-3.5 py-2 text-sm font-medium text-[hsl(var(--secondary-ink))] transition-colors duration-300 hover:border-[hsl(var(--secondary))]/50 hover:bg-[hsl(var(--surface-band))]",
+            focusVisibleStyles.primary,
+          )}
+        >
+          View all schools
+          <ArrowUpRight
+            className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+            aria-hidden
+          />
+        </Link>
+      </div>
+
+      <RevealGroup
+        as="ul"
+        stagger={0.04}
+        className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4"
+      >
+        {schools.map((school) => (
+          <RevealItem as="li" key={school.href} className="min-w-0">
+            <Link
+              href={school.href}
+              className={cn(
+                "group flex min-h-[5.25rem] items-center gap-3 rounded-2xl border border-brand-overlay/10 bg-white px-2.5 py-2.5 transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-0.5 hover:border-[hsl(var(--secondary))]/45 hover:shadow-[0_12px_28px_-20px_hsl(var(--brand-overlay)/0.65)]",
+                focusVisibleStyles.primary,
+              )}
+            >
+              <div className="relative h-16 w-[4.6rem] shrink-0 overflow-hidden rounded-xl bg-[hsl(var(--surface-band))]">
+                <PublicImage
+                  src={
+                    school.imageUrl ??
+                    defaultUniversityImage(school.id ?? school.href)
+                  }
+                  alt={school.imageAlt ?? ""}
+                  ratio="fill"
+                  className="absolute inset-0 h-full w-full bg-transparent"
+                  imageClassName="object-cover transition-transform duration-500 group-hover:scale-105"
+                  sizes="(min-width: 1024px) 8vw, 24vw"
+                />
+              </div>
+              <span className="min-w-0 flex-1 text-sm font-medium leading-snug text-brand-overlay">
+                {school.title}
+              </span>
+              <ArrowUpRight
+                className="h-4 w-4 shrink-0 text-brand-overlay/35 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[hsl(var(--secondary-ink))]"
+                aria-hidden
+              />
+            </Link>
+          </RevealItem>
+        ))}
+      </RevealGroup>
+    </div>
   );
 }
 

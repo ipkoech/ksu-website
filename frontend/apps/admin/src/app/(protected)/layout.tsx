@@ -2,9 +2,10 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "@ksu/auth";
+import { SessionError, useAuth } from "@ksu/auth";
 import { RealtimeProvider } from "@/components/realtime/realtime-provider";
 import { isStaffProfileOnlyUser, staffProfileHref } from "@/lib/auth-routing";
+import { WorkspaceContextProvider } from "@/components/workspaces/workspace-context";
 
 export default function ProtectedLayout({
   children,
@@ -12,8 +13,8 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const { user, isAuthenticated, isLoading, checkAuth } = useAuth();
+  const pathname = usePathname().replace(/\/$/, "") || "/";
+  const { user, isAuthenticated, isLoading, error, checkAuth } = useAuth();
 
   useEffect(() => {
     if (!user) {
@@ -22,13 +23,13 @@ export default function ProtectedLayout({
   }, [checkAuth, user]);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && !error) {
       router.push("/login?reason=session-expired");
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, error, router]);
 
   useEffect(() => {
-    if (isLoading || !user) return;
+    if (isLoading || error || !user) return;
     if (user.mustChangePassword && pathname !== "/change-password") {
       router.replace("/change-password");
       return;
@@ -40,7 +41,7 @@ export default function ProtectedLayout({
     if (isStaffProfileOnlyUser(user) && pathname !== staffProfileHref) {
       router.replace(staffProfileHref);
     }
-  }, [isLoading, pathname, router, user]);
+  }, [isLoading, error, pathname, router, user]);
 
   if (isLoading) {
     return (
@@ -52,6 +53,8 @@ export default function ProtectedLayout({
       </div>
     );
   }
+
+  if (error) return <SessionError retry={checkAuth} />;
 
   if (!isAuthenticated) {
     return (
@@ -71,5 +74,11 @@ export default function ProtectedLayout({
     );
   }
 
-  return <RealtimeProvider enabled={isAuthenticated}>{children}</RealtimeProvider>;
+  return (
+    <WorkspaceContextProvider>
+      <RealtimeProvider enabled={isAuthenticated} sessionKey={user?.id}>
+        {children}
+      </RealtimeProvider>
+    </WorkspaceContextProvider>
+  );
 }

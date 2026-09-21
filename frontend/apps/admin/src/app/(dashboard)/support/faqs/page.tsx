@@ -22,6 +22,7 @@ import Link from "next/link";
 import { useDeleteConfirm } from "@/hooks/use-delete-confirm";
 import { useState } from "react";
 import { TableSearch } from "@/components/shared/table-search";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const getFAQColumns = ({
     canDelete,
@@ -120,6 +121,7 @@ export default function FAQsPage() {
         confirmDelete("FAQ", async () => {
             try {
                 await deleteFAQ.mutateAsync(id);
+                void revalidatePublicContent("main", "faqs");
                 toast.success("FAQ deleted successfully");
             } catch {
                 toast.error("Failed to delete FAQ");

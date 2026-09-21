@@ -3,18 +3,22 @@
 import uuid
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
-from fastapi.responses import Response
+from fastapi.responses import StreamingResponse
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ....deps import DbSession
 from ....schemas.school_portal_team import (
+    SchoolTeamAssignmentRead,
     SchoolTeamImportRequest,
+    SchoolTeamImportJobRead,
     SchoolTeamLifecycleRequest,
     SchoolTeamMemberCreate,
     SchoolTeamMemberUpdate,
+    SchoolTeamPersonOptionRead,
     SchoolTeamTransferRequest,
 )
+from ....schemas.imports import ImportPreviewRead
 from ....services.imports import ImportService
 from ....services.school_portal_context import CurrentSchoolContext
 from ....services.school_portal_team import (
@@ -37,11 +41,16 @@ from ....services.school_portal_team import (
     update_school_team_member,
 )
 from ....tasks.celery_app import celery_app
+from ksu_common.response_validation import allow_response_model_exemption
 
 router = APIRouter()
 
 
-@router.get("/team/person-options")
+@router.get(
+    "/team/person-options",
+    response_model=SuccessResponse[list[SchoolTeamPersonOptionRead]],
+    response_model_exclude_unset=True,
+)
 async def get_team_person_options(
     db: DbSession,
     context: CurrentSchoolContext,
@@ -62,7 +71,11 @@ async def get_team_person_options(
     )
 
 
-@router.get("/team")
+@router.get(
+    "/team",
+    response_model=SuccessResponse[list[SchoolTeamAssignmentRead]],
+    response_model_exclude_unset=True,
+)
 async def get_team(
     db: DbSession,
     context: CurrentSchoolContext,
@@ -91,7 +104,12 @@ async def get_team(
     )
 
 
-@router.post("/team", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/team",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[SchoolTeamAssignmentRead],
+    response_model_exclude_unset=True,
+)
 async def post_team_member(data: SchoolTeamMemberCreate, db: DbSession, context: CurrentSchoolContext):
     assignment = await create_school_team_member(db, context, data)
     return success(
@@ -99,26 +117,31 @@ async def post_team_member(data: SchoolTeamMemberCreate, db: DbSession, context:
     )
 
 
-@router.get("/team/imports/template")
+@allow_response_model_exemption("stream", path="/api/v1/school-portal/team/imports/template")
+@router.get("/team/imports/template", response_class=StreamingResponse)
 async def download_team_import_template(
     context: CurrentSchoolContext,
     format: str = Query("csv", pattern="^(csv|xlsx)$"),
 ):
     _require_bulk(context)
     if format == "xlsx":
-        return Response(
-            content=team_import_template_xlsx(),
+        return StreamingResponse(
+            iter([team_import_template_xlsx()]),
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={"Content-Disposition": 'attachment; filename="school-team-template.xlsx"'},
         )
-    return Response(
-        content=team_import_template_csv(),
+    return StreamingResponse(
+        iter([team_import_template_csv()]),
         media_type="text/csv",
         headers={"Content-Disposition": 'attachment; filename="school-team-template.csv"'},
     )
 
 
-@router.post("/team/imports/preview")
+@router.post(
+    "/team/imports/preview",
+    response_model=SuccessResponse[ImportPreviewRead],
+    response_model_exclude_unset=True,
+)
 async def preview_team_import(
     db: DbSession,
     context: CurrentSchoolContext,
@@ -129,7 +152,12 @@ async def preview_team_import(
     return success(data=await preview_school_team_import(db, context.school.id, rows))
 
 
-@router.post("/team/imports", status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/team/imports",
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=SuccessResponse[SchoolTeamImportJobRead],
+    response_model_exclude_unset=True,
+)
 async def queue_team_import(data: SchoolTeamImportRequest, context: CurrentSchoolContext):
     _require_bulk(context)
     task = celery_app.send_task(
@@ -149,7 +177,11 @@ def _require_bulk(context: CurrentSchoolContext) -> None:
         raise HTTPException(status_code=403, detail="school.team.bulk permission is required")
 
 
-@router.get("/team/{assignment_id}")
+@router.get(
+    "/team/{assignment_id}",
+    response_model=SuccessResponse[SchoolTeamAssignmentRead],
+    response_model_exclude_unset=True,
+)
 async def get_team_member(assignment_id: uuid.UUID, db: DbSession, context: CurrentSchoolContext):
     assignment = await get_school_team_assignment(db, context, assignment_id)
     return success(
@@ -157,7 +189,11 @@ async def get_team_member(assignment_id: uuid.UUID, db: DbSession, context: Curr
     )
 
 
-@router.patch("/team/{assignment_id}")
+@router.patch(
+    "/team/{assignment_id}",
+    response_model=SuccessResponse[SchoolTeamAssignmentRead],
+    response_model_exclude_unset=True,
+)
 async def patch_team_member(
     assignment_id: uuid.UUID,
     data: SchoolTeamMemberUpdate,
@@ -170,7 +206,11 @@ async def patch_team_member(
     )
 
 
-@router.post("/team/{assignment_id}/activate")
+@router.post(
+    "/team/{assignment_id}/activate",
+    response_model=SuccessResponse[SchoolTeamAssignmentRead],
+    response_model_exclude_unset=True,
+)
 async def activate_team_member(assignment_id: uuid.UUID, db: DbSession, context: CurrentSchoolContext):
     assignment = await activate_school_team_assignment(db, context, assignment_id)
     return success(
@@ -178,7 +218,11 @@ async def activate_team_member(assignment_id: uuid.UUID, db: DbSession, context:
     )
 
 
-@router.post("/team/{assignment_id}/deactivate")
+@router.post(
+    "/team/{assignment_id}/deactivate",
+    response_model=SuccessResponse[SchoolTeamAssignmentRead],
+    response_model_exclude_unset=True,
+)
 async def deactivate_team_member(
     assignment_id: uuid.UUID,
     data: SchoolTeamLifecycleRequest,
@@ -191,7 +235,11 @@ async def deactivate_team_member(
     )
 
 
-@router.post("/team/{assignment_id}/end")
+@router.post(
+    "/team/{assignment_id}/end",
+    response_model=SuccessResponse[SchoolTeamAssignmentRead],
+    response_model_exclude_unset=True,
+)
 async def end_team_member(
     assignment_id: uuid.UUID,
     data: SchoolTeamLifecycleRequest,
@@ -204,7 +252,11 @@ async def end_team_member(
     )
 
 
-@router.post("/team/{assignment_id}/transfer")
+@router.post(
+    "/team/{assignment_id}/transfer",
+    response_model=SuccessResponse[SchoolTeamAssignmentRead],
+    response_model_exclude_unset=True,
+)
 async def transfer_team_member(
     assignment_id: uuid.UUID,
     data: SchoolTeamTransferRequest,
@@ -224,13 +276,21 @@ async def transfer_team_member(
     )
 
 
-@router.post("/team/{assignment_id}/revoke-access")
+@router.post(
+    "/team/{assignment_id}/revoke-access",
+    response_model=SuccessResponse[None],
+    response_model_exclude_unset=True,
+)
 async def revoke_team_member_access(assignment_id: uuid.UUID, db: DbSession, context: CurrentSchoolContext):
     await revoke_school_portal_access(db, context, assignment_id)
     return success(message="Portal access revoked")
 
 
-@router.post("/team/{assignment_id}/resend-invite")
+@router.post(
+    "/team/{assignment_id}/resend-invite",
+    response_model=SuccessResponse[None],
+    response_model_exclude_unset=True,
+)
 async def resend_team_member_invite(assignment_id: uuid.UUID, db: DbSession, context: CurrentSchoolContext):
     await resend_school_team_invite(db, context, assignment_id)
     return success(message="Invitation queued")

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { TeamPersonPhoto } from "./team-person-photo";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -288,7 +289,7 @@ export function SchoolTeamPage() {
                       onClick={() => updateUrl("member", member.id)}
                     >
                       <span className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${group.tone}`}>
-                        {initials(member.full_name || member.email || "Team member")}
+                        <TeamPersonPhoto photoUrl={member.photo_url} name={member.full_name || member.email || "Team member"} initials={initials(member.full_name || member.email || "Team member")} />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-medium">{member.full_name || member.email}</span>

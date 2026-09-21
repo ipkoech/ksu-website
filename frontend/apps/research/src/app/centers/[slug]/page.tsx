@@ -15,7 +15,6 @@ import {
   compactText,
   formatDate,
   formatLabel,
-  generateSlugParams,
   getCenterBySlug,
   getCenterProjects,
   getCenterPublications,
@@ -27,21 +26,17 @@ import {
   getRecordSummary,
   getRecordTitle,
 } from "../../../lib/research-page-model";
-import type { ResearchGenericRecord, ResearchProject, ResearchPublication } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord, ResearchProject, ResearchPublication } from "@ksu/api-client/server";
 
 import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getCenterBySlug(slug);
-  return researchRecordMetadata(data, { fallbackTitle: "Research centre", pathname: "/centers/" + slug });
-}
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.centers.list);
+  return researchRecordMetadata(data, { fallbackTitle: "Centre", pathname: "/centers/" + slug });
 }
 
 export default async function CenterDetailPage({
@@ -67,7 +62,7 @@ export default async function CenterDetailPage({
   const website = compactText(center.website) || compactText(center.url);
   const storySections = getNarrativeSections(center, [
     { title: "Center mandate", fields: ["mandate", "about", "summary", "description"] },
-    { title: "Research focus", fields: ["research_areas", "focus_areas", "objectives"] },
+    { title: "Focus", fields: ["research_areas", "focus_areas", "objectives"] },
     { title: "How the center works", fields: ["functions", "services_summary", "activities"] },
     { title: "Public value", fields: ["impact", "strategic_priorities", "benefits"] },
   ]);
@@ -96,7 +91,7 @@ export default async function CenterDetailPage({
           ...(contactEmail ? [{ label: "Contact center", href: `mailto:${contactEmail}` }] : []),
           ...(website ? [{ label: "Open website", href: website, variant: "secondary" as const }] : []),
         ]}
-        imageSrc={compactText(center.cover_image_url) || "/images/research/research-innovation-hero.svg"}
+        imageSrc={compactText(center.cover_image_url) || "/images/research/verified/innovation-week-03.jpeg"}
         imageAlt="Research center profile, work, and public outputs"
       />
 
@@ -150,7 +145,7 @@ export default async function CenterDetailPage({
       >
         <div className="grid gap-5 lg:grid-cols-2">
           <ResearchRecordPanel
-            title="Research programmes"
+            title="Programmes"
             records={programs.data}
             hrefBase="/programs"
             empty="No public programmes are currently linked to this center."

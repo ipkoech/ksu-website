@@ -24,7 +24,7 @@ import {
   getRecordTitle,
   getRecordYears,
 } from "../../lib/research-page-model";
-import type { ResearchGenericRecord } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import { pageFromSearchParams } from "@ksu/ui/components";
 import { ResearchListPagination } from "../../components/research-list-pagination";
 import { getListPageSize } from "../../lib/research-page-model";
@@ -32,7 +32,7 @@ import { getListPageSize } from "../../lib/research-page-model";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Research Events",
+  title: "Events",
   description: "Research events, workshops, forums, and conferences.",
 };
 
@@ -172,7 +172,7 @@ function EventsMasthead({
     { label: "Event types", value: eventTypesCount },
   ];
 
-  return <ResearchPageHero eyebrow="Events" title="Research workshops, forums, seminars, and conferences" description="Browse the public research calendar by event type, date, center, venue, platform, and registration status." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Learning", href: "/training" }, { label: "Events" }]} actions={[{ label: "View news", href: "/news" }, { label: "Explore training", href: "/training", variant: "secondary" }]} imageSrc="/institutional-research-images/KSUInnovationWeek2025,April7,2026-8234.jpg" imageAlt="Kisii University research event"><ResearchPageHeroStats facts={stats} /></ResearchPageHero>;
+  return <ResearchPageHero eyebrow="Events" title="Workshops, forums, seminars, and conferences" description="Browse the public research calendar by event type, date, center, venue, platform, and registration status." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Learning", href: "/training" }, { label: "Events" }]} actions={[{ label: "View news", href: "/news" }, { label: "Explore training", href: "/training", variant: "secondary" }]} imageSrc="/images/research/headers/innovation-week-8040.jpg" imageAlt="Kisii University research event"><ResearchPageHeroStats facts={stats} /></ResearchPageHero>;
 }
 
 function EventFilters({

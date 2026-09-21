@@ -6,7 +6,7 @@ import { ContentRecordDetailPage } from "../../_components/content-record-detail
 export default function ResearchAnnouncementDetailPage() {
   return (
     <ContentRecordDetailPage
-      title="Research Announcement"
+      title="Announcement"
       description="View research announcement metadata, priority, scope binding, media attachments, and audit history."
       backHref="/research/content/announcements"
       entityType="announcement"

@@ -79,6 +79,25 @@ SERVICE_SPECS = {
             "EXPORT_DIR": str(ROOT / ".tmp" / "docs" / "research" / "exports"),
         },
     },
+    "heri_africa": {
+        "service_dir": ROOT / "services" / "heri_africa",
+        "module": "app.main",
+        "app_factory": "create_app",
+        "env": {
+            "APP_ENV": "development",
+            "DATABASE_URL": "postgresql+asyncpg://docs:docs@localhost:5432/docs",  # pragma: allowlist secret
+            **JWT_VERIFY_ENV,
+            "REDIS_URL": "redis://localhost:6379/3",
+            "CELERY_BROKER_URL": "redis://localhost:6379/3",
+            "CELERY_RESULT_BACKEND": "redis://localhost:6379/3",
+            "MAIN_SERVICE_URL": "http://main:8000",
+            "RESEARCH_SERVICE_URL": "http://research:8001",
+            "MAIN_SERVICE_API_KEY": "docs-internal",  # pragma: allowlist secret
+            "RESEARCH_SERVICE_API_KEY": "docs-internal",  # pragma: allowlist secret
+            "UPLOAD_DIR": str(ROOT / ".tmp" / "docs" / "heri_africa" / "uploads"),
+            "LOG_DIR": str(ROOT / ".tmp" / "docs" / "heri_africa" / "logs"),
+        },
+    },
 }
 
 
@@ -256,7 +275,7 @@ def write_contracts(service_name: str, schema: dict[str, Any]) -> None:
     json_path = service_output / "openapi.json"
     md_path = service_output / "frontend-contract.md"
 
-    json_path.write_text(json.dumps(schema, indent=2, sort_keys=True), encoding="utf-8")
+    json_path.write_text(json.dumps(schema, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     md_path.write_text(render_markdown(service_name, schema), encoding="utf-8")
 
 

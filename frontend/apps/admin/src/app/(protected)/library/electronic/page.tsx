@@ -19,6 +19,8 @@ export default function LibraryElectronicPage() {
       title="Electronic Resources"
       description="Manage databases, e-book platforms, aggregators, and online access records."
       backHref="/library"
+      resourceKey="databases"
+      revalidatePublicService="library"
       queryKey={["library", "databases"]}
       fields={[
         { name: "name", label: "Name", required: true },

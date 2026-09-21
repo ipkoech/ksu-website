@@ -11,11 +11,13 @@ from ...core.config import get_settings
 from ...core.database import get_db
 from ...models.media import MediaAsset
 from ...services.storage import store_bytes
+from ...schemas.operations import MediaAssetResponse
+from ksu_common.response_validation import allow_response_model_exemption
 
 router = APIRouter(prefix="/admin/media", tags=["HERI Media"])
 
 
-@router.post("/upload", status_code=status.HTTP_201_CREATED)
+@router.post("/upload", response_model=MediaAssetResponse, status_code=status.HTTP_201_CREATED)
 async def upload(request: Request, folder: str = "general", filename: str = "upload.bin", db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(require_permission("heri.media.write"))):
     try:
         metadata = store_bytes(filename, request.headers.get("content-type", "application/octet-stream"), await request.body(), folder)
@@ -27,7 +29,8 @@ async def upload(request: Request, folder: str = "general", filename: str = "upl
     return asset
 
 
-@router.get("/{asset_id}/download")
+@allow_response_model_exemption("file", path="/api/v1/heri/admin/media/{asset_id}/download")
+@router.get("/{asset_id}/download", response_class=FileResponse)
 async def download(asset_id: UUID, db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.media.read"))):
     asset = await db.get(MediaAsset, asset_id)
     if asset is None or asset.deleted_at is not None:

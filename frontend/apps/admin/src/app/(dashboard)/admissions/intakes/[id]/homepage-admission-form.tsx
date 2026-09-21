@@ -30,6 +30,7 @@ import {
 } from "@ksu/ui/components";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { formatInstantInTimeZone, zonedDateTimeToIso } from "./homepage-admission-timezone";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 type ActionKey =
   | "apply"
@@ -291,6 +292,7 @@ export function HomepageAdmissionForm({ intakeId }: { intakeId: string }) {
       setValues(next);
       setBaseline(next);
       setIsDirty(false);
+      void revalidatePublicContent("main", "admissions");
       toast.success("Homepage admission settings updated");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update homepage admission settings");

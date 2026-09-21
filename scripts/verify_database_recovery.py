@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 from urllib.parse import unquote, urlparse
@@ -15,17 +16,44 @@ EXPECTED_HEADS = {
     "library": "20260807_0010",
     "heri": "0006_command_idempotency",
 }
+_HEAD_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
+
+
+def parse_expected_heads(values: list[str]) -> dict[str, str]:
+    """Return the default recovery heads with explicitly supplied overrides."""
+
+    expected_heads = dict(EXPECTED_HEADS)
+    for value in values:
+        schema, separator, head = value.partition("=")
+        if not separator or schema not in expected_heads or not _HEAD_PATTERN.fullmatch(head):
+            raise ValueError(
+                "--expected-head must use SCHEMA=HEAD for main, research, library, or heri "
+                "with an alphanumeric migration id"
+            )
+        expected_heads[schema] = head
+    return expected_heads
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--admin-url", default=os.getenv("DATABASE_ADMIN_URL"))
+    parser.add_argument(
+        "--expected-head",
+        action="append",
+        default=[],
+        metavar="SCHEMA=HEAD",
+        help="override one default migration head for a restored database (repeatable)",
+    )
     args = parser.parse_args()
     if not args.admin_url:
         parser.error("--admin-url or DATABASE_ADMIN_URL is required")
+    try:
+        expected_heads = parse_expected_heads(args.expected_head)
+    except ValueError as exc:
+        parser.error(str(exc))
     parsed = urlparse(args.admin_url.replace("postgresql+asyncpg://", "postgresql://", 1))
     expected = " UNION ALL ".join(
-        f"SELECT '{schema}'::text, '{head}'::text" for schema, head in EXPECTED_HEADS.items()
+        f"SELECT '{schema}'::text, '{head}'::text" for schema, head in expected_heads.items()
     )
     sql = f"""
 WITH expected(schema_name, expected_head) AS ({expected}),
@@ -63,7 +91,7 @@ ORDER BY schema_name;
         return 1
 
     # Read heads separately because PostgreSQL cannot parameterize identifiers.
-    for schema, expected_head in EXPECTED_HEADS.items():
+    for schema, expected_head in expected_heads.items():
         head_sql = f'SELECT version_num FROM "{schema}".alembic_version'
         head = subprocess.run(command, input=head_sql, text=True, capture_output=True, env=env)
         observed = {line.strip() for line in head.stdout.splitlines() if line.strip()}

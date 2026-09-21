@@ -88,7 +88,7 @@ export function LibraryFilterToolbar({
   };
 
   return (
-    <form id="filter-drawer-form" action={actionUrl}>
+    <form id="filter-drawer-form" action={actionUrl} data-server-data-display="library-filter-controls">
       <div className="flex flex-col gap-3">
         <div className="flex gap-2 md:gap-3">
           <LibraryFilterTextInput

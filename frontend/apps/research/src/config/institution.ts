@@ -1,5 +1,5 @@
 export const researchSiteUrl =
-  process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL ??
+  process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL ||
   "https://research.kisiiuniversity.ac.ke";
 
 export const institutionContact = {

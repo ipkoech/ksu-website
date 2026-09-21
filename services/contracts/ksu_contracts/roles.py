@@ -14,6 +14,9 @@ class RoleDefinition:
 
 
 ALL_PERMISSIONS: tuple[str, ...] = (
+    "school.integrations.programmes.preview", "school.integrations.programmes.sync",
+    "school.integrations.lecturers.preview", "school.integrations.lecturers.sync",
+    "platform.admin",
     # USER MANAGEMENT
     "users.view", "users.create", "users.edit", "users.delete", "users.suspend", "users.invite",
     # SELF-SERVICE PROFILE
@@ -43,7 +46,7 @@ ALL_PERMISSIONS: tuple[str, ...] = (
     "content.edit_submitted", "content.approve", "content.schedule", "content.unpublish",
     "about.manage", "stories.submit", "stories.view_own", "stories.update_own",
     # RESEARCH
-    "research.view_projects", "research.manage_projects", "research.manage_publications",
+    "research.oversight", "research.view_projects", "research.manage_projects", "research.manage_publications",
     "research.manage_centers", "research.manage_collaborations", "research.manage_services",
     "research.manage_resources", "research.manage_guidelines", "research.manage_expertise",
     "research.manage_grants", "research.review_grants", "research.manage_grant_guidelines",
@@ -59,7 +62,9 @@ ALL_PERMISSIONS: tuple[str, ...] = (
     "library.manage_resources", "library.manage_services", "library.manage_collections",
     "library.manage_staff", "library.manage_regulations", "library.manage_events",
     "library.manage_loans", "library.manage_statistics", "library.view",
-    "library.read", "library.write", "library.admin",
+    "library.read", "library.write", "library.admin", "library.transfer",
+    "library.assistant.view", "library.assistant.manage", "library.assistant.publish", "library.assistant.unpublish",
+    "library.assistant.conversations.view", "library.assistant.conversations.manage", "library.assistant.conversations.reply",
     # ADMISSIONS
     "admissions.view_applications", "admissions.manage_applications", "admissions.manage_intakes",
     "admissions.manage_courses", "admissions.manage_info", "admissions.view",
@@ -117,8 +122,10 @@ ALL_PERMISSIONS: tuple[str, ...] = (
     "docs.access", "api.test",
     # HERI AFRICA
     "heri.view",
+    "heri.integrations.sync",
     "heri.content.read", "heri.content.write", "heri.content.submit",
-    "heri.content.review", "heri.content.publish", "heri.content.manage",
+    "heri.content.review", "heri.content.approve", "heri.content.schedule",
+    "heri.content.publish", "heri.content.unpublish", "heri.content.manage",
     "heri.workflow.publish", "heri.media.read", "heri.media.write",
     "heri.submissions.read", "heri.submissions.write",
     "heri.social.read", "heri.social.write", "heri.analytics.read",
@@ -740,7 +747,8 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
         description="HERI Africa reviewer and publisher.",
         scopes=(
             "heri.content.read", "heri.content.write", "heri.content.submit",
-            "heri.content.review", "heri.content.publish", "heri.workflow.publish",
+            "heri.content.review", "heri.content.approve", "heri.content.schedule",
+            "heri.content.publish", "heri.content.unpublish", "heri.workflow.publish",
             "heri.media.read",
         ),
     ),

@@ -7,9 +7,9 @@ const __dirname = dirname(__filename);
 const outputDir = resolve(__dirname, "../src/generated/openapi");
 
 const services = [
-  ["main", process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000"],
-  ["research", process.env.NEXT_PUBLIC_RESEARCH_API_URL || "http://localhost:8001"],
-  ["library", process.env.NEXT_PUBLIC_LIBRARY_API_URL || "http://localhost:8002"],
+  ["main", process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8080"],
+  ["research", process.env.NEXT_PUBLIC_RESEARCH_API_URL || "http://localhost:8080"],
+  ["library", process.env.NEXT_PUBLIC_LIBRARY_API_URL || "http://localhost:8080"],
 ];
 
 await mkdir(outputDir, { recursive: true });

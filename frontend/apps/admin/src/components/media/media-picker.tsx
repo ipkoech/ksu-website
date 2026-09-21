@@ -37,6 +37,7 @@ export type MediaPickerProps = {
   dialogTitle?: string;
   dialogDescription?: string;
   uploadLabel?: string;
+  onUploaded?: () => void | Promise<void>;
 };
 
 function MediaPreview({ media, className = "h-20 w-28" }: { media?: Media | null; className?: string }) {
@@ -75,6 +76,7 @@ export function MediaPicker({
   dialogTitle,
   dialogDescription,
   uploadLabel = "Upload file",
+  onUploaded,
 }: MediaPickerProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = React.useState(false);
@@ -110,6 +112,7 @@ export function MediaPicker({
         entityId: uploadEntityId,
         role: uploadRole,
       });
+      void onUploaded?.();
       onChange(response.data.id, response.data, "upload");
       await mediaQuery.refetch();
       toast.success("Media uploaded");

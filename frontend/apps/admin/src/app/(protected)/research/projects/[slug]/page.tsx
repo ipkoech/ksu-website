@@ -44,6 +44,7 @@ import { Activity, Building2, CalendarDays, ChevronDown, Edit3, Eye, EyeOff, Fil
 import { MediaPicker } from "@/components/media";
 import { researchPartnerRelationshipAdapter } from "@/components/relationships/relationship-adapters";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../_components/research-admin-detail-page";
 import { ResearchDetailGuide } from "../../_components/research-guidance";
 import { RelatedRecordsCard, RelatedRecordsGrid } from "../../_components/research-detail-relationships";
@@ -217,7 +218,7 @@ function renderProjectDetailActions(record: ResearchGenericRecord) {
 export default function ResearchProjectDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Project"
+      title="Project"
       description="View public profile fields, project dates, progress, and publication-ready details."
       resource={researchServiceApi.projects}
       backHref="/research/projects"
@@ -235,7 +236,7 @@ export default function ResearchProjectDetailPage() {
       ]}
       sections={[
         { title: "Overview", fields: ["summary", "abstract", "background"] },
-        { title: "Research Design", fields: ["objectives", "methodology", "expected_outcomes", "deliverables"] },
+        { title: "Design", fields: ["objectives", "methodology", "expected_outcomes", "deliverables"] },
         { title: "Impact and Funding", fields: ["impact", "budget", "currency"] },
       ]}
       renderAfter={(record) => <ProjectRelations project={record} />}
@@ -262,6 +263,7 @@ function ProjectDetailActions({ project }: { project: ResearchGenericRecord }) {
       setEditOpen(false);
       setConfirmation(null);
       await refreshProject();
+      void revalidatePublicContent("research", "projects");
     },
     onError: () => toast.error("Could not update project"),
   });
@@ -272,6 +274,7 @@ function ProjectDetailActions({ project }: { project: ResearchGenericRecord }) {
       toast.success("Project deleted");
       setConfirmation(null);
       await queryClient.invalidateQueries({ queryKey: ["research", "projects"] });
+      void revalidatePublicContent("research", "projects");
       router.push("/research/projects");
     },
     onError: () => toast.error("Could not delete project"),
@@ -383,7 +386,7 @@ function ProjectDetailActions({ project }: { project: ResearchGenericRecord }) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <ResearchDetailGuide title="Research Project" status={project.status} isPublic={project.is_public} className="ml-auto">
+      <ResearchDetailGuide title="Project" status={project.status} isPublic={project.is_public} className="ml-auto">
         <ProjectRelationshipGuideContent />
       </ResearchDetailGuide>
 
@@ -780,7 +783,7 @@ function ProjectRelations({ project }: { project: ResearchGenericRecord }) {
           content: (
             <RelatedRecordsGrid>
               <ProjectRelationBindingCard
-                title="Research Outputs"
+                title="Outputs"
                 addLabel="Add output"
                 relationshipLabel="Output"
                 queryKey={["research", "projects", projectId, "outputs"]}
@@ -973,6 +976,7 @@ function ProjectRelationshipWorkspace({
     onSuccess: async () => {
       setSelected([]);
       await invalidate();
+      void revalidatePublicContent("research", "projects");
       toast.success(`${active.relationship} linked`);
     },
     onError: () => toast.error(`Failed to link ${active.relationship.toLowerCase()}`),
@@ -981,6 +985,7 @@ function ProjectRelationshipWorkspace({
     mutationFn: async (recordId: string) => active.unbindRecord?.(recordId),
     onSuccess: async () => {
       await invalidate();
+      void revalidatePublicContent("research", "projects");
       toast.success(`${active.relationship} unbound`);
     },
     onError: () => toast.error(`Failed to unbind ${active.relationship.toLowerCase()}`),
@@ -1363,6 +1368,7 @@ function ProjectRelationBindingCard({
     mutationFn: bindRecord,
     onSuccess: async () => {
       await invalidate();
+      void revalidatePublicContent("research", "projects");
       toast.success(`${relationshipLabel} attached`);
     },
     onError: () => toast.error(`Failed to attach ${relationshipLabel.toLowerCase()}`),
@@ -1375,6 +1381,7 @@ function ProjectRelationBindingCard({
     },
     onSuccess: async () => {
       await invalidate();
+      void revalidatePublicContent("research", "projects");
       toast.success(`${relationshipLabel} detached`);
     },
     onError: () => toast.error(`Failed to detach ${relationshipLabel.toLowerCase()}`),

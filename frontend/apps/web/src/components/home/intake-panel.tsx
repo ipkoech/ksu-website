@@ -83,7 +83,13 @@ function upcomingDates(
     .slice(0, 3);
 }
 
-export function IntakePanel({ intakes }: { intakes: HomeIntake[] }) {
+export function IntakePanel({
+  intakes,
+  compact = false,
+}: {
+  intakes: HomeIntake[];
+  compact?: boolean;
+}) {
   const intake = resolveOpenIntake(intakes);
   const major = intake
     ? parseDate(intake.lateApplicationEnd ?? intake.applicationEnd)
@@ -93,12 +99,17 @@ export function IntakePanel({ intakes }: { intakes: HomeIntake[] }) {
   return (
     <aside
       aria-labelledby="intake-panel-heading"
-      className="min-w-0 rounded-3xl bg-brand-overlay p-6 text-white shadow-[0_28px_70px_-32px_hsl(var(--brand-overlay)/0.8)] lg:p-7"
+      className={cn(
+        "min-w-0 bg-brand-overlay text-white shadow-[0_28px_70px_-32px_hsl(var(--brand-overlay)/0.8)]",
+        compact
+          ? "h-full rounded-[1.5rem] p-5 sm:p-6"
+          : "rounded-3xl p-6 lg:p-7",
+      )}
     >
       <div className="flex items-start justify-between gap-6">
         <div className="min-w-0">
           <h4 id="intake-panel-heading" className="ksu-l-card font-normal">
-            {intake ? "Applications open" : "Prepare your application"}
+            {compact ? "Open intakes" : intake ? "Applications open" : "Prepare your application"}
           </h4>
           {intake ? (
             <p className="mt-2 font-medium">{intake.name}</p>
@@ -117,20 +128,28 @@ export function IntakePanel({ intakes }: { intakes: HomeIntake[] }) {
         />
       </div>
 
-      {intake && major ? <Countdown deadline={major} /> : null}
+      {intake && major ? <Countdown deadline={major} compact={compact} /> : null}
 
       <Link
         href={intake ? intake.href : "/admissions/how-to-apply"}
         className={cn(
-          "mt-6 inline-flex min-h-11 items-center justify-center rounded-md bg-secondary px-7 py-3 font-medium text-white transition-[background-color,transform] duration-200 hover:bg-secondary/90 active:scale-[0.99]",
+          cn(
+            compact ? "mt-5" : "mt-6",
+            "inline-flex min-h-11 items-center justify-center rounded-md bg-secondary px-7 py-3 font-medium text-white transition-[background-color,transform] duration-200 hover:bg-secondary/90 active:scale-[0.99]",
+          ),
           focusVisibleStyles.white,
         )}
       >
-        {intake ? "Apply now" : "Admissions guide"}
+        {compact ? "How to apply" : intake ? "Apply now" : "Admissions guide"}
       </Link>
 
       {others.length > 0 ? (
-        <dl className="mt-6 space-y-2.5 border-t border-white/12 pt-5">
+        <dl
+          className={cn(
+            "space-y-2.5 border-t border-white/12 pt-5",
+            compact ? "mt-5" : "mt-6",
+          )}
+        >
           {others.map((entry) => (
             <div
               key={entry.id}
@@ -172,7 +191,13 @@ function remaining(deadline: Date) {
  * hydration mismatch. Until then, and without JavaScript, the deadline itself
  * is shown, which is the information that actually matters.
  */
-function Countdown({ deadline }: { deadline: Date }) {
+function Countdown({
+  deadline,
+  compact = false,
+}: {
+  deadline: Date;
+  compact?: boolean;
+}) {
   const [left, setLeft] = useState<ReturnType<typeof remaining>>(null);
 
   useEffect(() => {
@@ -197,7 +222,7 @@ function Countdown({ deadline }: { deadline: Date }) {
     : [];
 
   return (
-    <div className="mt-5">
+    <div className={compact ? "mt-4" : "mt-5"}>
       <p className="ksu-l-small text-white/60">
         Closes{" "}
         <time

@@ -13,9 +13,11 @@
   },
   "scripts": {
     "lint": "eslint src/",
+    "test": "vitest run --maxWorkers=1 --minWorkers=1 --testTimeout=10000",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ksu/api-client": "workspace:^",
     "zustand": "^5.0.5"
   },
   "peerDependencies": {
@@ -23,6 +25,7 @@
     "react": ">=19.0.0"
   },
   "devDependencies": {
+    "@tanstack/react-query": "5.100.10",
     "@types/node": "^22",
     "@types/react": "^19",
     "postcss": "^8.5.10",

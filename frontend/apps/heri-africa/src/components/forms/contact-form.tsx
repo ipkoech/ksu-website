@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { submitContact } from "../../lib/api";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { createHeriIdempotencyKey, submitContact } from "../../lib/api";
 
 const inputClass =
   "rounded-lg border border-slate-300 px-4 py-3 font-normal outline-none focus:border-heri-teal focus:ring-2 focus:ring-heri-lime/40";
@@ -11,24 +11,43 @@ export function ContactForm() {
     "idle",
   );
   const [message, setMessage] = useState("");
+  const commandKey = useRef<string | null>(null);
+  const submitAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => submitAbortRef.current?.abort(), []);
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     setState("pending");
     const values = Object.fromEntries(new FormData(form).entries());
+    const controller = new AbortController();
+    submitAbortRef.current?.abort();
+    submitAbortRef.current = controller;
     try {
-      const result = await submitContact({
-        ...values,
-        consent: values.consent === "on",
-      });
+      commandKey.current ??= createHeriIdempotencyKey();
+      const result = await submitContact(
+        {
+          ...values,
+          consent: values.consent === "on",
+        },
+        commandKey.current,
+        controller.signal,
+      );
       setMessage(result.message);
       setState("success");
+      commandKey.current = null;
       form.reset();
     } catch (error) {
+      if (controller.signal.aborted) return;
       setMessage(
         error instanceof Error ? error.message : "Unable to submit enquiry",
       );
       setState("error");
+    } finally {
+      if (submitAbortRef.current === controller) {
+        submitAbortRef.current = null;
+      }
     }
   }
   return (

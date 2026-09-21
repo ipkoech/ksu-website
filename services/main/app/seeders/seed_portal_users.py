@@ -205,13 +205,17 @@ async def seed_portal_users(db: AsyncSession, ctx: SeedContext) -> None:
                 raise ValueError(f"{permission_name} permission must be seeded before portal users")
             await upsert_role_permission(db, role, permission)
 
+        school_scope = None
+        if spec["role"] == "school_admin" and ctx.schools:
+            school = next(iter(ctx.schools.values()))
+            school_scope = {"scope_type": "school", "scope_id": school.id}
         await upsert_user_role(
             db,
             user,
             role,
             assigned_by_id=user.id,
-            scope_type=None,
-            scope_id=None,
+            scope_type=school_scope["scope_type"] if school_scope else None,
+            scope_id=school_scope["scope_id"] if school_scope else None,
             note="Seeded portal-specific assignment for browser QA",
         )
 

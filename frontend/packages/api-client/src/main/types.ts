@@ -27,7 +27,12 @@ export type SchoolPortalNavigationKey =
   | "media"
   | "inquiries"
   | "notifications"
-  | "audit";
+  | "audit"
+  | "documents"
+  | "work_queue"
+  | "reports"
+  | "synchronization";
+// Extended shell destinations are capability-gated by the School Portal provider.
 
 export interface SchoolPortalEntitySummary {
   id: string;
@@ -208,6 +213,7 @@ export type SchoolTeamRole =
   | "support_staff";
 
 export interface SchoolTeamMember {
+  photo_url?: string | null;
   id: string;
   person_id: string;
   full_name?: string;
@@ -251,6 +257,7 @@ export interface SchoolTeamMemberCreate {
 }
 
 export interface SchoolTeamPersonOption {
+  photo_url?: string | null;
   id: string;
   full_name?: string | null;
   email: string;
@@ -883,6 +890,31 @@ export interface PortalAccess {
 
 export interface PortalAccessResponse {
   portals: PortalAccess[];
+  workspaces?: WorkspaceContext[];
+  preferred_workspace?: WorkspaceContext | null;
+}
+
+export interface WorkspaceScope {
+  scope_type: string;
+  scope_id?: string | null;
+}
+
+export interface WorkspaceContext {
+  workspace: string;
+  actor_id: string;
+  scopes: WorkspaceScope[];
+  selected_scope?: WorkspaceScope | null;
+  capabilities: Record<string, boolean>;
+  sub_workspaces: string[];
+  reporting_capabilities: string[];
+  platform_authority: boolean;
+  selection_required: boolean;
+  label?: string;
+}
+
+export interface WorkspaceActivationResponse {
+  context: WorkspaceContext;
+  visit_id: string;
 }
 
 export type MyProfileUpdatePayload = Partial<
@@ -3218,6 +3250,7 @@ export interface ImportJob {
 export interface LoginRequest {
   email: string;
   password: string;
+  mfa_code?: string;
   token_transport?: "cookie";
 }
 

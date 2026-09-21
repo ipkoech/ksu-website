@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import uuid
+from pydantic import Field
+from ksu_contracts.workspaces import WorkspaceContext
 
 from .base import BaseSchema
 
@@ -22,4 +24,6 @@ class PortalAccessRead(BaseSchema):
 
 class PortalAccessResponse(BaseSchema):
     portals: list[PortalAccessRead]
+    workspaces: list[WorkspaceContext] = Field(default_factory=list)
+    preferred_workspace: WorkspaceContext | None = None
 

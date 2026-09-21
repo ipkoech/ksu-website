@@ -1,3 +1,4 @@
+import "server-only";
 import {
   accommodationsApi,
   academicCalendarsApi,
@@ -44,7 +45,12 @@ import {
   type SportsFacility,
   type StudentGovernance,
   type Wing,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
+import {
+  normalizePublicListResponse,
+  normalizePublicRecordResponse,
+} from "@/lib/web-response-shapes";
 import type {
   PublicCard,
   PublicIconName,
@@ -320,23 +326,27 @@ function academicCalendarCard(calendar: AcademicCalendar): PublicCard {
 async function safeList<T>(request: Promise<ListEnvelope<T>>): Promise<T[]> {
   try {
     const response = await request;
-    return Array.isArray(response.data) ? response.data : [];
+    const normalized = normalizePublicListResponse<T>(response);
+    if (!normalized) throw new Error("Malformed public record collection");
+    return normalized.data;
   } catch (error) {
     console.error("Failed to fetch public records:", error);
-    return [];
+    return uncachedPublicFallback([]);
   }
 }
 
 async function safePaginatedList<T>(request: Promise<ListEnvelope<T>>) {
   try {
     const response = await request;
+    const normalized = normalizePublicListResponse<T>(response);
+    if (!normalized) throw new Error("Malformed public paginated collection");
     return {
-      data: Array.isArray(response.data) ? response.data : [],
+      data: normalized.data,
       meta: response.meta,
     };
   } catch (error) {
     console.error("Failed to fetch paginated public records:", error);
-    return { data: [] as T[], meta: undefined };
+    return uncachedPublicFallback({ data: [] as T[], meta: undefined });
   }
 }
 
@@ -345,10 +355,12 @@ async function safeRecord<T>(
 ): Promise<T | null> {
   try {
     const response = await request;
-    return response.data ?? null;
+    const normalized = normalizePublicRecordResponse<T>(response);
+    if (normalized === undefined) throw new Error("Malformed public record");
+    return normalized;
   } catch (error) {
     console.error("Failed to fetch public record:", error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 

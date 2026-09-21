@@ -28,6 +28,7 @@ import { TableSearch } from "@/components/shared/table-search";
 import { PageTransition } from "@/lib/animations";
 import { useDeleteConfirm } from "@/hooks/use-delete-confirm";
 import { usePermissions } from "@/hooks/use-permissions";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const boardListFields = [
   "id",
@@ -195,6 +196,7 @@ export default function GovernancePage() {
     (board: Board) => {
       confirmDelete(board.name, async () => {
         await deleteBoard.mutateAsync(board.id);
+        void revalidatePublicContent("main", "governance");
         toast.success("Board deleted");
       });
     },

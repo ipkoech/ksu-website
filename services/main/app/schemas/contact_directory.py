@@ -6,7 +6,7 @@ import uuid
 
 from pydantic import BaseModel, Field
 
-from .base import BaseReadSchema
+from .base import BaseReadSchema, optional_snapshot
 from .support import FAQRead
 
 
@@ -82,6 +82,19 @@ class PublicContactDirectoryRead(BaseModel):
     contacts: PublicContactDirectoryPage
     campuses: list[PublicCampusContactSummary] = Field(default_factory=list)
     faqs: list[FAQRead] = Field(default_factory=list)
+
+
+class ContactOwnerRead(BaseModel):
+    id: uuid.UUID | None = None
+    entity_type: str
+    label: str
+    subtitle: str | None = None
+    is_active: bool
+
+
+PublicContactDirectorySnapshot = optional_snapshot(
+    "PublicContactDirectorySnapshot", PublicContactDirectoryRead
+)
 
 
 __all__ = [

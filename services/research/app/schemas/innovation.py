@@ -41,6 +41,7 @@ class InnovationBase(BaseSchema, SlugMixin, SEOFieldsMixin):
     target_users: str | None = None
     ip_status: str | None = Field(None, max_length=32)
     patent_number: str | None = Field(None, max_length=128)
+    copyright_number: str | None = Field(None, max_length=128)
     patent_filing_date: date | None = None
     patent_grant_date: date | None = None
     patent_countries: list[str] | None = None
@@ -65,6 +66,7 @@ class InnovationCreate(InnovationBase, StatusMixin):
 
 
 class InnovationUpdate(BaseSchema):
+    copyright_number: str | None = Field(None, max_length=128)
     title: str | None = Field(None, max_length=500)
     slug: SlugStr | None = None
     development_stage: str | None = None

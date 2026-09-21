@@ -1,3 +1,4 @@
+import { ResearchPageHero } from "../../components/research-page-hero";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, FileText } from "lucide-react";
@@ -5,7 +6,8 @@ import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 
 export const metadata: Metadata = {
   title: "Terms of Use",
-  description: "Kisii University Research Portal terms of use and public access guidance.",
+  description:
+    "Kisii University Research Portal terms of use and public access guidance.",
 };
 
 const sections = [
@@ -18,7 +20,7 @@ const sections = [
     body: "Kisii University makes reasonable efforts to keep portal information accurate and current. Users should verify time-sensitive notices, funding deadlines, application requirements, ethics procedures, event details, and official documents through the relevant office or linked official source.",
   },
   {
-    title: "Research resources and downloads",
+    title: "Resources and downloads",
     body: "Policies, guidelines, forms, templates, and downloads are provided for public information and research support. Users must confirm current requirements with REIRM or the responsible unit before relying on a document for formal submissions.",
   },
   {
@@ -41,10 +43,13 @@ const sections = [
 
 export default function TermsPage() {
   return (
-    <main id="research-main" className="min-h-screen bg-[hsl(var(--surface-muted))]">
+    <main
+      id="research-main"
+      className="min-h-screen bg-[hsl(var(--surface-muted))]"
+    >
       <LegalMasthead
         eyebrow="Terms of Use"
-        title="Research portal terms and public use guidance"
+        title="Portal terms and public use guidance"
         body="The terms that govern use of the Kisii University Research Portal, public research records, resources, and linked research services."
         current="Terms of Use"
       />
@@ -52,7 +57,10 @@ export default function TermsPage() {
       <article className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <ScrollRevealGroup className="space-y-8" staggerDelay={90}>
           {sections.map((section) => (
-            <section key={section.title} className="rounded-lg border border-border bg-white p-6 shadow-sm">
+            <section
+              key={section.title}
+              className="rounded-lg border border-border bg-white p-6 shadow-sm"
+            >
               <h2 className="font-display text-2xl font-semibold text-foreground">
                 {section.title}
               </h2>
@@ -104,23 +112,12 @@ function LegalMasthead({
   current: string;
 }) {
   return (
-    <section className="border-b border-border bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-10 xl:px-10 2xl:px-12">
-      <ScrollReveal className="mx-auto max-w-[1680px]">
-        <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
-          <Link href="/" className="transition hover:text-primary">Home</Link>
-          <span className="text-muted-foreground/60">/</span>
-          <span className="text-foreground">{current}</span>
-        </nav>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
-          {eyebrow}
-        </p>
-        <h1 className="mt-3 max-w-5xl font-display text-4xl font-semibold leading-tight text-foreground">
-          {title}
-        </h1>
-        <p className="mt-4 max-w-4xl text-base leading-8 text-muted-foreground">
-          {body}
-        </p>
-      </ScrollReveal>
-    </section>
+    <ResearchPageHero
+      eyebrow={eyebrow}
+      title={current}
+      description={body}
+      breadcrumbs={[{ label: "Home", href: "/" }, { label: current }]}
+      imageSrc="/images/research/headers/innovation-week-8040.jpg"
+    />
   );
 }

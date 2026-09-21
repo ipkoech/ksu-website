@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { TeamPersonPhoto } from "./team-person-photo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   schoolPortalApi,
@@ -41,6 +42,7 @@ import {
   Textarea,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const TEAM_ROLES: Array<{ value: SchoolTeamRole; label: string }> = [
   { value: "dean", label: "Dean" },
@@ -141,6 +143,7 @@ export function TeamMemberSheet({
         ? schoolPortalApi.team.update(member.id, values)
         : schoolPortalApi.team.create(values),
     onSuccess: async () => {
+      void revalidatePublicContent("main", "people");
       await refresh();
       onOpenChange(false);
     },
@@ -158,6 +161,7 @@ export function TeamMemberSheet({
       });
     },
     onSuccess: async () => {
+      void revalidatePublicContent("main", "people");
       await refresh();
       onOpenChange(false);
     },
@@ -250,7 +254,7 @@ export function TeamMemberSheet({
                           onClick={() => selectExistingPerson(person)}
                           className={`flex w-full items-center gap-3 border-b p-3 text-left transition last:border-0 ${selected ? "bg-primary/10" : "hover:bg-muted/60"}`}
                         >
-                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{initials(person.full_name || person.email)}</span>
+                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary"><TeamPersonPhoto photoUrl={person.photo_url} name={person.full_name || person.email} initials={initials(person.full_name || person.email)} /></span>
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-medium">{person.full_name || person.email}</span>
                             <span className="block truncate text-xs text-muted-foreground">{[person.email, person.department?.name].filter(Boolean).join(" · ")}</span>
@@ -277,7 +281,7 @@ export function TeamMemberSheet({
             <div className="overflow-hidden rounded-xl border bg-gradient-to-br from-primary/10 via-background to-emerald-500/10 p-4">
               <div className="flex items-center gap-3">
                 <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground">
-                  {initials(member.full_name || member.email || "Team member")}
+                  <TeamPersonPhoto photoUrl={member.photo_url} name={member.full_name || member.email || "Team member"} initials={initials(member.full_name || member.email || "Team member")} />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">{member.full_name || member.email}</p>

@@ -1,3 +1,4 @@
+import { ResearchPageHero } from "../../components/research-page-hero";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -12,11 +13,12 @@ import {
   Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
+import { ScrollRevealGroup } from "@ksu/ui/components";
 
 export const metadata: Metadata = {
   title: "Sitemap",
-  description: "Directory of key public sections on the Kisii University Research Portal.",
+  description:
+    "Directory of key public sections on the Kisii University Research Portal.",
 };
 
 const mainSections = [
@@ -24,7 +26,7 @@ const mainSections = [
   { label: "About REIRM", href: "/about", icon: Users },
   { label: "Projects", href: "/projects", icon: FlaskConical },
   { label: "Publications", href: "/publications", icon: BookOpen },
-  { label: "Research Centers", href: "/centers", icon: BriefcaseBusiness },
+  { label: "Centers", href: "/centers", icon: BriefcaseBusiness },
   { label: "Partners", href: "/partners", icon: Handshake },
   { label: "News & Events", href: "/news", icon: CalendarDays },
   { label: "Resources & Tools", href: "/resources-tools", icon: Wrench },
@@ -34,8 +36,8 @@ const groupedSections = [
   {
     title: "Research",
     links: [
-      { label: "Research Projects", href: "/projects" },
-      { label: "Research Programs", href: "/programs" },
+      { label: "Projects", href: "/projects" },
+      { label: "Programs", href: "/programs" },
       { label: "Publications", href: "/publications" },
       { label: "Outputs", href: "/outputs" },
       { label: "Expertise", href: "/expertise" },
@@ -60,7 +62,7 @@ const groupedSections = [
       { label: "Endowments", href: "/endowments" },
       { label: "Training", href: "/training" },
       { label: "Mentorship", href: "/mentorship" },
-      { label: "Research Services", href: "/services" },
+      { label: "Services", href: "/services" },
     ],
   },
   {
@@ -93,7 +95,11 @@ const groupedSections = [
       { label: "Donate", href: "/donate" },
       { label: "Privacy Policy", href: "/privacy" },
       { label: "Terms of Use", href: "/terms" },
-      { label: "Apply NACOSTI", href: "https://research-portal.nacosti.go.ke/", external: true },
+      {
+        label: "Apply NACOSTI",
+        href: "https://research-portal.nacosti.go.ke/",
+        external: true,
+      },
     ],
   },
 ];
@@ -101,35 +107,35 @@ const groupedSections = [
 export default function SitemapPage() {
   return (
     <main id="research-main" className="min-h-screen bg-surface-muted">
-      <section className="border-b border-border bg-white px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <ScrollReveal className="mx-auto max-w-[1680px]">
-          <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-muted-foreground/60">/</span>
-            <span className="text-foreground">Sitemap</span>
-          </nav>
-          <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">
-            Sitemap
-          </p>
-          <h1 className="mt-3 max-w-5xl font-display text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-            Research portal sitemap
-          </h1>
-          <p className="mt-4 max-w-4xl text-base leading-8 text-muted-foreground">
-            Browse the main public areas of the Kisii University REIRM Portal.
-          </p>
-        </ScrollReveal>
-      </section>
+      <ResearchPageHero
+        title="Sitemap"
+        eyebrow="Explore"
+        description="Browse the public areas of the Kisii University REIRM Portal."
+        imageSrc="/images/research/headers/innovation-week-8147.jpg"
+        imageAlt="Kisii University Innovation Week"
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Sitemap" }]}
+        actions={[]}
+      ></ResearchPageHero>
 
       <article className="mx-auto max-w-[1680px] px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <ScrollRevealGroup className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" staggerDelay={70}>
+        <ScrollRevealGroup
+          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+          staggerDelay={70}
+        >
           {mainSections.map((item) => (
             <SitemapPrimaryLink key={item.href} item={item} />
           ))}
         </ScrollRevealGroup>
 
-        <ScrollRevealGroup className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3" staggerDelay={85}>
+        <ScrollRevealGroup
+          className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+          staggerDelay={85}
+        >
           {groupedSections.map((section) => (
-            <section key={section.title} className="rounded-lg border border-border bg-white p-5 shadow-sm">
+            <section
+              key={section.title}
+              className="rounded-lg border border-border bg-white p-5 shadow-sm"
+            >
               <h2 className="font-display text-xl font-semibold text-foreground">
                 {section.title}
               </h2>
@@ -143,7 +149,10 @@ export default function SitemapPage() {
                     className="group flex min-h-11 items-center justify-between gap-3 rounded-md border border-border bg-surface-subtle px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:border-primary/30 hover:bg-white hover:text-primary"
                   >
                     <span>{item.label}</span>
-                    <ArrowRight aria-hidden className="h-4 w-4 shrink-0 text-primary/70 transition group-hover:translate-x-1" />
+                    <ArrowRight
+                      aria-hidden
+                      className="h-4 w-4 shrink-0 text-primary/70 transition group-hover:translate-x-1"
+                    />
                   </Link>
                 ))}
               </div>

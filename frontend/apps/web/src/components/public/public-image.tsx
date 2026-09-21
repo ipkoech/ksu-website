@@ -54,11 +54,13 @@ export function PublicImage({
   const [currentSrc, setCurrentSrc] = useState(
     src || (fallbackContent ? null : fallbackSrc),
   );
+  const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(Boolean(!src && fallbackContent));
   const canRenderImage = currentSrc && !failed;
 
   return (
     <div
+      data-server-data-display="web-public-image"
       className={cn(
         "relative w-full overflow-hidden bg-accent text-primary",
         ratioClasses[ratio],
@@ -66,7 +68,17 @@ export function PublicImage({
       )}
     >
       {canRenderImage ? (
-        <Image
+        <>
+          {!loaded ? (
+            <span
+              className="absolute inset-0 z-10 flex items-center justify-center bg-surface-muted"
+              role="status"
+              aria-label="Loading image"
+            >
+              <span className="h-8 w-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+            </span>
+          ) : null}
+          <Image
           src={currentSrc}
           alt={alt}
           fill
@@ -77,6 +89,7 @@ export function PublicImage({
           // host-only localhost URL; the browser can request it directly.
           unoptimized={
             unoptimized ||
+            ratio === "profile" ||
             /^https?:\/\/(localhost|127\.0\.0\.1|gateway|main)(:\d+)?\//i.test(
               currentSrc,
             )
@@ -85,7 +98,12 @@ export function PublicImage({
           // otherwise "eager" has to be explicit, because next/image treats
           // an undefined `loading` as lazy.
           loading={priority ? undefined : eager ? "eager" : "lazy"}
-          className={cn("object-cover", imageClassName)}
+          className={cn(
+            "object-cover transition-opacity duration-300",
+            loaded ? "opacity-100" : "opacity-0",
+            imageClassName,
+          )}
+          onLoad={() => setLoaded(true)}
           onError={() => {
             // A caller that supplied `fallbackContent` has said what a missing
             // image should look like, so honour it on failure too — not only
@@ -94,15 +112,17 @@ export function PublicImage({
             // cards render the same poster when their covers 404'd: eight
             // distinct, correct URLs collapsing onto one image reads as a
             // content bug rather than as missing artwork.
-            if (fallbackContent) {
+            if (fallbackContent || ratio === "profile") {
               setFailed(true);
             } else if (currentSrc !== fallbackSrc) {
+              setLoaded(false);
               setCurrentSrc(fallbackSrc);
             } else {
               setFailed(true);
             }
           }}
-        />
+          />
+        </>
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#dbeafe,#fff7ed)]">
           {fallbackContent ?? <ImageIcon className="h-8 w-8" aria-hidden />}

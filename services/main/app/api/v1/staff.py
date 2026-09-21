@@ -8,7 +8,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import StaffAssignment
@@ -21,6 +21,12 @@ from ...schemas import (
     StaffAssignmentEnd,
     StaffAssignmentReassign,
     StaffAssignmentUpdate,
+    StaffAssignmentSnapshot,
+    StaffConflictPayload,
+    StaffRoleOption,
+    AcademicRankOption,
+    StaffEntityOption,
+    StaffEntityTypeOption,
 )
 from ...services import StaffService
 from ._fields import FieldSelection, FieldsDep, build_selector
@@ -114,7 +120,7 @@ async def _prepare_conflict_or_raise(
     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=payload)
 
 
-@router.get("/assignments")
+@router.get("/assignments", response_model=SuccessResponse[list[StaffAssignmentSnapshot]], response_model_exclude_unset=True)
 async def list_assignments(
     db: DbSession,
     user: CurrentUser,
@@ -145,7 +151,7 @@ async def list_assignments(
     return success(data=data)
 
 
-@router.post("/assignments/check-conflict")
+@router.post("/assignments/check-conflict", response_model=SuccessResponse[StaffConflictPayload])
 async def check_conflict(data: StaffAssignmentConflictCheck, db: DbSession, user: CurrentUser):
     await _require_assignment_scope(
         db,
@@ -164,7 +170,7 @@ async def check_conflict(data: StaffAssignmentConflictCheck, db: DbSession, user
     return success(data=payload)
 
 
-@router.get("/assignments/{assignment_id}")
+@router.get("/assignments/{assignment_id}", response_model=SuccessResponse[StaffAssignmentSnapshot], response_model_exclude_unset=True)
 async def get_assignment(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(StaffAssignment, fields)
     assignment = await StaffService.get_by_id(db, assignment_id, load_options=selector.load_options)
@@ -182,21 +188,21 @@ async def get_assignment(assignment_id: uuid.UUID, db: DbSession, user: CurrentU
     return success(data=data)
 
 
-@router.get("/assignments/{assignment_id}/reporting-chain")
+@router.get("/assignments/{assignment_id}/reporting-chain", response_model=SuccessResponse[list[StaffAssignmentSnapshot]], response_model_exclude_unset=True)
 async def get_reporting_chain(assignment_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(StaffAssignment, fields)
     chain = await StaffService.get_reporting_chain(db, assignment_id, load_options=selector.load_options)
     return success(data=selector.apply(chain))
 
 
-@router.get("/assignments/{assignment_id}/direct-reports")
+@router.get("/assignments/{assignment_id}/direct-reports", response_model=SuccessResponse[list[StaffAssignmentSnapshot]], response_model_exclude_unset=True)
 async def get_direct_reports(assignment_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(StaffAssignment, fields)
     reports = await StaffService.get_direct_reports(db, assignment_id, load_options=selector.load_options)
     return success(data=selector.apply(reports))
 
 
-@router.post("/assignments", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("staff.manage_assignments"))])
+@router.post("/assignments", status_code=status.HTTP_201_CREATED, response_model=SuccessResponse[StaffAssignmentSnapshot], response_model_exclude_unset=True, dependencies=[Depends(require_scope("staff.manage_assignments"))])
 async def create_assignment(data: StaffAssignmentCreate, db: DbSession, user: CurrentUser):
     payload = data.model_dump()
     await _require_assignment_scope(
@@ -225,7 +231,7 @@ async def create_assignment(data: StaffAssignmentCreate, db: DbSession, user: Cu
     return success(data=assignment, message="Assignment created")
 
 
-@router.patch("/assignments/{assignment_id}", dependencies=[Depends(require_scope("staff.manage_assignments"))])
+@router.patch("/assignments/{assignment_id}", response_model=SuccessResponse[StaffAssignmentSnapshot], response_model_exclude_unset=True, dependencies=[Depends(require_scope("staff.manage_assignments"))])
 async def update_assignment(assignment_id: uuid.UUID, data: StaffAssignmentUpdate, db: DbSession, user: CurrentUser):
     assignment = await StaffService.get_by_id(db, assignment_id)
     if assignment is None:
@@ -272,7 +278,7 @@ async def update_assignment(assignment_id: uuid.UUID, data: StaffAssignmentUpdat
     return success(data=assignment, message="Assignment updated")
 
 
-@router.patch("/assignments/{assignment_id}/end", dependencies=[Depends(require_scope("staff.manage_assignments"))])
+@router.patch("/assignments/{assignment_id}/end", response_model=SuccessResponse[StaffAssignmentSnapshot], response_model_exclude_unset=True, dependencies=[Depends(require_scope("staff.manage_assignments"))])
 async def end_assignment(assignment_id: uuid.UUID, data: StaffAssignmentEnd, db: DbSession, user: CurrentUser):
     assignment = await StaffService.get_by_id(db, assignment_id)
     if assignment is None:
@@ -291,7 +297,7 @@ async def end_assignment(assignment_id: uuid.UUID, data: StaffAssignmentEnd, db:
     return success(data=assignment, message="Assignment ended")
 
 
-@router.patch("/assignments/{assignment_id}/activate", dependencies=[Depends(require_scope("staff.manage_assignments"))])
+@router.patch("/assignments/{assignment_id}/activate", response_model=SuccessResponse[StaffAssignmentSnapshot], response_model_exclude_unset=True, dependencies=[Depends(require_scope("staff.manage_assignments"))])
 async def activate_assignment(assignment_id: uuid.UUID, data: StaffAssignmentActivate, db: DbSession, user: CurrentUser):
     assignment = await StaffService.get_by_id(db, assignment_id)
     if assignment is None:
@@ -320,7 +326,7 @@ async def activate_assignment(assignment_id: uuid.UUID, data: StaffAssignmentAct
     return success(data=assignment, message="Assignment activated")
 
 
-@router.post("/assignments/{assignment_id}/reassign", dependencies=[Depends(require_scope("staff.manage_assignments"))])
+@router.post("/assignments/{assignment_id}/reassign", response_model=SuccessResponse[StaffAssignmentSnapshot], response_model_exclude_unset=True, dependencies=[Depends(require_scope("staff.manage_assignments"))])
 async def reassign_assignment(assignment_id: uuid.UUID, data: StaffAssignmentReassign, db: DbSession, user: CurrentUser):
     assignment = await StaffService.get_by_id(db, assignment_id)
     if assignment is None:
@@ -372,7 +378,7 @@ async def delete_assignment(assignment_id: uuid.UUID, db: DbSession, user: Curre
     await StaffService.delete_assignment(db, assignment)
 
 
-@router.get("/entities")
+@router.get("/entities", response_model=SuccessResponse[list[StaffEntityOption]])
 async def list_staff_entities(
     db: DbSession,
     user: CurrentUser,
@@ -395,7 +401,7 @@ async def list_staff_entities(
     return success(data=items)
 
 
-@router.get("/entity-types")
+@router.get("/entity-types", response_model=SuccessResponse[list[StaffEntityTypeOption]])
 async def list_entity_types(_: CurrentUser):
     """List all entity types with their available roles."""
     labels = {
@@ -422,13 +428,13 @@ async def list_entity_types(_: CurrentUser):
     return success(data=data)
 
 
-@router.get("/roles")
+@router.get("/roles", response_model=SuccessResponse[list[StaffRoleOption]])
 async def list_roles(_: CurrentUser, entity_type: str | None = None):
     """List roles, optionally filtered by entity type."""
     return success(data=StaffService.roles_for_entity(entity_type))
 
 
-@router.get("/academic-ranks")
+@router.get("/academic-ranks", response_model=SuccessResponse[list[AcademicRankOption]])
 async def list_academic_ranks(_: CurrentUser):
     """List all academic ranks in order."""
     return success(data=[

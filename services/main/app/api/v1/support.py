@@ -6,18 +6,23 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import SupportTicket
 from ...schemas import SupportTicketCreate, SupportTicketUpdate
+from ...schemas.support import SupportTicketSnapshot
 from ...services import SupportTicketService
 
 router = APIRouter()
 
 
-@router.get("/tickets")
+@router.get(
+    "/tickets",
+    response_model=SuccessResponse[list[SupportTicketSnapshot]],
+    response_model_exclude_unset=True,
+)
 async def list_tickets(
     db: DbSession,
     user: CurrentUser,
@@ -44,7 +49,11 @@ async def list_tickets(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/tickets/{ticket_id}")
+@router.get(
+    "/tickets/{ticket_id}",
+    response_model=SuccessResponse[SupportTicketSnapshot],
+    response_model_exclude_unset=True,
+)
 async def get_ticket(ticket_id: uuid.UUID, db: DbSession, user: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(SupportTicket, fields)
     ticket = await SupportTicketService.get_by_id(db, ticket_id, load_options=selector.load_options)
@@ -55,7 +64,12 @@ async def get_ticket(ticket_id: uuid.UUID, db: DbSession, user: CurrentUser, fie
     return success(data=selector.apply(ticket))
 
 
-@router.post("/tickets", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/tickets",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[SupportTicketSnapshot],
+    response_model_exclude_unset=True,
+)
 async def create_ticket(data: SupportTicketCreate, db: DbSession, user: CurrentUser):
     payload = data.model_dump()
     payload["requester_user_id"] = user.id
@@ -65,7 +79,12 @@ async def create_ticket(data: SupportTicketCreate, db: DbSession, user: CurrentU
     return success(data=ticket, message="Support ticket created")
 
 
-@router.patch("/tickets/{ticket_id}", dependencies=[Depends(require_scope("support.manage_inquiries"))])
+@router.patch(
+    "/tickets/{ticket_id}",
+    response_model=SuccessResponse[SupportTicketSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("support.manage_inquiries"))],
+)
 async def update_ticket(ticket_id: uuid.UUID, data: SupportTicketUpdate, db: DbSession, _: CurrentUser):
     ticket = await SupportTicketService.get_by_id(db, ticket_id)
     if ticket is None:

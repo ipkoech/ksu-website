@@ -44,8 +44,11 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: Literal["RS256"] = "RS256"
     JWT_ISSUER: str = Field(min_length=1, max_length=255)
     JWT_AUDIENCE: str = Field(min_length=1, max_length=255)
-    JWT_ACCESS_TTL_MINUTES: int
+    # Downstream services verify signed claims without a synchronous Main
+    # lookup. Keep the maximum stale-authority window bounded and explicit.
+    JWT_ACCESS_TTL_MINUTES: int = Field(ge=1, le=15)
     JWT_REFRESH_TTL_DAYS: int
+    MFA_ENCRYPTION_KEY: str | None = Field(default=None, repr=False)
     PASSWORD_RESET_TOKEN_TTL_HOURS: int
 
     REDIS_URL: str
@@ -72,6 +75,7 @@ class Settings(BaseSettings):
     RESEARCH_SERVICE_API_KEY: str | None = None
     LIBRARY_SERVICE_API_KEY: str | None = None
     DIGITAL_LECTURERS_URL: str = "https://digital.kisiiuniversity.ac.ke/api/lecturers"
+    DIGITAL_PROGRAMMES_URL: str = "https://digital.kisiiuniversity.ac.ke/api"
     PASSWORD_RESET_RATE_LIMIT_COUNT: int
     PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS: int
     AUTH_LOGIN_MAX_ATTEMPTS: int = 5

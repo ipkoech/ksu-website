@@ -3,6 +3,7 @@ import {
   eventsApi,
   libraryServiceApi,
   newsApi,
+  mainApi,
   type Blog,
   type Event,
   type LibraryBranch,
@@ -26,8 +27,15 @@ import {
   type LibraryWorkflowType,
   type LibrarySearchResult,
   type News,
-} from "@ksu/api-client";
-import type { PublicStatsResponse } from "@ksu/api-client";
+} from "@ksu/api-client/server";
+import type { PublicStatsResponse } from "@ksu/api-client/server";
+import { unstable_noStore as noStore } from "next/cache";
+import { cache } from "react";
+import { withBackendTimeout } from "./backend-timeout";
+import {
+  normalizeLibraryListResponse,
+  normalizeLibraryRecordResponse,
+} from "./library-response-shapes";
 
 export type PublicLibraryData<T> = {
   data: T[];
@@ -225,22 +233,23 @@ type OpeningHoursMap = Record<string, string>;
 async function safeList<T>(
   load: () => Promise<{ data?: T[]; meta?: unknown }>,
 ): Promise<PublicLibraryData<T>> {
+  const fallback = {
+    data: [] as T[],
+    meta: null,
+    error: unavailableMessage,
+  };
   const request = load()
-    .then((response) => ({
-      data: response.data ?? [],
-      meta: (response.meta as PublicLibraryData<T>["meta"]) ?? null,
-      error: null,
-    }))
-    .catch(() => ({ data: [], meta: null, error: unavailableMessage }));
+    .then((response) => {
+      const normalized = normalizeLibraryListResponse<T>(response);
+      if (!normalized) throw new Error("Invalid Library list response");
+      return { ...normalized, error: null };
+    })
+    .catch(() => {
+      noStore();
+      return fallback;
+    });
 
-  const timeout = new Promise<PublicLibraryData<T>>((resolve) => {
-    setTimeout(
-      () => resolve({ data: [], meta: null, error: unavailableMessage }),
-      PUBLIC_LIBRARY_TIMEOUT_MS,
-    );
-  });
-
-  return Promise.race([request, timeout]);
+  return withBackendTimeout(request, fallback, PUBLIC_LIBRARY_TIMEOUT_MS, noStore);
 }
 
 function normalizeList<T>(
@@ -256,8 +265,13 @@ function normalizeList<T>(
 async function safeStats() {
   try {
     const response = await libraryServiceApi.stats();
-    return response.data ?? null;
+    const stats = normalizeLibraryRecordResponse<PublicStatsResponse>({
+      data: response.data,
+    });
+    if (stats === undefined) throw new Error("Invalid Library stats response");
+    return stats;
   } catch {
+    noStore();
     return null;
   }
 }
@@ -267,8 +281,11 @@ async function safeRecord<T>(
 ): Promise<{ data: T | null; error: string | null }> {
   try {
     const response = await load();
-    return { data: response.data ?? null, error: null };
+    const normalized = normalizeLibraryRecordResponse<T>(response);
+    if (normalized === undefined) throw new Error("Invalid Library record response");
+    return { data: normalized, error: null };
   } catch {
+    noStore();
     return { data: null, error: unavailableMessage };
   }
 }
@@ -372,6 +389,22 @@ function normalizeStaff(member: LibraryStaff): LibraryStaff {
     job_title: member.job_title ?? member.person?.title ?? null,
     department: member.department ?? member.department_section ?? null,
   };
+}
+
+const getStaffPerson = cache(async (personId: string) => {
+  const response = await mainApi.get<{ data: NonNullable<LibraryStaff["person"]> }>(
+    `/api/v1/public/people/${encodeURIComponent(personId)}`,
+    { fields: "id,full_name,email,title,photo_url" },
+  );
+  return response.data;
+});
+
+async function attachStaffPeople(result: PublicLibraryData<LibraryStaff>) {
+  const data = await Promise.all(result.data.map(async (member) => normalizeStaff({
+    ...member,
+    person: await getStaffPerson(member.person_id),
+  })));
+  return { ...result, data };
 }
 
 function normalizeSpecialist(specialist: LibrarySpecialist): LibrarySpecialist {
@@ -599,7 +632,7 @@ async function getBranchStaff(branches: LibraryBranch[]) {
         page: 1,
         per_page: 100,
       }),
-    ).then((result) => normalizeList(result, normalizeStaff)),
+    ).then(attachStaffPeople),
   );
   return results.map((item) => ({ branch: item.branch, staff: item.result }));
 }
@@ -806,7 +839,7 @@ export async function getLibraryLeadershipData(): Promise<
       page: 1,
       per_page: 100,
     }),
-  ).then((result) => normalizeList(result, normalizeStaff));
+  ).then(attachStaffPeople);
 }
 
 export async function getLibraryGuidesData({

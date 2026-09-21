@@ -5,7 +5,7 @@ export const metadata = {
   description: "Remote access workflow guidance from Kisii University Library.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export default function RemoteAccessPage() {
   return (

@@ -1,0 +1,39 @@
+{
+  "workload": "20 concurrent synthetic audit producers; separate 4/1 connection pools; one drain per second",
+  "limitations": "No HTTP, broker, business queries or production traffic; sampled logical backlog uses client-observed commits",
+  "events": 1000,
+  "seconds": 13.3589,
+  "stored_events": 1000,
+  "pending_events": 0,
+  "peak_client_observed_backlog": 620,
+  "capture_transaction_ms_including_pool_wait": {
+    "p50": 99.027,
+    "p95": 354.425,
+    "max": 1359.73
+  },
+  "drain_batch_sizes": [
+    16,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    84
+  ],
+  "pools_and_sql_excluding_driver_commits": {
+    "capture": {
+      "statements": 1000,
+      "checked_out": 0,
+      "peak_connections": 4
+    },
+    "drain": {
+      "statements": 66,
+      "checked_out": 0,
+      "peak_connections": 1
+    }
+  }
+}

@@ -9,7 +9,6 @@ from fastapi import (
     HTTPException,
     Query,
     Request,
-    Response,
     status,
 )
 from ksu_common import cached_public, rate_limit
@@ -24,8 +23,8 @@ from ...services.research_domains import (
     resolve_domain_filters,
     stamp_domain_defaults,
 )
-from ...services.research_portal_context import caller_can_publish
-from ...services.research_workflow import hold_for_review
+from ...services.research_workflow import adapter_for, workflow_state
+from ...services.research_workflow_commands import create_editorial_record
 from ._fields import FieldsDep, FieldSelection, build_selector
 
 
@@ -324,12 +323,17 @@ def build_crud_router(
         request: Request,
         fields: FieldSelection = FieldsDep,
         db: AsyncSession = Depends(get_db),
+        user=Depends(get_current_user) if not public_read else None,
     ):
         selector = build_selector(service.model, fields)
         get_method = service.get_public_by_slug if public_read else service.get_by_slug
         item = await get_method(db, slug, load_options=selector.load_options)
         if item is None:
             raise HTTPException(status_code=404, detail=f"{tag.rstrip('s')} not found")
+        if not public_read:
+            assert_record_in_domain(user, resource_key, item)
+            if model_has_center_scope:
+                require_scoped_record(user, write_scope, "research", getattr(item, "center_id", None))
         return success(data=selector.apply(item))
 
     if public_create:
@@ -379,16 +383,8 @@ def build_crud_router(
             # never has to know that "farm project" means project_type=action.
             assert_record_in_domain(access, resource_key, data)
             data = stamp_domain_defaults(access, resource_key, data)
-            # Records created by anyone without publish authority are held for
-            # review instead of going live immediately.
-            if not caller_can_publish(access):
-                data = hold_for_review(resource_key, data)
             try:
-                item = await service.create(
-                    db,
-                    data,
-                    actor_id=access.sub,
-                )
+                item = await create_editorial_record(db, access, resource_key, service, data)
             except ValueError as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
             selector = build_selector(service.model, FieldSelection(fields=()))
@@ -420,6 +416,14 @@ def build_crud_router(
         # patch must not move it out of that domain.
         assert_record_in_domain(user, resource_key, item)
         assert_record_in_domain(user, resource_key, data)
+        adapter = adapter_for(resource_key)
+        if adapter is not None:
+            changes = data.model_dump(exclude_unset=True)
+            state_fields = {adapter.boolean_field, adapter.status_field} - {None}
+            if any(key in changes and changes[key] != getattr(item, key, None) for key in state_fields):
+                raise HTTPException(409, "Use the canonical Research workflow to change publication state")
+            if workflow_state(resource_key, item) in {"pending", "published"}:
+                raise HTTPException(409, "Withdraw the record before revising it")
         try:
             item = await service.update(db, item, data, actor_id=user.sub)
         except ValueError as exc:

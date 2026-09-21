@@ -8,6 +8,7 @@ import {
 } from "@/components/relationships/relationship-adapters";
 import { Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import {
   ResearchAdminDetailPage,
   ResearchDetailRelationshipTabs,
@@ -91,7 +92,7 @@ export function ContentRecordDetailPage({
       auditServiceName="main"
       auditResourceTypes={[resourceType, entityType]}
       renderAfter={(record) => (
-        <ContentRecordRelations record={record} entityType={entityType} />
+        <ContentRecordRelations record={record} entityType={entityType} resourceType={resourceType} />
       )}
     />
   );
@@ -100,9 +101,11 @@ export function ContentRecordDetailPage({
 function ContentRecordRelations({
   record,
   entityType,
+  resourceType,
 }: {
   record: ResearchGenericRecord;
   entityType: ContentKind;
+  resourceType: string;
 }) {
   return (
     <ResearchDetailRelationshipTabs
@@ -123,6 +126,7 @@ function ContentRecordRelations({
               title="Media Attachments"
               description="Browse, attach, preview, and unlink media assets connected to this research content record."
               roles={attachmentRoles}
+              onPersistedChange={() => revalidatePublicContent("research", resourceType)}
             />
           ),
         },

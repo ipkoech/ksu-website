@@ -1,6 +1,4 @@
 import { mainApi } from "../client";
-import { getStoredAccessToken } from "../auth-tokens";
-import { getMainApiBaseUrl } from "../service-urls";
 import type { SchoolUploadBatch, SchoolUploadBatchFile } from "./types";
 
 const BASE_PATH = "/api/v1/corporate-communication-portal";
@@ -23,18 +21,7 @@ async function corporatePortalUploadFiles<T>(
   const formData = new FormData();
   files.forEach((file) => formData.append("files", file));
   Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
-  const token = getStoredAccessToken();
-  const response = await fetch(`${getMainApiBaseUrl()}${path}`, {
-    method: "POST",
-    credentials: "include",
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    body: formData,
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || error.message || "Upload failed");
-  }
-  return response.json() as Promise<T>;
+  return mainApi.post<T>(path, formData, { timeoutMs: 120000 });
 }
 // #endregion upload-batch
 

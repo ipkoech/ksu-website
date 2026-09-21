@@ -12,11 +12,12 @@ from fastapi import APIRouter
 from sqlalchemy import Select, select
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import DbSession
 from ...models import Division, Wing
 from ...services import ClubService, DepartmentService, DivisionService, SchoolService
+from ...schemas.public_api import NavigationPayload
 
 router = APIRouter()
 
@@ -113,7 +114,7 @@ async def _load_navigation_data(db) -> dict[str, list[dict[str, Any]]]:
     )
 
 
-@router.get("")
+@router.get("", response_model=SuccessResponse[NavigationPayload])
 @cached_public(timeout=300, vary_on=())
 async def get_navigation(db: DbSession):
     """Single public payload backing the main-site mega menu."""

@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import Cookie, Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from ksu_common.auth import TokenPayload
+from fastapi import Cookie, Depends, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials
+from ksu_common.auth import StrictHTTPBearer, TokenPayload
+from ksu_common.identity_freshness import build_identity_validator
 from ksu_contracts.rbac import (
     AuthorizationDecision,
     AuthorizationScope,
@@ -19,10 +20,14 @@ from .idempotency_context import set_authenticated_scope
 
 settings = get_settings()
 public_key = decode_key_material(settings.JWT_PUBLIC_KEY_B64, field_name="JWT_PUBLIC_KEY_B64")
-_bearer = HTTPBearer(auto_error=False)
+_bearer = StrictHTTPBearer(auto_error=False)
+_validate_identity = build_identity_validator(
+    base_url=settings.MAIN_SERVICE_URL, service_key=settings.MAIN_SERVICE_API_KEY,
+)
 
 
 async def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
     access_token: str | None = Cookie(default=None, alias="ksu_access"),
     legacy_access_token: str | None = Cookie(default=None, alias="access_token"),
@@ -57,6 +62,9 @@ async def get_current_user(
         roles=payload.get("roles", []),
         raw=payload,
     )
+    token_payload = await _validate_identity(token, token_payload)
+    if selected_school := request.headers.get("X-School-ID"):
+        token_payload.raw["selected_school"] = selected_school
     set_authenticated_scope(token_payload.sub)
     return token_payload
 
@@ -82,17 +90,23 @@ async def get_optional_user(
         )
     except Exception:
         return None
-    return TokenPayload(
+    verified = TokenPayload(
         sub=payload["sub"],
         jti=payload["jti"],
         roles=payload.get("roles", []),
         raw=payload,
     )
+    try:
+        return await _validate_identity(token, verified)
+    except HTTPException:
+        return None
 
 
 def require_scope(scope: str):
     def _check(user: TokenPayload = Depends(get_current_user)) -> TokenPayload:
         if authorize_permission(user, scope).allowed:
+            from ksu_contracts.assurance import require_operation_assurance
+            require_operation_assurance(user, scope)
             return user
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -172,6 +186,15 @@ def resolve_exact_school_grant(user: TokenPayload, permission: str) -> uuid.UUID
             status_code=status.HTTP_403_FORBIDDEN,
             detail="A school-scoped assignment is required",
         )
+    selected = user.raw.get("selected_school")
+    if selected:
+        try:
+            selected_id = uuid.UUID(str(selected))
+        except ValueError as exc:
+            raise HTTPException(422, "Invalid selected school") from exc
+        if selected_id not in matching_ids:
+            raise HTTPException(403, "Selected school is not assigned")
+        return selected_id
     if len(matching_ids) != 1:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

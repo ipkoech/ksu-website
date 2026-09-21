@@ -13,6 +13,8 @@ const sectionByRoute: Record<string, string> = {
   brochures: "requirements",
 };
 
+export const revalidate = 300;
+
 export default async function AdmissionsRoutePage({
   params,
 }: {

@@ -8,14 +8,18 @@ from types import SimpleNamespace
 from fastapi import APIRouter, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ._person_media import with_person_photo_urls
 from ...deps import CurrentUser, DbSession
 from ...models import Department, DepartmentService as DepartmentServiceModel, Person, Programme
 from ...security.scopes import can_access_scope
+from ...security.department_policy import department_predicate
 from ...schemas import DepartmentCreate, DepartmentUpdate
+from ...schemas.academic import DepartmentServiceSnapshot, DepartmentSnapshot
+from ...schemas.admissions import ProgrammeSnapshot
+from ...schemas.person import PersonSnapshot
 from ...services import DepartmentService, ProgrammeService
 
 router = APIRouter()
@@ -88,7 +92,7 @@ async def _require_department_parent_scope(
     )
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[DepartmentSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "school_id", "wing_id", "department_type", "search", "fields", "include"))
 async def list_departments(
     db: DbSession,
@@ -114,7 +118,7 @@ async def list_departments(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin")
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[DepartmentSnapshot]])
 async def list_admin_departments(
     db: DbSession,
     user: CurrentUser,
@@ -140,17 +144,12 @@ async def list_admin_departments(
         is_active=is_active,
         is_public=is_public,
         load_options=selector.load_options,
+        authorization_predicate=department_predicate(user, DEPARTMENT_VIEW_PERMISSIONS),
     )
-    items = []
-    for item in result.items:
-        if await _can_access_department_scope(db, user, DEPARTMENT_VIEW_PERMISSIONS, item.id):
-            items.append(item)
-    meta = dict(result.meta)
-    meta["total"] = len(items)
-    return success(data=selector.apply(items), meta=meta)
+    return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{slug}")
+@router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[DepartmentSnapshot])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_department(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Department, fields)
@@ -160,8 +159,9 @@ async def get_department(slug: str, db: DbSession, fields: FieldSelection = Fiel
     return success(data=selector.apply(department))
 
 
-@router.get("/id/{department_id}")
+@router.get("/id/{department_id}", response_model_exclude_unset=True, response_model=SuccessResponse[DepartmentSnapshot])
 async def get_department_by_id(department_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
+    await _require_department_scope(db, _, DEPARTMENT_VIEW_PERMISSIONS, department_id)
     selector = build_selector(Department, fields)
     department = await DepartmentService.get_by_id(db, department_id, is_active=None, load_options=selector.load_options)
     if department is None:
@@ -169,7 +169,7 @@ async def get_department_by_id(department_id: uuid.UUID, db: DbSession, _: Curre
     return success(data=selector.apply(department))
 
 
-@router.get("/{slug}/staff")
+@router.get("/{slug}/staff", response_model_exclude_unset=True, response_model=SuccessResponse[list[PersonSnapshot]])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_department_staff(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     department = await DepartmentService.get_by_slug(db, slug)
@@ -180,7 +180,7 @@ async def get_department_staff(slug: str, db: DbSession, fields: FieldSelection 
     return success(data=with_person_photo_urls(selector.apply(staff), staff))
 
 
-@router.get("/{slug}/services")
+@router.get("/{slug}/services", response_model_exclude_unset=True, response_model=SuccessResponse[list[DepartmentServiceSnapshot]])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_department_services(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     department = await DepartmentService.get_by_slug(db, slug)
@@ -191,7 +191,7 @@ async def get_department_services(slug: str, db: DbSession, fields: FieldSelecti
     return success(data=selector.apply(items))
 
 
-@router.get("/{slug}/programmes")
+@router.get("/{slug}/programmes", response_model_exclude_unset=True, response_model=SuccessResponse[list[ProgrammeSnapshot]])
 @cached_public(timeout=300, vary_on=("slug", "page", "per_page", "fields", "include"))
 async def get_department_programmes(
     slug: str,
@@ -208,10 +208,12 @@ async def get_department_programmes(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", response_model_exclude_unset=True, response_model=SuccessResponse[DepartmentSnapshot], status_code=status.HTTP_201_CREATED)
 async def create_department(data: DepartmentCreate, db: DbSession, user: CurrentUser):
     parent_scope_type, parent_scope_id = _department_parent_scope(data)
     await _require_department_parent_scope(db, user, parent_scope_type, parent_scope_id)
+    if data.parent_department_id:
+        await _require_department_scope(db, user, DEPARTMENT_MANAGE_PERMISSIONS, data.parent_department_id)
     try:
         department = await DepartmentService.create(db, **data.model_dump())
     except ValueError as exc:
@@ -221,7 +223,7 @@ async def create_department(data: DepartmentCreate, db: DbSession, user: Current
     return success(data=department, message="Department created")
 
 
-@router.patch("/{department_id}")
+@router.patch("/{department_id}", response_model_exclude_unset=True, response_model=SuccessResponse[DepartmentSnapshot])
 async def update_department(department_id: uuid.UUID, data: DepartmentUpdate, db: DbSession, user: CurrentUser):
     department = await DepartmentService.get_by_id(db, department_id, is_active=None)
     if department is None:
@@ -233,7 +235,12 @@ async def update_department(department_id: uuid.UUID, data: DepartmentUpdate, db
         wing_id=payload.get("wing_id", department.wing_id),
     )
     parent_scope_type, parent_scope_id = _department_parent_scope(next_parent)
-    await _require_department_parent_scope(db, user, parent_scope_type, parent_scope_id)
+    if any(key in payload and payload[key] != getattr(department, key)
+           for key in ("school_id", "wing_id", "department_type", "parent_department_id")):
+        await _require_department_parent_scope(db, user, parent_scope_type, parent_scope_id)
+        if payload.get("parent_department_id"):
+            await _require_department_scope(db, user, DEPARTMENT_MANAGE_PERMISSIONS,
+                                            payload["parent_department_id"])
     try:
         department = await DepartmentService.update(db, department, **payload)
     except ValueError as exc:
@@ -249,4 +256,7 @@ async def delete_department(department_id: uuid.UUID, db: DbSession, user: Curre
     if department is None:
         raise HTTPException(status_code=404, detail="Department not found")
     await _require_department_scope(db, user, DEPARTMENT_MANAGE_PERMISSIONS, department.id)
-    await DepartmentService.delete(db, department)
+    try:
+        await DepartmentService.delete(db, department)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc

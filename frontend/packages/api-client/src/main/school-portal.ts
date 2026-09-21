@@ -1,5 +1,4 @@
 import { mainApi } from "../client";
-import { getStoredAccessToken } from "../auth-tokens";
 import { getMainApiBaseUrl } from "../service-urls";
 import type {
   ImportCommitResult,
@@ -38,18 +37,7 @@ const BASE_PATH = "/api/v1/school-portal";
 async function schoolPortalUpload<T>(path: string, file: File): Promise<T> {
   const formData = new FormData();
   formData.append("file", file);
-  const token = getStoredAccessToken();
-  const response = await fetch(`${getMainApiBaseUrl()}${path}`, {
-    method: "POST",
-    credentials: "include",
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    body: formData,
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || error.message || "Upload failed");
-  }
-  return response.json() as Promise<T>;
+  return mainApi.post<T>(path, formData, { timeoutMs: 120000 });
 }
 
 async function schoolPortalUploadFiles<T>(
@@ -60,18 +48,7 @@ async function schoolPortalUploadFiles<T>(
   const formData = new FormData();
   files.forEach((file) => formData.append("files", file));
   Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
-  const token = getStoredAccessToken();
-  const response = await fetch(`${getMainApiBaseUrl()}${path}`, {
-    method: "POST",
-    credentials: "include",
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    body: formData,
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || error.message || "Upload failed");
-  }
-  return response.json() as Promise<T>;
+  return mainApi.post<T>(path, formData, { timeoutMs: 120000 });
 }
 
 export const schoolPortalQueryKeys = {
@@ -117,6 +94,17 @@ export const schoolPortalApi = {
       `${BASE_PATH}/dashboard`,
       { range },
     ),
+  reportExportUrl: (range: SchoolPortalDashboardRange = "30d", format: "csv" | "json" = "csv") =>
+    `${getMainApiBaseUrl()}${BASE_PATH}/reports/export?range=${range}&format=${format}`,
+  workQueue: (range: SchoolPortalDashboardRange = "30d") =>
+    mainApi.get<{ data: { range: SchoolPortalDashboardRange; generated_at: string; items: Array<{ id: string; title: string; count: number; priority: string; status: string; href: string; source: string }> } }>(
+      `${BASE_PATH}/work-queue`,
+      { range },
+    ),
+  integrations: {
+    preview: (integration: "programmes" | "lecturers") =>
+      mainApi.get<{ data: Record<string, any> }>(`${BASE_PATH}/integrations/${integration}/preview`),
+  },
   profile: {
     get: () =>
       mainApi.get<{ data: SchoolPortalProfile }>(`${BASE_PATH}/profile`),

@@ -1,8 +1,10 @@
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { toast } from "sonner";
+import { isAdminRequestTimeout, resolveAdminApiBaseUrl } from "./client-url";
 
 const client = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1",
+    baseURL: resolveAdminApiBaseUrl(),
+    timeout: 15_000,
     withCredentials: true,
     headers: { "Content-Type": "application/json" },
 });
@@ -17,6 +19,11 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
     (response) => response.data,
     async (error: AxiosError<{ error?: { message?: string } }>) => {
+        if (isAdminRequestTimeout(error.code)) {
+            toast.error("The request timed out. Please try again.");
+            return Promise.reject(error);
+        }
+
         if (error.response?.status === 401) {
             window.location.href = "/login";
             return Promise.reject(error);

@@ -40,7 +40,7 @@ const centerColumns: Array<EditableRecordColumn<ResearchGenericRecord>> = [
 export default function ResearchCentersPage() {
   return (
     <ResearchResourcePage
-      title="Research Centers"
+      title="Centers"
       description="Manage research centers, institutes, and their public profile details."
       queryKey={["research", "centers"]}
       resource={researchServiceApi.centers}

@@ -11,6 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..models import LibraryAssistantContext, LibraryAssistantContextSource
+from ..core.auth import require_library_scope, require_library_transfer
+from ksu_common.assurance import require_recent_mfa
+from .ownership import lock_owner, validate_transfer_destination
+from .assistant_source_policy import validate_sources, valid_sources
+from .search import _public_library_parent_filter
 from ..schemas.assistant import (
     LibraryAssistantContextCreate,
     LibraryAssistantContextUpdate,
@@ -89,13 +94,25 @@ async def list_contexts(
         query = query.where(
             LibraryAssistantContext.status == "active",
             LibraryAssistantContext.is_public.is_(True),
+            _public_library_parent_filter(LibraryAssistantContext, allow_global=True),
         )
     elif status_filter:
         query = query.where(LibraryAssistantContext.status == status_filter)
     query = query.order_by(LibraryAssistantContext.sort_order, LibraryAssistantContext.name)
     items = (await db.execute(query)).scalars().unique().all()
-    serializer = _public_context_data if public_only else _context_data
-    return [serializer(item) for item in items]
+    if not public_only:
+        return [_context_data(item) for item in items]
+    sources = [source for item in items for source in item.sources
+               if source.deleted_at is None and source.is_approved]
+    owners = await valid_sources(db, None, sources, public_only=True, with_owners=True)
+    result = []
+    for item in items:
+        data = _public_context_data(item)
+        data["sources"] = [source for source in data["sources"]
+                           if (source["source_type"], source["source_id"]) in owners
+                           and (item.library_id is None or owners[(source["source_type"], source["source_id"])] == item.library_id)]
+        result.append(data)
+    return result
 
 
 async def get_context(
@@ -116,6 +133,7 @@ async def get_context(
         query = query.where(
             LibraryAssistantContext.status == "active",
             LibraryAssistantContext.is_public.is_(True),
+            _public_library_parent_filter(LibraryAssistantContext, allow_global=True),
         )
     context = (await db.execute(query)).scalars().unique().one_or_none()
     if context is None:
@@ -128,8 +146,11 @@ async def create_context(
     data: LibraryAssistantContextCreate,
     *,
     approved_by_person_id: uuid.UUID,
+    actor=None,
 ) -> dict:
+    require_library_scope(actor, "library.assistant.manage", data.library_id)
     context = LibraryAssistantContext(
+        sources=[],
         library_id=data.library_id,
         name=data.name,
         slug=data.slug,
@@ -156,8 +177,23 @@ async def update_context(
     data: LibraryAssistantContextUpdate,
     *,
     approved_by_person_id: uuid.UUID,
+    actor=None,
 ) -> dict:
+    await lock_owner(db, context)
+    require_library_scope(actor, "library.assistant.manage", context.library_id)
+    await db.refresh(context, attribute_names=["status", "is_public", "published_at"])
+    if "library_id" in data.model_fields_set:
+        require_library_scope(actor, "library.assistant.manage", data.library_id)
+        require_library_transfer(actor, context.library_id, data.library_id)
+        await validate_transfer_destination(db, context.library_id, data.library_id)
+    if context.status == "active":
+        require_library_scope(actor, "library.assistant.unpublish", context.library_id)
+        require_recent_mfa(actor)
     updates = data.model_dump(exclude_unset=True, exclude={"sources"})
+    if "library_id" in updates and data.sources is None:
+        await db.refresh(context, attribute_names=["sources"])
+        await validate_sources(db, data.library_id, [source for source in context.sources
+                                                     if source.deleted_at is None and source.is_approved])
     for key, value in updates.items():
         setattr(context, key, value)
     if data.sources is not None:
@@ -176,7 +212,11 @@ async def update_context(
 async def publish_context(
     db: AsyncSession,
     context: LibraryAssistantContext,
+    *, actor=None,
 ) -> dict:
+    await lock_owner(db, context)
+    require_library_scope(actor, "library.assistant.publish", context.library_id)
+    require_recent_mfa(actor)
     await db.refresh(context, attribute_names=["sources"])
     approved_sources = [source for source in context.sources if source.is_approved and source.deleted_at is None]
     if not approved_sources:
@@ -184,6 +224,7 @@ async def publish_context(
             status_code=status.HTTP_409_CONFLICT,
             detail="Assistant context needs at least one approved source before publishing",
         )
+    await validate_sources(db, context.library_id, approved_sources, public_only=True)
     context.status = "active"
     context.is_public = True
     context.published_at = datetime.now(timezone.utc)
@@ -191,7 +232,10 @@ async def publish_context(
     return _context_data(context)
 
 
-async def archive_context(db: AsyncSession, context: LibraryAssistantContext) -> dict:
+async def archive_context(db: AsyncSession, context: LibraryAssistantContext, *, actor=None) -> dict:
+    await lock_owner(db, context)
+    require_library_scope(actor, "library.assistant.unpublish", context.library_id)
+    require_recent_mfa(actor)
     context.status = "archived"
     context.is_public = False
     await db.flush()
@@ -205,6 +249,7 @@ async def replace_sources(
     *,
     approved_by_person_id: uuid.UUID,
 ) -> None:
+    await validate_sources(db, context.library_id, sources)
     requested = {(source.source_type, source.source_id): source for source in sources}
     for existing in context.sources:
         key = (existing.source_type, existing.source_id)

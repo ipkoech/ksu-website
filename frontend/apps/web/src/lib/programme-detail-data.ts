@@ -1,10 +1,16 @@
+import "server-only";
 import {
   programmesApi,
   testimonialsApi,
   type Programme,
   type Testimonial,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
 import type { ProgrammeWithRelations } from "@/lib/department-detail-data";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
+import {
+  normalizePublicListResponse,
+  normalizePublicRecordResponse,
+} from "@/lib/web-response-shapes";
 
 const programmeFields = [
   "id",
@@ -54,9 +60,11 @@ async function getProgramme(
       include: programmeRelationInclude,
     });
 
-    return (response.data as ProgrammeWithRelations | undefined) ?? null;
+    const programme = normalizePublicRecordResponse<ProgrammeWithRelations>(response);
+    if (programme === undefined) throw new Error("Invalid programme response");
+    return programme;
   } catch {
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -70,9 +78,11 @@ async function getRelatedProgrammes(programme: Programme | null) {
       per_page: 4,
     });
 
-    return (response.data ?? []).filter((item) => item.slug !== programme.slug);
+    const normalized = normalizePublicListResponse<Programme>(response);
+    if (!normalized) throw new Error("Invalid related programme response");
+    return normalized.data.filter((item) => item.slug !== programme.slug);
   } catch {
-    return [];
+    return uncachedPublicFallback([]);
   }
 }
 
@@ -90,7 +100,9 @@ async function getTestimonials(
       per_page: 3,
       fields: testimonialFields,
     });
-    if (byProgramme.data?.length) return byProgramme.data;
+    const programmeTestimonials = normalizePublicListResponse<Testimonial>(byProgramme);
+    if (!programmeTestimonials) throw new Error("Invalid programme testimonial response");
+    if (programmeTestimonials.data.length) return programmeTestimonials.data;
 
     const schoolId = (
       programme.department as { school_id?: string | null } | undefined
@@ -102,9 +114,11 @@ async function getTestimonials(
       per_page: 3,
       fields: testimonialFields,
     });
-    return bySchool.data ?? [];
+    const schoolTestimonials = normalizePublicListResponse<Testimonial>(bySchool);
+    if (!schoolTestimonials) throw new Error("Invalid school testimonial response");
+    return schoolTestimonials.data;
   } catch {
-    return [];
+    return uncachedPublicFallback([]);
   }
 }
 

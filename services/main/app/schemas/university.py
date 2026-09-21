@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from .base import BaseReadSchema, BaseSchema, PhoneStr, SlugStr, UrlStr
+from .base import BaseReadSchema, BaseSchema, PhoneStr, SlugStr, UrlStr, optional_snapshot
 
 
 class HeadMessageItem(BaseModel):
@@ -46,7 +46,7 @@ class UniversityInfoCreate(BaseSchema):
     country: str | None = Field(default=None, max_length=128)
     social_links: dict | None = None
     quick_facts: dict | None = None
-    strategic_priorities: list[dict] | None = None
+    strategic_priorities: list[dict[str, Any]] | dict[str, Any] | None = None
     logo_id: uuid.UUID | None = None
     seal_id: uuid.UUID | None = None
     cover_image_id: uuid.UUID | None = None
@@ -93,7 +93,7 @@ class UniversityInfoUpdate(BaseSchema):
     country: str | None = Field(default=None, max_length=128)
     social_links: dict | None = None
     quick_facts: dict | None = None
-    strategic_priorities: list[dict] | None = None
+    strategic_priorities: list[dict[str, Any]] | dict[str, Any] | None = None
     logo_id: uuid.UUID | None = None
     seal_id: uuid.UUID | None = None
     cover_image_id: uuid.UUID | None = None
@@ -140,7 +140,7 @@ class UniversityInfoRead(BaseReadSchema):
     country: str | None = None
     social_links: dict | None = None
     quick_facts: dict | None = None
-    strategic_priorities: list[dict] | None = None
+    strategic_priorities: list[dict[str, Any]] | dict[str, Any] | None = None
     logo_id: uuid.UUID | None = None
     seal_id: uuid.UUID | None = None
     cover_image_id: uuid.UUID | None = None
@@ -166,6 +166,9 @@ class UniversityInfoRead(BaseReadSchema):
     seal: dict[str, Any] | None = None
     vc: dict[str, Any] | None = None
     is_active: bool
+
+
+UniversityInfoSnapshot = optional_snapshot("UniversityInfoSnapshot", UniversityInfoRead)
 
 
 __all__ = [

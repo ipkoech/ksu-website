@@ -102,8 +102,8 @@ an empty shelf argues against the institution.
   `culture`, `health`, `innovation`, `leadership`, `career-mentorship`,
   `summer-exchange`.
 - Nine campus landmark photographs at `public/images/about-us/`.
-- Partial per-story imagery under `public/images/student-life/<slug>/`; most
-  paths referenced by `student-life-content.ts` do not resolve to files.
+- Partial per-story imagery under `public/images/student-life/<slug>/`; older
+  source references should be checked before adding new stories.
 
 Absences future work must not fabricate: club cover images, club membership
 numbers, sports facilities, halls of residence, activity schedules, and student

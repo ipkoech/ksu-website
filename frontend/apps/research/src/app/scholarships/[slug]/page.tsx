@@ -1,10 +1,9 @@
 import { notFound } from "next/navigation";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import { ResearchRecordPanel } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { ResearchStoryAccordion } from "../../../components/research-rich-text";
-import { compactText, formatDate, generateSlugParams, getScholarshipBySlug } from "../../../lib/research-public-data";
+import { compactText, formatDate, getScholarshipBySlug } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 import {
   CompactFactGrid,
@@ -19,15 +18,12 @@ import {
 import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getScholarshipBySlug(slug);
-  return researchRecordMetadata(data, { fallbackTitle: "Research scholarship", pathname: "/scholarships/" + slug });
-}
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.scholarships.list);
+  return researchRecordMetadata(data, { fallbackTitle: "Scholarship", pathname: "/scholarships/" + slug });
 }
 
 export default async function ScholarshipDetailPage({ params }: { params: Promise<{ slug: string }> }) {

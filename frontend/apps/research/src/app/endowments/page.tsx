@@ -25,7 +25,7 @@ import {
   getRecordYears,
   getListPageSize,
 } from "../../lib/research-page-model";
-import type { ResearchGenericRecord } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import { pageFromSearchParams } from "@ksu/ui/components";
 import { ResearchListPagination } from "../../components/research-list-pagination";
 
@@ -208,7 +208,7 @@ function EndowmentsMasthead({
   return (
     <FundingIllustratedHero
       eyebrow="Funding / Endowments"
-      title="Research Endowments"
+      title="Endowments"
       body="Scan purpose, donor context, contribution status, current value, annual distribution, and eligibility from published fund records."
       tone="endowment"
       actions={[

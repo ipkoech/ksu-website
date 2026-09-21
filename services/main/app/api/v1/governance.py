@@ -7,7 +7,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ._person_media import with_person_photo_urls
@@ -23,6 +23,17 @@ from ...schemas import (
     GovernancePageContentUpdate,
     GovernanceRoleCreate,
     GovernanceRoleUpdate,
+    BoardMemberSnapshot,
+    StaffAssignmentSnapshot,
+    BoardSnapshot,
+    AuditLogRead,
+    CouncilDashboardRead,
+    CouncilMemberSnapshot,
+    CouncilOrderNode,
+    GovernancePageContentRead,
+    GovernanceRoleSnapshot,
+    PublicCouncilProfile,
+    PublicCouncilResponse,
 )
 from ...services import AuditService, GovernanceService
 
@@ -44,7 +55,7 @@ def _council_member_payload(assignment: StaffAssignment) -> dict:
     return with_person_photo_urls(payload, assignment)
 
 
-@router.get("/boards")
+@router.get("/boards", response_model_exclude_unset=True, response_model=SuccessResponse[list[BoardSnapshot]])
 @cached_public(timeout=3600, vary_on=("board_type", "parent_entity_type", "parent_entity_id", "fields", "include"))
 async def list_boards(
     db: DbSession,
@@ -64,7 +75,7 @@ async def list_boards(
     return success(data=selector.apply(boards))
 
 
-@router.get("/boards/{slug}")
+@router.get("/boards/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[BoardSnapshot])
 @cached_public(timeout=3600, vary_on=("slug", "fields", "include"))
 async def get_board(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Board, fields)
@@ -74,7 +85,7 @@ async def get_board(slug: str, db: DbSession, fields: FieldSelection = FieldsDep
     return success(data=selector.apply(board))
 
 
-@router.get("/boards/id/{board_id}")
+@router.get("/boards/id/{board_id}", response_model_exclude_unset=True, response_model=SuccessResponse[BoardSnapshot])
 async def get_board_by_id(board_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(Board, fields)
     board = await GovernanceService.get_board(db, board_id, load_options=selector.load_options)
@@ -83,7 +94,7 @@ async def get_board_by_id(board_id: uuid.UUID, db: DbSession, _: CurrentUser, fi
     return success(data=selector.apply(board))
 
 
-@router.get("/boards/{slug}/members")
+@router.get("/boards/{slug}/members", response_model_exclude_unset=True, response_model=SuccessResponse[list[StaffAssignmentSnapshot]])
 @cached_public(timeout=3600, vary_on=("slug", "fields", "include"))
 async def get_board_members(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     board = await GovernanceService.get_board_by_slug(db, slug)
@@ -94,7 +105,7 @@ async def get_board_members(slug: str, db: DbSession, fields: FieldSelection = F
     return success(data=with_person_photo_urls(selector.apply(members), members))
 
 
-@router.get("/boards/id/{board_id}/members")
+@router.get("/boards/id/{board_id}/members", response_model_exclude_unset=True, response_model=SuccessResponse[list[StaffAssignmentSnapshot]])
 async def get_board_members_by_id(board_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     board = await GovernanceService.get_board(db, board_id)
     if board is None:
@@ -104,7 +115,7 @@ async def get_board_members_by_id(board_id: uuid.UUID, db: DbSession, _: Current
     return success(data=with_person_photo_urls(selector.apply(members), members))
 
 
-@router.get("/council")
+@router.get("/council", response_model_exclude_unset=True, response_model=SuccessResponse[BoardSnapshot])
 @cached_public(timeout=3600, vary_on=("fields", "include"))
 async def get_council(db: DbSession, fields: FieldSelection = FieldsDep):
     board = await GovernanceService.get_board_by_slug(db, "university-council")
@@ -114,7 +125,7 @@ async def get_council(db: DbSession, fields: FieldSelection = FieldsDep):
     return success(data=GovernanceService.public_board_data(board, members))
 
 
-@router.get("/management-board")
+@router.get("/management-board", response_model_exclude_unset=True, response_model=SuccessResponse[BoardSnapshot])
 @cached_public(timeout=3600, vary_on=("fields", "include"))
 async def get_management_board(db: DbSession, fields: FieldSelection = FieldsDep):
     board = await GovernanceService.get_board_by_slug(db, "management-board")
@@ -124,7 +135,7 @@ async def get_management_board(db: DbSession, fields: FieldSelection = FieldsDep
     return success(data=GovernanceService.public_board_data(board, members))
 
 
-@router.get("/senate")
+@router.get("/senate", response_model_exclude_unset=True, response_model=SuccessResponse[BoardSnapshot])
 @cached_public(timeout=3600, vary_on=("fields", "include"))
 async def get_senate(db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Board, fields)
@@ -134,13 +145,13 @@ async def get_senate(db: DbSession, fields: FieldSelection = FieldsDep):
     return success(data=selector.apply(board))
 
 
-@router.post("/boards", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("governance.manage_boards"))])
+@router.post("/boards", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[BoardSnapshot], dependencies=[Depends(require_scope("governance.manage_boards"))])
 async def create_board(data: BoardCreate, db: DbSession, _: CurrentUser):
     board = await GovernanceService.create_board(db, **data.model_dump())
     return success(data=board, message="Board created")
 
 
-@router.patch("/boards/id/{board_id}", dependencies=[Depends(require_scope("governance.manage_boards"))])
+@router.patch("/boards/id/{board_id}", response_model_exclude_unset=True, response_model=SuccessResponse[BoardSnapshot], dependencies=[Depends(require_scope("governance.manage_boards"))])
 async def update_board(board_id: uuid.UUID, data: BoardUpdate, db: DbSession, _: CurrentUser):
     board = await GovernanceService.get_board(db, board_id)
     if board is None:
@@ -157,7 +168,7 @@ async def delete_board(board_id: uuid.UUID, db: DbSession, _: CurrentUser):
     await GovernanceService.soft_delete_board(db, board)
 
 
-@router.post("/boards/{slug}/members", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("governance.manage_boards"))])
+@router.post("/boards/{slug}/members", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[BoardMemberSnapshot], dependencies=[Depends(require_scope("governance.manage_boards"))])
 async def add_board_member(slug: str, data: BoardMemberCreate, db: DbSession, _: CurrentUser):
     board = await GovernanceService.get_board_by_slug(db, slug)
     if board is None:
@@ -172,7 +183,7 @@ async def add_board_member(slug: str, data: BoardMemberCreate, db: DbSession, _:
     return success(data=assignment, message="Member added")
 
 
-@router.post("/boards/id/{board_id}/members", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("governance.manage_boards"))])
+@router.post("/boards/id/{board_id}/members", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[BoardMemberSnapshot], dependencies=[Depends(require_scope("governance.manage_boards"))])
 async def add_board_member_by_id(board_id: uuid.UUID, data: BoardMemberCreate, db: DbSession, _: CurrentUser):
     board = await GovernanceService.get_board(db, board_id)
     if board is None:
@@ -217,7 +228,7 @@ async def _board_member_or_404(db: DbSession, board_slug: str, assignment_id: uu
     return assignment
 
 
-@router.get("/admin/council/dashboard", dependencies=[Depends(require_scope("governance.view"))])
+@router.get("/admin/council/dashboard", response_model=SuccessResponse[CouncilDashboardRead], dependencies=[Depends(require_scope("governance.view"))])
 async def council_dashboard(db: DbSession, _: CurrentUser):
     try:
         data = await GovernanceService.council_dashboard(db)
@@ -226,7 +237,7 @@ async def council_dashboard(db: DbSession, _: CurrentUser):
     return success(data=data)
 
 
-@router.get("/admin/roles", dependencies=[Depends(require_scope("governance.manage_roles"))])
+@router.get("/admin/roles", response_model=SuccessResponse[list[GovernanceRoleSnapshot]], response_model_exclude_unset=True, dependencies=[Depends(require_scope("governance.manage_roles"))])
 async def list_governance_roles(db: DbSession, _: CurrentUser, active_only: bool = True):
     return success(data=await GovernanceService.list_governance_roles(db, active_only=active_only))
 
@@ -234,6 +245,8 @@ async def list_governance_roles(db: DbSession, _: CurrentUser, active_only: bool
 @router.post(
     "/admin/roles",
     status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[GovernanceRoleSnapshot],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.manage_roles"))],
 )
 async def create_governance_role(data: GovernanceRoleCreate, db: DbSession, user: CurrentUser):
@@ -241,7 +254,7 @@ async def create_governance_role(data: GovernanceRoleCreate, db: DbSession, user
     return success(data=role, message="Governance role created")
 
 
-@router.patch("/admin/roles/{role_id}", dependencies=[Depends(require_scope("governance.manage_roles"))])
+@router.patch("/admin/roles/{role_id}", response_model=SuccessResponse[GovernanceRoleSnapshot], response_model_exclude_unset=True, dependencies=[Depends(require_scope("governance.manage_roles"))])
 async def update_governance_role(role_id: uuid.UUID, data: GovernanceRoleUpdate, db: DbSession, user: CurrentUser):
     role = await GovernanceService.get_governance_role(db, role_id)
     if role is None:
@@ -250,7 +263,7 @@ async def update_governance_role(role_id: uuid.UUID, data: GovernanceRoleUpdate,
     return success(data=role, message="Governance role updated")
 
 
-@router.get("/admin/council/members", dependencies=[Depends(require_scope("governance.view"))])
+@router.get("/admin/council/members", response_model=SuccessResponse[list[CouncilMemberSnapshot]], response_model_exclude_unset=True, dependencies=[Depends(require_scope("governance.view"))])
 async def list_council_members(db: DbSession, _: CurrentUser, workflow_status: str | None = None):
     try:
         members = await GovernanceService.list_council_members(db, workflow_status=workflow_status)
@@ -262,6 +275,8 @@ async def list_council_members(db: DbSession, _: CurrentUser, workflow_status: s
 @router.post(
     "/admin/council/members",
     status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[CouncilMemberSnapshot],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.manage_members"))],
 )
 async def create_council_member(data: CouncilMemberCreate, db: DbSession, user: CurrentUser):
@@ -272,13 +287,15 @@ async def create_council_member(data: CouncilMemberCreate, db: DbSession, user: 
     return success(data=_council_member_payload(assignment), message="Council member created")
 
 
-@router.get("/admin/council/members/{assignment_id}", dependencies=[Depends(require_scope("governance.view"))])
+@router.get("/admin/council/members/{assignment_id}", response_model=SuccessResponse[CouncilMemberSnapshot], response_model_exclude_unset=True, dependencies=[Depends(require_scope("governance.view"))])
 async def get_council_member(assignment_id: uuid.UUID, db: DbSession, _: CurrentUser):
     return success(data=_council_member_payload(await _council_member_or_404(db, assignment_id)))
 
 
 @router.patch(
     "/admin/council/members/{assignment_id}",
+    response_model=SuccessResponse[CouncilMemberSnapshot],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.manage_members"))],
 )
 async def update_council_member(
@@ -305,7 +322,7 @@ async def delete_council_member(assignment_id: uuid.UUID, db: DbSession, _: Curr
     await db.flush()
 
 
-@router.get("/admin/council/order", dependencies=[Depends(require_scope("governance.view"))])
+@router.get("/admin/council/order", response_model=SuccessResponse[list[CouncilOrderNode]], dependencies=[Depends(require_scope("governance.view"))])
 async def get_council_order(db: DbSession, _: CurrentUser):
     members = await GovernanceService.list_council_members(db, active_only=True)
     return success(
@@ -322,7 +339,7 @@ async def get_council_order(db: DbSession, _: CurrentUser):
     )
 
 
-@router.put("/admin/council/order", dependencies=[Depends(require_scope("governance.manage_order"))])
+@router.put("/admin/council/order", response_model=SuccessResponse[list[CouncilMemberSnapshot]], response_model_exclude_unset=True, dependencies=[Depends(require_scope("governance.manage_order"))])
 async def update_council_order(data: CouncilOrderUpdate, db: DbSession, user: CurrentUser):
     try:
         members = await GovernanceService.update_council_order(db, data.nodes, user.id)
@@ -331,7 +348,7 @@ async def update_council_order(data: CouncilOrderUpdate, db: DbSession, user: Cu
     return success(data=members, message="Council order updated")
 
 
-@router.get("/admin/council/page-content", dependencies=[Depends(require_scope("governance.view"))])
+@router.get("/admin/council/page-content", response_model=SuccessResponse[GovernancePageContentRead], response_model_exclude_unset=True, dependencies=[Depends(require_scope("governance.view"))])
 async def get_council_page_content(db: DbSession, _: CurrentUser):
     board = await GovernanceService.get_university_council_board(db)
     if board is None:
@@ -339,7 +356,7 @@ async def get_council_page_content(db: DbSession, _: CurrentUser):
     return success(data=await GovernanceService.get_council_page_content(db, board.id))
 
 
-@router.patch("/admin/council/page-content", dependencies=[Depends(require_scope("governance.manage_members"))])
+@router.patch("/admin/council/page-content", response_model=SuccessResponse[GovernancePageContentRead], response_model_exclude_unset=True, dependencies=[Depends(require_scope("governance.manage_members"))])
 async def update_council_page_content(data: GovernancePageContentUpdate, db: DbSession, user: CurrentUser):
     board = await GovernanceService.get_university_council_board(db)
     if board is None:
@@ -364,6 +381,8 @@ async def _transition_council_page_content(action: str, db: DbSession, user: Cur
 
 @router.post(
     "/admin/council/page-content/submit-review",
+    response_model=SuccessResponse[GovernancePageContentRead],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.manage_members"))],
 )
 async def submit_council_page_content_for_review(db: DbSession, user: CurrentUser):
@@ -372,6 +391,8 @@ async def submit_council_page_content_for_review(db: DbSession, user: CurrentUse
 
 @router.post(
     "/admin/council/page-content/approve",
+    response_model=SuccessResponse[GovernancePageContentRead],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.approve"))],
 )
 async def approve_council_page_content(db: DbSession, user: CurrentUser):
@@ -380,6 +401,8 @@ async def approve_council_page_content(db: DbSession, user: CurrentUser):
 
 @router.post(
     "/admin/council/page-content/publish",
+    response_model=SuccessResponse[GovernancePageContentRead],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.publish"))],
 )
 async def publish_council_page_content(db: DbSession, user: CurrentUser):
@@ -388,6 +411,8 @@ async def publish_council_page_content(db: DbSession, user: CurrentUser):
 
 @router.post(
     "/admin/council/page-content/unpublish",
+    response_model=SuccessResponse[GovernancePageContentRead],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.publish"))],
 )
 async def unpublish_council_page_content(db: DbSession, user: CurrentUser):
@@ -396,13 +421,15 @@ async def unpublish_council_page_content(db: DbSession, user: CurrentUser):
 
 @router.post(
     "/admin/council/page-content/archive",
+    response_model=SuccessResponse[GovernancePageContentRead],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.archive"))],
 )
 async def archive_council_page_content(db: DbSession, user: CurrentUser):
     return await _transition_council_page_content("archive", db, user)
 
 
-@router.get("/admin/council/preview", dependencies=[Depends(require_scope("governance.view"))])
+@router.get("/admin/council/preview", response_model=SuccessResponse[PublicCouncilResponse], dependencies=[Depends(require_scope("governance.view"))])
 async def preview_council(db: DbSession, _: CurrentUser):
     try:
         return success(data=await GovernanceService.preview_university_council(db))
@@ -423,6 +450,8 @@ async def _transition_council_member(
 
 @router.post(
     "/admin/council/members/{assignment_id}/submit-review",
+    response_model=SuccessResponse[CouncilMemberSnapshot],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.manage_members"))],
 )
 async def submit_council_member_for_review(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
@@ -431,6 +460,8 @@ async def submit_council_member_for_review(assignment_id: uuid.UUID, db: DbSessi
 
 @router.post(
     "/admin/council/members/{assignment_id}/approve",
+    response_model=SuccessResponse[CouncilMemberSnapshot],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.approve"))],
 )
 async def approve_council_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
@@ -439,6 +470,8 @@ async def approve_council_member(assignment_id: uuid.UUID, db: DbSession, user: 
 
 @router.post(
     "/admin/council/members/{assignment_id}/publish",
+    response_model=SuccessResponse[CouncilMemberSnapshot],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.publish"))],
 )
 async def publish_council_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
@@ -447,6 +480,8 @@ async def publish_council_member(assignment_id: uuid.UUID, db: DbSession, user: 
 
 @router.post(
     "/admin/council/members/{assignment_id}/unpublish",
+    response_model=SuccessResponse[CouncilMemberSnapshot],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.publish"))],
 )
 async def unpublish_council_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
@@ -455,13 +490,15 @@ async def unpublish_council_member(assignment_id: uuid.UUID, db: DbSession, user
 
 @router.post(
     "/admin/council/members/{assignment_id}/archive",
+    response_model=SuccessResponse[CouncilMemberSnapshot],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.archive"))],
 )
 async def archive_council_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
     return await _transition_council_member(assignment_id, "archive", db, user, comment)
 
 
-@router.get("/admin/council/audit-log", dependencies=[Depends(require_scope("governance.view"))])
+@router.get("/admin/council/audit-log", response_model=SuccessResponse[list[AuditLogRead]], dependencies=[Depends(require_scope("governance.view"))])
 async def list_council_audit_log(db: DbSession, _: CurrentUser, page: int = 1, per_page: int = 20):
     result = await AuditService.list(
         db,
@@ -472,7 +509,7 @@ async def list_council_audit_log(db: DbSession, _: CurrentUser, page: int = 1, p
     return success(data=result.items, meta=result.meta)
 
 
-@router.get("/admin/management-board/dashboard", dependencies=[Depends(require_scope("governance.view"))])
+@router.get("/admin/management-board/dashboard", response_model=SuccessResponse[CouncilDashboardRead], dependencies=[Depends(require_scope("governance.view"))])
 async def management_board_dashboard(db: DbSession, _: CurrentUser):
     try:
         data = await GovernanceService.board_dashboard(db, "management-board")
@@ -481,7 +518,7 @@ async def management_board_dashboard(db: DbSession, _: CurrentUser):
     return success(data=data)
 
 
-@router.get("/admin/management-board/members", dependencies=[Depends(require_scope("governance.view"))])
+@router.get("/admin/management-board/members", response_model=SuccessResponse[list[CouncilMemberSnapshot]], response_model_exclude_unset=True, dependencies=[Depends(require_scope("governance.view"))])
 async def list_management_board_members(db: DbSession, _: CurrentUser, workflow_status: str | None = None):
     try:
         members = await GovernanceService.list_board_members(db, "management-board", workflow_status=workflow_status)
@@ -493,6 +530,8 @@ async def list_management_board_members(db: DbSession, _: CurrentUser, workflow_
 @router.post(
     "/admin/management-board/members",
     status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[CouncilMemberSnapshot],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.manage_members"))],
 )
 async def create_management_board_member(data: CouncilMemberCreate, db: DbSession, user: CurrentUser):
@@ -503,13 +542,15 @@ async def create_management_board_member(data: CouncilMemberCreate, db: DbSessio
     return success(data=_council_member_payload(assignment), message="Management Board member created")
 
 
-@router.get("/admin/management-board/members/{assignment_id}", dependencies=[Depends(require_scope("governance.view"))])
+@router.get("/admin/management-board/members/{assignment_id}", response_model=SuccessResponse[CouncilMemberSnapshot], response_model_exclude_unset=True, dependencies=[Depends(require_scope("governance.view"))])
 async def get_management_board_member(assignment_id: uuid.UUID, db: DbSession, _: CurrentUser):
     return success(data=_council_member_payload(await _board_member_or_404(db, "management-board", assignment_id)))
 
 
 @router.patch(
     "/admin/management-board/members/{assignment_id}",
+    response_model=SuccessResponse[CouncilMemberSnapshot],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.manage_members"))],
 )
 async def update_management_board_member(
@@ -536,7 +577,7 @@ async def delete_management_board_member(assignment_id: uuid.UUID, db: DbSession
     await db.flush()
 
 
-@router.get("/admin/management-board/order", dependencies=[Depends(require_scope("governance.view"))])
+@router.get("/admin/management-board/order", response_model=SuccessResponse[list[CouncilOrderNode]], dependencies=[Depends(require_scope("governance.view"))])
 async def get_management_board_order(db: DbSession, _: CurrentUser):
     members = await GovernanceService.list_board_members(db, "management-board", active_only=True)
     return success(
@@ -553,7 +594,7 @@ async def get_management_board_order(db: DbSession, _: CurrentUser):
     )
 
 
-@router.put("/admin/management-board/order", dependencies=[Depends(require_scope("governance.manage_order"))])
+@router.put("/admin/management-board/order", response_model=SuccessResponse[list[CouncilMemberSnapshot]], response_model_exclude_unset=True, dependencies=[Depends(require_scope("governance.manage_order"))])
 async def update_management_board_order(data: CouncilOrderUpdate, db: DbSession, user: CurrentUser):
     try:
         members = await GovernanceService.update_board_order(db, "management-board", data.nodes, user.id)
@@ -569,13 +610,13 @@ async def _management_board_or_404(db: DbSession):
     return board
 
 
-@router.get("/admin/management-board/page-content", dependencies=[Depends(require_scope("governance.view"))])
+@router.get("/admin/management-board/page-content", response_model=SuccessResponse[GovernancePageContentRead], response_model_exclude_unset=True, dependencies=[Depends(require_scope("governance.view"))])
 async def get_management_board_page_content(db: DbSession, _: CurrentUser):
     board = await _management_board_or_404(db)
     return success(data=await GovernanceService.get_council_page_content(db, board.id))
 
 
-@router.patch("/admin/management-board/page-content", dependencies=[Depends(require_scope("governance.manage_members"))])
+@router.patch("/admin/management-board/page-content", response_model=SuccessResponse[GovernancePageContentRead], response_model_exclude_unset=True, dependencies=[Depends(require_scope("governance.manage_members"))])
 async def update_management_board_page_content(data: GovernancePageContentUpdate, db: DbSession, user: CurrentUser):
     board = await _management_board_or_404(db)
     page = await GovernanceService.upsert_council_page_content(db, board.id, data.model_dump(exclude_unset=True), user.id)
@@ -596,6 +637,8 @@ async def _transition_management_board_page_content(action: str, db: DbSession, 
 
 @router.post(
     "/admin/management-board/page-content/submit-review",
+    response_model=SuccessResponse[GovernancePageContentRead],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.manage_members"))],
 )
 async def submit_management_board_page_content_for_review(db: DbSession, user: CurrentUser):
@@ -604,6 +647,8 @@ async def submit_management_board_page_content_for_review(db: DbSession, user: C
 
 @router.post(
     "/admin/management-board/page-content/approve",
+    response_model=SuccessResponse[GovernancePageContentRead],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.approve"))],
 )
 async def approve_management_board_page_content(db: DbSession, user: CurrentUser):
@@ -612,6 +657,8 @@ async def approve_management_board_page_content(db: DbSession, user: CurrentUser
 
 @router.post(
     "/admin/management-board/page-content/publish",
+    response_model=SuccessResponse[GovernancePageContentRead],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.publish"))],
 )
 async def publish_management_board_page_content(db: DbSession, user: CurrentUser):
@@ -620,6 +667,8 @@ async def publish_management_board_page_content(db: DbSession, user: CurrentUser
 
 @router.post(
     "/admin/management-board/page-content/unpublish",
+    response_model=SuccessResponse[GovernancePageContentRead],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.publish"))],
 )
 async def unpublish_management_board_page_content(db: DbSession, user: CurrentUser):
@@ -628,13 +677,15 @@ async def unpublish_management_board_page_content(db: DbSession, user: CurrentUs
 
 @router.post(
     "/admin/management-board/page-content/archive",
+    response_model=SuccessResponse[GovernancePageContentRead],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.archive"))],
 )
 async def archive_management_board_page_content(db: DbSession, user: CurrentUser):
     return await _transition_management_board_page_content("archive", db, user)
 
 
-@router.get("/admin/management-board/preview", dependencies=[Depends(require_scope("governance.view"))])
+@router.get("/admin/management-board/preview", response_model=SuccessResponse[PublicCouncilResponse], dependencies=[Depends(require_scope("governance.view"))])
 async def preview_management_board(db: DbSession, _: CurrentUser):
     try:
         return success(data=await GovernanceService.preview_board(db, "management-board"))
@@ -655,6 +706,8 @@ async def _transition_management_board_member(
 
 @router.post(
     "/admin/management-board/members/{assignment_id}/submit-review",
+    response_model=SuccessResponse[CouncilMemberSnapshot],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.manage_members"))],
 )
 async def submit_management_board_member_for_review(
@@ -665,6 +718,8 @@ async def submit_management_board_member_for_review(
 
 @router.post(
     "/admin/management-board/members/{assignment_id}/approve",
+    response_model=SuccessResponse[CouncilMemberSnapshot],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.approve"))],
 )
 async def approve_management_board_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
@@ -673,6 +728,8 @@ async def approve_management_board_member(assignment_id: uuid.UUID, db: DbSessio
 
 @router.post(
     "/admin/management-board/members/{assignment_id}/publish",
+    response_model=SuccessResponse[CouncilMemberSnapshot],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.publish"))],
 )
 async def publish_management_board_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
@@ -681,6 +738,8 @@ async def publish_management_board_member(assignment_id: uuid.UUID, db: DbSessio
 
 @router.post(
     "/admin/management-board/members/{assignment_id}/unpublish",
+    response_model=SuccessResponse[CouncilMemberSnapshot],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.publish"))],
 )
 async def unpublish_management_board_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
@@ -689,13 +748,15 @@ async def unpublish_management_board_member(assignment_id: uuid.UUID, db: DbSess
 
 @router.post(
     "/admin/management-board/members/{assignment_id}/archive",
+    response_model=SuccessResponse[CouncilMemberSnapshot],
+    response_model_exclude_unset=True,
     dependencies=[Depends(require_scope("governance.archive"))],
 )
 async def archive_management_board_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
     return await _transition_management_board_member(assignment_id, "archive", db, user, comment)
 
 
-@router.get("/public/university-council")
+@router.get("/public/university-council", response_model=SuccessResponse[PublicCouncilResponse])
 @cached_public(timeout=3600)
 async def public_university_council(db: DbSession):
     try:
@@ -704,7 +765,7 @@ async def public_university_council(db: DbSession):
         raise HTTPException(status_code=404, detail=str(error)) from error
 
 
-@router.get("/public/university-council/{slug}")
+@router.get("/public/university-council/{slug}", response_model=SuccessResponse[PublicCouncilProfile])
 @cached_public(timeout=3600, vary_on=("slug",))
 async def public_university_council_profile(slug: str, db: DbSession):
     profile = await GovernanceService.public_university_council_profile(db, slug)

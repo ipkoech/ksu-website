@@ -1,4 +1,4 @@
-import type { ResearchGenericRecord } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 
 import { institutionContact } from "../../config/institution";
 import { compactText } from "../../lib/research-public-data";

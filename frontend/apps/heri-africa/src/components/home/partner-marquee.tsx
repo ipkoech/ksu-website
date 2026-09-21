@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import type { PartnerSummary } from "../../lib/api";
 
@@ -35,6 +37,7 @@ export function PartnerMarquee({ partners }: { partners: PartnerSummary[] }) {
     <section
       aria-label="Our partners"
       className="heri-marquee overflow-hidden border-y border-slate-100 bg-white py-8"
+      data-server-data-display="heri-partners"
     >
       <h2 className="text-center text-2xl font-bold text-heri-blue">
         Who we work with

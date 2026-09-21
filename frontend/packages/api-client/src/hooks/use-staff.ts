@@ -18,7 +18,7 @@ export function useStaffAssignments(
 ) {
   return useQuery({
     queryKey: queryKeys.staff.assignments(params),
-    queryFn: () => staffApi.listAssignments(params),
+    queryFn: ({ signal }) => staffApi.listAssignments(params, { signal }),
     enabled: options?.enabled !== false,
   });
 }

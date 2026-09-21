@@ -7,20 +7,25 @@ import uuid
 from fastapi import APIRouter, HTTPException, Query, Request, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ._scoped import can_access_scoped_record, require_scoped_record
 from ...deps import CurrentUser, DbSession
 from ...models import Document
 from ...schemas import DocumentCreate, DocumentUpdate
+from ...schemas.document import DocumentSnapshot
 from ...services import DocumentService
 from ...core.config import public_content_rate_limit
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[DocumentSnapshot]],
+    response_model_exclude_unset=True,
+)
 @public_content_rate_limit
 @cached_public(timeout=300, vary_on=("page", "per_page", "q", "document_type", "category", "scope_type", "scope_id", "fields", "include"))
 async def list_documents(
@@ -50,7 +55,11 @@ async def list_documents(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin")
+@router.get(
+    "/admin",
+    response_model=SuccessResponse[list[DocumentSnapshot]],
+    response_model_exclude_unset=True,
+)
 async def list_admin_documents(
     db: DbSession,
     user: CurrentUser,
@@ -93,7 +102,11 @@ async def list_admin_documents(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{slug}")
+@router.get(
+    "/{slug}",
+    response_model=SuccessResponse[DocumentSnapshot],
+    response_model_exclude_unset=True,
+)
 @public_content_rate_limit
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_document(request: Request, slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
@@ -105,7 +118,12 @@ async def get_document(request: Request, slug: str, db: DbSession, fields: Field
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[DocumentSnapshot],
+    response_model_exclude_unset=True,
+)
 async def create_document(data: DocumentCreate, db: DbSession, user: CurrentUser):
     await require_scoped_record(
         db,
@@ -119,7 +137,11 @@ async def create_document(data: DocumentCreate, db: DbSession, user: CurrentUser
     return success(data=item, message="Document created")
 
 
-@router.patch("/{item_id}")
+@router.patch(
+    "/{item_id}",
+    response_model=SuccessResponse[DocumentSnapshot],
+    response_model_exclude_unset=True,
+)
 async def update_document(item_id: uuid.UUID, data: DocumentUpdate, db: DbSession, user: CurrentUser):
     item = await DocumentService.get_by_id(db, item_id)
     if item is None:

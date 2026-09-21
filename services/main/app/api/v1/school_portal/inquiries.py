@@ -4,10 +4,12 @@ import uuid
 from datetime import date, datetime, time, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException, Query
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ....deps import DbSession
 from ....schemas.contact_inquiry import (
+    ContactInquiryMessageRead,
+    ContactInquiryRead,
     InquiryAssign,
     InquiryNoteCreate,
     InquiryReplyCreate,
@@ -24,7 +26,11 @@ def _require(context, permission: str) -> None:
         raise HTTPException(status_code=403, detail=f"{permission} permission is required")
 
 
-@router.get("/inquiries")
+@router.get(
+    "/inquiries",
+    response_model=SuccessResponse[list[ContactInquiryRead]],
+    response_model_exclude_unset=True,
+)
 async def list_inquiries(
     db: DbSession,
     context: CurrentSchoolContext,
@@ -58,7 +64,11 @@ async def list_inquiries(
     return success(data=items, meta={**result.meta, "returned": len(items)})
 
 
-@router.get("/inquiries/{inquiry_id}")
+@router.get(
+    "/inquiries/{inquiry_id}",
+    response_model=SuccessResponse[ContactInquiryRead],
+    response_model_exclude_unset=True,
+)
 async def get_inquiry(
     inquiry_id: uuid.UUID,
     db: DbSession,
@@ -74,7 +84,11 @@ async def get_inquiry(
     )
 
 
-@router.patch("/inquiries/{inquiry_id}/assign")
+@router.patch(
+    "/inquiries/{inquiry_id}/assign",
+    response_model=SuccessResponse[ContactInquiryRead],
+    response_model_exclude_unset=True,
+)
 async def assign_inquiry(
     inquiry_id: uuid.UUID,
     data: InquiryAssign,
@@ -93,7 +107,11 @@ async def assign_inquiry(
     )
 
 
-@router.patch("/inquiries/{inquiry_id}/status")
+@router.patch(
+    "/inquiries/{inquiry_id}/status",
+    response_model=SuccessResponse[ContactInquiryRead],
+    response_model_exclude_unset=True,
+)
 async def update_inquiry_status(
     inquiry_id: uuid.UUID,
     data: InquiryStatusUpdate,
@@ -107,7 +125,11 @@ async def update_inquiry_status(
     )
 
 
-@router.post("/inquiries/{inquiry_id}/notes")
+@router.post(
+    "/inquiries/{inquiry_id}/notes",
+    response_model=SuccessResponse[ContactInquiryMessageRead],
+    response_model_exclude_unset=True,
+)
 async def add_inquiry_note(
     inquiry_id: uuid.UUID,
     data: InquiryNoteCreate,
@@ -121,7 +143,11 @@ async def add_inquiry_note(
     )
 
 
-@router.post("/inquiries/{inquiry_id}/replies")
+@router.post(
+    "/inquiries/{inquiry_id}/replies",
+    response_model=SuccessResponse[ContactInquiryMessageRead],
+    response_model_exclude_unset=True,
+)
 async def reply_to_inquiry(
     inquiry_id: uuid.UUID,
     data: InquiryReplyCreate,
@@ -135,7 +161,11 @@ async def reply_to_inquiry(
     )
 
 
-@router.post("/inquiries/{inquiry_id}/messages/{message_id}/retry")
+@router.post(
+    "/inquiries/{inquiry_id}/messages/{message_id}/retry",
+    response_model=SuccessResponse[ContactInquiryMessageRead],
+    response_model_exclude_unset=True,
+)
 async def retry_inquiry_reply(
     inquiry_id: uuid.UUID,
     message_id: uuid.UUID,

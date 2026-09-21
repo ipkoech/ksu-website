@@ -9,19 +9,19 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession, permissions_for_user, require_scope
 from ...models import Blog
-from ...schemas import BlogCreate, BlogUpdate
+from ...schemas import BlogCreate, BlogSnapshot, BlogUpdate
 from ...services import BlogService, ContentWorkflowService
 from .content_workflow import authorize_content_workflow_action
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[BlogSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "scope_type", "scope_id", "is_main", "is_published", "search", "fields", "include"))
 async def list_blogs(
     db: DbSession,
@@ -49,7 +49,7 @@ async def list_blogs(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin", dependencies=[Depends(require_scope("content.manage_news"))])
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[BlogSnapshot]], dependencies=[Depends(require_scope("content.manage_news"))])
 async def list_admin_blogs(
     db: DbSession,
     _: CurrentUser,
@@ -93,7 +93,7 @@ async def list_admin_blogs(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/id/{blog_id}")
+@router.get("/id/{blog_id}", response_model_exclude_unset=True, response_model=SuccessResponse[BlogSnapshot])
 async def get_blog_by_id(blog_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(Blog, fields)
     item = await BlogService.get_by_id(db, blog_id, load_options=selector.load_options)
@@ -102,7 +102,7 @@ async def get_blog_by_id(blog_id: uuid.UUID, db: DbSession, _: CurrentUser, fiel
     return success(data=selector.apply(item))
 
 
-@router.get("/{slug}")
+@router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[BlogSnapshot])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_blog(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Blog, fields)
@@ -112,7 +112,7 @@ async def get_blog(slug: str, db: DbSession, fields: FieldSelection = FieldsDep)
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("content.manage_news"))])
+@router.post("", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[BlogSnapshot], dependencies=[Depends(require_scope("content.manage_news"))])
 async def create_blog(data: BlogCreate, db: DbSession, user: CurrentUser):
     payload = ContentWorkflowService.authoring_create_payload(
         data.model_dump(), actor_id=user.id,
@@ -124,7 +124,7 @@ async def create_blog(data: BlogCreate, db: DbSession, user: CurrentUser):
     return success(data=item, message="Blog created")
 
 
-@router.patch("/id/{blog_id}", dependencies=[Depends(require_scope("content.manage_news"))])
+@router.patch("/id/{blog_id}", response_model_exclude_unset=True, response_model=SuccessResponse[BlogSnapshot], dependencies=[Depends(require_scope("content.manage_news"))])
 async def update_blog(blog_id: uuid.UUID, data: BlogUpdate, db: DbSession, user: CurrentUser):
     item = await BlogService.get_by_id(db, blog_id)
     if item is None:
@@ -154,7 +154,7 @@ async def update_blog(blog_id: uuid.UUID, data: BlogUpdate, db: DbSession, user:
     return success(data=item, message="Blog updated")
 
 
-@router.post("/id/{blog_id}/publish", dependencies=[Depends(require_scope("content.manage_news"))])
+@router.post("/id/{blog_id}/publish", response_model_exclude_unset=True, response_model=SuccessResponse[BlogSnapshot], dependencies=[Depends(require_scope("content.manage_news"))])
 async def publish_blog(blog_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await BlogService.get_by_id(db, blog_id)
     if item is None:
@@ -170,7 +170,7 @@ async def publish_blog(blog_id: uuid.UUID, db: DbSession, user: CurrentUser):
     return success(data=item, message="Blog published")
 
 
-@router.post("/id/{blog_id}/unpublish", dependencies=[Depends(require_scope("content.manage_news"))])
+@router.post("/id/{blog_id}/unpublish", response_model_exclude_unset=True, response_model=SuccessResponse[BlogSnapshot], dependencies=[Depends(require_scope("content.manage_news"))])
 async def unpublish_blog(blog_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await BlogService.get_by_id(db, blog_id)
     if item is None:

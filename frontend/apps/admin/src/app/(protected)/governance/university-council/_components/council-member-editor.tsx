@@ -23,6 +23,7 @@ import {
 } from "@ksu/ui/components";
 import { MediaPicker } from "@/components/media";
 import { PersonPicker } from "@/components/relationships";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { councilGovernanceProfile, governanceAdminApi, type CouncilMember, type GovernanceRole, type GovernanceWorkspaceProfile } from "@/lib/api/organization";
 
 type MemberForm = Partial<CouncilMember> & {
@@ -174,6 +175,7 @@ export function CouncilMemberEditor({
     mutationFn: (payload: Partial<CouncilMember>) =>
       editing ? profile.api.updateMember(editing.id, payload) : profile.api.createMember(payload),
     onSuccess: async () => {
+      void revalidatePublicContent("main", "governance");
       toast.success(editing ? `${profile.memberSingular} updated` : `${profile.memberSingular} created`);
       setEditing(null);
       setValues(defaultForm);
@@ -189,6 +191,7 @@ export function CouncilMemberEditor({
         comment: values.publication_notes || `${profile.memberSingular} ${action}`,
       }),
     onSuccess: async () => {
+      void revalidatePublicContent("main", "governance");
       toast.success("Workflow status updated");
       await invalidateCouncil();
     },

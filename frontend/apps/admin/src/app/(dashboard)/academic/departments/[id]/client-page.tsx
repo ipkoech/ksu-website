@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { hasChangedPayload, pickChangedPayloadWithRecord, type PayloadFieldMap } from "@/lib/changed-fields";
 import { richTextToEditorValue, richTextToPayloadValue } from "@/lib/rich-text-form";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import {
   Button,
   Card,
@@ -272,6 +273,7 @@ export default function DepartmentFormPage() {
     try {
       if (isNew) {
         await createDepartment.mutateAsync(payload);
+        void revalidatePublicContent("main", "academic-departments");
         toast.success("Department created successfully");
       } else {
         const patch = pickChangedPayloadWithRecord(payload, form.formState.dirtyFields as Record<string, unknown>, departmentPayloadFieldMap, department);
@@ -281,6 +283,7 @@ export default function DepartmentFormPage() {
         }
         const response = await updateDepartment.mutateAsync({ id: department!.id, data: patch });
         form.reset(departmentValues(response.data));
+        void revalidatePublicContent("main", "academic-departments");
         toast.success("Department updated successfully");
       }
       router.push("/academic/departments");

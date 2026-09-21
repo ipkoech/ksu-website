@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import {
   ResearchDetailHero,
   ResearchDetailSidebar,
@@ -12,7 +11,6 @@ import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import {
   compactText,
   formatDate,
-  generateSlugParams,
   getCenters,
   getConsultancyBySlug,
   getPartners,
@@ -22,15 +20,12 @@ import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../..
 import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getConsultancyBySlug(slug);
   return researchRecordMetadata(data, { fallbackTitle: "Consultancy", pathname: "/consultancies/" + slug });
-}
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.consultancies.list);
 }
 
 export default async function ConsultancyDetailPage({
@@ -82,7 +77,7 @@ export default async function ConsultancyDetailPage({
           { label: "Back to consultancies", href: "/consultancies", variant: "secondary" },
           ...(partner?.slug ? [{ label: "View partner", href: `/partners/${partner.slug}` }] : []),
         ]}
-        imageSrc={compactText(consultancy.cover_image_url) || "/images/research/research-about-hero.webp"}
+        imageSrc={compactText(consultancy.cover_image_url) || "/images/research/verified/multidisciplinary-conference-2026.jpg"}
         imageAlt="Consultancy engagement profile and deliverables"
       />
 

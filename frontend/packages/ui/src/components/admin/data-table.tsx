@@ -11,23 +11,26 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import {
-  Button,
-  Checkbox,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  Input,
-  Skeleton,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui";
-import { cn } from "../../lib";
+} from "../ui/table";
+import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { Input } from "../ui/input";
+import { Skeleton } from "../ui/skeleton";
+import { cn } from "../../lib/utils";
 import { EmptyState } from "./empty-state";
+import { useDebouncedSearch } from "./use-debounced-search";
 
 export interface ColumnDef<T> {
   key: string;
@@ -57,6 +60,7 @@ export interface DataTableProps<T extends { id?: string }> {
   isLoading?: boolean;
   emptyMessage?: string;
   searchPlaceholder?: string;
+  searchValue?: string;
   onSearch?: (query: string) => void;
   getRowLabel?: (row: T, index: number) => string;
 }
@@ -78,25 +82,36 @@ export function DataTable<T extends { id?: string }>({
   emptyMessage = "No results found.",
   searchPlaceholder = "Search records…",
   onSearch,
+  searchValue,
   getRowLabel,
 }: DataTableProps<T>) {
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
-  const [search, setSearch] = React.useState("");
+  const [search, setSearch] = React.useState(searchValue ?? "");
+  const { schedule, cancel } = useDebouncedSearch(onSearch);
+  const selectionCallback = React.useRef(onSelectionChange);
   const [sortState, setSortState] = React.useState<{ column: string; direction: "asc" | "desc" } | null>(null);
 
   React.useEffect(() => {
-    onSelectionChange?.(selectedIds);
-  }, [onSelectionChange, selectedIds]);
+    selectionCallback.current = onSelectionChange;
+  }, [onSelectionChange]);
 
   React.useEffect(() => {
-    setSelectedIds((current) => current.filter((id) => data.some((row, index) => getRowId(row, index) === id)));
+    selectionCallback.current?.(selectedIds);
+  }, [selectedIds]);
+
+  React.useEffect(() => {
+    const rowIds = new Set(data.map(getRowId));
+    setSelectedIds((current) => {
+      const retained = current.filter((id) => rowIds.has(id));
+      return retained.length === current.length ? current : retained;
+    });
   }, [data]);
 
   React.useEffect(() => {
-    if (!onSearch) return;
-    const timeout = window.setTimeout(() => onSearch(search), 300);
-    return () => window.clearTimeout(timeout);
-  }, [onSearch, search]);
+    if (searchValue === undefined) return;
+    setSearch(searchValue);
+    cancel();
+  }, [searchValue, cancel]);
 
   const allSelected = data.length > 0 && selectedIds.length === data.length;
   const someSelected = selectedIds.length > 0 && !allSelected;
@@ -136,7 +151,7 @@ export function DataTable<T extends { id?: string }>({
             name="table-search"
             type="search"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => { setSearch(event.target.value); schedule(event.target.value); }}
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder}
             autoComplete="off"
@@ -344,7 +359,7 @@ export function DataTable<T extends { id?: string }>({
                   />
                 </div>
                 <dl className="mt-3 grid gap-2 text-sm">
-                  {columns.slice(0, 4).map((column) => (
+                  {columns.map((column) => (
                     <div key={`${rowId}-${column.key}`} className="grid grid-cols-[7rem_1fr] gap-3">
                       <dt className="text-muted-foreground">{column.mobileLabel ?? (typeof column.header === "string" ? column.header : column.key)}</dt>
                       <dd className="min-w-0 break-words font-medium">
@@ -367,7 +382,7 @@ export function DataTable<T extends { id?: string }>({
         <div className="text-sm text-muted-foreground">
           Page {pagination.page} of {Math.max(pagination.totalPages, 1)}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <select
             className="h-11 rounded-md border border-input bg-background px-3 text-sm"
             value={pagination.limit}

@@ -11,11 +11,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ....deps import CurrentUser, DbSession, require_scope
 from ....models import Intake, Programme, User, UserRole
 from ....schemas import UserCreate, UserUpdate
+from ....schemas.auth import UserSnapshot
+from ....schemas.rbac import UserRoleSnapshot
 from ....services import RBACService, StaffService, UserService
 from .._fields import FieldSelection, FieldsDep, build_selector
 
@@ -138,7 +140,12 @@ async def _with_users_scoped_roles(
     return data
 
 
-@router.get("", dependencies=[Depends(require_scope("users.view"))])
+@router.get(
+    "",
+    response_model=SuccessResponse[list[UserSnapshot]],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("users.view"))],
+)
 async def list_admin_users(
     db: DbSession,
     _: CurrentUser,
@@ -174,7 +181,12 @@ async def list_admin_users(
     return success(data=data, meta=result.meta)
 
 
-@router.get("/{user_id}", dependencies=[Depends(require_scope("users.view"))])
+@router.get(
+    "/{user_id}",
+    response_model=SuccessResponse[UserSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("users.view"))],
+)
 async def get_admin_user(user_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(User, fields)
     user = await UserService.get_by_id(db, user_id, load_options=selector.load_options)
@@ -185,14 +197,30 @@ async def get_admin_user(user_id: uuid.UUID, db: DbSession, _: CurrentUser, fiel
     return success(data=data)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("users.create"))])
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[UserSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("users.create"))],
+)
 async def create_admin_user(data: UserCreate, db: DbSession, _: CurrentUser):
     user = await UserService.create(db, **data.model_dump())
     return success(data=user, message="User created")
 
 
-@router.patch("/{user_id}", dependencies=[Depends(require_scope("users.edit"))])
-@router.put("/{user_id}", dependencies=[Depends(require_scope("users.edit"))])
+@router.patch(
+    "/{user_id}",
+    response_model=SuccessResponse[UserSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("users.edit"))],
+)
+@router.put(
+    "/{user_id}",
+    response_model=SuccessResponse[UserSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("users.edit"))],
+)
 async def update_admin_user(user_id: uuid.UUID, data: UserUpdate, db: DbSession, _: CurrentUser):
     user = await UserService.get_by_id(db, user_id)
     if user is None:
@@ -209,7 +237,12 @@ async def delete_admin_user(user_id: uuid.UUID, db: DbSession, _: CurrentUser):
     await UserService.delete(db, user)
 
 
-@router.get("/{user_id}/roles", dependencies=[Depends(require_scope("roles.view"))])
+@router.get(
+    "/{user_id}/roles",
+    response_model=SuccessResponse[list[UserRoleSnapshot]],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("roles.view"))],
+)
 async def list_admin_user_roles(user_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     user = await UserService.get_by_id(db, user_id)
     if user is None:
@@ -221,7 +254,12 @@ async def list_admin_user_roles(user_id: uuid.UUID, db: DbSession, _: CurrentUse
     return success(data=data)
 
 
-@router.put("/{user_id}/roles", dependencies=[Depends(require_scope("roles.manage"))])
+@router.put(
+    "/{user_id}/roles",
+    response_model=SuccessResponse[list[UserRoleSnapshot]],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("roles.manage"))],
+)
 async def update_admin_user_roles(
     user_id: uuid.UUID,
     data: UserRolesUpdatePayload,
@@ -263,7 +301,12 @@ async def update_admin_user_roles(
     return success(data=data, message="User roles updated")
 
 
-@router.post("/{user_id}/roles/{role_id}", dependencies=[Depends(require_scope("roles.manage"))])
+@router.post(
+    "/{user_id}/roles/{role_id}",
+    response_model=SuccessResponse[UserRoleSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("roles.manage"))],
+)
 async def assign_user_role(
     user_id: uuid.UUID,
     role_id: uuid.UUID,

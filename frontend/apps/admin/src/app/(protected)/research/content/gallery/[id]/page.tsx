@@ -2,13 +2,14 @@
 
 import { mediaApi, type ResearchGenericRecord } from "@ksu/api-client";
 import { AttachmentManager } from "@/components/media/attachment-manager";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../../_components/research-admin-detail-page";
 import { RelatedRecordsCard, RelatedRecordsGrid } from "../../../_components/research-detail-relationships";
 
 export default function ResearchGalleryFolderDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Gallery Folder"
+      title="Gallery Folder"
       description="View research-scoped folder metadata, contained media assets, usage links, and audit history."
       resource={{
         list: (params) => mediaApi.listFolders({ page: 1, per_page: 100, scope_type: "research", ...params }),
@@ -93,6 +94,7 @@ function GalleryFolderRelations({ folder }: { folder: ResearchGenericRecord }) {
                 { value: "featured", label: "Featured image", mediaType: "image", accept: "image/*" },
                 { value: "attachment", label: "Attachment" },
               ]}
+              onPersistedChange={() => revalidatePublicContent("research", "content")}
             />
           ),
         },

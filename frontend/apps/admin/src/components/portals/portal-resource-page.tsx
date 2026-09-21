@@ -6,7 +6,7 @@ import {
   EditableServiceResourcePage,
   type EditableRecordColumn,
 } from "@/components/dashboard/editable-service-resource-page";
-import { getPortalResource } from "@/lib/portals/registry";
+import { getPortalConfig, getPortalResource } from "@/lib/portals/registry";
 import type { PortalPayload, PortalResourceConfig } from "@/lib/portals/types";
 import { recordRecoveryApi, usePortalAccess, useUploadMedia, type PortalAccess } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
@@ -41,6 +41,7 @@ interface PortalResourcePageProps {
 export function PortalResourcePage({ portalKey, resourceKey, initialFilters }: PortalResourcePageProps) {
   const { hasAnyScope } = usePermissions();
   const portalAccessQuery = usePortalAccess();
+  const portal = getPortalConfig(portalKey);
   const resource = getPortalResource(portalKey, resourceKey);
   const [selectedScopeKey, setSelectedScopeKey] = useState<string>("");
   const portalAccess = useMemo(
@@ -222,6 +223,11 @@ export function PortalResourcePage({ portalKey, resourceKey, initialFilters }: P
       }
       backHref={scopedResource.backHref}
       queryKey={scopedResource.queryKey}
+      resourceKey={portal?.service === "system" ? undefined : scopedResource.key}
+      revalidateResearchCache={portal?.service === "research"}
+      revalidatePublicService={
+        portal?.service === "system" ? undefined : portal?.service
+      }
       fields={scopedResource.fields}
       listFilters={scopedResource.listFilters}
       list={scopedResource.list}

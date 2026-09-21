@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Inbox } from "lucide-react";
-import { Button } from "../ui";
+import { Button } from "../ui/button";
 
 export interface EmptyStateProps {
   icon?: React.ReactNode;

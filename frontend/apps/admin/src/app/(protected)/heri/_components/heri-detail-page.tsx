@@ -19,6 +19,7 @@ import {
   useHeriResourceMutation,
   heriRequest,
 } from "@/lib/api/heri";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { HeriMediaPicker } from "./heri-media-picker";
 
 const workflowStatuses = [
@@ -132,6 +133,7 @@ export function HeriDetailPage() {
         method: "POST",
         body: JSON.stringify({ status, note: "Updated from HERI record detail" }),
       });
+      void revalidatePublicContent("heri", resource);
       toast.success("Workflow status updated");
       await recordQuery.refetch();
     } catch (reason) {
@@ -146,6 +148,7 @@ export function HeriDetailPage() {
         method: "POST",
         body: JSON.stringify({ audit_id: entry.id, direction }),
       });
+      void revalidatePublicContent("heri", resource);
       toast.success("Revision restored");
       await recordQuery.refetch();
       await loadHistory();

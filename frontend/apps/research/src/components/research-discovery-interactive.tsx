@@ -90,7 +90,11 @@ function DiscoveryGraphic({ activeIndex, reduceMotion }: { activeIndex: number; 
         <path d="M18 48C30 25 34 22 42 20C55 16 59 30 72 28C81 27 84 42 84 58" stroke="hsl(var(--primary))" strokeOpacity=".28" strokeWidth=".5" strokeDasharray="2 2" />
         {points.map((point, index) => <g key={point.x}><circle cx={point.x} cy={point.y} r={index === activeIndex ? 7 : 4.5} fill={index === activeIndex ? "hsl(var(--secondary))" : "hsl(var(--primary))"} opacity={index === activeIndex ? 1 : .65} /><circle cx={point.x} cy={point.y} r={index === activeIndex ? 11 : 7} stroke="white" strokeOpacity={index === activeIndex ? .5 : .15} strokeWidth=".5" /></g>)}
       </svg>
-      {!reduceMotion ? <motion.div className="absolute left-[10%] top-[12%] h-20 w-20 rounded-full border border-secondary/30" animate={{ scale: [1, 1.2, 1], opacity: [.25, .6, .25] }} transition={{ duration: 4, repeat: Infinity }} /> : null}
+      <motion.div
+        className="absolute left-[10%] top-[12%] h-20 w-20 rounded-full border border-secondary/30"
+        animate={reduceMotion ? undefined : { scale: [1, 1.2, 1], opacity: [.25, .6, .25] }}
+        transition={reduceMotion ? undefined : { duration: 4, repeat: Infinity }}
+      />
     </div>
   );
 }

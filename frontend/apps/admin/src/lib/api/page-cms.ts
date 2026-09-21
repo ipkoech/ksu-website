@@ -528,8 +528,8 @@ export interface PageSectionAdminListResponse {
 }
 
 export const pageSectionsApi = {
-  listAdmin: (params?: PageSectionAdminListParams) =>
-    api.get<PageSection[]>("/page-sections/admin", { params }),
+  listAdmin: (params?: PageSectionAdminListParams, config?: AxiosRequestConfig) =>
+    api.get<PageSection[]>("/page-sections/admin", { ...config, params }),
   get: (sectionId: string) =>
     api.get<PageSection>(`/page-sections/${sectionId}`),
   create: (data: PageSectionPayload) =>
@@ -560,10 +560,10 @@ export const sectionItemsApi = {
 };
 
 export const partnershipSpotlightsApi = {
-  listAdmin: (params?: ListParams) =>
-    api.get<PartnershipSpotlight[]>("/partnership-spotlights/admin", { params }),
-  get: (spotlightId: string) =>
-    api.get<PartnershipSpotlight>(`/partnership-spotlights/${spotlightId}`),
+  listAdmin: (params?: ListParams, config?: AxiosRequestConfig) =>
+    api.get<PartnershipSpotlight[]>("/partnership-spotlights/admin", { ...config, params }),
+  get: (spotlightId: string, config?: AxiosRequestConfig) =>
+    api.get<PartnershipSpotlight>(`/partnership-spotlights/${spotlightId}`, config),
   create: (data: PartnershipSpotlightPayload) =>
     api.post<PartnershipSpotlight>("/partnership-spotlights", data),
   update: (spotlightId: string, data: PartnershipSpotlightPayload) =>

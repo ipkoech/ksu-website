@@ -13,9 +13,15 @@ import {
   type ResearchGrant,
   type ResearchProject,
   type ResearchPublication,
-} from "@ksu/api-client";
-import type { PublicStatsResponse } from "@ksu/api-client";
-import { unstable_cache } from "next/cache";
+} from "@ksu/api-client/server";
+import type { PublicStatsResponse } from "@ksu/api-client/server";
+import { unstable_cache, unstable_noStore as noStore } from "next/cache";
+import { unstable_rethrow } from "next/navigation";
+export { generateSlugParams } from "./research-static-params";
+import {
+  normalizeResearchListResponse,
+  normalizeResearchRecordResponse,
+} from "./research-response-shapes";
 
 export type PublicResearchData<T> = {
   data: T[];
@@ -146,11 +152,11 @@ const unavailableMessage =
   "Research records are temporarily unavailable. Try again later or contact the research office.";
 
 const researchPublicListFields =
-  "id,title,name,slug,code,summary,abstract,description,about,mission,vision,mandate,objectives,functions,services_summary,leadership_message,strategic_priorities,category,status,is_active,is_public,is_featured,project_type,publication_type,grant_type,center_type,farm_type,program_type,output_type,innovation_type,partner_type,consultancy_type,fund_type,event_type,article_type,news_type,resource_type,service_type,guideline_type,scholarship_type,delivery_mode,access_type,development_stage,ip_status,commercialization_status,partnership_level,client_type,center_id,program_id,project_id,partner_id,funder_id,funder_name,donor_name,year,start_date,end_date,deadline,event_date,published_at,publication_date,announcement_date,open_date,review_start_date,award_date,project_start_date,project_end_date,application_open,application_deadline,established_date,total_budget,min_award,max_award,value,current_value,target_value,principal_amount,annual_distribution,currency,number_of_awards,number_available,duration_months,covers_tuition,covers_stipend,covers_travel,covers_research,is_accepting_contributions,progress_percentage,cover_image_id,logo_id,cover_image_url,logo_url,url,pdf_url,website,external_url,application_url,contribution_url,contact_name,contact_email,contact_phone,key,value_json,social_links";
+  "id,title,name,slug,code,summary,abstract,description,about,mission,vision,mandate,objectives,functions,services_summary,leadership_message,strategic_priorities,category,status,is_active,is_public,is_featured,project_type,publication_type,grant_type,center_type,farm_type,program_type,output_type,innovation_type,partner_type,consultancy_type,fund_type,event_type,article_type,news_type,resource_type,service_type,guideline_type,scholarship_type,delivery_mode,access_type,development_stage,ip_status,commercialization_status,partnership_level,client_type,center_id,program_id,project_id,partner_id,funder_id,funder_name,principal_investigator_name,school_name,source_references,donor_name,year,start_date,end_date,deadline,event_date,published_at,publication_date,announcement_date,open_date,review_start_date,award_date,project_start_date,project_end_date,application_open,application_deadline,established_date,total_budget,min_award,max_award,value,current_value,target_value,principal_amount,annual_distribution,currency,number_of_awards,number_available,duration_months,covers_tuition,covers_stipend,covers_travel,covers_research,is_accepting_contributions,progress_percentage,cover_image_id,logo_id,cover_image_url,logo_url,url,pdf_url,website,external_url,application_url,contribution_url,contact_name,contact_email,contact_phone,key,value_json,social_links";
 const researchPublicationListFields =
   `${researchPublicListFields},journal_name,publisher,volume,issue,pages,conference_name,book_title,isbn,issn,doi,is_open_access,authors:id,name,full_name,title,project:id,title,slug,code,summary,center:id,title,name,slug,code,summary`;
 const researchInnovationListFields =
-  `${researchPublicListFields},problem_addressed,solution,benefits,trl_level,outputs_count,partners_count,project:id,title,slug,code,summary,center:id,title,name,slug,code,summary`;
+  `${researchPublicListFields},problem_addressed,solution,benefits,copyright_number,patent_number,trl_level,outputs_count,partners_count,project:id,title,slug,code,summary,center:id,title,name,slug,code,summary`;
 const researchStartupListFields =
   "id,name,slug,code,summary,problem,solution,business_model,market,traction,venture_stage,registration_status,registration_number,incorporation_date,sector,funding_raised,currency,website,pitch_deck_url,status,is_active,is_public,is_featured,display_order,innovation_id,partner_id,center_id,lead_founder_id,cover_image_id,gallery_media_ids,attachment_media_ids,document_media_ids,created_at,updated_at";
 const researchIncubationListFields =
@@ -160,7 +166,7 @@ const researchCompetitionListFields =
 const researchTechnologyTransferListFields =
   "id,title,slug,code,summary,case_type,transfer_status,disclosure_date,agreement_date,ip_reference,agreement_reference,license_type,territory,exclusivity,revenue_generated,currency,public_benefit,next_steps,status,is_active,is_public,is_featured,display_order,innovation_id,partner_id,center_id,gallery_media_ids,attachment_media_ids,document_media_ids,created_at,updated_at";
 const researchProjectListFields =
-  "id,title,slug,code,summary,status,is_active,is_featured,project_type,cover_image:id,url,public_url,thumbnail_url,alt_text";
+  "id,title,slug,code,summary,status,is_active,is_featured,project_type,principal_investigator_name,school_name,funder_name,source_references,start_date,end_date,cover_image:id,url,public_url,thumbnail_url,alt_text";
 const researchProjectFilterFields = "id,start_date,end_date,published_at,created_at,updated_at";
 
 const researchPublicDetailFields = `${researchPublicListFields},background,methodology,expected_outcomes,impact,deliverables,budget,gallery_media_ids,attachment_media_ids,document_media_ids,journal_name,publisher,volume,issue,pages,article_number,conference_name,conference_location,conference_date,book_title,editors,edition,isbn,issn,doi,pmid,arxiv_id,is_open_access,impact_factor,quartile,h_index,funding_acknowledgment,email,phone,address,location,venue,registration_url,download_url,file_url,document_url,eligibility,requirements,benefits,scope,content,body,rich_text,plain_text,focus_areas,selection_criteria,obligations,application_instructions,application_process,purpose,beneficiaries,target_beneficiaries,use_guidelines,distribution_policy,annual_distribution_notes,donor_message,donor_background,recognition_notes,mission,vision,mandate,head_message,office_location,social_links,documents,guidelines,applications,reports`;
@@ -200,36 +206,54 @@ async function safeList<T>(
     error: unavailableMessage,
   };
   const request = load()
-    .then((response) => ({
-      data: response.data ?? [],
-      total: response.meta?.total ?? response.data?.length ?? 0,
-      perPage: response.meta?.per_page ?? 100,
-      error: null,
-    }))
-    .catch(() => ({ ...defaults }));
+    .then((response) => {
+      const normalized = normalizeResearchListResponse<T>(response);
+      if (!normalized) throw new Error("Invalid Research list response");
+      return { ...normalized, error: null };
+    })
+    .catch(() => {
+      noStore();
+      return { ...defaults };
+    });
 
-  return withBackendTimeout(request, { ...defaults }, "list");
+  return withBackendTimeout(request, { ...defaults }, "list", noStore);
 }
 
 async function safeRecord<T>(
   load: () => Promise<{ data?: T }>,
 ): Promise<PublicResearchRecord<T>> {
   const request = load()
-    .then((response) => ({ data: response.data ?? null, error: null }))
-    .catch(() => ({ data: null, error: unavailableMessage }));
+    .then((response) => {
+      const data = normalizeResearchRecordResponse<T>(response);
+      if (data === undefined) throw new Error("Invalid Research record response");
+      return { data, error: null };
+    })
+    .catch(() => {
+      noStore();
+      return { data: null, error: unavailableMessage };
+    });
 
   return withBackendTimeout(
     request,
     { data: null, error: unavailableMessage },
     "record",
+    noStore,
   );
 }
 
-async function withBackendTimeout<T>(request: Promise<T>, fallback: T, kind: string) {
+async function withBackendTimeout<T>(
+  request: Promise<T>,
+  fallback: T,
+  kind: string,
+  onTimeout?: () => void,
+) {
   const startedAt = performance.now();
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<T>((resolve) => {
-    timeoutId = setTimeout(() => resolve(fallback), PUBLIC_RESEARCH_TIMEOUT_MS);
+    timeoutId = setTimeout(() => {
+      onTimeout?.();
+      resolve(fallback);
+    }, PUBLIC_RESEARCH_TIMEOUT_MS);
   });
 
   try {
@@ -247,8 +271,13 @@ async function withBackendTimeout<T>(request: Promise<T>, fallback: T, kind: str
 async function safeStats() {
   try {
     const response = await researchServiceApi.stats();
-    return response.data ?? null;
+    const stats = normalizeResearchRecordResponse<PublicStatsResponse>({
+      data: response.data,
+    });
+    if (stats === undefined) throw new Error("Invalid Research stats response");
+    return stats;
   } catch {
+    noStore();
     return null;
   }
 }
@@ -261,7 +290,9 @@ async function safeResearchHeadProfile(): Promise<ResearchHeadProfile> {
       status: "active",
       per_page: 12,
     });
-    const people = (response.data ?? []) as Person[];
+    const normalized = normalizeResearchListResponse<Person>(response);
+    if (!normalized) throw new Error("Invalid Research head profile response");
+    const people = normalized.data;
     const person =
       people.find((item) =>
         compactText(item.institutional_role)
@@ -284,6 +315,7 @@ async function safeResearchHeadProfile(): Promise<ResearchHeadProfile> {
       href: person.slug ? `/team#${person.slug}` : "/team",
     };
   } catch {
+    noStore();
     return null;
   }
 }
@@ -1858,11 +1890,45 @@ async function loadResearchOverviewData(): Promise<ResearchOverviewData> {
   return result;
 }
 
-export const getResearchOverviewData = unstable_cache(
-  loadResearchOverviewData,
-  ["research-overview-v1"],
+class DegradedResearchOverviewError extends Error {
+  constructor(readonly data: ResearchOverviewData) {
+    super("Research overview contains degraded backend data");
+    this.name = "DegradedResearchOverviewError";
+  }
+}
+
+const getCachedResearchOverviewData = unstable_cache(
+  async () => {
+    const data = await loadResearchOverviewData();
+    // Never persist an outage as a healthy-looking, mostly-empty overview.
+    // The caller still receives the degraded DTO for this request, while the
+    // next request gets a chance to recover from the backend.
+    if (data.errors.length > 0) {
+      throw new DegradedResearchOverviewError(data);
+    }
+    return data;
+  },
+  [
+    "research-overview-v2",
+    process.env.KSU_MAIN_API_URL || process.env.NEXT_PUBLIC_MAIN_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
+    process.env.KSU_RESEARCH_API_URL || process.env.NEXT_PUBLIC_RESEARCH_API_URL || "http://localhost:8080",
+  ],
   { revalidate: 300, tags: ["research-content", "research-overview"] },
 );
+
+export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
+  try {
+    return await getCachedResearchOverviewData();
+  } catch (error) {
+    unstable_rethrow(error);
+    // `unstable_cache` does not retain thrown errors, but this catch returns
+    // the degraded DTO for the current request. Mark that response dynamic so
+    // a route render cannot persist the outage-shaped overview as page cache.
+    noStore();
+    if (error instanceof DegradedResearchOverviewError) return error.data;
+    throw error;
+  }
+}
 
 export function compactText(value?: string | number | null) {
   if (value === null || value === undefined) return "";
@@ -1885,17 +1951,6 @@ export function formatLabel(value?: string | null) {
   return compactText(value)
     .replace(/_/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-type ListFn = (params?: Record<string, string | number | boolean | undefined>) => Promise<{ data?: Array<{ slug?: string }> }>;
-
-export async function generateSlugParams(listFn: ListFn, filterExtra: Record<string, string | number | boolean | undefined> = {}): Promise<{ slug: string }[]> {
-  try {
-    const response = await listFn({ per_page: 50, fields: "slug", is_public: true, is_active: true, ...filterExtra });
-    return (response.data ?? []).filter((item) => item.slug).map((item) => ({ slug: item.slug! }));
-  } catch {
-    return [];
-  }
 }
 
 export function formatDate(value?: string | null) {

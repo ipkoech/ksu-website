@@ -7,13 +7,14 @@ import uuid
 from fastapi import APIRouter, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ._scoped import can_access_scoped_record, require_scoped_record
 from ...deps import CurrentUser, DbSession
 from ...models import FAQ
 from ...schemas import FAQCreate, FAQUpdate
+from ...schemas.support import FAQSnapshot
 from ...services import FAQService
 
 router = APIRouter()
@@ -26,7 +27,11 @@ FAQ_MANAGE_PERMISSIONS = [
 ]
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[FAQSnapshot]],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("page", "per_page", "scope_type", "scope_id", "is_main", "fields", "include"))
 async def list_faqs(
     db: DbSession,
@@ -42,7 +47,11 @@ async def list_faqs(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin")
+@router.get(
+    "/admin",
+    response_model=SuccessResponse[list[FAQSnapshot]],
+    response_model_exclude_unset=True,
+)
 async def list_admin_faqs(
     db: DbSession,
     user: CurrentUser,
@@ -82,7 +91,11 @@ async def list_admin_faqs(
     return success(data=selector.apply(items), meta=meta)
 
 
-@router.get("/admin/{faq_id}")
+@router.get(
+    "/admin/{faq_id}",
+    response_model=SuccessResponse[FAQSnapshot],
+    response_model_exclude_unset=True,
+)
 async def get_admin_faq(
     faq_id: uuid.UUID,
     db: DbSession,
@@ -104,7 +117,11 @@ async def get_admin_faq(
     return success(data=selector.apply(item))
 
 
-@router.get("/{faq_id}")
+@router.get(
+    "/{faq_id}",
+    response_model=SuccessResponse[FAQSnapshot],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("faq_id", "fields", "include"))
 async def get_faq(faq_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(FAQ, fields)
@@ -114,7 +131,12 @@ async def get_faq(faq_id: uuid.UUID, db: DbSession, fields: FieldSelection = Fie
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[FAQSnapshot],
+    response_model_exclude_unset=True,
+)
 async def create_faq(data: FAQCreate, db: DbSession, user: CurrentUser):
     await require_scoped_record(
         db,
@@ -128,7 +150,11 @@ async def create_faq(data: FAQCreate, db: DbSession, user: CurrentUser):
     return success(data=item, message="FAQ created")
 
 
-@router.patch("/{faq_id}")
+@router.patch(
+    "/{faq_id}",
+    response_model=SuccessResponse[FAQSnapshot],
+    response_model_exclude_unset=True,
+)
 async def update_faq(faq_id: uuid.UUID, data: FAQUpdate, db: DbSession, user: CurrentUser):
     item = await FAQService.get_by_id(db, faq_id)
     if item is None:

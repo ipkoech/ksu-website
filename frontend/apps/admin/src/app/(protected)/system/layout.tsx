@@ -26,6 +26,9 @@ export default function SystemLayout({
   const router = useRouter();
   const { user, isLoading, activeService, checkAuth, switchService } = useAuth();
   const { hasScope } = usePermissions();
+  const hasSystemService = Boolean(
+    user?.services.some((service) => service.service === "system"),
+  );
 
   useEffect(() => {
     if (!user) {
@@ -49,16 +52,19 @@ export default function SystemLayout({
   );
 
   useEffect(() => {
+    if (!isLoading && user && activeService !== "system" && hasSystemService) {
+      return;
+    }
     if (!isLoading && user && !hasSystemAccess) {
       router.push("/select-service");
     }
-  }, [hasSystemAccess, isLoading, user, router]);
+  }, [activeService, hasSystemAccess, hasSystemService, isLoading, user, router]);
 
   useEffect(() => {
-    if (user && hasSystemAccess && activeService !== "system") {
+    if (user && hasSystemService && activeService !== "system") {
       switchService("system");
     }
-  }, [activeService, hasSystemAccess, switchService, user]);
+  }, [activeService, hasSystemService, switchService, user]);
 
   if (isLoading) {
     return (

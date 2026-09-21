@@ -1,0 +1,29 @@
+{
+  "events_per_case": 1000,
+  "pool_size": 1,
+  "max_overflow": 0,
+  "workload": "sequential synthetic audit-only; no HTTP, broker or concurrent business traffic",
+  "results": {
+    "single_event": {
+      "seconds": 9.559,
+      "sql_statements_excluding_driver_commits": 1000,
+      "peak_connections": 1,
+      "stored_events": 1000,
+      "pending_events": 0
+    },
+    "preassembled_batches": {
+      "seconds": 1.2481,
+      "sql_statements_excluding_driver_commits": 10,
+      "peak_connections": 1,
+      "stored_events": 1000,
+      "pending_events": 0
+    },
+    "durable_capture_and_drain": {
+      "seconds": 10.0806,
+      "sql_statements_excluding_driver_commits": 1051,
+      "peak_connections": 1,
+      "stored_events": 1000,
+      "pending_events": 0
+    }
+  }
+}

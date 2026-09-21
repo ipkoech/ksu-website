@@ -45,6 +45,7 @@ import {
   Skeleton,
 } from "@ksu/ui/components";
 import { usePermissions } from "@/hooks/use-permissions";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import {
   PortalEmptyState,
   PortalFilterBar,
@@ -184,6 +185,7 @@ export function ClubReviewWorkspace() {
     mutationFn: (club: Club) =>
       clubsApi.update(club.id, { is_public: !club.is_public }),
     onSuccess: (_, club) => {
+      void revalidatePublicContent("main", "student-life");
       toast.success(
         club.is_public
           ? `"${club.name}" is no longer publicly listed`

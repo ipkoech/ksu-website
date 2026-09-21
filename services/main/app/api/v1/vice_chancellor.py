@@ -8,28 +8,45 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Query, Response, status
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import CurrentUser, DbSession, user_has_scope
 from ...models import Event, Media, MediaLink, News, VcGalleryAlbum, VcHubPlacement, VcPortrait, VcSpeech, VcSpeechVideo, VcVideo
 from ...schemas.vice_chancellor import (
     VcGalleryAlbumCreate,
+    VcGalleryAlbumSnapshot,
     VcGalleryAlbumUpdate,
     VcGalleryMediaCreate,
+    VcGalleryMediaResponse,
+    VcGalleryPage,
     VcHubPlacementCreate,
+    VcHubPlacementSnapshot,
     VcHubPlacementUpdate,
+    VcHubSnapshot,
     VcHubUpdate,
     VcPortraitCreate,
+    VcPortraitSnapshot,
     VcPortraitUpdate,
     VcReorderRequest,
     VcSpeechCreate,
+    VcSpeechPage,
+    VcSpeechSnapshot,
     VcSpeechUpdate,
     VcSpeechVideoCreate,
+    VcSpeechVideoResponse,
     VcVideoCreate,
+    VcVideoPage,
+    VcVideoSnapshot,
     VcVideoUpdate,
     VcWorkflowAction,
+    VcWorkflowTransitionResponse,
+    VcPublicGalleryResponse,
+    VcPublicHubResponse,
+    VcPublicSpeechResponse,
+    VcYouTubePreviewResponse,
     YouTubePreviewRequest,
 )
+from ...schemas.content import EventSnapshot, NewsSnapshot
 from ...services import (
     ViceChancellorAdminService,
     ViceChancellorPublicService,
@@ -68,13 +85,13 @@ async def _record_or_404(db: DbSession, model: type, record_id: uuid.UUID):
     return record
 
 
-@router.get("/vice-chancellor/hub")
+@router.get("/vice-chancellor/hub", response_model_exclude_unset=True, response_model=SuccessResponse[VcHubSnapshot])
 async def get_hub(db: DbSession, user: CurrentUser):
     _require_vc_action(user, "view")
     return success(data=await ViceChancellorAdminService.get_or_create_hub(db))
 
 
-@router.patch("/vice-chancellor/hub")
+@router.patch("/vice-chancellor/hub", response_model_exclude_unset=True, response_model=SuccessResponse[VcHubSnapshot])
 async def update_hub(data: VcHubUpdate, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     try:
@@ -98,7 +115,7 @@ def _serialize_portrait(portrait: VcPortrait, *, active_media_id: uuid.UUID | No
     }
 
 
-@router.get("/vice-chancellor/hub/portraits")
+@router.get("/vice-chancellor/hub/portraits", response_model_exclude_unset=True, response_model=SuccessResponse[list[VcPortraitSnapshot]])
 async def list_portraits(db: DbSession, user: CurrentUser):
     _require_vc_action(user, "view")
     hub = await ViceChancellorAdminService.get_or_create_hub(db)
@@ -112,7 +129,7 @@ async def list_portraits(db: DbSession, user: CurrentUser):
     return success(data=[_serialize_portrait(item, active_media_id=hub.hero_media_id) for item in portraits])
 
 
-@router.post("/vice-chancellor/hub/portraits", status_code=201)
+@router.post("/vice-chancellor/hub/portraits", status_code=201, response_model_exclude_unset=True, response_model=SuccessResponse[VcPortraitSnapshot])
 async def attach_portrait(data: VcPortraitCreate, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     hub = await ViceChancellorAdminService.get_or_create_hub(db)
@@ -135,7 +152,7 @@ async def attach_portrait(data: VcPortraitCreate, db: DbSession, user: CurrentUs
     return success(data=_serialize_portrait(portrait, active_media_id=hub.hero_media_id))
 
 
-@router.post("/vice-chancellor/hub/portraits/reorder")
+@router.post("/vice-chancellor/hub/portraits/reorder", response_model=SuccessResponse[bool])
 async def reorder_portraits(data: VcReorderRequest, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     hub = await ViceChancellorAdminService.get_or_create_hub(db)
@@ -152,7 +169,7 @@ async def reorder_portraits(data: VcReorderRequest, db: DbSession, user: Current
     return success(data=True)
 
 
-@router.patch("/vice-chancellor/hub/portraits/{portrait_id}")
+@router.patch("/vice-chancellor/hub/portraits/{portrait_id}", response_model_exclude_unset=True, response_model=SuccessResponse[VcPortraitSnapshot])
 async def update_portrait(portrait_id: uuid.UUID, data: VcPortraitUpdate, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     hub = await ViceChancellorAdminService.get_or_create_hub(db)
@@ -165,7 +182,7 @@ async def update_portrait(portrait_id: uuid.UUID, data: VcPortraitUpdate, db: Db
     return success(data=_serialize_portrait(portrait, active_media_id=hub.hero_media_id))
 
 
-@router.post("/vice-chancellor/hub/portraits/{portrait_id}/select")
+@router.post("/vice-chancellor/hub/portraits/{portrait_id}/select", response_model_exclude_unset=True, response_model=SuccessResponse[VcPortraitSnapshot])
 async def select_portrait(portrait_id: uuid.UUID, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     hub = await ViceChancellorAdminService.get_or_create_hub(db)
@@ -193,7 +210,7 @@ async def detach_portrait(portrait_id: uuid.UUID, db: DbSession, user: CurrentUs
     return Response(status_code=204)
 
 
-@router.post("/vice-chancellor/hub/{action}")
+@router.post("/vice-chancellor/hub/{action}", response_model_exclude_unset=True, response_model=SuccessResponse[VcHubSnapshot])
 async def transition_hub(action: str, data: VcWorkflowAction, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "publish" if action in {"publish", "unpublish"} else "review" if action in {"approve", "request_changes"} else "manage")
     try:
@@ -203,13 +220,13 @@ async def transition_hub(action: str, data: VcWorkflowAction, db: DbSession, use
         raise _validation_error(exc) from exc
 
 
-@router.get("/vice-chancellor/videos")
+@router.get("/vice-chancellor/videos", response_model_exclude_unset=True, response_model=SuccessResponse[VcVideoPage])
 async def list_videos(db: DbSession, user: CurrentUser, page: int = Query(1, ge=1), per_page: int = Query(20, ge=1, le=100)):
     _require_vc_action(user, "view")
     return success(data=await ViceChancellorAdminService.list_videos(db, page=page, per_page=per_page))
 
 
-@router.post("/vice-chancellor/videos/youtube/preview")
+@router.post("/vice-chancellor/videos/youtube/preview", response_model=SuccessResponse[VcYouTubePreviewResponse])
 async def preview_youtube(data: YouTubePreviewRequest, user: CurrentUser):
     _require_vc_action(user, "manage")
     try:
@@ -222,7 +239,7 @@ async def preview_youtube(data: YouTubePreviewRequest, user: CurrentUser):
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
-@router.post("/vice-chancellor/videos", status_code=status.HTTP_201_CREATED)
+@router.post("/vice-chancellor/videos", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[VcVideoSnapshot])
 async def create_video(data: VcVideoCreate, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     try:
@@ -232,7 +249,7 @@ async def create_video(data: VcVideoCreate, db: DbSession, user: CurrentUser):
         raise _validation_error(exc) from exc
 
 
-@router.patch("/vice-chancellor/videos/{record_id}")
+@router.patch("/vice-chancellor/videos/{record_id}", response_model_exclude_unset=True, response_model=SuccessResponse[VcVideoSnapshot])
 async def update_video(record_id: uuid.UUID, data: VcVideoUpdate, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     try:
@@ -242,7 +259,7 @@ async def update_video(record_id: uuid.UUID, data: VcVideoUpdate, db: DbSession,
         raise _validation_error(exc) from exc
 
 
-@router.post("/vice-chancellor/videos/{record_id}/refresh-metadata")
+@router.post("/vice-chancellor/videos/{record_id}/refresh-metadata", response_model_exclude_unset=True, response_model=SuccessResponse[VcVideoSnapshot])
 async def refresh_video(record_id: uuid.UUID, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     try:
@@ -262,13 +279,13 @@ async def delete_video(record_id: uuid.UUID, db: DbSession, user: CurrentUser):
     return Response(status_code=204)
 
 
-@router.get("/vice-chancellor/speeches")
+@router.get("/vice-chancellor/speeches", response_model_exclude_unset=True, response_model=SuccessResponse[VcSpeechPage])
 async def list_speeches(db: DbSession, user: CurrentUser, page: int = Query(1, ge=1), per_page: int = Query(20, ge=1, le=100)):
     _require_vc_action(user, "view")
     return success(data=await ViceChancellorAdminService.list_speeches(db, page=page, per_page=per_page))
 
 
-@router.post("/vice-chancellor/speeches", status_code=201)
+@router.post("/vice-chancellor/speeches", status_code=201, response_model_exclude_unset=True, response_model=SuccessResponse[VcSpeechSnapshot])
 async def create_speech(data: VcSpeechCreate, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     try:
@@ -277,7 +294,7 @@ async def create_speech(data: VcSpeechCreate, db: DbSession, user: CurrentUser):
         raise _validation_error(exc) from exc
 
 
-@router.patch("/vice-chancellor/speeches/{record_id}")
+@router.patch("/vice-chancellor/speeches/{record_id}", response_model_exclude_unset=True, response_model=SuccessResponse[VcSpeechSnapshot])
 async def update_speech(record_id: uuid.UUID, data: VcSpeechUpdate, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     try:
@@ -295,7 +312,7 @@ async def delete_speech(record_id: uuid.UUID, db: DbSession, user: CurrentUser):
     return Response(status_code=204)
 
 
-@router.post("/vice-chancellor/speeches/{speech_id}/videos", status_code=201)
+@router.post("/vice-chancellor/speeches/{speech_id}/videos", status_code=201, response_model_exclude_unset=True, response_model=SuccessResponse[VcSpeechVideoResponse])
 async def attach_speech_video(speech_id: uuid.UUID, data: VcSpeechVideoCreate, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     try:
@@ -304,7 +321,7 @@ async def attach_speech_video(speech_id: uuid.UUID, data: VcSpeechVideoCreate, d
         raise _validation_error(exc) from exc
 
 
-@router.get("/vice-chancellor/speeches/{speech_id}/videos")
+@router.get("/vice-chancellor/speeches/{speech_id}/videos", response_model_exclude_unset=True, response_model=SuccessResponse[list[VcSpeechVideoResponse]])
 async def list_speech_videos(speech_id: uuid.UUID, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "view")
     await _record_or_404(db, VcSpeech, speech_id)
@@ -335,13 +352,13 @@ async def detach_speech_video(speech_id: uuid.UUID, link_id: uuid.UUID, db: DbSe
     return Response(status_code=204)
 
 
-@router.get("/vice-chancellor/galleries")
+@router.get("/vice-chancellor/galleries", response_model_exclude_unset=True, response_model=SuccessResponse[VcGalleryPage])
 async def list_galleries(db: DbSession, user: CurrentUser, page: int = Query(1, ge=1), per_page: int = Query(20, ge=1, le=100)):
     _require_vc_action(user, "view")
     return success(data=await ViceChancellorAdminService.list_galleries(db, page=page, per_page=per_page))
 
 
-@router.post("/vice-chancellor/galleries", status_code=201)
+@router.post("/vice-chancellor/galleries", status_code=201, response_model_exclude_unset=True, response_model=SuccessResponse[VcGalleryAlbumSnapshot])
 async def create_gallery(data: VcGalleryAlbumCreate, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     try:
@@ -350,7 +367,7 @@ async def create_gallery(data: VcGalleryAlbumCreate, db: DbSession, user: Curren
         raise _validation_error(exc) from exc
 
 
-@router.patch("/vice-chancellor/galleries/{record_id}")
+@router.patch("/vice-chancellor/galleries/{record_id}", response_model_exclude_unset=True, response_model=SuccessResponse[VcGalleryAlbumSnapshot])
 async def update_gallery(record_id: uuid.UUID, data: VcGalleryAlbumUpdate, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     try:
@@ -368,7 +385,7 @@ async def delete_gallery(record_id: uuid.UUID, db: DbSession, user: CurrentUser)
     return Response(status_code=204)
 
 
-@router.post("/vice-chancellor/galleries/{album_id}/media", status_code=201)
+@router.post("/vice-chancellor/galleries/{album_id}/media", status_code=201, response_model_exclude_unset=True, response_model=SuccessResponse[VcGalleryMediaResponse])
 async def attach_gallery_media(album_id: uuid.UUID, data: VcGalleryMediaCreate, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     try:
@@ -377,7 +394,7 @@ async def attach_gallery_media(album_id: uuid.UUID, data: VcGalleryMediaCreate, 
         raise _validation_error(exc) from exc
 
 
-@router.get("/vice-chancellor/galleries/{album_id}/media")
+@router.get("/vice-chancellor/galleries/{album_id}/media", response_model_exclude_unset=True, response_model=SuccessResponse[list[VcGalleryMediaResponse]])
 async def list_gallery_media(album_id: uuid.UUID, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "view")
     await _record_or_404(db, VcGalleryAlbum, album_id)
@@ -396,7 +413,7 @@ async def list_gallery_media(album_id: uuid.UUID, db: DbSession, user: CurrentUs
     } for link in links])
 
 
-@router.post("/vice-chancellor/galleries/{album_id}/media/reorder")
+@router.post("/vice-chancellor/galleries/{album_id}/media/reorder", response_model=SuccessResponse[bool])
 async def reorder_gallery_media(album_id: uuid.UUID, data: VcReorderRequest, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     try:
@@ -417,7 +434,7 @@ async def detach_gallery_media(album_id: uuid.UUID, link_id: uuid.UUID, db: DbSe
     return Response(status_code=204)
 
 
-@router.get("/vice-chancellor/placements")
+@router.get("/vice-chancellor/placements", response_model_exclude_unset=True, response_model=SuccessResponse[list[VcHubPlacementSnapshot]])
 async def list_placements(db: DbSession, user: CurrentUser):
     _require_vc_action(user, "view")
     hub = await ViceChancellorAdminService.get_or_create_hub(db)
@@ -425,7 +442,7 @@ async def list_placements(db: DbSession, user: CurrentUser):
     return success(data=records)
 
 
-@router.post("/vice-chancellor/placements", status_code=201)
+@router.post("/vice-chancellor/placements", status_code=201, response_model_exclude_unset=True, response_model=SuccessResponse[VcHubPlacementSnapshot])
 async def create_placement(data: VcHubPlacementCreate, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     try:
@@ -435,7 +452,7 @@ async def create_placement(data: VcHubPlacementCreate, db: DbSession, user: Curr
         raise _validation_error(exc) from exc
 
 
-@router.post("/vice-chancellor/placements/reorder")
+@router.post("/vice-chancellor/placements/reorder", response_model=SuccessResponse[bool])
 async def reorder_placements(data: VcReorderRequest, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     try:
@@ -446,7 +463,7 @@ async def reorder_placements(data: VcReorderRequest, db: DbSession, user: Curren
         raise _validation_error(exc) from exc
 
 
-@router.patch("/vice-chancellor/placements/{record_id}")
+@router.patch("/vice-chancellor/placements/{record_id}", response_model_exclude_unset=True, response_model=SuccessResponse[VcHubPlacementSnapshot])
 async def update_placement(record_id: uuid.UUID, data: VcHubPlacementUpdate, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
     record = await _record_or_404(db, VcHubPlacement, record_id)
@@ -463,7 +480,7 @@ async def delete_placement(record_id: uuid.UUID, db: DbSession, user: CurrentUse
     return Response(status_code=204)
 
 
-@router.get("/vice-chancellor/lookups/news")
+@router.get("/vice-chancellor/lookups/news", response_model_exclude_unset=True, response_model=SuccessResponse[list[NewsSnapshot]])
 async def lookup_news(db: DbSession, user: CurrentUser, q: str | None = None):
     _require_vc_action(user, "view")
     query = News.active_query().order_by(News.created_at.desc()).limit(50)
@@ -472,7 +489,7 @@ async def lookup_news(db: DbSession, user: CurrentUser, q: str | None = None):
     return success(data=(await db.execute(query)).scalars().all())
 
 
-@router.get("/vice-chancellor/lookups/events")
+@router.get("/vice-chancellor/lookups/events", response_model_exclude_unset=True, response_model=SuccessResponse[list[EventSnapshot]])
 async def lookup_events(db: DbSession, user: CurrentUser, q: str | None = None):
     _require_vc_action(user, "view")
     query = Event.active_query().order_by(Event.start_date.desc()).limit(50)
@@ -481,7 +498,7 @@ async def lookup_events(db: DbSession, user: CurrentUser, q: str | None = None):
     return success(data=(await db.execute(query)).scalars().all())
 
 
-@router.post("/vice-chancellor/{resource}/{record_id}/{action}")
+@router.post("/vice-chancellor/{resource}/{record_id}/{action}", response_model_exclude_unset=True, response_model=SuccessResponse[VcWorkflowTransitionResponse])
 async def transition_content(resource: str, record_id: uuid.UUID, action: str, data: VcWorkflowAction, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "publish" if action in {"publish", "unpublish"} else "review" if action in {"approve", "request_changes"} else "manage")
     models = {"videos": VcVideo, "speeches": VcSpeech, "galleries": VcGalleryAlbum}
@@ -494,7 +511,7 @@ async def transition_content(resource: str, record_id: uuid.UUID, action: str, d
         raise _validation_error(exc) from exc
 
 
-@router.get("/public/vice-chancellor")
+@router.get("/public/vice-chancellor", response_model=SuccessResponse[VcPublicHubResponse])
 @cached_public(timeout=600)
 async def get_public_hub(db: DbSession):
     payload = await ViceChancellorPublicService.get_hub(db)
@@ -503,7 +520,7 @@ async def get_public_hub(db: DbSession):
     return success(data=payload)
 
 
-@router.get("/public/vice-chancellor/speeches/{slug}")
+@router.get("/public/vice-chancellor/speeches/{slug}", response_model=SuccessResponse[VcPublicSpeechResponse])
 @cached_public(timeout=600, vary_on=("slug",))
 async def get_public_speech(slug: str, db: DbSession):
     payload = await ViceChancellorPublicService.get_speech(db, slug)
@@ -512,7 +529,7 @@ async def get_public_speech(slug: str, db: DbSession):
     return success(data=payload)
 
 
-@router.get("/public/vice-chancellor/galleries/{slug}")
+@router.get("/public/vice-chancellor/galleries/{slug}", response_model=SuccessResponse[VcPublicGalleryResponse])
 @cached_public(timeout=600, vary_on=("slug",))
 async def get_public_gallery(slug: str, db: DbSession):
     payload = await ViceChancellorPublicService.get_gallery(db, slug)

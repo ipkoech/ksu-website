@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { ExpandableRichText } from "@/components/public/expandable-rich-text";
+import { BioSectionSwitcher, type BioSection } from "@/components/public/bio-section-switcher";
 import { PublicImage } from "@/components/public/public-image";
 import { EntityInquiryLauncher } from "@/components/public/entity-inquiry-launcher";
 import {
@@ -36,6 +37,7 @@ import {
   type PublicPersonGenericRecord,
   type PublicPersonProfile,
   type PublicPersonPublication,
+  type PublicPersonWorkExperience,
 } from "@/lib/public-person-data";
 import { publicFileUrl, resolvePublicMediaUrl } from "@/lib/public-media";
 
@@ -70,8 +72,8 @@ function displayName(person: PublicPersonProfile) {
   );
 }
 
-function initialsFromName(name: string) {
-  const parts = name
+function initialsFromName(name?: string | null) {
+  const parts = (name ?? "")
     .split(/\s+/)
     .map((part) => part.replace(/[^A-Za-z]/g, ""))
     .filter(Boolean)
@@ -94,6 +96,7 @@ function photoUrl(person: PublicPersonProfile) {
   return (
     resolvePublicMediaUrl(person.photo_url) ??
     publicFileUrl(person.photo_id) ??
+    externalHref(person.external_avatar_url) ??
     null
   );
 }
@@ -196,6 +199,38 @@ function qualificationText(item: Record<string, unknown>) {
     .map((value) => present(value as string | number | null))
     .filter(Boolean)
     .join(", ");
+}
+
+function educationText(item: Record<string, unknown>) {
+  return [
+    item.level,
+    item.qualification,
+    item.programme,
+    item.institution,
+    normalizedYear(item.year),
+  ]
+    .map((value) => present(value as string | number | null))
+    .filter(Boolean)
+    .join(", ");
+}
+
+function workExperienceRecords(items: PublicPersonWorkExperience[]) {
+  return items.flatMap((item) => {
+    const title = present(item.designation) || present(item.organization);
+    if (!title) return [];
+    const dates = [item.start_date, item.end_date || "Present"]
+      .map((value) => present(value))
+      .filter(Boolean)
+      .join(" – ");
+    return [
+      {
+        title,
+        category: present(item.organization) || "Work experience",
+        meta: dates ? [dates] : [],
+        description: present(item.assignment),
+      },
+    ];
+  });
 }
 
 function normalizedYear(value: unknown) {
@@ -314,7 +349,7 @@ function ProfileActionRail({
           className="inline-flex h-12 items-center justify-center gap-3 rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-sm transition-colors duration-200 hover:bg-primary/90 active:scale-[0.98]"
         >
           <Download aria-hidden className="h-5 w-5" />
-          Download CV
+          View CV
         </a>
       ) : null}
       {links.slice(0, cvUrl ? 2 : 3).map((item) => (
@@ -450,19 +485,22 @@ function ProfileHero({
   cvUrl?: string | null;
 }) {
   return (
-    <section className="rounded-lg border border-border bg-white p-4 shadow-sm sm:p-5">
-      <div className="grid gap-5 lg:grid-cols-[180px_minmax(0,1fr)_260px] lg:items-center">
-        <div className="max-w-[180px]">
-          <div className="aspect-[4/5] overflow-hidden rounded-xl bg-surface-muted">
+    <section className="overflow-hidden rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-6 lg:p-7">
+      <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_250px] lg:items-center">
+        <div className="max-w-[220px]">
+          <div className="aspect-square overflow-hidden rounded-2xl bg-surface-muted ring-1 ring-black/[0.04]">
             <ProfileImage person={person} name={name} />
           </div>
         </div>
         <div className="min-w-0 self-center py-1">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600">
+            Profile
+          </p>
           <h1 className="max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-[2.4rem]">
             {name}
           </h1>
           {role ? (
-            <p className="mt-2 text-lg font-bold leading-6 text-amber-600">
+            <p className="mt-2 text-lg font-bold leading-6 text-primary">
               {role}
             </p>
           ) : null}
@@ -493,14 +531,18 @@ function ProfileHero({
 
 function ContentBlock({
   title,
+  id,
   children,
 }: {
   title: string;
+  id?: string;
   children: ReactNode;
 }) {
   return (
-    <section>
-      <h2 className="text-base font-bold text-foreground">{title}</h2>
+    <section id={id}>
+      <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-foreground">
+        {title}
+      </h2>
       <div className="mt-3">{children}</div>
     </section>
   );
@@ -508,7 +550,7 @@ function ContentBlock({
 
 function PanelCard({ children }: { children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
       {children}
     </section>
   );
@@ -522,7 +564,7 @@ function SidebarCard({
   children: ReactNode;
 }) {
   return (
-    <aside className="rounded-lg border border-border bg-white p-4 shadow-sm">
+    <aside className="rounded-xl border border-border bg-white p-4 shadow-sm">
       <h2 className="text-base font-bold text-foreground">{title}</h2>
       <div className="mt-4">{children}</div>
     </aside>
@@ -599,9 +641,17 @@ function ProfileSidebar({
   );
 }
 
-function QualificationTimeline({ items }: { items: string[] }) {
+function QualificationTimeline({
+  items,
+  title = "Qualifications",
+  id,
+}: {
+  items: string[];
+  title?: string;
+  id?: string;
+}) {
   return (
-    <ContentBlock title="Academics">
+    <ContentBlock id={id} title={title}>
       <ol className="grid gap-3 lg:grid-cols-3">
         {items.map((item, index) => (
           <li
@@ -643,16 +693,19 @@ function ExternalProfileLinks({ links }: { links: ProfileLink[] }) {
 }
 
 function publicationTitle(item: PublicPersonPublication) {
-  return present(item.title) || present(item.citation) || present(item.doi);
+  return present(item.title) || present(item.name) || present(item.citation) || present(item.doi);
 }
 
 function grantTitle(item: {
   title?: string | null;
+  name?: string | null;
   funder?: string | null;
   role?: string | null;
 }) {
-  return present(item.title) || present(item.funder) || present(item.role);
+  return present(item.title) || present(item.name) || present(item.funder) || present(item.role);
 }
+
+export const revalidate = 300;
 
 export default async function PublicPersonPage({
   params,
@@ -687,6 +740,27 @@ export default async function PublicPersonPage({
   const qualifications = (person.qualifications ?? [])
     .map(qualificationText)
     .filter(Boolean);
+  const educationBackground = (person.education_background ?? [])
+    .map(educationText)
+    .filter(Boolean);
+  const skills = listValues(person.skills);
+  const workExperience = workExperienceRecords(person.work_experience ?? []);
+  const bioSections = [
+    bio ? { id: "biography", label: "Biography", icon: "profile" as const } : null,
+    qualifications.length
+      ? { id: "qualifications", label: "Qualifications", icon: "qualification" as const }
+      : null,
+    educationBackground.length
+      ? { id: "education-background", label: "Education background", icon: "education" as const }
+      : null,
+    workExperience.length
+      ? { id: "work-experience", label: "Work experience", icon: "experience" as const }
+      : null,
+    skills.length ? { id: "skills", label: "Skills", icon: "skills" as const } : null,
+    teachingAreas.length || courses.length
+      ? { id: "teaching", label: "Teaching areas and courses", icon: "teaching" as const }
+      : null,
+  ].filter(Boolean) as Array<Pick<BioSection, "id" | "label" | "icon">>;
   const links = [
     { label: "Website", href: externalHref(person.website_url) },
     { label: "Google Scholar", href: googleScholarHref(person) },
@@ -810,6 +884,9 @@ export default async function PublicPersonPage({
   const hasBioContent =
     Boolean(bio) ||
     qualifications.length > 0 ||
+    educationBackground.length > 0 ||
+    skills.length > 0 ||
+    workExperience.length > 0 ||
     teachingAreas.length > 0 ||
     courses.length > 0 ||
     Boolean(person.assignments?.length);
@@ -820,40 +897,48 @@ export default async function PublicPersonPage({
           id: "bio",
           label: "Bio",
           content: (
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
               <PanelCard>
-                <div className="grid gap-5">
-                  {bio ? (
-                    <ContentBlock title="Biography">
-                      <ExpandableRichText text={bio} collapsedLines={8} />
-                    </ContentBlock>
-                  ) : null}
-                  {qualifications.length ? (
-                    <QualificationTimeline items={qualifications} />
-                  ) : null}
-                  {teachingAreas.length || courses.length ? (
-                    <ContentBlock title="Teaching">
-                      <div className="grid gap-4 lg:grid-cols-2">
-                        {teachingAreas.length ? (
-                          <div>
-                            <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
-                              Teaching Areas
-                            </p>
-                            <PillList items={teachingAreas} />
+                <BioSectionSwitcher
+                  sections={bioSections.map((section) => ({
+                    ...section,
+                    content:
+                      section.id === "biography" ? (
+                        <ContentBlock title="Biography">
+                          <ExpandableRichText text={bio!} collapsedLines={8} />
+                        </ContentBlock>
+                      ) : section.id === "qualifications" ? (
+                        <QualificationTimeline items={qualifications} />
+                      ) : section.id === "education-background" ? (
+                        <QualificationTimeline items={educationBackground} title="Education background" />
+                      ) : section.id === "work-experience" ? (
+                        <ContentBlock title="Work experience">
+                          <TimelineRecordList records={workExperience} />
+                        </ContentBlock>
+                      ) : section.id === "skills" ? (
+                        <ContentBlock title="Skills">
+                          <PillList items={skills} />
+                        </ContentBlock>
+                      ) : (
+                        <ContentBlock title="Teaching areas and courses">
+                          <div className="grid gap-4 lg:grid-cols-2">
+                            {teachingAreas.length ? (
+                              <div>
+                                <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">Teaching Areas</p>
+                                <PillList items={teachingAreas} />
+                              </div>
+                            ) : null}
+                            {courses.length ? (
+                              <div>
+                                <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">Courses</p>
+                                <PillList items={courses} />
+                              </div>
+                            ) : null}
                           </div>
-                        ) : null}
-                        {courses.length ? (
-                          <div>
-                            <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
-                              Courses
-                            </p>
-                            <PillList items={courses} />
-                          </div>
-                        ) : null}
-                      </div>
-                    </ContentBlock>
-                  ) : null}
-                </div>
+                        </ContentBlock>
+                      ),
+                  }))}
+                />
               </PanelCard>
               <div className="grid content-start gap-4">
                 <ProfileSidebar

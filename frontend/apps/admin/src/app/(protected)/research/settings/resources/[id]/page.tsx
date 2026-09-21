@@ -7,7 +7,7 @@ import { SettingsOperationalDetail } from "../../_components/settings-operationa
 export default function ResearchResourceDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Resource"
+      title="Resource"
       description="View operational resource details, access rules, and manager binding."
       resource={researchServiceApi.resources}
       backHref="/research/settings/resources"

@@ -59,6 +59,7 @@ import type {
   StaffAssignmentUpdatePayload,
   StaffEntityOption,
 } from "@ksu/api-client";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { Plus, Search, UserPlus } from "lucide-react";
 
 type AssignmentEntityOption = Pick<
@@ -378,6 +379,7 @@ export function StaffAssignmentEditor({
         setForm((current) => ({ ...current, person_id: created.id }));
         setPersonSearch(created.full_name || created.email);
         setShowCreatePerson(false);
+        void revalidatePublicContent("main", "people");
         toast.success("Staff profile created");
       },
     });
@@ -470,6 +472,7 @@ export function StaffAssignmentEditor({
     } else {
       response = await createAssignment.mutateAsync(payload);
     }
+    void revalidatePublicContent("main", "people");
     toast.success(mode === "reassign" ? "Assignment reassigned" : assignment ? "Assignment updated" : "Assignment created");
     onSuccess?.(response.data);
     onOpenChange(false);
@@ -517,6 +520,7 @@ export function StaffAssignmentEditor({
   const endCurrentAssignment = async () => {
     if (!assignment) return;
     await endAssignment.mutateAsync({ id: assignment.id, data: { end_date: valueOrNull(endDate), notes: valueOrNull(richTextToPlainText(endNotes)) } });
+    void revalidatePublicContent("main", "people");
     toast.success("Assignment ended");
     setEndDialogOpen(false);
     onOpenChange(false);

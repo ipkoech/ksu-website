@@ -8,13 +8,15 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Query, status as http_status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ._scoped import can_access_scoped_record, require_scoped_record
 from ...deps import CurrentUser, DbSession
 from ...models import ContactDirectory
 from ...schemas import ContactDirectoryCreate, ContactDirectoryUpdate
+from ...schemas.support import ContactDirectorySnapshot
+from ...schemas.contact_directory import ContactOwnerRead
 from ...services import ContactReferenceError, ContactService, StaffService
 
 router = APIRouter()
@@ -28,7 +30,11 @@ CONTACT_MANAGE_PERMISSIONS = [
 CONTACT_OWNER_PERMISSIONS = [*CONTACT_VIEW_PERMISSIONS, *CONTACT_MANAGE_PERMISSIONS]
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[ContactDirectorySnapshot]],
+    response_model_exclude_unset=True,
+)
 @cached_public(
     timeout=300,
     vary_on=("page", "per_page", "scope_type", "scope_id", "is_main", "q", "contact_type", "sort", "fields", "include"),
@@ -61,7 +67,11 @@ async def list_contacts(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin")
+@router.get(
+    "/admin",
+    response_model=SuccessResponse[list[ContactDirectorySnapshot]],
+    response_model_exclude_unset=True,
+)
 async def list_admin_contacts(
     db: DbSession,
     user: CurrentUser,
@@ -106,7 +116,11 @@ async def list_admin_contacts(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin/{contact_id}")
+@router.get(
+    "/admin/{contact_id}",
+    response_model=SuccessResponse[ContactDirectorySnapshot],
+    response_model_exclude_unset=True,
+)
 async def get_admin_contact(
     contact_id: uuid.UUID,
     db: DbSession,
@@ -128,7 +142,11 @@ async def get_admin_contact(
     return success(data=selector.apply(item))
 
 
-@router.get("/owners")
+@router.get(
+    "/owners",
+    response_model=SuccessResponse[list[ContactOwnerRead]],
+    response_model_exclude_unset=True,
+)
 async def list_contact_owners(
     db: DbSession,
     user: CurrentUser,
@@ -155,7 +173,11 @@ async def list_contact_owners(
     return success(data=authorized_items)
 
 
-@router.get("/{contact_id}")
+@router.get(
+    "/{contact_id}",
+    response_model=SuccessResponse[ContactDirectorySnapshot],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("contact_id", "fields", "include"))
 async def get_contact(contact_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(ContactDirectory, fields)
@@ -165,7 +187,12 @@ async def get_contact(contact_id: uuid.UUID, db: DbSession, fields: FieldSelecti
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=http_status.HTTP_201_CREATED)
+@router.post(
+    "",
+    status_code=http_status.HTTP_201_CREATED,
+    response_model=SuccessResponse[ContactDirectorySnapshot],
+    response_model_exclude_unset=True,
+)
 async def create_contact(data: ContactDirectoryCreate, db: DbSession, user: CurrentUser):
     await require_scoped_record(
         db,
@@ -182,7 +209,11 @@ async def create_contact(data: ContactDirectoryCreate, db: DbSession, user: Curr
     return success(data=item, message="Contact created")
 
 
-@router.patch("/{contact_id}")
+@router.patch(
+    "/{contact_id}",
+    response_model=SuccessResponse[ContactDirectorySnapshot],
+    response_model_exclude_unset=True,
+)
 async def update_contact(contact_id: uuid.UUID, data: ContactDirectoryUpdate, db: DbSession, user: CurrentUser):
     item = await ContactService.get_by_id(db, contact_id)
     if item is None:
@@ -226,14 +257,22 @@ async def _get_managed_contact(db: DbSession, user: CurrentUser, contact_id: uui
     return item
 
 
-@router.post("/admin/{contact_id}/archive")
+@router.post(
+    "/admin/{contact_id}/archive",
+    response_model=SuccessResponse[ContactDirectorySnapshot],
+    response_model_exclude_unset=True,
+)
 async def archive_contact(contact_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await _get_managed_contact(db, user, contact_id)
     item = await ContactService.update(db, item, status="archived", is_public=False)
     return success(data=item, message="Contact archived")
 
 
-@router.post("/admin/{contact_id}/unarchive")
+@router.post(
+    "/admin/{contact_id}/unarchive",
+    response_model=SuccessResponse[ContactDirectorySnapshot],
+    response_model_exclude_unset=True,
+)
 async def unarchive_contact(contact_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await _get_managed_contact(db, user, contact_id)
     item = await ContactService.update(db, item, status="active")

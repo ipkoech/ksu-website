@@ -11,7 +11,7 @@ from sqlalchemy import or_, select, tuple_
 from sqlalchemy.orm import selectinload
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from .public_team import _assignment_payload, _build_groups, _build_hierarchy, _photo_urls, _person_payload
@@ -19,6 +19,7 @@ from ...deps import CurrentUser, DbSession
 from ...models import Department, Division, Person, StaffAssignment, Wing
 from ...security.scopes import can_access_scope
 from ...services import DepartmentService, WingService
+from ...schemas.public_api import PublicResearchContextPayload
 
 router = APIRouter()
 
@@ -95,7 +96,11 @@ class ResearchContextUpdate(BaseModel):
     department: ResearchDepartmentUpdate | None = None
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[PublicResearchContextPayload],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("fields", "include"))
 async def get_public_research_context(
     request: Request,
@@ -113,7 +118,11 @@ async def get_public_research_context(
     return success(data=apply_context_selection(payload, fields))
 
 
-@router.patch("")
+@router.patch(
+    "",
+    response_model=SuccessResponse[PublicResearchContextPayload],
+    response_model_exclude_unset=True,
+)
 async def update_public_research_context(
     data: ResearchContextUpdate,
     db: DbSession,

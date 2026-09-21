@@ -6,6 +6,8 @@ import asyncio
 import hmac
 import random
 import time
+from datetime import timezone
+from email.utils import parsedate_to_datetime
 from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import replace
@@ -20,6 +22,21 @@ from .reliability import CircuitBreaker, RetryPolicy, TimeoutConfig
 INTERNAL_KEY_HEADER = "X-Internal-Key"
 LEGACY_INTERNAL_KEY_HEADER = "X-Internal-API-Key"
 DEFAULT_TIMEOUT_SECONDS = 5.0
+
+
+def retry_after_seconds(value: str | None) -> float | None:
+    """Parse Retry-After without letting malformed advisory headers break calls."""
+    if not value:
+        return None
+    try:
+        if value.strip().isdigit():
+            return float(int(value.strip()))
+        date = parsedate_to_datetime(value)
+        if date.tzinfo is None:
+            date = date.replace(tzinfo=timezone.utc)
+        return max(0.0, date.timestamp() - time.time())
+    except (ValueError, TypeError, OverflowError):
+        return None
 _RETRYABLE_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
 _RETRYABLE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE", "PUT", "DELETE"})
 _AUTHENTICATION_HEADERS = frozenset(
@@ -531,11 +548,18 @@ class PooledIntegrationClient:
         """Retry only while there is enough end-to-end time remaining."""
 
         for attempt in range(1, policy.attempts + 1):
+            advised_delay = None
             remaining = deadline - self._clock()
             if remaining <= 0:
                 raise _TimeoutBudgetExceeded("integration request timeout budget exhausted")
             try:
-                response = await send(remaining)
+                # HTTPX timeouts bound individual socket operations; a server
+                # sending small chunks can otherwise exceed the total deadline.
+                try:
+                    async with asyncio.timeout(remaining):
+                        response = await send(remaining)
+                except TimeoutError as exc:
+                    raise _TimeoutBudgetExceeded("integration request timeout budget exhausted") from exc
             except _TimeoutBudgetExceeded:
                 raise
             except Exception as exc:
@@ -548,8 +572,15 @@ class PooledIntegrationClient:
                     if response.status_code in policy.retry_statuses:
                         raise _RetryableStatusError(response)
                     return response
+                advised_delay = retry_after_seconds(response.headers.get("Retry-After"))
 
             delay = policy.delay_for(attempt, self._random_value())
+            if advised_delay is not None:
+                delay = max(delay, advised_delay)
+                if delay >= deadline - self._clock():
+                    # Preserve the status and advisory for a durable caller to
+                    # reschedule; never hammer the peer before its requested wait.
+                    raise _RetryableStatusError(response)
             if delay >= deadline - self._clock():
                 raise _TimeoutBudgetExceeded("integration request timeout budget exhausted")
             await self._sleep(delay)

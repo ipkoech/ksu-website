@@ -31,6 +31,7 @@ import { MediaPicker } from "@/components/media";
 import { EntityPicker } from "@/components/relationships/entity-picker";
 import { relationshipAdapters } from "@/components/relationships/relationship-adapters";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { ResearchDetailGuide } from "../../_components/research-guidance";
 import { BindableRecordsCard, RelatedRecordsCard, RelatedRecordsGrid } from "../../_components/research-detail-relationships";
 import { formatFundingDate, labelize, MoneyValue, StatusBadge } from "../../fundings/_components/funding-workspace";
@@ -273,6 +274,7 @@ function GrantDetailActions({ grant }: { grant: ResearchGenericRecord }) {
       setEditOpen(false);
       setConfirmation(null);
       await refresh();
+      void revalidatePublicContent("research", "grants");
     },
     onError: () => toast.error("Could not update grant"),
   });
@@ -281,6 +283,7 @@ function GrantDetailActions({ grant }: { grant: ResearchGenericRecord }) {
     mutationFn: () => researchServiceApi.grants.delete(String(grant.id)),
     onSuccess: async () => {
       toast.success("Grant deleted");
+      void revalidatePublicContent("research", "grants");
       await queryClient.invalidateQueries({ queryKey: ["research", "grants"] });
       router.push("/research/grants");
     },

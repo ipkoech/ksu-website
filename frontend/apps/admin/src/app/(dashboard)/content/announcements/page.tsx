@@ -22,6 +22,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@ksu/ui";
 import { useState } from "react";
 import { TableSearch } from "@/components/shared/table-search";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const getAnnouncementColumns = ({
     canDelete,
@@ -130,6 +131,7 @@ export default function AnnouncementsPage() {
         mutationFn: (id: string) => announcementsApi.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.announcements.all });
+            void revalidatePublicContent("main", "announcements");
             toast.success("Announcement deleted successfully");
         },
         onError: () => {

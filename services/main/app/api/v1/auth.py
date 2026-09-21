@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Cookie, HTTPException, Request, Response, status
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 from ksu_common.security import decode_key_material, public_jwk
 
 from ...core.config import get_settings
@@ -13,6 +13,7 @@ from ...models import User
 from ...schemas import (
     ChangePasswordRequest,
     CookieAuthResponse,
+    AuthUserResponse,
     ForgotPasswordRequest,
     RefreshRequest,
     ResetPasswordRequest,
@@ -106,13 +107,14 @@ def _serialize_auth_user(user: User) -> dict:
     }
 
 
-@router.post("/login")
+@router.post("/login", response_model=SuccessResponse[TokenResponse | CookieAuthResponse])
 async def login(data: UserLogin, db: DbSession, response: Response, request: Request):
     user, access_token, refresh_token = await AuthService.login(
         db,
         data.email,
         data.password,
         ip_address=request.client.host if request.client else None,
+        mfa_code=data.mfa_code,
     )
     if data.token_transport == "bearer":
         return success(
@@ -124,7 +126,7 @@ async def login(data: UserLogin, db: DbSession, response: Response, request: Req
     )
 
 
-@router.post("/refresh")
+@router.post("/refresh", response_model=SuccessResponse[TokenResponse | CookieAuthResponse])
 async def refresh(
     data: RefreshRequest,
     db: DbSession,
@@ -145,20 +147,20 @@ async def refresh(
     )
 
 
-@router.post("/logout")
+@router.post("/logout", response_model=SuccessResponse[dict[str, int]])
 async def logout(db: DbSession, user: CurrentUser, token: CurrentToken, response: Response):
     await AuthService.logout(db, user.id, token.jti)
     _clear_auth_cookies(response)
     return success(message="Logged out")
 
 
-@router.post("/logout-all")
+@router.post("/logout-all", response_model=SuccessResponse[dict[str, int]])
 async def logout_all(db: DbSession, user: CurrentUser):
     count = await AuthService.logout_all(db, user.id)
     return success(data={"revoked_sessions": count}, message="All sessions revoked")
 
 
-@router.post("/forgot-password")
+@router.post("/forgot-password", response_model=SuccessResponse[str])
 async def forgot_password(data: ForgotPasswordRequest, db: DbSession, request: Request):
     await AuthService.request_password_reset(
         db,
@@ -169,19 +171,19 @@ async def forgot_password(data: ForgotPasswordRequest, db: DbSession, request: R
     return success(message="If the email exists, a password reset message has been queued")
 
 
-@router.post("/reset-password")
+@router.post("/reset-password", response_model=SuccessResponse[str])
 async def reset_password(data: ResetPasswordRequest, db: DbSession):
     await AuthService.reset_password(db, data.token, data.new_password)
     return success(message="Password reset successfully")
 
 
-@router.post("/verify-email")
+@router.post("/verify-email", response_model=SuccessResponse[dict[str, str | bool]])
 async def verify_email(data: VerifyEmailRequest, db: DbSession):
     user = await AuthService.verify_email(db, data.token)
     return success(data={"user_id": str(user.id), "verified": True}, message="Email verified")
 
 
-@router.post("/change-password")
+@router.post("/change-password", response_model=SuccessResponse[str])
 async def change_password(
     data: ChangePasswordRequest,
     db: DbSession,
@@ -193,7 +195,7 @@ async def change_password(
     return success(message="Password changed successfully")
 
 
-@router.get("/me")
+@router.get("/me", response_model=SuccessResponse[AuthUserResponse])
 async def get_me(user: CurrentUser, fields: FieldSelection = FieldsDep):
     payload = _serialize_auth_user(user)
     if fields and not fields.is_empty:

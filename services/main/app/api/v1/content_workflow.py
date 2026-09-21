@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import selectinload
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import CurrentUser, DbSession, permissions_for_user
 from ...models import (
@@ -30,7 +30,12 @@ from ...models import (
     Story,
     User,
 )
-from ...schemas.content_workflow import ContentWorkflowActionRequest
+from ...schemas.content_workflow import (
+    ContentWorkflowActionRequest,
+    ContentWorkflowLogRead,
+    ContentWorkflowQueueItemRead,
+    ContentWorkflowRecordSnapshot,
+)
 from ...security.scopes import can_access_scope
 from ...services.content_workflow import ContentWorkflowService
 
@@ -299,7 +304,7 @@ async def _workflow_queue_actor_labels(db: DbSession, records_by_type: dict[str,
     return {user_id: full_name for user_id, full_name in result.all()}
 
 
-@router.get("/queue")
+@router.get("/queue", response_model_exclude_unset=True, response_model=SuccessResponse[list[ContentWorkflowQueueItemRead]])
 async def list_content_workflow_queue(
     db: DbSession,
     user: CurrentUser,
@@ -370,6 +375,7 @@ async def list_content_workflow_queue(
 
 
 def authorize_content_workflow_action(user, content, action: str, permissions: set[str]) -> None:
+    from ksu_contracts.assurance import require_operation_assurance
     owner_id = getattr(content, "author_user_id", None)
     if action == "edit":
         workflow_status = getattr(content, "workflow_status", None) or content.status
@@ -383,14 +389,18 @@ def authorize_content_workflow_action(user, content, action: str, permissions: s
             return
         raise HTTPException(status_code=403, detail="Insufficient privileges")
     if action in PUBLISH_ACTIONS:
-        if owner_id == user.id or "content.publish" not in permissions:
-            raise HTTPException(status_code=403, detail="Content owners cannot publish")
+        required = {"schedule": "content.schedule", "publish": "content.publish",
+                    "unpublish": "content.unpublish"}[action]
+        if required not in permissions:
+            raise HTTPException(status_code=403, detail=f"{required} permission is required")
+        require_operation_assurance(user, required)
         return
-    if action == "submit" and owner_id == user.id:
+    if action == "submit" and owner_id == user.id and {"content.submit", "stories.submit"}.intersection(permissions):
         return
-    required = "content.review" if action in REVIEW_ACTIONS else "content.submit" if action == "submit" else "content.archive"
-    if required not in permissions and not {"content.manage", "content.manage_stories"}.intersection(permissions):
+    required = "content.approve" if action == "approve" else "content.review" if action in REVIEW_ACTIONS else "content.submit" if action == "submit" else "content.archive"
+    if required not in permissions:
         raise HTTPException(status_code=403, detail="Insufficient privileges")
+    require_operation_assurance(user, required)
 
 
 async def authorize_club_event_workflow_action(
@@ -402,7 +412,7 @@ async def authorize_club_event_workflow_action(
 ) -> None:
     """Apply club scope checks to generic workflow routes for club events."""
     if action != "submit":
-        authorize_cocms_workflow_permission(permissions)
+        authorize_content_workflow_action(user, content, action, permissions)
         return
 
     for permission in CLUB_EVENT_SUBMIT_PERMISSIONS:
@@ -411,17 +421,22 @@ async def authorize_club_event_workflow_action(
     raise HTTPException(status_code=403, detail="Insufficient privileges for this club event")
 
 
-def authorize_club_media_workflow_action(action: str, permissions: set[str]) -> None:
-    if action in {"start_review", "request_changes", "approve", "reject"}:
+def authorize_club_media_workflow_action(action: str, permissions: set[str], *, actor=None) -> None:
+    if action == "approve":
+        required = "content.approve"
+    elif action in {"start_review", "request_changes", "reject"}:
         required = "content.review"
     elif action in {"schedule", "publish", "unpublish"}:
-        required = "content.publish"
+        required = {"schedule": "content.schedule", "publish": "content.publish",
+                    "unpublish": "content.unpublish"}[action]
     elif action == "archive":
         required = "content.manage"
     else:
         raise HTTPException(status_code=400, detail="Unsupported club media workflow action")
-    if required not in permissions and "content.manage" not in permissions:
+    if required not in permissions:
         raise HTTPException(status_code=403, detail="Insufficient privileges")
+    from ksu_contracts.assurance import require_operation_assurance
+    require_operation_assurance(actor, required)
 
 
 async def _get_content_or_404(db: DbSession, content_type: str, content_id: uuid.UUID):
@@ -434,7 +449,7 @@ async def _get_content_or_404(db: DbSession, content_type: str, content_id: uuid
     return item
 
 
-@router.post("/{content_type}/{content_id}/{action}")
+@router.post("/{content_type}/{content_id}/{action}", response_model_exclude_unset=True, response_model=SuccessResponse[ContentWorkflowRecordSnapshot])
 async def run_content_workflow_action(
     content_type: str,
     content_id: uuid.UUID,
@@ -450,7 +465,7 @@ async def run_content_workflow_action(
     if content_type == "club-events":
         await authorize_club_event_workflow_action(db, user, content, action, permissions)
     elif content_type == "club-media":
-        authorize_club_media_workflow_action(action, permissions)
+        authorize_club_media_workflow_action(action, permissions, actor=user)
     else:
         authorize_content_workflow_action(user, content, action, permissions)
     try:
@@ -487,7 +502,7 @@ async def run_content_workflow_action(
     return success(data=content, message="Content workflow updated")
 
 
-@router.get("/{content_type}/{content_id}/logs")
+@router.get("/{content_type}/{content_id}/logs", response_model_exclude_unset=True, response_model=SuccessResponse[list[ContentWorkflowLogRead]])
 async def list_content_workflow_logs(
     content_type: str,
     content_id: uuid.UUID,

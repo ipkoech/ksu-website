@@ -1,8 +1,12 @@
-import { mainApi } from "@ksu/api-client";
+import "server-only";
+import { mainApi } from "@ksu/api-client/server";
 import type { PublicTeamAssignment } from "@/lib/public-team-data";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
+import { normalizePublicRecordResponse } from "@/lib/web-response-shapes";
 
 export type PublicPersonPublication = {
   title?: string | null;
+  name?: string | null;
   citation?: string | null;
   year?: string | number | null;
   venue?: string | null;
@@ -44,6 +48,16 @@ export type PublicPersonGenericRecord = {
   category?: string | null;
 };
 
+export type PublicPersonWorkExperience = {
+  id?: string | null;
+  organization?: string | null;
+  designation?: string | null;
+  assignment?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  source_status?: string | null;
+};
+
 export type PublicPersonProfile = {
   id: string;
   slug?: string | null;
@@ -58,12 +72,15 @@ export type PublicPersonProfile = {
   alternative_phone?: string | null;
   photo_id?: string | null;
   photo_url?: string | null;
+  external_avatar_url?: string | null;
   cv_file_id?: string | null;
   cv_file_url?: string | null;
   bio?: string | null;
   full_bio?: string | null;
   qualifications?: Array<Record<string, unknown>> | null;
   education_background?: Array<Record<string, unknown>> | null;
+  skills?: string[] | null;
+  work_experience?: PublicPersonWorkExperience[] | null;
   professional_memberships?: Array<Record<string, unknown>> | null;
   awards_honors?: Array<Record<string, unknown>> | null;
   department_id?: string | null;
@@ -588,6 +605,8 @@ function enrichPublicPersonProfile(
     assignments: person.assignments,
     photo_id: person.photo_id,
     photo_url: person.photo_url,
+    cv_file_id: person.cv_file_id,
+    cv_file_url: person.cv_file_url,
   };
 }
 
@@ -595,13 +614,26 @@ export async function getPublicPersonProfile(
   personId: string,
 ): Promise<PublicPersonProfile | null> {
   try {
+    // Route params can arrive either decoded or still percent-encoded,
+    // depending on how the URL was requested. Normalize once before building
+    // the API URL so names such as "Dr. Eric Omori Omwenga" do not get
+    // double-encoded.
+    let personIdentifier = personId;
+    try {
+      personIdentifier = decodeURIComponent(personId);
+    } catch {
+      // Keep the original identifier if it is not valid percent-encoding.
+    }
+
     const response = await mainApi.get<PublicPersonResponse>(
-      `/api/v1/public/people/${encodeURIComponent(personId)}`,
+      `/api/v1/public/people/${encodeURIComponent(personIdentifier)}`,
     );
 
-    return response.data ? enrichPublicPersonProfile(response.data) : null;
+    const normalized = normalizePublicRecordResponse<PublicPersonProfile>(response);
+    if (normalized === undefined) throw new Error("Malformed public person response");
+    return normalized ? enrichPublicPersonProfile(normalized) : null;
   } catch (error) {
     console.error("Failed to load public person profile:", error);
-    return null;
+    return uncachedPublicFallback(null);
   }
 }

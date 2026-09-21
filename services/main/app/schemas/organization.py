@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import Field
 
-from .base import BaseReadSchema, BaseSchema, CodeStr, PhoneStr, SlugStr
+from .base import BaseReadSchema, BaseSchema, CodeStr, PhoneStr, SlugStr, optional_snapshot
 
 
 class DivisionCreate(BaseSchema):
@@ -146,3 +146,19 @@ class WingRead(BaseReadSchema):
     is_public: bool
     is_active: bool
     display_order: int
+
+
+DivisionSnapshot = optional_snapshot("DivisionSnapshot", DivisionRead)
+WingSnapshot = optional_snapshot("WingSnapshot", WingRead)
+
+
+__all__ = [
+    "DivisionCreate",
+    "DivisionUpdate",
+    "DivisionRead",
+    "DivisionSnapshot",
+    "WingCreate",
+    "WingUpdate",
+    "WingRead",
+    "WingSnapshot",
+]

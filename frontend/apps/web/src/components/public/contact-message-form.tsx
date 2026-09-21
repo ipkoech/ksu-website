@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { mainApi } from "@ksu/api-client";
+import { useCommandKey } from "@/lib/use-command-key";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
 
 type InquiryResponse = {
@@ -18,30 +19,42 @@ export function ContactMessageForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [reference, setReference] = useState("");
+  const pending = useRef(false);
+  const command = useCommandKey();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending.current) return;
     const form = event.currentTarget;
     if (!form.checkValidity()) return form.reportValidity();
 
     const data = new FormData(form);
+    pending.current = true;
     setSubmitting(true);
     setError("");
     try {
-      const response = await mainApi.post<InquiryResponse>(
-        `/api/v1/public/entities/university/${encodeURIComponent(universitySlug)}/inquiries`,
-        {
-          sender_name: data.get("sender_name"),
-          sender_email: data.get("sender_email"),
-          sender_phone: data.get("sender_phone") || null,
-          category: data.get("category"),
-          subject: data.get("subject"),
-          message: data.get("message"),
-          consent_to_contact: data.get("consent_to_contact") === "on",
-          website: data.get("website"),
-          source_page_url: window.location.pathname,
-        },
-      );
+      const path = `/api/v1/public/entities/university/${encodeURIComponent(universitySlug)}/inquiries`;
+      const payload = {
+        sender_name: data.get("sender_name"),
+        sender_email: data.get("sender_email"),
+        sender_phone: data.get("sender_phone") || null,
+        category: data.get("category"),
+        subject: data.get("subject"),
+        message: data.get("message"),
+        consent_to_contact: data.get("consent_to_contact") === "on",
+        website: data.get("website"),
+        source_page_url: window.location.pathname,
+      };
+      const response = await mainApi.post<InquiryResponse>(path, payload, {
+        auth: "none",
+        headers: { "Idempotency-Key": command.forPayload(path, payload) },
+      });
+      if (!response?.data?.reference_number) {
+        throw new Error(
+          "The response did not include a reference number. Please retry your message.",
+        );
+      }
+      command.confirmed();
       setReference(response.data.reference_number);
       form.reset();
     } catch (caught) {
@@ -51,6 +64,7 @@ export function ContactMessageForm({
           : "We could not send your message. Please try again.",
       );
     } finally {
+      pending.current = false;
       setSubmitting(false);
     }
   }
@@ -92,6 +106,7 @@ export function ContactMessageForm({
       <label className="grid gap-1 text-[0.65rem] font-bold uppercase tracking-wide text-muted-foreground">
         Your name
         <input
+          disabled={submitting}
           name="sender_name"
           required
           minLength={2}
@@ -103,6 +118,7 @@ export function ContactMessageForm({
       <label className="grid gap-1 text-[0.65rem] font-bold uppercase tracking-wide text-muted-foreground">
         Email address
         <input
+          disabled={submitting}
           name="sender_email"
           type="email"
           required
@@ -114,6 +130,7 @@ export function ContactMessageForm({
       <label className="grid gap-1 text-[0.65rem] font-bold uppercase tracking-wide text-muted-foreground">
         Phone <span className="sr-only">optional</span>
         <input
+          disabled={submitting}
           name="sender_phone"
           type="tel"
           autoComplete="tel"
@@ -123,7 +140,12 @@ export function ContactMessageForm({
       </label>
       <label className="grid gap-1 text-[0.65rem] font-bold uppercase tracking-wide text-muted-foreground">
         Enquiry type
-        <select name="category" className={fieldClass} defaultValue="general">
+        <select
+          disabled={submitting}
+          name="category"
+          className={fieldClass}
+          defaultValue="general"
+        >
           <option value="general" className="text-foreground">
             General enquiry
           </option>
@@ -147,6 +169,7 @@ export function ContactMessageForm({
       <label className="grid gap-1 text-[0.65rem] font-bold uppercase tracking-wide text-muted-foreground sm:col-span-2">
         Subject
         <input
+          disabled={submitting}
           name="subject"
           required
           minLength={3}
@@ -157,6 +180,7 @@ export function ContactMessageForm({
       <label className="grid gap-1 text-[0.65rem] font-bold uppercase tracking-wide text-muted-foreground sm:col-span-2">
         Message
         <textarea
+          disabled={submitting}
           name="message"
           required
           minLength={5}
@@ -168,13 +192,19 @@ export function ContactMessageForm({
       <div className="absolute -left-[9999px]" aria-hidden>
         <label>
           Website
-          <input name="website" tabIndex={-1} autoComplete="off" />
+          <input
+            disabled={submitting}
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+          />
         </label>
       </div>
       <label
         className={`${compact ? "text-xs leading-5" : "text-sm leading-6"} flex items-start gap-2 text-muted-foreground sm:col-span-2`}
       >
         <input
+          disabled={submitting}
           name="consent_to_contact"
           type="checkbox"
           required

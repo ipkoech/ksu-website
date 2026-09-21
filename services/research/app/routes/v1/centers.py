@@ -15,6 +15,7 @@ from ...schemas import (
     ResearchCenterCreate,
     ResearchCenterUpdate,
     ResearchFarmCreate,
+    ResearchFarmPublicDetail,
     ResearchFarmUpdate,
     ResearchProgramCreate,
     ResearchProgramUpdate,
@@ -33,7 +34,12 @@ from ._crud import build_crud_router
 router = APIRouter()
 
 
-@router.get("/farms/{slug}/detail", tags=["Research Farms"], response_model=SuccessEnvelope[JsonObject])
+@router.get(
+    "/farms/{slug}/detail",
+    tags=["Research Farms"],
+    response_model_exclude_unset=True,
+    response_model=SuccessEnvelope[ResearchFarmPublicDetail],
+)
 @cached_public(timeout=300)
 async def get_farm_detail(slug: str, db: AsyncSession = Depends(get_db)):
     detail = await FarmDetailService.get_by_slug(db, slug)

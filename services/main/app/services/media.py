@@ -192,6 +192,8 @@ class MediaService:
         resolved_folder_path = folder_path or ""
         folder: MediaFolder | None = None
         attachment_scope: tuple[str, uuid.UUID | None] | None = None
+        scope_type: str | None = None
+        scope_id: uuid.UUID | None = None
         if entity_type or entity_id:
             if not entity_type or entity_id is None:
                 raise ValueError("Both entity_type and entity_id are required for entity uploads")
@@ -257,14 +259,15 @@ class MediaService:
                     "owner_scope_id": scope_id,
                     "author_user_id": uploaded_by_id,
                 }
-            await MediaService.link_media(
-                db,
-                media_id=media.id,
-                entity_type=entity_type,
-                entity_id=entity_id,
-                role=role or "attachment",
-                **link_metadata,
-            )
+            if entity_type and entity_id is not None:
+                await MediaService.link_media(
+                    db,
+                    media_id=media.id,
+                    entity_type=entity_type,
+                    entity_id=entity_id,
+                    role=role or "attachment",
+                    **link_metadata,
+                )
             return media
         except Exception:
             await db.rollback()

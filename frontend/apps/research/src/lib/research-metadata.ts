@@ -49,7 +49,7 @@ function resolveImage(record?: PublicRecord | null) {
     record?.thumbnail_url,
   ];
   const image = candidates.find((value) => typeof value === "string" && value.trim());
-  return typeof image === "string" ? image : "/images/research/research-home-hero.webp";
+  return typeof image === "string" ? image : "/images/research/verified/multidisciplinary-conference-2026.jpg";
 }
 
 function truncate(value: string, maximum: number) {

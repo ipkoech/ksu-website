@@ -1,4 +1,4 @@
-import { resolveMainMediaUrl } from "@ksu/api-client";
+import { resolveMainMediaUrl } from "@ksu/api-client/media";
 
 type PublicMediaLike = {
   id?: string | null;

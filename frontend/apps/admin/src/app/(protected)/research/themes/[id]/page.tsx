@@ -8,7 +8,7 @@ import { BindableRecordsCard, RelatedRecordsCard, RelatedRecordsGrid } from "../
 export default function ResearchThemeDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Theme"
+      title="Theme"
       description="View research theme taxonomy metadata, focus areas, and audit history."
       resource={researchServiceApi.themes}
       backHref="/research/themes"
@@ -18,6 +18,7 @@ export default function ResearchThemeDetailPage() {
         <ResearchCoreDetailActions
           record={record}
           resource={researchServiceApi.themes}
+          resourceKey="themes"
           resourceLabel="Theme"
           listHref="/research/themes"
         />

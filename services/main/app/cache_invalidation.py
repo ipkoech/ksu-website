@@ -7,6 +7,8 @@ PUBLIC_CACHE_INVALIDATION_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 PUBLIC_CACHE_INVALIDATION_EXCLUDED_PREFIXES = (
     "/api/v1/analytics",
     "/api/v1/auth",
+    "/api/v1/audit",
+    "/api/v1/internal",
     "/api/v1/notifications",
 )
 

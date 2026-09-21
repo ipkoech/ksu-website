@@ -89,26 +89,43 @@ export function useFocusRestoration() {
 
 export function useLiveAnnounce() {
   const [announcement, setAnnouncement] = useState("");
-  const timeoutRef = useRef<NodeJS.Timeout>(undefined);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearAnnouncementRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const announce = useCallback((message: string, delay = 100) => {
     // Clear any pending announcement
-    if (timeoutRef.current) {
+    if (timeoutRef.current !== null) {
       clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (clearAnnouncementRef.current !== null) {
+      clearTimeout(clearAnnouncementRef.current);
+      clearAnnouncementRef.current = null;
     }
 
     // Small delay to ensure screen readers pick up the change
     timeoutRef.current = setTimeout(() => {
+      timeoutRef.current = null;
       setAnnouncement(message);
       // Clear after announcement
-      setTimeout(() => setAnnouncement(""), 1000);
+      clearAnnouncementRef.current = setTimeout(() => {
+        clearAnnouncementRef.current = null;
+        setAnnouncement("");
+      }, 1000);
     }, delay);
   }, []);
 
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) {
+      if (timeoutRef.current !== null) {
         clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      if (clearAnnouncementRef.current !== null) {
+        clearTimeout(clearAnnouncementRef.current);
+        clearAnnouncementRef.current = null;
       }
     };
   }, []);

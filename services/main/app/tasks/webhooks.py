@@ -20,6 +20,7 @@ from ..core.config import get_settings
 from ..core.database import AsyncSessionLocal
 from ..models import OutboxEvent, Webhook, WebhookDelivery
 from ..services.domain_events import domain_event_envelope
+from ..services.system import WebhookService
 from .celery_app import celery_app
 
 RETRYABLE_STATUS_CODES = frozenset({408, 425, 429, 500, 502, 503, 504})
@@ -197,9 +198,12 @@ async def _deliver(webhook_id: uuid.UUID, event_id: uuid.UUID, *, force: bool = 
                 next_attempt_at=next_attempt_at,
             )
         )
-        webhook.last_triggered_at = datetime.now(timezone.utc)
-        webhook.last_status = status_code
-        webhook.failure_count = webhook.failure_count + 1 if error else 0
+        await WebhookService.record_delivery(
+            db,
+            webhook,
+            status_code=status_code,
+            failed=error is not None,
+        )
         await db.commit()
 
     if will_retry:

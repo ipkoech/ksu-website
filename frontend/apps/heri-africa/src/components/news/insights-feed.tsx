@@ -48,7 +48,7 @@ export function InsightsFeed({
   const featured = visible[0];
 
   return (
-    <section className="mx-auto max-w-7xl px-6 py-14 lg:px-10">
+    <section className="mx-auto max-w-7xl px-6 py-14 lg:px-10" data-server-data-display="heri-news-insights">
       <div className="flex flex-col gap-5 rounded-2xl bg-slate-50 p-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap gap-2">
           {filters.map((item) => (
@@ -112,14 +112,14 @@ export function InsightsFeed({
                 <p className="mt-4 flex items-center gap-2 text-xs text-slate-500">
                   <CalendarDays className="size-4 text-heri-teal" />
                   {item.starts_at
-                    ? new Date(item.starts_at).toLocaleDateString()
+                    ? new Date(item.starts_at).toLocaleDateString("en-US", { timeZone: "UTC" })
                     : "Date to be announced"}
                 </p>
               )}
               {item.kind === "Opportunities" && (
                 <p className="mt-4 text-xs font-semibold text-heri-teal">
                   {item.closing_at
-                    ? `Closes ${new Date(item.closing_at).toLocaleDateString()}`
+                    ? `Closes ${new Date(item.closing_at).toLocaleDateString("en-US", { timeZone: "UTC" })}`
                     : "Open opportunity"}
                 </p>
               )}

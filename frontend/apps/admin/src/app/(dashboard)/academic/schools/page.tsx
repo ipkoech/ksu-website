@@ -22,6 +22,7 @@ import { toast } from "@ksu/ui";
 import Link from "next/link";
 import { useState } from "react";
 import { TableSearch } from "@/components/shared/table-search";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const getSchoolColumns = ({
     canDelete,
@@ -128,6 +129,7 @@ export default function SchoolsPage() {
     const handleDelete = (id: string) => {
         confirmDelete("school", async () => {
             await deleteSchool.mutateAsync(id);
+            void revalidatePublicContent("main", "academic-schools");
             toast.success("School deleted successfully");
         });
     };

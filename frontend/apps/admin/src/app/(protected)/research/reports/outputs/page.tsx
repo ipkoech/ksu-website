@@ -98,7 +98,7 @@ const reportColumns: Array<EditableRecordColumn<ResearchGenericRecord>> = [
 export default function ResearchReportsPage() {
   return (
     <ResearchResourcePage
-      title="Research Reports"
+      title="Reports"
       description="Publish and manage research reports stored as report-type research outputs."
       queryKey={["research", "outputs", "reports"]}
       resource={researchServiceApi.outputs}

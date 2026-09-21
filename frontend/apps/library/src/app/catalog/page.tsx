@@ -1,7 +1,5 @@
 import Link from "next/link";
-import type { LibraryResource } from "@ksu/api-client";
 import {
-  CompactRecord,
   LibraryActionLink,
   LibraryHero,
   MetricStrip,
@@ -13,6 +11,7 @@ import {
   StatusMessage,
 } from "../../components/library-ui";
 import { LibraryFilterToolbar } from "../../components/library-filter-toolbar";
+import { CatalogResultsDisplay, type CatalogResourceDto } from "./catalog-results-display";
 import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
 import {
   compactText,
@@ -26,7 +25,7 @@ export const metadata = {
     "Search Kisii University Library print and digital catalog resources.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type CatalogPageProps = {
   searchParams?: Promise<{
@@ -86,6 +85,23 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
     ? Math.ceil(resources.meta.total / resources.meta.per_page)
     : 1;
   const catalogBaseHref = buildBaseHref("/catalog", params);
+  const resourceDtos: CatalogResourceDto[] = resources.data.map((resource) => ({
+    id: resource.id,
+    title: resource.title,
+    eyebrow: formatLabel(resource.resource_type ?? "resource"),
+    body: compactText(resource.description) || resource.subtitle || "Catalog details are being updated.",
+    meta: [
+      resource.authors,
+      resource.publisher,
+      resource.publication_year,
+      resource.call_number,
+      resource.location_shelf,
+      `${resource.available_copies ?? 0} of ${resource.total_copies ?? 0} available`,
+      formatLabel(resource.status ?? "status unknown"),
+      resource.is_reference_only ? "Reference only" : null,
+      resource.is_loanable === false ? "In-library use" : null,
+    ].filter((value): value is string => Boolean(value)),
+  }));
 
   return (
     <main id="library-main" className="min-h-screen bg-background">
@@ -180,11 +196,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
                   </Link>
                 </div>
               </SidePanel>
-              <div className="grid gap-4">
-                {resources.data.map((resource) => (
-                  <CatalogCard key={resource.id} resource={resource} />
-                ))}
-              </div>
+              <CatalogResultsDisplay resources={resourceDtos} />
 
               <aside className="flex flex-col gap-5">
                 <MetricStrip
@@ -217,28 +229,6 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
         )}
       </LibraryContentBand>
     </main>
-  );
-}
-
-function CatalogCard({ resource }: { resource: LibraryResource }) {
-  return (
-    <CompactRecord
-      icon="book"
-      eyebrow={formatLabel(resource.resource_type ?? "resource")}
-      title={resource.title}
-      body={compactText(resource.description) || resource.subtitle}
-      meta={[
-        resource.authors,
-        resource.publisher,
-        resource.publication_year,
-        resource.call_number,
-        resource.location_shelf,
-        `${resource.available_copies ?? 0} of ${resource.total_copies ?? 0} available`,
-        formatLabel(resource.status ?? "status unknown"),
-        resource.is_reference_only ? "Reference only" : null,
-        resource.is_loanable === false ? "In-library use" : null,
-      ]}
-    />
   );
 }
 

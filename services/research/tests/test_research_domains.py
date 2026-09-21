@@ -44,7 +44,7 @@ def _user(*permissions: str) -> TokenPayload:
         sub="00000000-0000-0000-0000-000000000001",
         jti="jti",
         roles=[],
-        raw={"permissions": list(permissions)},
+        raw={"scope_grants": [{"scope_type": "global", "permissions": list(permissions)}]},
     )
 
 
@@ -53,6 +53,7 @@ SUSTAINABILITY = _user(
     "sustainability.view", "sustainability.manage", "research.view"
 )
 ADMIN = _user(
+    "research.oversight",
     "research.manage_projects",
     "research.review",
     "research.publish",
@@ -155,13 +156,15 @@ def test_a_multi_domain_caller_is_refused_resources_no_domain_owns():
     assert excinfo.value.status_code == 403
 
 
-def test_contested_resources_fall_back_to_agreed_filters_only():
+def test_contested_resources_preserve_authorized_union():
     """Both domains claim 'partners' with different types.
 
     Applying either one would hide the other domain's records from a caller
     entitled to see both, so only filters the domains agree on survive.
     """
-    assert rd.resolve_domain_filters(STAFF, "partners") == {}
+    assert rd.resolve_domain_filters(STAFF, "partners") == {"__domain_any__": [
+        {"partner_type": "community"}, {"partner_type": "sustainability"},
+    ]}
 
 
 def test_portal_filters_match_the_public_site_contract():

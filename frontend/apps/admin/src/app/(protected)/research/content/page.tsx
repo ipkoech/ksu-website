@@ -40,7 +40,7 @@ export default function ResearchContentPage() {
   return (
     <div>
       <PageHeader
-        title="Research Content"
+        title="Content"
         description="Research content is managed through the main content service with research scope."
       />
       <div className="px-6">

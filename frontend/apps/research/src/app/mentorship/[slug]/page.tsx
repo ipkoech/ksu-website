@@ -1,24 +1,20 @@
 import { notFound } from "next/navigation";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordPanel } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { ResearchStoryAccordion } from "../../../components/research-rich-text";
-import { compactText, formatDate, generateSlugParams, getMentorshipBySlug } from "../../../lib/research-public-data";
+import { compactText, formatDate, getMentorshipBySlug } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
 import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getMentorshipBySlug(slug);
   return researchRecordMetadata(data, { fallbackTitle: "Mentorship opportunity", pathname: "/mentorship/" + slug });
-}
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.mentorship.list);
 }
 
 export default async function MentorshipDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -57,7 +53,7 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
           { label: "Back to mentorship", href: "/mentorship", variant: "secondary" },
           ...(compactText(mentorship.brochure_url) ? [{ label: "Download brochure", href: compactText(mentorship.brochure_url) }] : []),
         ]}
-        imageSrc={compactText(mentorship.cover_image_url) || "/images/research/research-about-hero.webp"}
+        imageSrc={compactText(mentorship.cover_image_url) || "/images/research/verified/multidisciplinary-conference-2026.jpg"}
         imageAlt="Research mentorship programme and application information"
       />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}

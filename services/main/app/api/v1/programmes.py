@@ -7,13 +7,19 @@ import uuid
 from fastapi import APIRouter, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import ApiKeyAuth, CurrentUser, DbSession
 from ...models import Person, Programme
 from ...security.scopes import can_access_scope
 from ...schemas import ProgrammeCreate, ProgrammeIntakeCreate, ProgrammeTutorCreate, ProgrammeUpdate
+from ...schemas.admissions import (
+    ProgrammeIntakeSnapshot,
+    ProgrammeSnapshot,
+    ProgrammeTutorSnapshot,
+)
+from ...schemas.person import PersonSnapshot
 from ...services import ProgrammeService
 
 router = APIRouter()
@@ -52,7 +58,7 @@ async def _require_programme_department_scope(
         )
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[ProgrammeSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "q", "school_id", "department_id", "level", "mode_of_study", "fields", "include"))
 async def list_programmes(
     db: DbSession,
@@ -80,7 +86,7 @@ async def list_programmes(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin")
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[ProgrammeSnapshot]])
 async def list_admin_programmes(
     db: DbSession,
     user: CurrentUser,
@@ -121,7 +127,7 @@ async def list_admin_programmes(
     return success(data=selector.apply(items), meta=meta)
 
 
-@router.get("/{slug}")
+@router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[ProgrammeSnapshot])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_programme(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Programme, fields)
@@ -131,7 +137,7 @@ async def get_programme(slug: str, db: DbSession, fields: FieldSelection = Field
     return success(data=selector.apply(programme))
 
 
-@router.get("/id/{programme_id}")
+@router.get("/id/{programme_id}", response_model_exclude_unset=True, response_model=SuccessResponse[ProgrammeSnapshot])
 async def get_programme_by_id(programme_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(Programme, fields)
     programme = await ProgrammeService.get_by_id(db, programme_id, load_options=selector.load_options)
@@ -140,7 +146,7 @@ async def get_programme_by_id(programme_id: uuid.UUID, db: DbSession, _: Current
     return success(data=selector.apply(programme))
 
 
-@router.get("/{slug}/staff")
+@router.get("/{slug}/staff", response_model_exclude_unset=True, response_model=SuccessResponse[list[PersonSnapshot]])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_programme_staff(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     programme = await ProgrammeService.get_by_slug(db, slug)
@@ -151,7 +157,7 @@ async def get_programme_staff(slug: str, db: DbSession, fields: FieldSelection =
     return success(data=selector.apply(staff))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", response_model_exclude_unset=True, response_model=SuccessResponse[ProgrammeSnapshot], status_code=status.HTTP_201_CREATED)
 async def create_programme(data: ProgrammeCreate, db: DbSession, user: CurrentUser):
     await _require_programme_department_scope(
         db,
@@ -163,7 +169,7 @@ async def create_programme(data: ProgrammeCreate, db: DbSession, user: CurrentUs
     return success(data=programme, message="Programme created")
 
 
-@router.patch("/{programme_id}")
+@router.patch("/{programme_id}", response_model_exclude_unset=True, response_model=SuccessResponse[ProgrammeSnapshot])
 async def update_programme(programme_id: uuid.UUID, data: ProgrammeUpdate, db: DbSession, user: CurrentUser):
     programme = await ProgrammeService.get_by_id(db, programme_id)
     if programme is None:
@@ -185,7 +191,7 @@ async def update_programme(programme_id: uuid.UUID, data: ProgrammeUpdate, db: D
     return success(data=programme, message="Programme updated")
 
 
-@router.post("/{programme_id}/tutors", status_code=status.HTTP_201_CREATED)
+@router.post("/{programme_id}/tutors", response_model_exclude_unset=True, response_model=SuccessResponse[ProgrammeTutorSnapshot], status_code=status.HTTP_201_CREATED)
 async def add_programme_tutor(programme_id: uuid.UUID, data: ProgrammeTutorCreate, db: DbSession, user: CurrentUser):
     programme = await ProgrammeService.get_by_id(db, programme_id)
     if programme is None:
@@ -206,7 +212,7 @@ async def add_programme_tutor(programme_id: uuid.UUID, data: ProgrammeTutorCreat
     return success(data=tutor, message="Programme tutor saved")
 
 
-@router.post("/{programme_id}/intakes", status_code=status.HTTP_201_CREATED)
+@router.post("/{programme_id}/intakes", response_model_exclude_unset=True, response_model=SuccessResponse[ProgrammeIntakeSnapshot], status_code=status.HTTP_201_CREATED)
 async def attach_programme_intake(programme_id: uuid.UUID, data: ProgrammeIntakeCreate, db: DbSession, user: CurrentUser):
     programme = await ProgrammeService.get_by_id(db, programme_id)
     if programme is None:
@@ -244,7 +250,7 @@ async def delete_programme(programme_id: uuid.UUID, db: DbSession, user: Current
 
 # API Key authenticated endpoints for external developers
 
-@router.get("/api/list")
+@router.get("/api/list", response_model_exclude_unset=True, response_model=SuccessResponse[list[ProgrammeSnapshot]])
 async def list_programmes_api_key(
     db: DbSession,
     api_key: ApiKeyAuth,
@@ -273,7 +279,7 @@ async def list_programmes_api_key(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/api/{slug}")
+@router.get("/api/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[ProgrammeSnapshot])
 async def get_programme_api_key(slug: str, db: DbSession, api_key: ApiKeyAuth, fields: FieldSelection = FieldsDep):
     """Get programme by slug via API key authentication."""
     selector = build_selector(Programme, fields)

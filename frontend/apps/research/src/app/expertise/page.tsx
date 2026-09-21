@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ResearchImage } from "../../components/research-image";
-import type { Person } from "@ksu/api-client";
-import { personsApi } from "@ksu/api-client";
+import type { Person } from "@ksu/api-client/server";
+import { personsApi } from "@ksu/api-client/server";
 import { pageFromSearchParams } from "@ksu/ui/components";
 import { ArrowRight, UserRound } from "lucide-react";
 import { ResearchFilterForm } from "../../components/research-listing";
@@ -9,6 +9,7 @@ import { ResearchListPagination } from "../../components/research-list-paginatio
 import { ResearchPortfolioHero, ResearchPortfolioQuickLinks } from "../../components/research-portfolio";
 import { Badge, StatusMessage } from "../../components/research-ui";
 import { compactText, formatLabel } from "../../lib/research-public-data";
+import { unstable_noStore as noStore } from "next/cache";
 import { ExpertiseDetailSheet } from "./expertise-detail-sheet";
 
 export const revalidate = 300;
@@ -157,6 +158,7 @@ export default async function ExpertisePage({
 }
 
 async function getResearchPeople() {
+  const controller = new AbortController();
   const request = personsApi
     .list({
       fields: "id,slug,full_name,first_name,last_name,title,academic_rank,email,phone,office_phone,department_name,department,institutional_role,bio,full_bio,specialization,research_interests,publications_count,h_index,google_scholar_url,website_url,researchgate_url,linkedin_url,photo_url,is_researcher,is_featured,updated_at",
@@ -164,21 +166,28 @@ async function getResearchPeople() {
       status: "active",
       page: 1,
       per_page: 100,
-    })
+    }, { signal: controller.signal, timeoutMs: peopleTimeoutMs })
     .then((response) => ({ data: response.data ?? [], error: null as string | null }))
-    .catch((error) => ({
-      data: [] as Person[],
-      error: error instanceof Error ? error.message : "Unable to load researcher profiles.",
-    }));
+    .catch((error) => {
+      noStore();
+      return {
+        data: [] as Person[],
+        error: error instanceof Error ? error.message : "Unable to load researcher profiles.",
+      };
+    });
 
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<{ data: Person[]; error: string | null }>((resolve) => {
-    setTimeout(
-      () => resolve({ data: [], error: "Researcher profiles are temporarily unavailable." }),
-      peopleTimeoutMs,
-    );
+    timeoutId = setTimeout(() => {
+      controller.abort();
+      noStore();
+      resolve({ data: [], error: "Researcher profiles are temporarily unavailable." });
+    }, peopleTimeoutMs);
   });
 
-  return Promise.race([request, timeout]);
+  return Promise.race([request, timeout]).finally(() => {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  });
 }
 
 function ExpertiseFilters({

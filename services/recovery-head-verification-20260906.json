@@ -1,0 +1,27 @@
+{
+  "captured_at": "2026-09-06",
+  "checks": [
+    "every expected schema has alembic_version and at least two tables",
+    "each schema has exactly the supplied current migration head"
+  ],
+  "command": "python scripts/verify_database_recovery.py --admin-url postgresql://ci@127.0.0.1:55432/ksu_refactor_ci --expected-head main=20260906_0010 --expected-head research=20260906_0014 --expected-head library=20260906_0011 --expected-head heri=0011_public_news_listing_index",
+  "database": {
+    "database": "ksu_refactor_ci",
+    "disposable": true,
+    "engine": "PostgreSQL",
+    "host": "127.0.0.1",
+    "port": 55432,
+    "version": "18.6"
+  },
+  "expected_heads": {
+    "heri": "0011_public_news_listing_index",
+    "library": "20260906_0011",
+    "main": "20260906_0010",
+    "research": "20260906_0014"
+  },
+  "limitations": [
+    "This verifies a populated disposable database state, not a backup restore or WAL/PITR recovery drill.",
+    "No production data or external service was modified."
+  ],
+  "result": "passed"
+}

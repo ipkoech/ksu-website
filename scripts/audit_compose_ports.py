@@ -8,7 +8,35 @@ import json
 import subprocess
 import sys
 
-INTERNAL = {"main", "research", "library", "heri", "postgres", "redis", "redis-cache", "celery-main", "celery-library", "celery-research", "celery-heri", "web-prod", "admin-prod", "research-web-prod", "library-web-prod", "heri-web-prod", "gateway", "research-gateway"}
+INTERNAL = {
+    "main",
+    "research",
+    "library",
+    "heri",
+    "postgres",
+    "redis",
+    "redis-cache",
+    "celery-main",
+    "celery-main-audit",
+    "celery-main-integrations",
+    "beat-main",
+    "celery-research",
+    "celery-research-audit",
+    "beat-research",
+    "celery-library",
+    "celery-library-audit",
+    "beat-library",
+    "celery-heri",
+    "celery-heri-audit",
+    "beat-heri",
+    "web-prod",
+    "admin-prod",
+    "research-web-prod",
+    "library-web-prod",
+    "heri-web-prod",
+    "gateway",
+    "research-gateway",
+}
 ALLOWED = {"edge", "research-edge"}
 
 

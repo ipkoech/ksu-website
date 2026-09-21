@@ -8,11 +8,11 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import CurrentUser, DbSession, permissions_for_user, require_scope
 from ...models import Slider, SliderGroup
-from ...schemas import SliderCreate, SliderGroupCreate, SliderGroupUpdate, SliderUpdate
+from ...schemas import SliderCreate, SliderGroupCreate, SliderGroupSnapshot, SliderGroupUpdate, SliderSnapshot, SliderUpdate
 from ...services import ContentWorkflowService, SliderGroupService, SliderService
 from .content_workflow import authorize_content_workflow_action
 from ._fields import FieldSelection, FieldsDep, build_selector
@@ -21,7 +21,7 @@ router = APIRouter()
 SLIDER_ADMIN_SCOPE = "marketing.manage_sliders"
 
 
-@router.get("/groups")
+@router.get("/groups", response_model_exclude_unset=True, response_model=SuccessResponse[list[SliderGroupSnapshot]])
 @cached_public(timeout=300, vary_on=("scope_type", "scope_id", "is_main", "fields", "include"))
 async def list_slider_groups(
     db: DbSession,
@@ -35,7 +35,7 @@ async def list_slider_groups(
     return success(data=selector.apply(items))
 
 
-@router.get("/groups/admin", dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
+@router.get("/groups/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[SliderGroupSnapshot]], dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
 async def list_admin_slider_groups(
     db: DbSession,
     _: CurrentUser,
@@ -66,7 +66,7 @@ async def list_admin_slider_groups(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/groups/{slug}")
+@router.get("/groups/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[SliderGroupSnapshot])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_slider_group(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(SliderGroup, fields)
@@ -76,7 +76,7 @@ async def get_slider_group(slug: str, db: DbSession, fields: FieldSelection = Fi
     return success(data=selector.apply(item))
 
 
-@router.get("/groups/id/{group_id}")
+@router.get("/groups/id/{group_id}", response_model_exclude_unset=True, response_model=SuccessResponse[SliderGroupSnapshot])
 async def get_slider_group_by_id(group_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(SliderGroup, fields)
     item = await SliderGroupService.get_by_id(db, group_id, load_options=selector.load_options)
@@ -85,7 +85,7 @@ async def get_slider_group_by_id(group_id: uuid.UUID, db: DbSession, _: CurrentU
     return success(data=selector.apply(item))
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[SliderSnapshot]])
 @cached_public(timeout=300, vary_on=("slider_group_id", "scope_type", "scope_id", "is_main", "fields", "include"))
 async def list_sliders(
     db: DbSession,
@@ -107,7 +107,7 @@ async def list_sliders(
     return success(data=selector.apply(items))
 
 
-@router.get("/admin", dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[SliderSnapshot]], dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
 async def list_admin_sliders(
     db: DbSession,
     _: CurrentUser,
@@ -143,13 +143,13 @@ async def list_admin_sliders(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.post("/groups", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
+@router.post("/groups", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[SliderGroupSnapshot], dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
 async def create_slider_group(data: SliderGroupCreate, db: DbSession, _: CurrentUser):
     item = await SliderGroupService.create(db, **data.model_dump())
     return success(data=item, message="Slider group created")
 
 
-@router.patch("/groups/{group_id}", dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
+@router.patch("/groups/{group_id}", response_model_exclude_unset=True, response_model=SuccessResponse[SliderGroupSnapshot], dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
 async def update_slider_group(group_id: uuid.UUID, data: SliderGroupUpdate, db: DbSession, _: CurrentUser):
     item = await SliderGroupService.get_by_id(db, group_id)
     if item is None:
@@ -166,7 +166,7 @@ async def delete_slider_group(group_id: uuid.UUID, db: DbSession, _: CurrentUser
     await SliderGroupService.delete(db, item)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
+@router.post("", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[SliderSnapshot], dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
 async def create_slider(data: SliderCreate, db: DbSession, user: CurrentUser):
     payload = {
         **data.model_dump(),
@@ -180,7 +180,7 @@ async def create_slider(data: SliderCreate, db: DbSession, user: CurrentUser):
     return success(data=item, message="Slider created")
 
 
-@router.get("/{slider_id}")
+@router.get("/{slider_id}", response_model_exclude_unset=True, response_model=SuccessResponse[SliderSnapshot])
 async def get_slider(slider_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(Slider, fields)
     item = await SliderService.get_by_id(db, slider_id, load_options=selector.load_options)
@@ -189,7 +189,7 @@ async def get_slider(slider_id: uuid.UUID, db: DbSession, _: CurrentUser, fields
     return success(data=selector.apply(item))
 
 
-@router.patch("/{slider_id}", dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
+@router.patch("/{slider_id}", response_model_exclude_unset=True, response_model=SuccessResponse[SliderSnapshot], dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
 async def update_slider(slider_id: uuid.UUID, data: SliderUpdate, db: DbSession, user: CurrentUser):
     item = await SliderService.get_by_id(db, slider_id)
     if item is None:

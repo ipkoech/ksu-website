@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 from pydantic import Field
 
-from .base import BaseReadSchema, BaseSchema
+from .base import BaseReadSchema, BaseSchema, optional_snapshot
 
 
 ConflictResolution = Literal["cancel", "assign_acting", "replace_current", "edit_selection"]
@@ -140,3 +140,44 @@ class StaffAssignmentRead(BaseReadSchema):
     subordinates: list[dict[str, Any]] | None = None
     user: dict[str, Any] | None = None
     is_current: bool | None = None
+
+
+StaffAssignmentSnapshot = optional_snapshot("StaffAssignmentSnapshot", StaffAssignmentRead)
+
+
+class StaffConflictHolder(BaseSchema):
+    assignment_id: uuid.UUID
+    person_id: uuid.UUID
+    person_name: str | None = None
+    start_date: str | None = None
+    is_acting: bool
+    role: str
+    title: str | None = None
+
+
+class StaffConflictPayload(BaseSchema):
+    has_conflict: bool
+    current_holder: StaffConflictHolder | None = None
+    role_label: str
+    entity_label: str
+    allowed_resolutions: list[str] = Field(default_factory=list)
+
+
+class StaffRoleOption(BaseSchema):
+    role: str
+    label: str
+    hierarchy_level: int
+    is_unique: bool
+
+
+class AcademicRankOption(BaseSchema):
+    rank: str
+    label: str
+    order: int
+
+
+class StaffEntityTypeOption(BaseSchema):
+    type: str
+    label: str
+    description: str
+    roles: list[str]

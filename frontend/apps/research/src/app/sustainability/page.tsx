@@ -1,9 +1,20 @@
+import {
+  ResearchPageHero,
+  ResearchPageSummary,
+} from "../../components/research-page-hero";
 import type { Metadata } from "next";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import Image from "next/image";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
+
 import Link from "next/link";
-import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
-import { Badge, PrimaryLink, ResearchSection, SecondaryLink, StatusMessage } from "../../components/research-ui";
+import {
+  ResearchFilterForm,
+  ResearchRecordRow,
+} from "../../components/research-listing";
+import {
+  Badge,
+  ResearchSection,
+  StatusMessage,
+} from "../../components/research-ui";
 import {
   compactText,
   formatDate,
@@ -26,13 +37,29 @@ import {
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Research Sustainability",
+  title: "Sustainability",
   description: "Sustainability initiatives and impact records.",
 };
 
-type SustainabilitySearchParams = { q?: string; type?: string; active?: string; status?: string; year?: string; month?: string; sort?: string };
+type SustainabilitySearchParams = {
+  q?: string;
+  type?: string;
+  active?: string;
+  status?: string;
+  year?: string;
+  month?: string;
+  sort?: string;
+};
 
-const sustainabilityTypes = ["climate", "conservation", "biodiversity", "water", "food_security", "circular_economy", "energy"];
+const sustainabilityTypes = [
+  "climate",
+  "conservation",
+  "biodiversity",
+  "water",
+  "food_security",
+  "circular_economy",
+  "energy",
+];
 const sustainabilityStatuses = ["active", "planned", "completed", "paused"];
 const activeStates = [
   { label: "Active", value: "active" },
@@ -46,29 +73,38 @@ const sortOptions = [
   { value: "start_date", label: "Start date" },
 ];
 
-export default async function SustainabilityPage({ searchParams }: { searchParams?: Promise<SustainabilitySearchParams> }) {
+export default async function SustainabilityPage({
+  searchParams,
+}: {
+  searchParams?: Promise<SustainabilitySearchParams>;
+}) {
   const params = (await searchParams) ?? {};
   const sort = params.sort || "updated_at";
   const order = sort === "name" ? "asc" : "desc";
   const activeFlags = getActiveFlags(params.active);
-  const [initiatives, partners, activities, stories, metrics] = await Promise.all([
-    getSustainabilityFiltered({
-      search: params.q,
-      sustainabilityType: params.type,
-      status: params.status,
-      year: params.year,
-      sort,
-      order,
-      ...activeFlags,
-    }),
-    getSustainabilityPartners(),
-    getSustainabilityActivities(),
-    getStories(),
-    getImpactMetrics(),
-  ]);
-  const visibleInitiatives = filterRecordsByMonth(initiatives.data, params.year, params.month);
-  const errors = [initiatives, partners, activities, stories, metrics].flatMap((item) =>
-    item.error ? [item.error] : [],
+  const [initiatives, partners, activities, stories, metrics] =
+    await Promise.all([
+      getSustainabilityFiltered({
+        search: params.q,
+        sustainabilityType: params.type,
+        status: params.status,
+        year: params.year,
+        sort,
+        order,
+        ...activeFlags,
+      }),
+      getSustainabilityPartners(),
+      getSustainabilityActivities(),
+      getStories(),
+      getImpactMetrics(),
+    ]);
+  const visibleInitiatives = filterRecordsByMonth(
+    initiatives.data,
+    params.year,
+    params.month,
+  );
+  const errors = [initiatives, partners, activities, stories, metrics].flatMap(
+    (item) => (item.error ? [item.error] : []),
   );
   const years = getRecordYears(initiatives.data);
   const months = getRecordMonths(initiatives.data, params.year);
@@ -106,11 +142,7 @@ export default async function SustainabilityPage({ searchParams }: { searchParam
         title="Find sustainability records"
         body="Search first, then open filters for initiative type, active state, status, year, month, and sort order."
       >
-        <SustainabilityFilters
-          params={params}
-          years={years}
-          months={months}
-        />
+        <SustainabilityFilters params={params} years={years} months={months} />
         {visibleInitiatives.length > 0 ? (
           <div className="mt-6 divide-y divide-border rounded-lg border border-border bg-white shadow-sm">
             {visibleInitiatives.map((initiative) => (
@@ -119,7 +151,9 @@ export default async function SustainabilityPage({ searchParams }: { searchParam
           </div>
         ) : (
           <div className="mt-7">
-            <StatusMessage>No sustainability records match the current filters.</StatusMessage>
+            <StatusMessage>
+              No sustainability records match the current filters.
+            </StatusMessage>
           </div>
         )}
       </ResearchSection>
@@ -132,8 +166,18 @@ export default async function SustainabilityPage({ searchParams }: { searchParam
         tone="white"
       >
         <div className="grid gap-5 lg:grid-cols-[1fr_1.2fr]">
-          {metrics.data.length > 0 ? <MetricPanel records={metrics.data} /> : <StatusMessage>Impact metrics are not published yet.</StatusMessage>}
-          {stories.data.length > 0 ? <StoryPanel records={stories.data} /> : <StatusMessage>Sustainability stories are not published yet.</StatusMessage>}
+          {metrics.data.length > 0 ? (
+            <MetricPanel records={metrics.data} />
+          ) : (
+            <StatusMessage>Impact metrics are not published yet.</StatusMessage>
+          )}
+          {stories.data.length > 0 ? (
+            <StoryPanel records={stories.data} />
+          ) : (
+            <StatusMessage>
+              Sustainability stories are not published yet.
+            </StatusMessage>
+          )}
         </div>
       </ResearchSection>
 
@@ -146,10 +190,22 @@ export default async function SustainabilityPage({ searchParams }: { searchParam
         <div className="grid gap-5 lg:grid-cols-2">
           {partners.data.length > 0 ? (
             <RecordListPanel title="Partners" records={partners.data} />
-          ) : <StatusMessage>Partner records are not published yet.</StatusMessage>}
+          ) : (
+            <StatusMessage>
+              Partner records are not published yet.
+            </StatusMessage>
+          )}
           {activities.data.length > 0 ? (
-            <RecordListPanel title="Activities" records={activities.data} dateField="start_date" />
-          ) : <StatusMessage>Public activity records are not published yet.</StatusMessage>}
+            <RecordListPanel
+              title="Activities"
+              records={activities.data}
+              dateField="start_date"
+            />
+          ) : (
+            <StatusMessage>
+              Public activity records are not published yet.
+            </StatusMessage>
+          )}
         </div>
       </ResearchSection>
     </main>
@@ -175,56 +231,43 @@ function SustainabilityHero({
   ];
 
   return (
-    <section className="border-b border-border bg-white">
-      <div className="mx-auto grid min-h-[560px] max-w-[1680px] lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,0.75fr)]">
-        <div className="flex flex-col justify-center px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-muted-foreground/60">/</span>
-            <span className="text-foreground">Sustainability</span>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Sustainability</p>
-          <h1 className="mt-4 max-w-5xl text-balance font-display text-4xl font-semibold leading-tight text-foreground sm:text-5xl lg:text-6xl">Sustainability at Kisii University Research</h1>
-          <p className="mt-5 max-w-3xl text-pretty text-base leading-8 text-muted-foreground sm:text-lg">Climate, conservation, water, food systems, and measurable public impact brought together through published university research records.</p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <PrimaryLink href="#initiatives">Explore initiatives</PrimaryLink>
-            <SecondaryLink href="#outcomes">View impact metrics</SecondaryLink>
-            <SecondaryLink href="/farm">University farm</SecondaryLink>
-          </div>
-          <dl className="mt-8 grid gap-2 sm:grid-cols-4">
-            {stats.map((stat) => (
-              <div key={stat.label} className="rounded-md border border-border bg-surface-subtle px-3 py-3">
-                <dt className="text-[11px] font-semibold uppercase text-muted-foreground">{stat.label}</dt>
-                <dd className="mt-1 text-xl font-semibold text-foreground">{stat.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-        <div className="relative min-h-[320px] overflow-hidden border-t border-border lg:min-h-full lg:border-l lg:border-t-0">
-          <Image
-            src="/images/research/sustainability-hero-imagegen.webp"
-            alt="Sustainability research landscape with conservation and food systems work"
-            fill
-            priority
-            sizes="(min-width: 1024px) 42vw, 100vw"
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.05)_0%,rgba(15,23,42,0.58)_100%)]" />
-          <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-            <p className="max-w-md text-sm font-semibold leading-6">Published records connect initiatives, outcomes, stories, partners, and public activities.</p>
-          </div>
-        </div>
-      </div>
-    </section>
+    <>
+      <ResearchPageHero
+        title="Sustainability"
+        eyebrow="Impact"
+        description="Climate, conservation, water, food systems, and measurable public impact through university research."
+        imageSrc="/images/research/headers/innovation-week-8243.jpg"
+        imageAlt="Kisii University Innovation Week"
+        breadcrumbs={[
+          { label: "Home", href: "/" },
+          { label: "Sustainability" },
+        ]}
+      />
+      <ResearchPageSummary
+        actions={[
+          { label: "Explore initiatives", href: "#initiatives" },
+          { label: "View impact metrics", href: "#outcomes" },
+          { label: "University Farm", href: "/farm" },
+        ]}
+        facts={stats}
+      ></ResearchPageSummary>
+    </>
   );
 }
 
 function LandingTabs({ items }: { items: { href: string; label: string }[] }) {
   return (
-    <nav className="sticky top-0 z-20 border-b border-border bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-8 xl:px-10 2xl:px-12" aria-label="Sustainability sections">
+    <nav
+      className="sticky top-0 z-20 border-b border-border bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+      aria-label="Sustainability sections"
+    >
       <div className="mx-auto flex max-w-[1680px] gap-2 overflow-x-auto">
         {items.map((item) => (
-          <a key={item.href} href={item.href} className="shrink-0 rounded-md border border-border bg-white px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:border-primary/30 hover:text-primary">
+          <a
+            key={item.href}
+            href={item.href}
+            className="shrink-0 rounded-md border border-border bg-white px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:border-primary/30 hover:text-primary"
+          >
             {item.label}
           </a>
         ))}
@@ -233,28 +276,59 @@ function LandingTabs({ items }: { items: { href: string; label: string }[] }) {
   );
 }
 
-function FeaturedInitiatives({ records }: { records: ResearchGenericRecord[] }) {
+function FeaturedInitiatives({
+  records,
+}: {
+  records: ResearchGenericRecord[];
+}) {
   const featured = records.filter((record) => record.is_featured).slice(0, 3);
   const displayRecords = (featured.length > 0 ? featured : records).slice(0, 3);
 
   if (displayRecords.length === 0) {
-    return <StatusMessage>No sustainability records are published yet.</StatusMessage>;
+    return (
+      <StatusMessage>
+        No sustainability records are published yet.
+      </StatusMessage>
+    );
   }
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       {displayRecords.map((record) => (
-        <article key={record.id} className="flex min-h-[250px] flex-col rounded-lg border border-border bg-white p-5 shadow-sm">
+        <article
+          key={record.id}
+          className="flex min-h-[250px] flex-col rounded-lg border border-border bg-white p-5 shadow-sm"
+        >
           <div className="flex flex-wrap gap-2">
-            <Badge>{formatLabel(record.initiative_type ?? "sustainability")}</Badge>
+            <Badge>
+              {formatLabel(record.initiative_type ?? "sustainability")}
+            </Badge>
             {record.status ? <Badge>{formatLabel(record.status)}</Badge> : null}
           </div>
           <h2 className="mt-5 text-xl font-semibold leading-7 text-foreground">
-            {record.slug ? <Link href={`/sustainability/${record.slug}`} className="transition hover:text-primary">{getRecordTitle(record, "Sustainability initiative")}</Link> : getRecordTitle(record, "Sustainability initiative")}
+            {record.slug ? (
+              <Link
+                href={`/sustainability/${record.slug}`}
+                className="transition hover:text-primary"
+              >
+                {getRecordTitle(record, "Sustainability initiative")}
+              </Link>
+            ) : (
+              getRecordTitle(record, "Sustainability initiative")
+            )}
           </h2>
-          <p className="mt-3 text-sm leading-7 text-muted-foreground">{getRecordSummary(record) || compactText(record.objectives) || compactText(record.impact) || "Published details will appear when the research office updates this record."}</p>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">
+            {getRecordSummary(record) ||
+              compactText(record.objectives) ||
+              compactText(record.impact) ||
+              "Published details will appear when the research office updates this record."}
+          </p>
           <div className="mt-auto pt-5 text-sm font-semibold text-primary">
-            {record.slug ? <Link href={`/sustainability/${record.slug}`}>Open initiative</Link> : null}
+            {record.slug ? (
+              <Link href={`/sustainability/${record.slug}`}>
+                Open initiative
+              </Link>
+            ) : null}
           </div>
         </article>
       ))}
@@ -278,9 +352,24 @@ function SustainabilityFilters({
       searchValue={params.q}
       searchPlaceholder="Initiative name, climate theme, public impact"
       selects={[
-        { name: "type", label: "Type", value: params.type, options: sustainabilityTypes },
-        { name: "active", label: "Active state", value: params.active, options: activeStates },
-        { name: "status", label: "Status", value: params.status, options: sustainabilityStatuses },
+        {
+          name: "type",
+          label: "Type",
+          value: params.type,
+          options: sustainabilityTypes,
+        },
+        {
+          name: "active",
+          label: "Active state",
+          value: params.active,
+          options: activeStates,
+        },
+        {
+          name: "status",
+          label: "Status",
+          value: params.status,
+          options: sustainabilityStatuses,
+        },
         { name: "year", label: "Year", value: params.year, options: years },
         { name: "month", label: "Month", value: params.month, options: months },
       ]}
@@ -291,14 +380,28 @@ function SustainabilityFilters({
 }
 
 function InitiativeRow({ initiative }: { initiative: ResearchGenericRecord }) {
-  const sdgGoals = Array.isArray(initiative.sdg_goals) ? initiative.sdg_goals : [];
+  const sdgGoals = Array.isArray(initiative.sdg_goals)
+    ? initiative.sdg_goals
+    : [];
 
   return (
     <ResearchRecordRow
-      href={initiative.slug ? `/sustainability/${initiative.slug}` : "/sustainability"}
+      href={
+        initiative.slug
+          ? `/sustainability/${initiative.slug}`
+          : "/sustainability"
+      }
       title={getRecordTitle(initiative, "Sustainability initiative")}
-      description={getRecordSummary(initiative) || compactText(initiative.objectives) || compactText(initiative.impact) || "Sustainability profile has not been published yet."}
-      badges={[initiative.initiative_type ?? "sustainability", initiative.status]}
+      description={
+        getRecordSummary(initiative) ||
+        compactText(initiative.objectives) ||
+        compactText(initiative.impact) ||
+        "Sustainability profile has not been published yet."
+      }
+      badges={[
+        initiative.initiative_type ?? "sustainability",
+        initiative.status,
+      ]}
       filledBadges={[initiative.is_featured ? "Featured" : null]}
       facts={[
         { label: "Timeline", value: getRecordTimelineLabel(initiative) },
@@ -324,7 +427,9 @@ function MetricPanel({ records }: { records: ResearchGenericRecord[] }) {
           <div key={record.id} className="rounded-md bg-surface-subtle p-4">
             <p className="text-2xl font-bold text-primary">
               {compactText(record.value)}
-              {record.unit ? <span className="text-base"> {compactText(record.unit)}</span> : null}
+              {record.unit ? (
+                <span className="text-base"> {compactText(record.unit)}</span>
+              ) : null}
             </p>
             <p className="mt-2 text-sm font-semibold leading-6 text-foreground">
               {compactText(record.name) || compactText(record.title)}
@@ -379,9 +484,15 @@ function RecordListPanel({
         {records.slice(0, 8).map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
             <div className="flex flex-wrap gap-2">
-              {record.partner_type ? <Badge>{formatLabel(record.partner_type)}</Badge> : null}
-              {record.event_type ? <Badge>{formatLabel(record.event_type)}</Badge> : null}
-              {record.status ? <Badge>{formatLabel(record.status)}</Badge> : null}
+              {record.partner_type ? (
+                <Badge>{formatLabel(record.partner_type)}</Badge>
+              ) : null}
+              {record.event_type ? (
+                <Badge>{formatLabel(record.event_type)}</Badge>
+              ) : null}
+              {record.status ? (
+                <Badge>{formatLabel(record.status)}</Badge>
+              ) : null}
             </div>
             <h3 className="mt-3 text-base font-semibold leading-6 text-foreground">
               {compactText(record.name) || compactText(record.title)}

@@ -1,9 +1,13 @@
 """Research service ORM models."""
 
+# Package-level imports register and re-export the service's ORM models.
+# ruff: noqa: F401
+
 from ksu_common.models.base import SEOMixin, PolymorphicMixin
 
 from .base import Base
 from .idempotency import CommandIdempotency
+from .workflow import ResearchWorkflowEvent
 
 from .ask_ai import ResearchAIConversation, ResearchAIMessage
 from .media import PublicMedia
@@ -112,6 +116,10 @@ from .support import (
     ResearchService,
     ResearchGuideline,
 )
+
+from ksu_common.audit_relay import audit_relay_table
+
+audit_relay = audit_relay_table(Base.metadata, schema="research")
 
 __all__ = [
     # Base

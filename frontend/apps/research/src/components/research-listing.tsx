@@ -10,8 +10,8 @@ import {
   compactText,
   formatDate,
   formatLabel,
-  type PublicResearchData,
-} from "../lib/research-public-data";
+} from "../lib/research-formatters";
+import type { PublicResearchData } from "../lib/research-public-data";
 export { ResearchListingRegion, ResearchResultsFrame } from "./research-page-primitives";
 
 type FilterOption = {
@@ -387,7 +387,7 @@ export function ResearchRecordRow({
   const cleanFilledBadges = uniqueDisplayValues(filledBadges.map((badge) => compactText(badge)));
 
   return (
-    <article className="group grid gap-4 p-4 transition hover:bg-surface-subtle/70 lg:grid-cols-[minmax(0,1fr)_260px_auto] lg:items-center">
+    <article className="group grid gap-4 p-4 transition hover:bg-surface-subtle/70 lg:grid-cols-[minmax(0,1fr)_260px_auto] lg:items-center" data-server-data-display="research-record-row">
       <div>
         <div className="flex flex-wrap gap-2">
           {cleanBadges.map((badge) => (
@@ -446,7 +446,7 @@ export function GenericRecordGrid({
       {records.error || error ? (
         <StatusMessage tone="error">{records.error || error}</StatusMessage>
       ) : null}
-      <div className="grid gap-3">
+      <div className="grid gap-3" data-server-data-display="research-record-grid">
         {records.data.map((record) => (
           <GenericRecordCard
             key={record.id}
@@ -479,7 +479,7 @@ export function GenericRecordList({
   const visibleRecords = limit ? records.data.slice(0, limit) : records.data;
 
   return (
-    <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+    <section className="rounded-lg border border-border bg-card p-5 shadow-sm" data-server-data-display="research-record-list">
       {records.error || error ? (
         <StatusMessage tone="error">{records.error || error}</StatusMessage>
       ) : null}

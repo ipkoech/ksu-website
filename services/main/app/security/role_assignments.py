@@ -19,6 +19,8 @@ def is_role_assignment_current(
     """
     if not getattr(assignment, "is_active", True):
         return False
+    if getattr(assignment, "deleted_at", None) is not None:
+        return False
 
     expires_at = getattr(assignment, "expires_at", None)
     if expires_at is None:

@@ -1,11 +1,13 @@
 import { mainApi } from "../client";
-import { getStoredAccessToken } from "../auth-tokens";
 import { getMainApiBaseUrl } from "../service-urls";
 import type {
   User,
   MyProfile,
   MyProfileUpdatePayload,
   PortalAccessResponse,
+  WorkspaceContext,
+  WorkspaceScope,
+  WorkspaceActivationResponse,
   UserPreferencesResponse,
   UserPreferencesUpdatePayload,
   Person,
@@ -157,39 +159,30 @@ const MAIN_API_BASE_URL = getMainApiBaseUrl();
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-export function resolveMainMediaUrl(value?: string | null): string | undefined {
-  const rawValue = value?.trim();
-  if (!rawValue) return undefined;
-  if (/^(https?:|data:|blob:)/i.test(rawValue)) return rawValue;
-
-  let path = rawValue;
-  while (/^\/?uploads\/uploads\//.test(path)) {
-    path = path.replace(/^\/?uploads\/uploads\//, "/uploads/");
+function commandOptions() {
+  const cryptoApi = globalThis.crypto;
+  let key: string;
+  try {
+    key = cryptoApi?.randomUUID
+      ? cryptoApi.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  } catch {
+    key = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
-  if (!path.startsWith("/")) {
-    path = path.startsWith("uploads/") ? `/${path}` : `/uploads/${path}`;
-  }
-  while (/^\/uploads\/uploads\//.test(path)) {
-    path = path.replace(/^\/uploads\/uploads\//, "/uploads/");
-  }
-
-  // Server-side API calls use the Docker-internal hostname, but media URLs
-  // are rendered into the browser and must use the public API/gateway host.
-  const publicMediaBaseUrl =
-    process.env.NEXT_PUBLIC_MAIN_API_URL || MAIN_API_BASE_URL;
-  return new URL(path, publicMediaBaseUrl).toString();
+  return { headers: { "Idempotency-Key": key } };
 }
 
-async function parseImportResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || error.message || "Import request failed");
-  }
-  return response.json() as Promise<T>;
-}
+export { resolveMainMediaUrl } from "../media";
 
 // Auth
+type AuthRequestOptions = Pick<FetchCacheOptions, "signal" | "timeoutMs">;
+
 export const authApi = {
+  mfaStatus: (options?: AuthRequestOptions) => mainApi.get<{ data: { enabled: boolean; verified_at: string | null; recovery_codes_remaining: number } }>("/api/v1/auth/mfa/status", undefined, options),
+  enrollMfa: (password: string, options?: AuthRequestOptions) => mainApi.post<{ data: { secret: string; otpauth_uri: string } }>("/api/v1/auth/mfa/enroll", { password }, { auth: "none", ...options }),
+  replaceMfa: (password: string, mfa_code: string, options?: AuthRequestOptions) => mainApi.post<{ data: { secret: string; otpauth_uri: string } }>("/api/v1/auth/mfa/replace", { password, mfa_code }, { auth: "none", ...options }),
+  confirmMfa: (mfa_code: string, options?: AuthRequestOptions) => mainApi.post<{ data: { recovery_codes: string[] } }>("/api/v1/auth/mfa/confirm", { mfa_code }, { auth: "none", ...options }),
+  stepUpMfa: (password: string, mfa_code: string, options?: AuthRequestOptions) => mainApi.post<{ data: { verified_at: string } }>("/api/v1/auth/mfa/step-up", { password, mfa_code }, { auth: "none", ...options }),
   login: (data: LoginRequest) =>
     mainApi.post<LoginResponse>("/api/v1/auth/login", data),
 
@@ -263,8 +256,8 @@ export const statsApi = {
       slug?: string;
     }>,
   ) => mainApi.get<{ data: PublicStatsResponse }>("/api/v1/stats", params),
-  admin: () =>
-    mainApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin"),
+  admin: (options?: Pick<FetchCacheOptions, "signal" | "timeoutMs">) =>
+    mainApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin", undefined, options),
   portal: (
     portal:
       | "admin"
@@ -299,8 +292,11 @@ export const usersApi = {
   list: (params?: ListParams) =>
     mainApi.get<PaginatedResponse<User>>("/api/v1/users", params),
 
-  get: (id: string, params?: FieldSelectionParams) =>
-    mainApi.get<{ data: User }>(`/api/v1/users/${id}`, params),
+  get: (
+    id: string,
+    params?: FieldSelectionParams,
+    options?: Pick<FetchCacheOptions, "signal" | "timeoutMs">,
+  ) => mainApi.get<{ data: User }>(`/api/v1/users/${id}`, params, options),
 
   create: (data: Partial<User> & { password: string }) =>
     mainApi.post<{ data: User }>("/api/v1/users", data),
@@ -322,6 +318,20 @@ export const myProfileApi = {
 export const portalAccessApi = {
   get: () =>
     mainApi.get<{ data: PortalAccessResponse }>("/api/v1/me/portal-access"),
+};
+
+export const workspacesApi = {
+  list: () => mainApi.get<{ data: WorkspaceContext[] }>("/api/v1/workspaces"),
+  activate: (workspace: string, body?: { scope?: WorkspaceScope; previous_visit_id?: string }) =>
+    mainApi.post<{ data: WorkspaceActivationResponse }>(
+      `/api/v1/workspaces/${encodeURIComponent(workspace)}/activate`,
+      body ?? {},
+    ),
+  exit: (workspace: string, body?: { previous_visit_id?: string }) =>
+    mainApi.post<{ data: WorkspaceActivationResponse }>(
+      `/api/v1/workspaces/${encodeURIComponent(workspace)}/exit`,
+      body ?? {},
+    ),
 };
 
 export const userPreferencesApi = {
@@ -347,7 +357,8 @@ export const personsApi = {
       is_researcher?: boolean;
       status?: PersonStatusFilter;
     }>,
-  ) => mainApi.get<PaginatedResponse<Person>>("/api/v1/persons", params),
+    options?: Pick<FetchCacheOptions, "signal" | "timeoutMs">,
+  ) => mainApi.get<PaginatedResponse<Person>>("/api/v1/persons", params, options),
 
   listAdmin: (
     params?: ListParams<{
@@ -382,21 +393,7 @@ export const personsApi = {
   uploadPhoto: async (id: string, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    const token = getStoredAccessToken();
-    const response = await fetch(
-      `${MAIN_API_BASE_URL}/api/v1/persons/${id}/photo`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        body: formData,
-      },
-    );
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || "Profile photo upload failed");
-    }
-    return response.json() as Promise<{ data: Person }>;
+    return mainApi.post<{ data: Person }>(`/api/v1/persons/${id}/photo`, formData);
   },
 
   removePhoto: (id: string) =>
@@ -538,10 +535,12 @@ export const staffApi = {
       entity_id?: string;
       status?: StaffAssignmentStatusFilter;
     }>,
+    options?: Pick<FetchCacheOptions, "signal" | "timeoutMs">,
   ) =>
     mainApi.get<{ data: StaffAssignment[] }>(
       "/api/v1/staff/assignments",
       params,
+      options,
     ),
 
   getAssignment: (id: string, params?: FieldSelectionParams) =>
@@ -688,7 +687,8 @@ export const schoolsApi = {
       administrative_wing_id?: string;
       search?: string;
     }>,
-  ) => mainApi.get<PaginatedResponse<School>>("/api/v1/schools", params),
+    options?: Pick<FetchCacheOptions, "signal" | "timeoutMs">,
+  ) => mainApi.get<PaginatedResponse<School>>("/api/v1/schools", params, options),
 
   listAdmin: (
     params?: ListParams<{
@@ -742,8 +742,9 @@ export const departmentsApi = {
       department_type?: string;
       search?: string;
     }>,
+    options?: Pick<FetchCacheOptions, "signal" | "timeoutMs">,
   ) =>
-    mainApi.get<PaginatedResponse<Department>>("/api/v1/departments", params),
+    mainApi.get<PaginatedResponse<Department>>("/api/v1/departments", params, options),
 
   listAdmin: (
     params?: ListParams<{
@@ -842,7 +843,8 @@ export const programmesApi = {
       level?: string;
       mode_of_study?: string;
     }>,
-  ) => mainApi.get<PaginatedResponse<Programme>>("/api/v1/programmes", params),
+    options?: Pick<FetchCacheOptions, "signal" | "timeoutMs">,
+  ) => mainApi.get<PaginatedResponse<Programme>>("/api/v1/programmes", params, options),
 
   listAdmin: (
     params?: ListParams<{
@@ -1604,7 +1606,8 @@ export const newsApi = {
       is_published?: boolean;
       search?: string;
     }>,
-  ) => mainApi.get<PaginatedResponse<News>>("/api/v1/news", params),
+    options?: Pick<FetchCacheOptions, "signal" | "timeoutMs">,
+  ) => mainApi.get<PaginatedResponse<News>>("/api/v1/news", params, options),
 
   listAdmin: (
     params?: ListParams<{
@@ -1737,10 +1740,11 @@ export const storiesApi = {
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/stories/id/${id}`),
 
-  requestContributorAccount: (data: StoryContributorAccountRequestPayload) =>
+  requestContributorAccount: (data: StoryContributorAccountRequestPayload, options?: FetchCacheOptions) =>
     mainApi.post<{ data: StoryContributorAccountRequest }>(
       "/api/v1/stories/account-requests",
       data,
+      options,
     ),
 
   listContributorAccountRequests: (
@@ -1877,11 +1881,14 @@ export const announcementsApi = {
 };
 
 export const contentWorkflowApi = {
-  listQueue: (params?: ContentWorkflowQueueFilters) =>
+  listQueue: (
+    params?: ContentWorkflowQueueFilters,
+    options?: Pick<FetchCacheOptions, "signal" | "timeoutMs">,
+  ) =>
     mainApi.get<{
       data: ContentWorkflowQueueItem[];
       meta?: ContentWorkflowQueueMeta;
-    }>("/api/v1/content-workflow/queue", params),
+    }>("/api/v1/content-workflow/queue", params, options),
 
   action: (
     item: ContentWorkflowQueueItem,
@@ -1911,9 +1918,12 @@ export const contentWorkflowApi = {
   logs: (
     contentType: ContentWorkflowQueueItem["content_type"],
     contentId: string,
+    options?: Pick<FetchCacheOptions, "signal" | "timeoutMs">,
   ) =>
     mainApi.get<{ data: ContentWorkflowLog[] }>(
       `/api/v1/content-workflow/${contentType}/${contentId}/logs`,
+      undefined,
+      options,
     ),
 
   /**
@@ -1944,29 +1954,16 @@ export const recordRecoveryApi = {
 export const mainExportsApi = {
   /**
    * Downloads a resource's admin listing as CSV, honoring the caller's list
-   * filters. Fetched with credentials (not window.open) because access tokens
-   * live in sessionStorage, which a new tab cannot read.
+   * filters and the current cookie session.
    */
   downloadCsv: async (
     resource: string,
     params?: Record<string, string | number | boolean | undefined>,
   ) => {
-    const token = getStoredAccessToken();
-    const url = new URL(`${getMainApiBaseUrl()}/api/v1/exports/${resource}.csv`);
-    Object.entries(params ?? {}).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.append(key, String(value));
-      }
-    });
-    const response = await fetch(url.toString(), {
-      credentials: "include",
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    });
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || error.message || "CSV export failed");
-    }
-    return response.blob();
+    const filtered = Object.fromEntries(Object.entries(params ?? {}).filter(
+      ([, value]) => value !== undefined && value !== null && value !== "",
+    ));
+    return mainApi.download(`/api/v1/exports/${resource}.csv`, filtered);
   },
 };
 
@@ -2103,7 +2100,8 @@ export const mediaApi = {
       is_public?: boolean;
       search?: string;
     }>,
-  ) => mainApi.get<PaginatedResponse<Media>>("/api/v1/media", params),
+    options?: Pick<FetchCacheOptions, "signal" | "timeoutMs">,
+  ) => mainApi.get<PaginatedResponse<Media>>("/api/v1/media", params, options),
 
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Media }>(`/api/v1/media/${id}`, params),
@@ -2120,21 +2118,7 @@ export const mediaApi = {
     if (options?.entityType) formData.append("entity_type", options.entityType);
     if (options?.entityId) formData.append("entity_id", options.entityId);
     if (options?.role) formData.append("role", options.role);
-    const token = getStoredAccessToken();
-
-    const response = await fetch(`${MAIN_API_BASE_URL}/api/v1/media/upload`, {
-      method: "POST",
-      credentials: "include",
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || error.message || "Upload failed");
-    }
-
-    return response.json() as Promise<{ data: Media }>;
+    return mainApi.post<{ data: Media }>("/api/v1/media/upload", formData);
   },
 
   listFolders: (
@@ -2360,15 +2344,27 @@ export const newslettersApi = {
 
   /** Queue an immediate send to all active subscribers. */
   sendNow: (id: string) =>
-    mainApi.post<{ data: Newsletter }>(`/api/v1/newsletters/${id}/send`),
+    mainApi.post<{ data: Newsletter }>(
+      `/api/v1/newsletters/${id}/send`,
+      undefined,
+      commandOptions(),
+    ),
 
   /** Schedule a future send. `scheduled_send_at` must be in the future. */
   scheduleSend: (id: string, data: { scheduled_send_at: string }) =>
-    mainApi.post<{ data: Newsletter }>(`/api/v1/newsletters/${id}/schedule`, data),
+    mainApi.post<{ data: Newsletter }>(
+      `/api/v1/newsletters/${id}/schedule`,
+      data,
+      commandOptions(),
+    ),
 
   /** Cancel a scheduled send, returning the newsletter to draft. */
   cancelSchedule: (id: string) =>
-    mainApi.post<{ data: Newsletter }>(`/api/v1/newsletters/${id}/cancel-schedule`),
+    mainApi.post<{ data: Newsletter }>(
+      `/api/v1/newsletters/${id}/cancel-schedule`,
+      undefined,
+      commandOptions(),
+    ),
 
   listSubscribers: (
     params?: ListParams<{
@@ -2386,6 +2382,8 @@ export const newslettersApi = {
   unsubscribeSubscriber: (id: string) =>
     mainApi.post<{ data: NewsletterSubscriber }>(
       `/api/v1/newsletters/subscribers/${id}/unsubscribe`,
+      undefined,
+      commandOptions(),
     ),
 };
 
@@ -2463,17 +2461,7 @@ export const importsApi = {
   preview: async (resource: string, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    const token = getStoredAccessToken();
-    const response = await fetch(
-      `${MAIN_API_BASE_URL}/api/v1/imports/${resource}/preview`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        body: formData,
-      },
-    );
-    return parseImportResponse<{ data: ImportPreview }>(response);
+    return mainApi.post<{ data: ImportPreview }>(`/api/v1/imports/${resource}/preview`, formData);
   },
 
   commit: (resource: string, data: ImportCommitRequest) =>
@@ -2488,33 +2476,27 @@ export const importsApi = {
       data,
     ),
 
-  getJob: (jobId: string) =>
-    mainApi.get<{ data: ImportJob }>(`/api/v1/imports/jobs/${jobId}`),
+  getJob: (jobId: string, options?: FetchCacheOptions) =>
+    mainApi.get<{ data: ImportJob }>(
+      `/api/v1/imports/jobs/${jobId}`,
+      undefined,
+      options,
+    ),
 
   downloadTemplate: async (resource: string) => {
-    const token = getStoredAccessToken();
-    const response = await fetch(
-      `${MAIN_API_BASE_URL}/api/v1/imports/${resource}/template`,
-      {
-        credentials: "include",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      },
-    );
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(
-        error.detail || error.message || "Template download failed",
-      );
-    }
-    return response.blob();
+    return mainApi.download(`/api/v1/imports/${resource}/template`);
   },
 };
 
 export const adminReportsApi = {
-  overview: (params?: { days?: number }) =>
+  overview: (
+    params?: { days?: number },
+    options?: Pick<FetchCacheOptions, "signal" | "timeoutMs">,
+  ) =>
     mainApi.get<{ data: ReportsOverview }>(
       "/api/v1/admin/reports/overview",
       params,
+      options,
     ),
 
   traffic: (params?: { days?: number }) =>

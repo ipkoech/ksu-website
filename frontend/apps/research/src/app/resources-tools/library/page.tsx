@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/resources-tools/library" },
 };
 
+export const revalidate = 300;
+
 export default function ResourceLibraryPage({ searchParams }: { searchParams?: Promise<Record<string, string | undefined>> }) {
   return <ResourcesSectionPage searchParams={searchParams} activeItem="resources" visibleSections={["resources"]} />;
 }

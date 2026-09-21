@@ -120,7 +120,7 @@ const outputColumns: Array<EditableRecordColumn<ResearchGenericRecord>> = [
 export default function ResearchOutputsPage() {
   return (
     <ResearchResourcePage
-      title="Research Outputs"
+      title="Outputs"
       description="Manage datasets, software, tools, reports, briefs, methodologies, models, and published deliverables."
       queryKey={["research", "outputs"]}
       resource={researchServiceApi.outputs}

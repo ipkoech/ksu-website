@@ -8,7 +8,7 @@ from datetime import datetime
 
 from pydantic import Field
 
-from .base import BaseReadSchema, BaseSchema
+from .base import BaseReadSchema, BaseSchema, optional_snapshot
 
 
 class PermissionRead(BaseReadSchema):
@@ -72,3 +72,8 @@ class UserRoleRead(BaseReadSchema):
     user: dict[str, Any] | None = None
     scope: dict[str, Any] | None = None
     is_active: bool
+
+
+PermissionSnapshot = optional_snapshot("PermissionSnapshot", PermissionRead)
+RoleSnapshot = optional_snapshot("RoleSnapshot", RoleRead)
+UserRoleSnapshot = optional_snapshot("UserRoleSnapshot", UserRoleRead)

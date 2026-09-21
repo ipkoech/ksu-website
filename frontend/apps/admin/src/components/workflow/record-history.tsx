@@ -50,10 +50,11 @@ interface RecordHistoryProps {
 export function RecordHistory({ contentType, contentId }: RecordHistoryProps) {
   const logsQuery = useQuery({
     queryKey: ["workflow-logs", contentType, contentId],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       contentWorkflowApi.logs(
         contentType as ContentWorkflowQueueItem["content_type"],
         contentId,
+        { signal },
       ),
   });
 
@@ -139,7 +140,7 @@ function HistoryEntry({
 function ActorName({ actorId }: { actorId: string | null }) {
   const userQuery = useQuery({
     queryKey: ["workflow-log-actor", actorId],
-    queryFn: () => usersApi.get(actorId!),
+    queryFn: ({ signal }) => usersApi.get(actorId!, undefined, { signal }),
     enabled: Boolean(actorId),
     staleTime: Infinity,
     retry: false,

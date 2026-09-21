@@ -23,7 +23,7 @@ from ..models import (
     grant_themes,
     project_funders,
 )
-from ._crud import CRUDService, build_simple_service
+from ._crud import CRUDService, apply_public_visibility, build_simple_service
 
 
 GrantService = build_simple_service(
@@ -54,7 +54,11 @@ def _brief(item: Any, *extra_fields: str) -> dict[str, Any]:
     return {key: value for key, value in payload.items() if value is not None}
 
 
-async def _related_many(db: AsyncSession, stmt, *extra_fields: str) -> list[dict[str, Any]]:
+async def _related_many(db: AsyncSession, stmt, *extra_fields: str, public: bool = False) -> list[dict[str, Any]]:
+    if public:
+        entity = next((item.get("entity") for item in stmt.column_descriptions if item.get("entity") is not None), None)
+        if entity is not None:
+            stmt = apply_public_visibility(entity, stmt)
     result = await db.execute(stmt)
     return [_brief(item, *extra_fields) for item in result.scalars().unique().all()]
 
@@ -117,7 +121,14 @@ class GrantRelationshipService:
     """Read and bind grant relationships supported by the current funding model."""
 
     @staticmethod
-    async def _ensure_grant(db: AsyncSession, grant_id: uuid.UUID) -> Grant:
+    async def _ensure_grant(db: AsyncSession, grant_id: uuid.UUID, *, public: bool = False) -> Grant:
+        if public:
+            statement = apply_public_visibility(Grant, Grant.active_query().where(Grant.id == grant_id))
+            result = await db.execute(statement)
+            grant = result.scalar_one_or_none()
+            if grant is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grant not found")
+            return grant
         return await _get_or_404(db, Grant, grant_id, "Grant not found")
 
     @staticmethod
@@ -126,7 +137,7 @@ class GrantRelationshipService:
 
     @staticmethod
     async def list_projects(db: AsyncSession, grant_id: uuid.UUID) -> list[dict[str, Any]]:
-        await GrantRelationshipService._ensure_grant(db, grant_id)
+        await GrantRelationshipService._ensure_grant(db, grant_id, public=True)
         return await _related_many(
             db,
             ResearchProject.active_query()
@@ -136,11 +147,12 @@ class GrantRelationshipService:
             "project_type",
             "status",
             "start_date",
+            public=True,
         )
 
     @staticmethod
     async def list_themes(db: AsyncSession, grant_id: uuid.UUID) -> list[dict[str, Any]]:
-        await GrantRelationshipService._ensure_grant(db, grant_id)
+        await GrantRelationshipService._ensure_grant(db, grant_id, public=True)
         return await _related_many(
             db,
             ResearchTheme.active_query()
@@ -148,6 +160,7 @@ class GrantRelationshipService:
             .where(grant_themes.c.grant_id == grant_id)
             .order_by(ResearchTheme.display_order.asc(), ResearchTheme.name.asc()),
             "code",
+            public=True,
         )
 
     @staticmethod
@@ -175,7 +188,12 @@ class FundingRelationshipService:
 
     @staticmethod
     async def _ensure_funder(db: AsyncSession, funder_id: uuid.UUID) -> Funding:
-        return await _get_or_404(db, Funding, funder_id, "Funder not found")
+        statement = apply_public_visibility(Funding, Funding.active_query().where(Funding.id == funder_id))
+        result = await db.execute(statement)
+        funder = result.scalar_one_or_none()
+        if funder is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Funder not found")
+        return funder
 
     @staticmethod
     async def list_projects(db: AsyncSession, funder_id: uuid.UUID) -> list[dict[str, Any]]:
@@ -190,6 +208,7 @@ class FundingRelationshipService:
             "project_type",
             "status",
             "start_date",
+            public=True,
         )
 
     @staticmethod
@@ -205,6 +224,7 @@ class FundingRelationshipService:
             "category",
             "status",
             "deadline",
+            public=True,
         )
 
 

@@ -4,11 +4,10 @@ import { useCallback, useEffect, useRef } from "react";
 import { useAuthStore } from "../store";
 import type { Service, LoginCredentials } from "../types";
 import {
-  fetchCurrentUser,
   loginWithPassword,
   logoutCurrentSession,
-  refreshStoredAuthTokens,
 } from "../backend";
+import { allowSessionRefresh, beginSessionAction, checkSession, invalidateSession, isCurrentSession } from "../session";
 
 export function useAuth() {
   const sessionExpiredHandledRef = useRef(false);
@@ -27,34 +26,20 @@ export function useAuth() {
 
   const accessibleServices = user ? user.services.map((service) => service.service) : [];
 
-  const checkAuth = useCallback(async (_retryWithRefresh = true) => {
-    setLoading(true);
-    try {
-      let user = await fetchCurrentUser();
-
-      if (!user && _retryWithRefresh) {
-        const refreshed = await refreshStoredAuthTokens();
-        if (refreshed) {
-          user = await fetchCurrentUser();
-        }
-      }
-
-      setUser(user);
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [setLoading, setUser]);
+  const checkAuth = useCallback((retryWithRefresh = true) => checkSession(retryWithRefresh), []);
 
   const login = useCallback(
     async (credentials: LoginCredentials) => {
+      const { version, signal } = beginSessionAction();
+      setUser(null);
       setLoading(true);
       setError(null);
 
       try {
         sessionExpiredHandledRef.current = false;
-        const data = await loginWithPassword(credentials);
+        const data = await loginWithPassword(credentials, signal);
+        if (!isCurrentSession(version)) throw new Error("Sign-in was cancelled");
+        allowSessionRefresh();
         setUser(data.user);
 
         const services = data.user.services.map((service) => service.service);
@@ -65,26 +50,41 @@ export function useAuth() {
         return { user: data.user, services };
       } catch (err) {
         const message = err instanceof Error ? err.message : "Login failed";
-        setError(message);
+        if (isCurrentSession(version)) setError(message);
         throw err;
       } finally {
-        setLoading(false);
+        if (isCurrentSession(version)) setLoading(false);
       }
     },
     [setLoading, setError, setUser, setActiveService]
   );
 
   const logout = useCallback(async () => {
-    // Clear user state immediately - no token refresh attempts after this
+    // Stop competing auth requests, then clear the session after confirmation.
+    // A failed logout stays visible in the caller's confirmation dialog.
     sessionExpiredHandledRef.current = true;
-    logoutStore();
-    await logoutCurrentSession();
+    const { version, signal } = beginSessionAction();
+    try {
+      await logoutCurrentSession(signal);
+      if (isCurrentSession(version)) logoutStore();
+    } catch (error) {
+      if (isCurrentSession(version)) {
+        sessionExpiredHandledRef.current = false;
+        allowSessionRefresh();
+      }
+      throw error;
+    }
   }, [logoutStore]);
+
+  useEffect(() => {
+    if (user) sessionExpiredHandledRef.current = false;
+  }, [user]);
 
   useEffect(() => {
     function handleSessionExpired() {
       if (sessionExpiredHandledRef.current) return;
       sessionExpiredHandledRef.current = true;
+      invalidateSession();
       logoutStore();
     }
     window.addEventListener("ksu:session-expired", handleSessionExpired);

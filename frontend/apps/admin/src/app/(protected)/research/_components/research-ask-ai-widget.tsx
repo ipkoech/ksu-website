@@ -93,6 +93,7 @@ export function ResearchAskAIWidget() {
   const [isStreaming, setIsStreaming] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  const streamAbortRef = React.useRef<AbortController | null>(null);
   const context = React.useMemo(() => buildAskAIContext(pathname), [pathname]);
   const selectedReferences = React.useMemo(
     () => mergeReferences(manualReferences, referencesFromPrompt(prompt)),
@@ -102,7 +103,7 @@ export function ResearchAskAIWidget() {
 
   const conversationsQuery = useQuery({
     queryKey: ["research", "ask-ai", "conversations"],
-    queryFn: () => researchServiceApi.listAskAIConversations(),
+    queryFn: ({ signal }) => researchServiceApi.listAskAIConversations({ signal }),
     enabled: open,
     staleTime: 30_000,
   });
@@ -111,7 +112,7 @@ export function ResearchAskAIWidget() {
 
   const messagesQuery = useQuery({
     queryKey: ["research", "ask-ai", "messages", activeConversationId],
-    queryFn: () => researchServiceApi.listAskAIMessages(activeConversationId as string),
+    queryFn: ({ signal }) => researchServiceApi.listAskAIMessages(activeConversationId as string, { signal }),
     enabled: open && Boolean(activeConversationId) && !isStreaming,
     staleTime: 10_000,
   });
@@ -135,6 +136,11 @@ export function ResearchAskAIWidget() {
     }
   }, [messages, open]);
 
+  React.useEffect(() => () => {
+    streamAbortRef.current?.abort();
+    streamAbortRef.current = null;
+  }, []);
+
   const sendMessage = React.useCallback(
     async (text: string) => {
       const message = text.trim();
@@ -142,6 +148,9 @@ export function ResearchAskAIWidget() {
 
       const now = new Date().toISOString();
       const assistantId = `assistant-${Date.now()}`;
+      streamAbortRef.current?.abort();
+      const controller = new AbortController();
+      streamAbortRef.current = controller;
       let assistantDraft = "";
       setPrompt("");
       setError(null);
@@ -178,6 +187,7 @@ export function ResearchAskAIWidget() {
             references: selectedReferences,
           },
           (event) => {
+            if (controller.signal.aborted) return;
             if (event.event === "metadata") {
               if (event.data.conversation_id) {
                 setConversationId(event.data.conversation_id);
@@ -228,13 +238,19 @@ export function ResearchAskAIWidget() {
               );
             }
           },
+          controller.signal,
         );
+        if (controller.signal.aborted) return;
         await queryClient.invalidateQueries({ queryKey: ["research", "ask-ai"] });
       } catch (streamError) {
+        if (controller.signal.aborted) return;
         setError(streamError instanceof Error ? streamError.message : "Ask AI could not answer right now.");
         setMessages((current) => current.filter((item) => item.id !== assistantId));
       } finally {
-        setIsStreaming(false);
+        if (streamAbortRef.current === controller) {
+          streamAbortRef.current = null;
+          setIsStreaming(false);
+        }
       }
     },
     [activeConversationId, context, isStreaming, queryClient, selectedMode, selectedReferences, selectedScope],

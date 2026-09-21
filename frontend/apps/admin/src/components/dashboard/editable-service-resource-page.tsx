@@ -7,6 +7,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArchiveRestore, ArrowUpDown, ChevronDown, Database, Download, Edit, Eye, FileSpreadsheet, FilterX, HelpCircle, History, MoreHorizontal, Plus, Search, ShieldCheck, SlidersHorizontal, Sparkles, Trash2 } from "lucide-react";
 
 import { RecordHistory } from "@/components/workflow/record-history";
+import {
+  revalidatePublicContent,
+  type PublicFrontendService,
+} from "@/lib/api/public-revalidation";
 import { NextActionButton } from "@/components/workflow/next-action-button";
 import { StatusChip } from "@/components/workflow/status-chip";
 import {
@@ -15,19 +19,6 @@ import {
   usersApi,
   type ContentWorkflowBulkAction,
 } from "@ksu/api-client";
-
-const RESEARCH_FRONTEND = process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL;
-
-async function revalidateResearch(resource: string) {
-  if (!RESEARCH_FRONTEND) return;
-  try {
-    await fetch(`${RESEARCH_FRONTEND}/api/revalidate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resource, secret: "ksu-research-revalidate" }),
-    });
-  } catch { /* fire and forget */ }
-}
 
 import { PageHeader } from "@/components/layout";
 import { DateTimePicker } from "@/components/shared/date-time-picker";
@@ -271,6 +262,10 @@ interface EditableServiceResourcePageProps<
   readOnlyMessage?: string;
   primaryActionLabel?: string;
   resourceKey?: string;
+  /** Opt into the authenticated Research public-cache revalidation endpoint. */
+  revalidateResearchCache?: boolean;
+  /** Invalidate the owning public frontend after a confirmed mutation. */
+  revalidatePublicService?: PublicFrontendService;
   toolbarSlot?: ReactNode;
   summarySlot?: ReactNode;
   editorMode?: "dialog" | "sheet" | "auto";
@@ -488,6 +483,8 @@ export function EditableServiceResourcePage<
   readOnlyMessage = "You can view these records, but your current permissions do not allow changes.",
   primaryActionLabel,
   resourceKey,
+  revalidateResearchCache = false,
+  revalidatePublicService,
   toolbarSlot,
   summarySlot,
   editorMode = "auto",
@@ -584,6 +581,13 @@ export function EditableServiceResourcePage<
   const resolvedEditorMode = viewInEditor ? "dialog" : editorMode === "auto" ? (fields.length > 10 ? "sheet" : "dialog") : editorMode;
   const visibleFrom = totalRecords === 0 ? 0 : (page - 1) * perPage + 1;
   const visibleTo = Math.min(page * perPage, totalRecords);
+  const revalidateResource = () => {
+    if (!resourceKey || (!revalidatePublicService && !revalidateResearchCache)) return;
+    void revalidatePublicContent(
+      revalidatePublicService ?? "research",
+      resourceKey,
+    );
+  };
 
   useEffect(() => {
     setPage(1);
@@ -664,6 +668,7 @@ export function EditableServiceResourcePage<
       const results = response.data ?? [];
       const failures = results.filter((result) => !result.ok);
       const okCount = results.length - failures.length;
+      if (okCount > 0) revalidateResource();
       if (failures.length === 0) {
         toast.success(`${verb} ${okCount} of ${results.length}.`);
       } else {
@@ -715,6 +720,7 @@ export function EditableServiceResourcePage<
     mutationFn: (record: TRecord) => restoreRecord?.(record) ?? Promise.resolve(),
     onSuccess: (_result, record) => {
       toast.success(`'${getRecordTitle(record)}' has been restored. It's back in your drafts.`);
+      revalidateResource();
       return queryClient.invalidateQueries({ queryKey });
     },
     onError: () => {
@@ -830,7 +836,7 @@ export function EditableServiceResourcePage<
       }
       resetForm();
       setEditorOpen(false);
-      if (resourceKey) revalidateResearch(resourceKey);
+      revalidateResource();
     } catch {
       toast.error(
         editingRecord
@@ -866,7 +872,7 @@ export function EditableServiceResourcePage<
       await deleteMutation.mutateAsync(deleteTarget.id);
       toast.success(`${title} deleted successfully`);
       setDeleteTarget(null);
-      if (resourceKey) revalidateResearch(resourceKey);
+      revalidateResource();
     } catch {
       toast.error(`Failed to delete ${title.toLowerCase()}`);
     }
@@ -891,6 +897,7 @@ export function EditableServiceResourcePage<
           (typeof action.payload === "function" ? action.payload(record) : action.payload);
         await updateMutation.mutateAsync({ id: record.id, payload });
       }
+      revalidateResource();
       toast.success(action.successMessage ?? `${title} updated successfully`);
     } catch {
       toast.error(`Failed to update ${title.toLowerCase()}`);
@@ -1014,6 +1021,7 @@ export function EditableServiceResourcePage<
           canPublish={hasAnyWorkflowScope?.(["content.publish"]) === true}
           onEdit={canEdit ? () => startEdit(record) : undefined}
           onCompleted={() => queryClient.invalidateQueries({ queryKey })}
+          revalidateService={revalidatePublicService}
         />
       ) : null;
     const workflowActions = (getRecordWorkflowActions?.(record) ?? []).filter(

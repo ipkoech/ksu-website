@@ -64,9 +64,8 @@ export function ForgotPasswordForm() {
         </div>
         <div>
           <h3 className="font-semibold">Check your email</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            We've sent a password reset link to your email address. The link
-            will expire in 1 hour.
+            <p className="text-sm text-muted-foreground mt-1">
+            If an account matches that address, you&apos;ll receive reset instructions shortly.
           </p>
         </div>
         <Button asChild variant="outline" className="w-full">

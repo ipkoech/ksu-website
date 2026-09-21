@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.audit import AuditLog
@@ -19,6 +20,6 @@ async def record_audit(
     ip_address: str | None = None,
     user_agent: str | None = None,
 ) -> AuditLog:
-    entry = AuditLog(action=action, entity_type=entity_type, entity_id=entity_id, actor_id=actor_id, previous_value=previous_value, new_value=new_value, ip_address=ip_address, user_agent=user_agent)
+    entry = AuditLog(action=action, entity_type=entity_type, entity_id=entity_id, actor_id=actor_id, previous_value=jsonable_encoder(previous_value), new_value=jsonable_encoder(new_value), ip_address=ip_address, user_agent=user_agent)
     db.add(entry)
     return entry

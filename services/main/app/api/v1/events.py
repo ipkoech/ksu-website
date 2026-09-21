@@ -10,13 +10,13 @@ from fastapi import APIRouter, HTTPException, Query, Request, status
 from fastapi.encoders import jsonable_encoder
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ._scoped import can_access_scoped_record, require_scoped_record
 from ...deps import CurrentUser, DbSession, permissions_for_user
 from ...models import Event
-from ...schemas import EventCreate, EventUpdate
+from ...schemas import EventCreate, EventSnapshot, EventUpdate
 from ...services import ContentWorkflowService, EventService
 from .content_workflow import authorize_content_workflow_action
 from ...core.config import public_content_rate_limit
@@ -109,7 +109,7 @@ def _with_scope_summaries(serialized_items: Any, source_items: list[Any]) -> lis
     ]
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[EventSnapshot]])
 @public_content_rate_limit
 @cached_public(timeout=300, vary_on=("page", "per_page", "scope_type", "scope_id", "is_main", "is_published", "upcoming", "search", "fields", "include", "include_scope"))
 async def list_events(
@@ -145,7 +145,7 @@ async def list_events(
     return success(data=data, meta=result.meta)
 
 
-@router.get("/admin")
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[EventSnapshot]])
 async def list_admin_events(
     db: DbSession,
     user: CurrentUser,
@@ -207,7 +207,7 @@ async def list_admin_events(
     return success(data=data, meta=meta)
 
 
-@router.get("/id/{event_id}")
+@router.get("/id/{event_id}", response_model_exclude_unset=True, response_model=SuccessResponse[EventSnapshot])
 async def get_event_by_id(
     event_id: uuid.UUID,
     db: DbSession,
@@ -233,7 +233,7 @@ async def get_event_by_id(
     return success(data=data)
 
 
-@router.get("/{slug}")
+@router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[EventSnapshot])
 @public_content_rate_limit
 @cached_public(timeout=300, vary_on=("slug", "fields", "include", "include_scope"))
 async def get_event(request: Request, slug: str, db: DbSession, include_scope: bool = False, fields: FieldSelection = FieldsDep):
@@ -247,7 +247,7 @@ async def get_event(request: Request, slug: str, db: DbSession, include_scope: b
     return success(data=data)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[EventSnapshot])
 async def create_event(data: EventCreate, db: DbSession, user: CurrentUser):
     await require_scoped_record(
         db,
@@ -267,7 +267,7 @@ async def create_event(data: EventCreate, db: DbSession, user: CurrentUser):
     return success(data=item, message="Event created")
 
 
-@router.patch("/{event_id}")
+@router.patch("/{event_id}", response_model_exclude_unset=True, response_model=SuccessResponse[EventSnapshot])
 async def update_event(event_id: uuid.UUID, data: EventUpdate, db: DbSession, user: CurrentUser):
     item = await EventService.get_by_id(db, event_id)
     if item is None:
@@ -313,7 +313,7 @@ async def update_event(event_id: uuid.UUID, data: EventUpdate, db: DbSession, us
     return success(data=item, message="Event updated")
 
 
-@router.post("/{event_id}/publish")
+@router.post("/{event_id}/publish", response_model_exclude_unset=True, response_model=SuccessResponse[EventSnapshot])
 async def publish_event(event_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await EventService.get_by_id(db, event_id)
     if item is None:
@@ -337,7 +337,7 @@ async def publish_event(event_id: uuid.UUID, db: DbSession, user: CurrentUser):
     return success(data=item, message="Event published")
 
 
-@router.post("/{event_id}/unpublish")
+@router.post("/{event_id}/unpublish", response_model_exclude_unset=True, response_model=SuccessResponse[EventSnapshot])
 async def unpublish_event(event_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await EventService.get_by_id(db, event_id)
     if item is None:

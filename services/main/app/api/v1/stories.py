@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from .content_workflow import authorize_content_workflow_action
@@ -18,10 +18,13 @@ from ...deps import CurrentUser, DbSession, permissions_for_user, require_scope
 from ...models import ContentWorkflowLog, Story
 from ...schemas import (
     StoryContributorAccountRequestCreate,
+    StoryContributorAccountRequestRead,
     StoryContributorAccountRequestReview,
     StoryCreate,
     StorySubmissionCreate,
+    StorySnapshot,
     StoryUpdate,
+    ContentWorkflowLogRead,
 )
 from ...services import ContentWorkflowService, StoryContributorAccountRequestService, StoryService
 
@@ -69,7 +72,7 @@ def reject_non_contributor_fields(payload: dict) -> None:
         )
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[StorySnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "story_type", "category", "is_featured", "search", "fields", "include"))
 async def list_stories(
     db: DbSession,
@@ -95,7 +98,7 @@ async def list_stories(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.post("/account-requests", status_code=status.HTTP_201_CREATED)
+@router.post("/account-requests", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[StoryContributorAccountRequestRead])
 async def request_story_contributor_account(
     data: StoryContributorAccountRequestCreate,
     request: Request,
@@ -111,7 +114,7 @@ async def request_story_contributor_account(
     return success(data=item, message="Contributor account request submitted")
 
 
-@router.get("/account-requests/admin", dependencies=[Depends(require_scope("content.manage_stories"))])
+@router.get("/account-requests/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[StoryContributorAccountRequestRead]], dependencies=[Depends(require_scope("content.manage_stories"))])
 async def list_story_contributor_account_requests(
     db: DbSession,
     _: CurrentUser,
@@ -130,7 +133,7 @@ async def list_story_contributor_account_requests(
     return success(data=result.items, meta=result.meta)
 
 
-@router.post("/account-requests/admin/{request_id}/approve", dependencies=[Depends(require_scope("content.manage_stories"))])
+@router.post("/account-requests/admin/{request_id}/approve", response_model_exclude_unset=True, response_model=SuccessResponse[StoryContributorAccountRequestRead], dependencies=[Depends(require_scope("users.create"))])
 async def approve_story_contributor_account_request(
     request_id: uuid.UUID,
     db: DbSession,
@@ -146,7 +149,7 @@ async def approve_story_contributor_account_request(
     return success(data=item, message="Contributor request approved")
 
 
-@router.post("/account-requests/admin/{request_id}/reject", dependencies=[Depends(require_scope("content.manage_stories"))])
+@router.post("/account-requests/admin/{request_id}/reject", response_model_exclude_unset=True, response_model=SuccessResponse[StoryContributorAccountRequestRead], dependencies=[Depends(require_scope("content.manage_stories"))])
 async def reject_story_contributor_account_request(
     request_id: uuid.UUID,
     data: StoryContributorAccountRequestReview,
@@ -168,7 +171,7 @@ async def reject_story_contributor_account_request(
     return success(data=item, message="Contributor request rejected")
 
 
-@router.get("/admin", dependencies=[Depends(require_scope("content.manage_stories"))])
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[StorySnapshot]], dependencies=[Depends(require_scope("content.manage_stories"))])
 async def list_admin_stories(
     db: DbSession,
     _: CurrentUser,
@@ -207,7 +210,7 @@ async def list_admin_stories(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/mine")
+@router.get("/mine", response_model_exclude_unset=True, response_model=SuccessResponse[list[StorySnapshot]])
 async def list_my_stories(
     db: DbSession,
     user: CurrentUser,
@@ -233,7 +236,7 @@ async def list_my_stories(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/id/{story_id}")
+@router.get("/id/{story_id}", response_model_exclude_unset=True, response_model=SuccessResponse[StorySnapshot])
 async def get_story_by_id(story_id: uuid.UUID, db: DbSession, user: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(Story, fields)
     item = await StoryService.get_by_id(db, story_id, load_options=selector.load_options)
@@ -245,7 +248,7 @@ async def get_story_by_id(story_id: uuid.UUID, db: DbSession, user: CurrentUser,
     return success(data=selector.apply(item))
 
 
-@router.get("/id/{story_id}/feedback")
+@router.get("/id/{story_id}/feedback", response_model_exclude_unset=True, response_model=SuccessResponse[list[ContentWorkflowLogRead]])
 async def list_story_feedback(
     story_id: uuid.UUID,
     db: DbSession,
@@ -278,7 +281,7 @@ async def list_story_feedback(
     return success(data=result.scalars().all())
 
 
-@router.get("/{slug}")
+@router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[StorySnapshot])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_story(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Story, fields)
@@ -288,7 +291,7 @@ async def get_story(slug: str, db: DbSession, fields: FieldSelection = FieldsDep
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[StorySnapshot])
 async def create_story(data: StoryCreate, db: DbSession, user: CurrentUser):
     permissions = permissions_for_user(user)
     if not _can_manage_stories(permissions):
@@ -305,7 +308,7 @@ async def create_story(data: StoryCreate, db: DbSession, user: CurrentUser):
     return success(data=item, message="Story created")
 
 
-@router.post("/submissions", status_code=status.HTTP_201_CREATED)
+@router.post("/submissions", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[StorySnapshot])
 async def submit_story(data: StorySubmissionCreate, db: DbSession, user: CurrentUser):
     permissions = permissions_for_user(user)
     if not _can_submit_stories(permissions):
@@ -328,7 +331,7 @@ async def submit_story(data: StorySubmissionCreate, db: DbSession, user: Current
     return success(data=item, message="Story draft created")
 
 
-@router.patch("/id/{story_id}")
+@router.patch("/id/{story_id}", response_model_exclude_unset=True, response_model=SuccessResponse[StorySnapshot])
 async def update_story(story_id: uuid.UUID, data: StoryUpdate, db: DbSession, user: CurrentUser):
     item = await StoryService.get_by_id(db, story_id)
     if item is None:

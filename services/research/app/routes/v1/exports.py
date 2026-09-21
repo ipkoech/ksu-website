@@ -6,7 +6,7 @@ from typing import Any
 import uuid
 
 from celery.result import AsyncResult
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +14,7 @@ from ksu_common.response_validation import allow_response_model_exemption
 from ksu_common.schemas.responses import success
 
 from ...core.auth import require_scope
+from ...services.research_domains import resolve_domain_filters
 from ...core.database import get_db
 from ...schemas.exports import (
     ResearchExportJobRead,
@@ -75,19 +76,14 @@ async def queue_research_export(
     order: str | None = Query(default="desc", pattern="^(asc|desc)$"),
     limit: int = Query(default=5000, ge=1, le=10000),
     db: AsyncSession = Depends(get_db),
+    user=Depends(RESEARCH_WRITE_SCOPE),
 ):
     config = ResearchExportService.get_config(resource_key)
     if config is None:
         raise HTTPException(status_code=404, detail="Research export resource not found")
 
-    task = celery_app.send_task(
-        "research.exports.generate",
-        kwargs={
-            "resource_key": resource_key,
-            "options": _export_options(
-                format=format,
-                search=search,
-                filters=_compact_filters(
+    authorization_filters = resolve_domain_filters(user, resource_key)
+    requested_filters = _compact_filters(
                     {
                         "status": status,
                         "is_active": is_active,
@@ -123,14 +119,12 @@ async def queue_research_export(
                         "is_required": is_required,
                         "is_accepting_contributions": is_accepting_contributions,
                     }
-                ),
-                year=year,
-                sort=sort,
-                order=order,
-                limit=limit,
-            ),
-        },
-    )
+                )
+    options = _export_options(format=format, search=search,
+                               filters=_merge_authorization_filters(requested_filters, authorization_filters),
+                               year=year, sort=sort, order=order, limit=limit)
+    options.update({"actor_id": str(user.sub), "authorization_filters": authorization_filters})
+    task = celery_app.send_task("research.exports.generate", kwargs={"resource_key": resource_key, "options": options})
     return success(
         data=ResearchExportJobRead(
             job_id=task.id,
@@ -142,9 +136,10 @@ async def queue_research_export(
 
 
 @router.get("/exports/jobs/{job_id}", response_model=ResearchExportJobSuccessResponse)
-async def get_research_export_job(job_id: str):
+async def get_research_export_job(job_id: str, user=Depends(RESEARCH_WRITE_SCOPE)):
     result = AsyncResult(job_id, app=celery_app)
     result_data = result.result if result.successful() else {}
+    _require_job_owner(result_data, user)
     error = str(result.result) if result.failed() else None
 
     return success(
@@ -163,11 +158,12 @@ async def get_research_export_job(job_id: str):
 
 @router.get("/exports/jobs/{job_id}/download", response_class=FileResponse)
 @allow_response_model_exemption("file", path="/api/v1/exports/jobs/{job_id}/download")
-async def download_research_export_job(job_id: str):
+async def download_research_export_job(job_id: str, user=Depends(RESEARCH_WRITE_SCOPE)):
     result = AsyncResult(job_id, app=celery_app)
     if not result.successful():
         raise HTTPException(status_code=409, detail="Export is not ready")
     result_data = result.result
+    _require_job_owner(result_data, user)
     if not isinstance(result_data, dict) or not result_data.get("file_path"):
         raise HTTPException(status_code=404, detail="Export file not found")
 
@@ -247,6 +243,7 @@ async def export_research_resource(
     order: str | None = Query(default="desc", pattern="^(asc|desc)$"),
     limit: int = Query(default=5000, ge=1, le=10000),
     db: AsyncSession = Depends(get_db),
+    user=Depends(RESEARCH_WRITE_SCOPE),
 ):
     config = ResearchExportService.get_config(resource_key)
     if config is None:
@@ -256,7 +253,7 @@ async def export_research_resource(
         db,
         config,
         search=search,
-        filters=_compact_filters(
+        filters=_merge_authorization_filters(_compact_filters(
             {
                 "status": status,
                 "is_active": is_active,
@@ -291,8 +288,7 @@ async def export_research_resource(
                 "funder_type": funder_type,
                 "is_required": is_required,
                 "is_accepting_contributions": is_accepting_contributions,
-            }
-        ),
+            }), resolve_domain_filters(user, resource_key)),
         year=year,
         sort=sort,
         order=order,
@@ -315,6 +311,18 @@ async def export_research_resource(
 
 def _compact_filters(filters: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in filters.items() if value is not None}
+
+
+def _merge_authorization_filters(requested: dict[str, Any], authorized: dict[str, Any]) -> dict[str, Any]:
+    """Keep server ownership predicates authoritative when exporting."""
+    if not authorized:
+        return requested
+    if "__domain_any__" in authorized:
+        return {"__domain_any__": [
+            {**alternative, **{key: value for key, value in requested.items() if key not in alternative}}
+            for alternative in authorized["__domain_any__"]
+        ]}
+    return {**requested, **authorized}
 
 
 def _export_options(
@@ -342,3 +350,12 @@ def _json_safe(value: Any) -> Any:
     if isinstance(value, uuid.UUID):
         return str(value)
     return value
+
+
+def _require_job_owner(result_data: Any, user: Any) -> None:
+    """Prevent completed export artifacts from being read across accounts."""
+    if not isinstance(result_data, dict):
+        return
+    owner = result_data.get("actor_id")
+    if owner is not None and str(owner) != str(user.sub):
+        raise HTTPException(status_code=404, detail="Export job not found")

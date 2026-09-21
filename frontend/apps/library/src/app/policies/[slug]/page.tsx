@@ -1,5 +1,4 @@
 import {
-  CompactRecord,
   LibraryContentBand,
   LibraryHero,
   LibrarySectionHeading,
@@ -15,8 +14,10 @@ import {
   getLibraryPolicyDetail,
   shortText,
 } from "../../../lib/library-public-data";
+import { PolicyContentDisplay, PolicyFileDisplay } from "./policy-content-display";
 
-export const dynamic = "force-dynamic";
+// Public policy detail pages are cacheable; loader failures remain request-only.
+export const revalidate = 300;
 
 type PolicyDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -80,13 +81,7 @@ export default async function LibraryPolicyDetailPage({ params }: PolicyDetailPa
             ) : paragraphs.length === 0 ? (
               <StatusMessage>No policy content has been published yet.</StatusMessage>
             ) : (
-              <article className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="grid gap-4 text-sm leading-7 text-slate-700 sm:text-base">
-                  {paragraphs.map((paragraph) => (
-                    <p key={paragraph}>{paragraph}</p>
-                  ))}
-                </div>
-              </article>
+              <PolicyContentDisplay paragraphs={paragraphs} />
             )}
           </div>
           <SidePanel title="Policy details" eyebrow="Metadata">
@@ -98,12 +93,7 @@ export default async function LibraryPolicyDetailPage({ params }: PolicyDetailPa
             </dl>
             {record?.file_id ? (
               <div className="mt-6">
-                <CompactRecord
-                  icon="file"
-                  title="Policy file"
-                  body="A related file is attached to this policy record."
-                  meta={[record.file_id]}
-                />
+                <PolicyFileDisplay fileId={record.file_id} />
               </div>
             ) : null}
           </SidePanel>

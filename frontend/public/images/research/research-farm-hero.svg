@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#0a1628"/><stop offset="100%" style="stop-color:#1a3045"/></linearGradient></defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <!-- Fields -->
+  <rect x="0" y="650" width="1920" height="80" rx="4" fill="#1e5a3f" opacity="0.3"/>
+  <rect x="0" y="740" width="1920" height="60" rx="4" fill="#2a6a4f" opacity="0.2"/>
+  <rect x="0" y="810" width="1920" height="50" rx="4" fill="#1e5a3f" opacity="0.25"/>
+  <!-- Crop rows -->
+  <line x1="100" y1="660" x2="1820" y2="660" stroke="#3a8a6f" stroke-width="2" opacity="0.2" stroke-dasharray="8,12"/>
+  <line x1="100" y1="680" x2="1820" y2="680" stroke="#3a8a6f" stroke-width="2" opacity="0.2" stroke-dasharray="8,12"/>
+  <line x1="100" y1="750" x2="1820" y2="750" stroke="#3a8a6f" stroke-width="2" opacity="0.15" stroke-dasharray="8,12"/>
+  <!-- Barn/shed -->
+  <rect x="1400" y="500" width="200" height="200" rx="4" fill="#1a3050" opacity="0.4"/>
+  <polygon points="1380,500 1500,400 1620,500" fill="#1a3050" opacity="0.3"/>
+  <!-- Windmill -->
+  <rect x="400" y="440" width="6" height="160" rx="2" fill="#4a6a9f" opacity="0.4"/>
+  <line x1="403" y1="440" x2="360" y2="380" stroke="#4a6a9f" stroke-width="4" opacity="0.3"/>
+  <line x1="403" y1="440" x2="450" y2="380" stroke="#4a6a9f" stroke-width="4" opacity="0.3"/>
+  <line x1="403" y1="440" x2="403" y2="360" stroke="#4a6a9f" stroke-width="4" opacity="0.3"/>
+  <!-- Sun -->
+  <circle cx="960" cy="250" r="80" fill="#c15106" opacity="0.15"/>
+  <circle cx="960" cy="250" r="60" fill="#c15106" opacity="0.2"/>
+  <!-- BG circles -->
+  <circle cx="1700" cy="300" r="100" fill="#1043b1" opacity="0.05"/>
+</svg>

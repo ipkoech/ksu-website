@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -55,7 +57,7 @@ export function NumbersFactsPage({ data }: { data: PublicFactsData }) {
   const pickImage = createAboutImagePicker("numbersFacts");
 
   return (
-    <main className="bg-white">
+    <main className="bg-white" data-server-data-display="web-about-facts">
       <CampusPageHeader
         image="main-admin"
         variant="feature"

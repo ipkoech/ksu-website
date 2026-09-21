@@ -1,5 +1,8 @@
 """Main service layer exports."""
 
+# Package-level imports are the service's public API.
+# ruff: noqa: F401
+
 from .admissions import (
     AdmissionDocumentService,
     AdmissionFaqService,

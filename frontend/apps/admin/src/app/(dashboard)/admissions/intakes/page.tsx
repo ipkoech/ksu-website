@@ -22,6 +22,7 @@ import {
 import { useDeleteIntake, useIntakes, type Intake } from "@ksu/api-client";
 import { toast } from "@ksu/ui";
 import Link from "next/link";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const getIntakeColumns = ({
     canDelete,
@@ -134,6 +135,7 @@ export default function IntakesPage() {
     const handleDelete = (intake: Intake) => {
         confirmDelete(intake.name, async () => {
             await deleteIntake.mutateAsync(intake.id);
+            void revalidatePublicContent("main", "admissions");
             toast.success("Intake deleted successfully");
         });
     };

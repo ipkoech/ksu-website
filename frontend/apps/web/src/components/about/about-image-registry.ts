@@ -138,10 +138,11 @@ export function createAboutImagePicker(page: AboutImagePage): AboutImagePicker {
       return candidate;
     }
 
-    const fallback = pool.find((image) => !used.has(normalizeImageSource(image)));
-    if (!fallback) {
-      throw new Error(`No unused About image remains for the ${page} page.`);
-    }
+    // Content cards can outnumber the curated image pool. Reuse images
+    // deterministically instead of failing the entire page render.
+    const fallback =
+      pool.find((image) => !used.has(normalizeImageSource(image))) ??
+      pool[used.size % pool.length];
 
     used.add(normalizeImageSource(fallback));
     return fallback;

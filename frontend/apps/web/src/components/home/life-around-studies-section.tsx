@@ -166,7 +166,7 @@ function LifeCard({ item }: { item: HomepageSectionItem }) {
     "/images/student-life/Life-around-studies/culture.jpg";
 
   const card = (
-    <article className="group flex h-full w-full flex-col overflow-hidden rounded-3xl bg-white shadow-[0_1px_2px_hsl(var(--brand-overlay)/0.05),0_14px_34px_-22px_hsl(var(--brand-overlay)/0.45)] ring-1 ring-brand-overlay/8 transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:group-hover:-translate-y-1 motion-safe:group-hover:shadow-[0_1px_2px_hsl(var(--brand-overlay)/0.06),0_26px_50px_-24px_hsl(var(--brand-overlay)/0.55)]">
+    <article className="group flex h-full w-full flex-col overflow-hidden rounded-3xl bg-white shadow-[0_1px_2px_hsl(var(--brand-overlay)/0.05),0_14px_34px_-22px_hsl(var(--brand-overlay)/0.45)] ring-1 ring-brand-overlay/8 transition-[transform,box-shadow] duration-500 ease-in-out motion-safe:group-hover:-translate-y-1 motion-safe:group-hover:shadow-[0_1px_2px_hsl(var(--brand-overlay)/0.06),0_26px_50px_-24px_hsl(var(--brand-overlay)/0.55)]">
       <ImageCurtainReveal className="relative min-h-[7.5rem] flex-1 overflow-hidden">
         <PublicImage
           src={imageSrc}

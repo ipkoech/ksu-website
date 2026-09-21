@@ -7,7 +7,7 @@ import type { FieldSelectionParams, PaginationParams } from "../client";
 export function useDepartments(params?: PaginationParams & { school_id?: string; search?: string; wing_id?: string; department_type?: string }) {
   return useQuery({
     queryKey: queryKeys.departments.list(params),
-    queryFn: () => departmentsApi.list(params),
+    queryFn: ({ signal }) => departmentsApi.list(params, { signal }),
   });
 }
 

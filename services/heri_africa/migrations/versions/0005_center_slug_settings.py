@@ -10,10 +10,26 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("site_settings", sa.Column("research_center_slug", sa.String(180), nullable=True), schema="heri")
-    op.create_index("ix_heri_site_settings_research_center_slug", "site_settings", ["research_center_slug"], schema="heri")
-    op.add_column("partners", sa.Column("research_center_slug", sa.String(180), nullable=True), schema="heri")
-    op.create_index("ix_heri_partners_research_center_slug", "partners", ["research_center_slug"], schema="heri")
+    inspector = sa.inspect(op.get_bind())
+    for table_name in ("site_settings", "partners"):
+        columns = {column["name"] for column in inspector.get_columns(table_name, schema="heri")}
+        if "research_center_slug" not in columns:
+            op.add_column(
+                table_name,
+                sa.Column("research_center_slug", sa.String(180), nullable=True),
+                schema="heri",
+            )
+    indexes = {
+        index["name"]
+        for table_name in ("site_settings", "partners")
+        for index in inspector.get_indexes(table_name, schema="heri")
+    }
+    for name, table_name in (
+        ("ix_heri_site_settings_research_center_slug", "site_settings"),
+        ("ix_heri_partners_research_center_slug", "partners"),
+    ):
+        if name not in indexes:
+            op.create_index(name, table_name, ["research_center_slug"], schema="heri")
 
 
 def downgrade() -> None:

@@ -8,7 +8,7 @@ import { BindableRecordsCard, RelatedRecordsCard } from "../../_components/resea
 export default function ResearchProgramDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Program"
+      title="Program"
       description="View program metadata, lead, center binding, projects, impact metrics, and audit history."
       resource={researchServiceApi.programs}
       backHref="/research/programs"
@@ -18,6 +18,7 @@ export default function ResearchProgramDetailPage() {
         <ResearchCoreDetailActions
           record={record}
           resource={researchServiceApi.programs}
+          resourceKey="programs"
           resourceLabel="Program"
           listHref="/research/programs"
         />

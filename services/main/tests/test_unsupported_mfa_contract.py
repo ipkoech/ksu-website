@@ -1,4 +1,4 @@
-"""MFA must not appear configurable until challenge and recovery are implemented."""
+"""Generic account mutations must not bypass MFA enrollment and proof."""
 
 import pytest
 from pydantic import ValidationError
@@ -28,7 +28,7 @@ def test_user_contracts_do_not_advertise_mfa() -> None:
     ],
 )
 def test_user_contracts_reject_unsupported_mfa_state(schema, payload) -> None:
-    with pytest.raises(ValidationError, match="MFA enrollment is not supported"):
+    with pytest.raises(ValidationError, match="Use MFA enrollment endpoints"):
         schema.model_validate(payload)
 
 

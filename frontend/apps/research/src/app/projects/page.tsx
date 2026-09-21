@@ -13,7 +13,6 @@ import {
 } from "../../components/research-portfolio";
 import {
   Badge,
-  FilledBadge,
   StatusMessage,
 } from "../../components/research-ui";
 import {
@@ -26,7 +25,7 @@ import {
   getProjects,
   getResearchPortfolioStats,
 } from "../../lib/research-public-data";
-import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
+import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client/server";
 import {
   getProjectMonths,
   getProjectYears,
@@ -35,11 +34,12 @@ import { getListPageSize } from "../../lib/research-page-model";
 import { ResearchImage } from "../../components/research-image";
 import { ResearchDiscoveryInteractive } from "../../components/research-discovery-interactive";
 import { ResearchBackground } from "../../components/research-background";
+import { ProjectResults, type ProjectResultDto } from "../../components/project-results";
 
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Research Projects",
+  title: "Projects",
   description: "Browse Kisii University research projects and active research work.",
 };
 
@@ -114,6 +114,33 @@ export default async function ProjectsPage({
   const years = getProjectYears(projectFilterRecords.data);
   const months = getProjectMonths(projectFilterRecords.data, params.year);
   const visibleProjects = projects.data;
+  const projectResultDtos: ProjectResultDto[] = visibleProjects.map((project) => {
+    const record = project as ResearchProject & Record<string, unknown>;
+    const cover = record.cover_image;
+    const coverImage = cover && typeof cover === "object" ? cover as Record<string, unknown> : null;
+    return {
+      id: project.id,
+      title: project.title,
+      slug: project.slug,
+      code: project.code ?? null,
+      project_type: project.project_type ?? null,
+      status: project.status ?? null,
+      is_featured: Boolean(project.is_featured),
+      summary: project.summary ?? null,
+      start_date: project.start_date ?? null,
+      end_date: project.end_date ?? null,
+      cover_image_url: project.cover_image_url ?? null,
+      principal_investigator_name: typeof record.principal_investigator_name === "string" ? record.principal_investigator_name : null,
+      lead_researcher: typeof record.lead_researcher === "string" ? record.lead_researcher : null,
+      center_name: typeof record.center_name === "string" ? record.center_name : null,
+      cover_image: coverImage ? {
+        url: typeof coverImage.url === "string" ? coverImage.url : null,
+        public_url: typeof coverImage.public_url === "string" ? coverImage.public_url : null,
+        thumbnail_url: typeof coverImage.thumbnail_url === "string" ? coverImage.thumbnail_url : null,
+        file_url: typeof coverImage.file_url === "string" ? coverImage.file_url : null,
+      } : null,
+    };
+  });
   const totalPages = Math.ceil(projects.total / projects.perPage);
 
   return (
@@ -127,10 +154,10 @@ export default async function ProjectsPage({
     >
       <ResearchPortfolioHero
         eyebrow="Research & Discovery"
-        title="Ideas tested. Evidence created. Communities changed."
+        title="Projects"
         body="Explore the questions Kisii University researchers are pursuing and the practical outcomes emerging from laboratories, field sites, communities, and partnerships."
         illustration="projects"
-        imageSrc="/institutional-research-images/research-header.jpg"
+        imageSrc="/images/research/headers/innovation-week-8246.jpg"
         immersive
       />
 
@@ -178,13 +205,7 @@ export default async function ProjectsPage({
           ))}
 
         {visibleProjects.length > 0 ? (
-          <>
-            {view === "cards" ? (
-              <ProjectCardGrid projects={visibleProjects} />
-            ) : (
-              <ProjectTable projects={visibleProjects} />
-            )}
-          </>
+          <ProjectResults projects={projectResultDtos} view={view} />
         ) : (
           <div className="mt-7">
             <StatusMessage>
@@ -367,114 +388,6 @@ function ProjectViewSwitch({
   );
 }
 
-function ProjectTable({ projects }: { projects: ResearchProject[] }) {
-  return (
-    <div className="mt-4 overflow-hidden rounded-xl border border-primary/15 bg-white/75 shadow-[0_16px_45px_-42px_hsl(var(--primary)/0.6)]">
-      <div className="hidden grid-cols-[minmax(250px,1.35fr)_130px_minmax(150px,.8fr)_110px_100px_minmax(180px,1fr)] gap-4 border-b border-primary/10 bg-primary/[0.035] px-4 py-3 text-[0.68rem] font-bold uppercase tracking-wider text-muted-foreground xl:grid">
-        <span>Project</span>
-        <span>Theme</span>
-        <span>Lead / Centre</span>
-        <span>Status</span>
-        <span>Period</span>
-        <span>Impact snapshot</span>
-      </div>
-      <div className="divide-y divide-border">
-        {projects.map((project) => (
-          <ProjectRow key={project.id} project={project} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ProjectRow({ project }: { project: ResearchProject }) {
-  const href = project.slug ? `/projects/${project.slug}` : "/projects";
-  const record = project as ResearchProject & Record<string, unknown>;
-  const lead = compactText(String(record.principal_investigator_name ?? "")) || compactText(String(record.lead_researcher ?? "")) || compactText(String(record.center_name ?? "")) || "Kisii University";
-  const startYear = compactText(String(record.start_date ?? "")).slice(0, 4);
-  const endYear = compactText(String(record.end_date ?? "")).slice(0, 4);
-  const period = [startYear, endYear].filter(Boolean).join("–") || "Current";
-  return (
-    <Link
-      href={href}
-      className="group grid gap-2 border-l-2 border-transparent px-4 py-3.5 transition hover:border-secondary hover:bg-primary/[0.025] xl:grid-cols-[minmax(250px,1.35fr)_130px_minmax(150px,.8fr)_110px_100px_minmax(180px,1fr)] xl:items-center xl:gap-4"
-    >
-      <div className="min-w-0">
-        <h2 className="truncate text-sm font-semibold leading-6 text-foreground transition group-hover:text-primary">
-          {project.title}
-        </h2>
-        {project.code ? (
-          <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{project.code}</p>
-        ) : null}
-      </div>
-      <div className="text-xs font-semibold text-primary">
-        {project.project_type ? formatLabel(project.project_type) : "Research"}
-      </div>
-      <p className="truncate text-xs leading-5 text-muted-foreground">{lead}</p>
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge>{formatLabel(project.status ?? "ongoing")}</Badge>
-        {project.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
-      </div>
-      <p className="text-xs font-medium text-muted-foreground">{period}</p>
-      <p className="line-clamp-2 text-xs leading-5 text-muted-foreground">{compactText(project.summary) || "Research activity and outputs in progress."}</p>
-    </Link>
-  );
-}
-
-function ProjectCardGrid({ projects }: { projects: ResearchProject[] }) {
-  return (
-    <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
-      {projects.map((project) => (
-        <ProjectCard key={project.id} project={project} />
-      ))}
-    </div>
-  );
-}
-
-function ProjectCard({ project }: { project: ResearchProject }) {
-  const href = project.slug ? `/projects/${project.slug}` : "/projects";
-  const image = getProjectCoverImage(project);
-  return (
-    <Link
-      href={href}
-      className="group overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
-    >
-      {image ? (
-        <div
-          className="aspect-[4/3] bg-surface-muted bg-cover bg-center"
-          style={{ backgroundImage: `url('${image}')` }}
-        />
-      ) : (
-        <div className="relative aspect-[4/3] overflow-hidden bg-[hsl(var(--brand-overlay))]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_25%,hsl(var(--success)/0.42),transparent_28%),linear-gradient(135deg,hsl(var(--brand-overlay)),hsl(var(--success)))]" />
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.12)_1px,transparent_1px)] bg-[size:22px_22px] opacity-60" />
-          <div className="absolute bottom-3 left-3 right-3 h-10 rounded-md border border-white/20 bg-white/10" />
-        </div>
-      )}
-      <div className="p-3">
-        <div className="flex flex-wrap gap-1.5">
-          <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">
-            {formatLabel(project.status ?? "ongoing")}
-          </span>
-          {project.is_featured ? (
-            <span className="rounded-md bg-secondary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-secondary">
-              Featured
-            </span>
-          ) : null}
-        </div>
-        <h2 className="mt-2 line-clamp-2 min-h-[2.5rem] text-xs font-semibold leading-5 text-foreground transition group-hover:text-primary sm:text-sm">
-          {project.title}
-        </h2>
-        {project.summary ? (
-          <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-muted-foreground">
-            {project.summary}
-          </p>
-        ) : null}
-      </div>
-    </Link>
-  );
-}
-
 function getActiveFlags(value?: string) {
   if (value === "inactive") return { isActive: false };
   if (value === "featured") return { isActive: true, isFeatured: true };
@@ -495,11 +408,5 @@ function getProjectCoverImage(project: ResearchProject) {
     } | null;
   }).cover_image;
 
-  return (
-    compactText(cover?.thumbnail_url) ||
-    compactText(cover?.public_url) ||
-    compactText(cover?.url) ||
-    compactText(cover?.file_url) ||
-    compactText(project.cover_image_url)
-  );
+  return compactText(cover?.thumbnail_url) || compactText(cover?.public_url) || compactText(cover?.url) || compactText(cover?.file_url) || compactText(project.cover_image_url);
 }

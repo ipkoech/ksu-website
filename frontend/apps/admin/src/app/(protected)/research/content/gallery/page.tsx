@@ -41,6 +41,7 @@ import {
   Textarea,
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const galleryFilters: EditableListFilter[] = [
   { name: "parent_id", label: "Parent Folder", type: "entity", relation: { adapter: "mediaFolder", filters: { scope_type: "research" } } },
@@ -143,6 +144,7 @@ function GalleryAssetWorkflow() {
         role: role.trim() || "gallery",
         is_public: true,
       });
+      void revalidatePublicContent("research", "content");
       toast.success("Media linked to research record");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Media link failed");
@@ -162,6 +164,7 @@ function GalleryAssetWorkflow() {
           <MediaPicker
             value={mediaId}
             onChange={(value) => setMediaId(value)}
+            onUploaded={() => revalidatePublicContent("research", "content")}
             label="Research media"
             helperText="Browse or upload media through the main media service with entity_type: research."
             dialogTitle="Research Asset Library"
@@ -226,6 +229,7 @@ function GalleryAssetWorkflow() {
                       aria-label="Unlink media"
                       onClick={async () => {
                         await deleteLink.mutateAsync(link.id);
+                        void revalidatePublicContent("research", "content");
                         toast.success("Media unlinked from research record");
                       }}
                     >
@@ -287,6 +291,7 @@ function AssetUsageDrawer({
           is_public: isPublic,
         },
       });
+      void revalidatePublicContent("research", "content");
       toast.success("Media metadata updated");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Media update failed");
@@ -297,6 +302,7 @@ function AssetUsageDrawer({
     if (!deleteTarget) return;
     try {
       await deleteMedia.mutateAsync(deleteTarget.id);
+      void revalidatePublicContent("research", "content");
       toast.success("Media asset removed");
       setDeleteTarget(null);
       onOpenChange(false);
@@ -390,7 +396,7 @@ export default function ResearchGalleryPage() {
 
   return (
     <EditableServiceResourcePage<GalleryRecord, Record<string, any>>
-      title="Research Gallery"
+      title="Gallery"
       description="Manage research-scoped media folders used by the main media service."
       backHref="/research/content"
       queryKey={["research", "content", "gallery"]}
@@ -410,7 +416,7 @@ export default function ResearchGalleryPage() {
         { label: "Recently updated", sort: "updated_at", order: "desc" },
         { label: "Folder name A-Z", sort: "name", order: "asc" },
       ]}
-      toolbarSlot={<ResearchSectionGuide title="Research Content" className="sm:ml-auto" />}
+      toolbarSlot={<ResearchSectionGuide title="Content" className="sm:ml-auto" />}
       renderMobileRecord={GalleryMobileRecord}
       fields={withResearchFieldHelp([
         { name: "name", label: "Name", required: true },
@@ -433,6 +439,7 @@ export default function ResearchGalleryPage() {
       canEdit={canManage}
       canDelete={canManage}
       resourceKey="content"
+      revalidateResearchCache
     />
   );
 }

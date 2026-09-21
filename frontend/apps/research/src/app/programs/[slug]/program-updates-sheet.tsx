@@ -31,7 +31,7 @@ export function ProgramUpdatesSheet({ groups }: { groups: ProgramUpdateGroup[] }
   if (!visibleGroups.length) return null;
 
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+    <section className="overflow-hidden rounded-lg border border-border bg-white shadow-sm" data-server-data-display="research-program-updates">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
         <div>
           <h2 className="font-display text-xl font-semibold text-foreground">

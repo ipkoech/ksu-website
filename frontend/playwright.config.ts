@@ -1,7 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  timeout: 60_000,
+  // A cold Next dev runtime can spend over a minute compiling a large route
+  // before the first response; keep the browser gate reliable without
+  // weakening its assertions.
+  timeout: 120_000,
   fullyParallel: false,
   workers: 1,
   forbidOnly: Boolean(process.env.CI),
@@ -18,6 +21,18 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         baseURL: process.env.WEB_E2E_BASE_URL ?? "http://localhost:3000",
+      },
+    },
+    {
+      name: "web-responsive-audit",
+      testDir: "./apps/web",
+      testMatch: "page-cms-visual-audit.spec.ts",
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL:
+          process.env.PAGE_CMS_AUDIT_BASE_URL ??
+          process.env.WEB_E2E_BASE_URL ??
+          "http://localhost:3000",
       },
     },
     {

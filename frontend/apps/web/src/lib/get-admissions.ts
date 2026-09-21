@@ -1,4 +1,5 @@
-import { admissionsApi, intakesApi, programmesApi } from "@ksu/api-client";
+import "server-only";
+import { admissionsApi, intakesApi, programmesApi } from "@ksu/api-client/server";
 import type {
   AdmissionDocument,
   AdmissionFaq,
@@ -9,8 +10,13 @@ import type {
   Intake,
   Programme,
   ProgrammeFeeStructure,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
 import { publicFileUrl } from "@/lib/public-media";
+import {
+  markUncacheableIfFailed,
+  uncachedPublicFallback,
+} from "@/lib/public-fetch";
+import { normalizePublicListResponse } from "@/lib/web-response-shapes";
 
 export interface AdmissionsIntakeSummary {
   id: string;
@@ -74,6 +80,13 @@ function mapAdmissionInfo(info: AdmissionInfo): AdmissionsInfoSummary {
   };
 }
 
+function settledList<T>(result: PromiseSettledResult<unknown>): T[] {
+  if (result.status === "rejected") return [];
+  const normalized = normalizePublicListResponse<T>(result.value);
+  if (!normalized) return uncachedPublicFallback([]);
+  return normalized.data;
+}
+
 export async function getAdmissionsPageData(): Promise<AdmissionsPageData> {
   const [
     intakesResult,
@@ -129,6 +142,20 @@ export async function getAdmissionsPageData(): Promise<AdmissionsPageData> {
     }),
   ]);
 
+  // Partial admissions content is useful for this request, but an outage
+  // must not be persisted as a complete-looking empty admissions page.
+  markUncacheableIfFailed([
+    intakesResult,
+    admissionInfoResult,
+    pathwaysResult,
+    requirementsResult,
+    feeStructuresResult,
+    documentsResult,
+    faqsResult,
+    pageSectionsResult,
+    programmesResult,
+  ]);
+
   if (intakesResult.status === "rejected") {
     console.error("Failed to fetch admissions intakes:", intakesResult.reason);
   }
@@ -142,38 +169,21 @@ export async function getAdmissionsPageData(): Promise<AdmissionsPageData> {
 
   return {
     intakes:
-      intakesResult.status === "fulfilled"
-        ? (intakesResult.value.data ?? []).map(mapIntake)
-        : [],
+      settledList<Intake>(intakesResult).map(mapIntake),
     admissionInfo:
-      admissionInfoResult.status === "fulfilled"
-        ? (admissionInfoResult.value.data ?? []).map(mapAdmissionInfo)
-        : [],
+      settledList<AdmissionInfo>(admissionInfoResult).map(mapAdmissionInfo),
     pathways:
-      pathwaysResult.status === "fulfilled"
-        ? (pathwaysResult.value.data ?? [])
-        : [],
+      settledList<AdmissionPathway>(pathwaysResult),
     requirements:
-      requirementsResult.status === "fulfilled"
-        ? (requirementsResult.value.data ?? [])
-        : [],
+      settledList<AdmissionRequirement>(requirementsResult),
     feeStructures:
-      feeStructuresResult.status === "fulfilled"
-        ? (feeStructuresResult.value.data ?? [])
-        : [],
+      settledList<ProgrammeFeeStructure>(feeStructuresResult),
     documents:
-      documentsResult.status === "fulfilled"
-        ? (documentsResult.value.data ?? [])
-        : [],
-    faqs:
-      faqsResult.status === "fulfilled" ? (faqsResult.value.data ?? []) : [],
+      settledList<AdmissionDocument>(documentsResult),
+    faqs: settledList<AdmissionFaq>(faqsResult),
     pageSections:
-      pageSectionsResult.status === "fulfilled"
-        ? (pageSectionsResult.value.data ?? [])
-        : [],
+      settledList<AdmissionPageSection>(pageSectionsResult),
     programmes:
-      programmesResult.status === "fulfilled"
-        ? (programmesResult.value.data ?? [])
-        : [],
+      settledList<Programme>(programmesResult),
   };
 }

@@ -1,0 +1,62 @@
+{
+  "captured_at": "2026-09-06",
+  "command": "python scripts/forbidden_scope_smoke.py services/forbidden-scope-smoke-20260906.json --max-workers 2",
+  "limitations": [
+    "Main's session/role-backed scope guard is not bypassed by this smoke; Main scope outcomes remain covered by database-backed authorization tests.",
+    "This covers empty-scope forbidden responses for selected Research, Library and HERI routes only; it does not prove record ownership or every permission name."
+  ],
+  "result": "passed",
+  "services": {
+    "heri_africa": {
+      "cases": [
+        {
+          "expected": [
+            403
+          ],
+          "method": "GET",
+          "ok": true,
+          "path": "/api/v1/heri/admin/dashboard",
+          "status": 403
+        }
+      ],
+      "passed": 1
+    },
+    "library": {
+      "cases": [
+        {
+          "expected": [
+            403
+          ],
+          "method": "GET",
+          "ok": true,
+          "path": "/api/v1/library/stats/admin",
+          "status": 403
+        }
+      ],
+      "passed": 1
+    },
+    "research": {
+      "cases": [
+        {
+          "expected": [
+            403
+          ],
+          "method": "GET",
+          "ok": true,
+          "path": "/api/v1/analytics/dashboard",
+          "status": 403
+        },
+        {
+          "expected": [
+            403
+          ],
+          "method": "GET",
+          "ok": true,
+          "path": "/api/v1/ask-ai/conversations",
+          "status": 403
+        }
+      ],
+      "passed": 2
+    }
+  }
+}

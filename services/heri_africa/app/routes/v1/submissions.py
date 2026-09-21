@@ -21,6 +21,7 @@ from ...schemas.submissions import (
 )
 from ...models.content import Event
 from pydantic import BaseModel, EmailStr, Field
+from ...schemas.operations import SubmissionResponse
 
 router = APIRouter(tags=["HERI Submissions"])
 
@@ -308,13 +309,13 @@ async def _save_submission(
     )
 
 
-@router.post("/contact", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/contact", response_model=SubmissionResponse, status_code=status.HTTP_202_ACCEPTED)
 @rate_limit(requests=5, window=300, prefix="heri:contact:ip", max_body_bytes=32 * 1024)
 async def contact(payload: ContactSubmission, request: Request, db: AsyncSession = Depends(get_db)):
     return await _save_submission("contact", payload, db, request)
 
 
-@router.post("/partnership-applications", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/partnership-applications", response_model=SubmissionResponse, status_code=status.HTTP_202_ACCEPTED)
 @rate_limit(
     requests=5,
     window=3600,
@@ -325,13 +326,13 @@ async def partnership(payload: PartnershipSubmission, request: Request, db: Asyn
     return await _save_submission("partnership", payload, db, request)
 
 
-@router.post("/network-applications", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/network-applications", response_model=SubmissionResponse, status_code=status.HTTP_202_ACCEPTED)
 @rate_limit(requests=5, window=3600, prefix="heri:network:ip", max_body_bytes=32 * 1024)
 async def network(payload: NetworkSubmission, request: Request, db: AsyncSession = Depends(get_db)):
     return await _save_submission("network", payload, db, request)
 
 
-@router.post("/newsletter/subscribe", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/newsletter/subscribe", response_model=SubmissionResponse, status_code=status.HTTP_202_ACCEPTED)
 @rate_limit(
     requests=3,
     window=3600,
@@ -342,7 +343,7 @@ async def newsletter(payload: NewsletterSubmission, request: Request, db: AsyncS
     return await _save_submission("newsletter", payload, db, request)
 
 
-@router.post("/events/{event_id}/register", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/events/{event_id}/register", response_model=SubmissionResponse, status_code=status.HTTP_202_ACCEPTED)
 @rate_limit(
     requests=5,
     window=3600,

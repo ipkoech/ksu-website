@@ -50,11 +50,15 @@ export function usePermissions() {
   }, [currentServiceAccess]);
 
   const availableScopes = useMemo(() => {
+    // Once a service is selected, only that service's scopes are valid for
+    // client-side gating. The account-level permission list spans every
+    // service and must only be used before a service context exists.
+    if (activeService) return new Set(scopes);
     return new Set([
       ...scopes,
       ...(user?.permissions ?? []).map(normalizeScope),
     ]);
-  }, [scopes, user?.permissions]);
+  }, [activeService, scopes, user?.permissions]);
 
   const hasScope = (scope: string): boolean => {
     if (!user) return false;

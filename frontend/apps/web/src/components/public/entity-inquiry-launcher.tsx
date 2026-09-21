@@ -9,6 +9,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { mainApi } from "@ksu/api-client";
+import { useCommandKey } from "@/lib/use-command-key";
 import {
   Button,
   Checkbox,
@@ -79,6 +80,14 @@ export function EntityInquiryLauncher({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [reference, setReference] = useState("");
+  const pending = useRef(false);
+  const submitAbortRef = useRef<AbortController | null>(null);
+  const command = useCommandKey();
+
+  useEffect(() => () => {
+    submitAbortRef.current?.abort();
+    submitAbortRef.current = null;
+  }, []);
 
   useEffect(() => {
     const slot = document.getElementById(KSU_CONTEXTUAL_ACTION_SLOT_ID);
@@ -97,10 +106,7 @@ export function EntityInquiryLauncher({
 
     return () => {
       if (previousOffset) {
-        dock.style.setProperty(
-          "--ksu-floating-bottom-offset",
-          previousOffset,
-        );
+        dock.style.setProperty("--ksu-floating-bottom-offset", previousOffset);
       } else {
         dock.style.removeProperty("--ksu-floating-bottom-offset");
       }
@@ -118,7 +124,9 @@ export function EntityInquiryLauncher({
   function updateDraft(
     field: keyof InquiryDraft,
   ): (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    event: ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => void {
     return (event) => {
       setDraft((current) => ({
@@ -130,45 +138,62 @@ export function EntityInquiryLauncher({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending.current) return;
     const form = event.currentTarget;
     if (!form.checkValidity() || !draft.consentToContact) {
       const invalidControl =
         form.querySelector<HTMLElement>(":invalid") ??
-        form.querySelector<HTMLElement>(
-          '[name="consent_to_contact"]',
-        );
+        form.querySelector<HTMLElement>('[name="consent_to_contact"]');
       invalidControl?.focus();
       return;
     }
 
+    pending.current = true;
     setSubmitting(true);
     setError("");
+    const controller = new AbortController();
+    submitAbortRef.current?.abort();
+    submitAbortRef.current = controller;
 
     try {
-      const response = await mainApi.post<InquiryResponse>(
-        `/api/v1/public/entities/${target.type}/${encodeURIComponent(target.slug)}/inquiries`,
-        {
-          sender_name: draft.senderName,
-          sender_email: draft.senderEmail,
-          sender_phone: draft.senderPhone || null,
-          category: draft.category,
-          subject: draft.subject,
-          message: draft.message,
-          consent_to_contact: draft.consentToContact,
-          website: draft.website,
-          source_page_url: window.location.pathname,
-        },
-      );
+      const path = `/api/v1/public/entities/${target.type}/${encodeURIComponent(target.slug)}/inquiries`;
+      const payload = {
+        sender_name: draft.senderName,
+        sender_email: draft.senderEmail,
+        sender_phone: draft.senderPhone || null,
+        category: draft.category,
+        subject: draft.subject,
+        message: draft.message,
+        consent_to_contact: draft.consentToContact,
+        website: draft.website,
+        source_page_url: window.location.pathname,
+      };
+      const response = await mainApi.post<InquiryResponse>(path, payload, {
+        auth: "none",
+        headers: { "Idempotency-Key": command.forPayload(path, payload) },
+        signal: controller.signal,
+      });
+      if (!response?.data?.reference_number) {
+        throw new Error(
+          "The response did not include a reference number. Please retry your message.",
+        );
+      }
+      command.confirmed();
       setDraft(initialDraft);
       setReference(response.data.reference_number);
     } catch (caught) {
+      if (controller.signal.aborted) return;
       setError(
         caught instanceof Error
           ? caught.message
           : "We could not send your message. Please try again.",
       );
     } finally {
-      setSubmitting(false);
+      if (submitAbortRef.current === controller) {
+        submitAbortRef.current = null;
+        pending.current = false;
+        setSubmitting(false);
+      }
     }
   }
 
@@ -210,6 +235,7 @@ export function EntityInquiryLauncher({
           side="right"
           onCloseAutoFocus={(event) => {
             event.preventDefault();
+            if (pending.current) return;
             launcherRef.current?.focus();
           }}
           className="flex h-dvh w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-xl"
@@ -232,9 +258,7 @@ export function EntityInquiryLauncher({
           </p>
 
           {reference ? (
-            <div
-              className="overflow-y-auto px-6 py-10 text-center sm:px-8"
-            >
+            <div className="overflow-y-auto px-6 py-10 text-center sm:px-8">
               <CheckCircle2
                 aria-hidden
                 className="mx-auto h-12 w-12 text-emerald-600"
@@ -272,6 +296,7 @@ export function EntityInquiryLauncher({
               <div className="grid gap-1.5">
                 <Label htmlFor="inquiry-name">Your name</Label>
                 <Input
+                  disabled={submitting}
                   id="inquiry-name"
                   name="sender_name"
                   value={draft.senderName}
@@ -284,6 +309,7 @@ export function EntityInquiryLauncher({
               <div className="grid gap-1.5">
                 <Label htmlFor="inquiry-email">Email address</Label>
                 <Input
+                  disabled={submitting}
                   id="inquiry-email"
                   name="sender_email"
                   type="email"
@@ -296,6 +322,7 @@ export function EntityInquiryLauncher({
               <div className="grid gap-1.5">
                 <Label htmlFor="inquiry-phone">Phone (optional)</Label>
                 <Input
+                  disabled={submitting}
                   id="inquiry-phone"
                   name="sender_phone"
                   type="tel"
@@ -307,6 +334,7 @@ export function EntityInquiryLauncher({
               <div className="grid gap-1.5">
                 <Label htmlFor="inquiry-category">Category</Label>
                 <select
+                  disabled={submitting}
                   id="inquiry-category"
                   name="category"
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -324,6 +352,7 @@ export function EntityInquiryLauncher({
               <div className="grid gap-1.5 sm:col-span-2">
                 <Label htmlFor="inquiry-subject">Subject</Label>
                 <Input
+                  disabled={submitting}
                   id="inquiry-subject"
                   name="subject"
                   value={draft.subject}
@@ -335,6 +364,7 @@ export function EntityInquiryLauncher({
               <div className="grid gap-1.5 sm:col-span-2">
                 <Label htmlFor="inquiry-message">Message</Label>
                 <Textarea
+                  disabled={submitting}
                   id="inquiry-message"
                   name="message"
                   value={draft.message}
@@ -347,6 +377,7 @@ export function EntityInquiryLauncher({
               <div className="absolute -left-[9999px]" aria-hidden="true">
                 <Label htmlFor="inquiry-website">Website</Label>
                 <Input
+                  disabled={submitting}
                   id="inquiry-website"
                   name="website"
                   value={draft.website}
@@ -357,6 +388,7 @@ export function EntityInquiryLauncher({
               </div>
               <label className="flex items-start gap-3 text-sm leading-5 text-muted-foreground sm:col-span-2">
                 <Checkbox
+                  disabled={submitting}
                   name="consent_to_contact"
                   checked={draft.consentToContact}
                   onCheckedChange={(checked) =>
@@ -388,10 +420,7 @@ export function EntityInquiryLauncher({
                   className="min-w-36 gap-2"
                 >
                   {submitting ? (
-                    <Loader2
-                      aria-hidden
-                      className="h-4 w-4 animate-spin"
-                    />
+                    <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
                   ) : (
                     <Send aria-hidden className="h-4 w-4" />
                   )}

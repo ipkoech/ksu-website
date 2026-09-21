@@ -1,5 +1,5 @@
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { compactText, formatDate } from "./research-public-data";
+import { compactText, formatDate } from "./research-formatters";
 
 export type MonthOption = {
   value: string;

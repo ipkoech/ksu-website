@@ -4,6 +4,7 @@ import { Button } from "@ksu/ui";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -26,6 +27,9 @@ export function InfoButton({ title, children }: InfoButtonProps) {
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
+          <DialogDescription className="sr-only">
+            Additional information about {title}
+          </DialogDescription>
         </DialogHeader>
         <div className="prose prose-sm dark:prose-invert max-w-none">
           {children}

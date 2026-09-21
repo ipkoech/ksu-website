@@ -18,7 +18,7 @@ List Audit Logs
 - Auth: public
 - Request body: -
 - Parameters: `page` (query, integer), `per_page` (query, integer), `user_id` (query, string | null), `resource_type` (query, string | null), `status` (query, string | null), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ## Competition Entries
 
@@ -28,98 +28,98 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/competition-entries`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: CompetitionEntryCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/competition-entries/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: CompetitionEntryUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/competition-entries/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/competition-entries/id/{item_id}/approve`
 
 Approve Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/competition-entries/id/{item_id}/archive`
 
 Archive Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/competition-entries/id/{item_id}/entry-status`
 
 Set Competition Entry Status
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: CompetitionEntryStatusAction
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/competition-entries/id/{item_id}/feature`
 
 Feature Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/competition-entries/id/{item_id}/publish`
 
 Publish Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/competition-entries/id/{item_id}/unfeature`
 
 Unfeature Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/competition-entries/id/{item_id}/unpublish`
 
 Unpublish Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/competition-entries/{slug}`
 
@@ -127,8 +127,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Consultancies
 
@@ -138,35 +138,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/consultancies`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ConsultancyCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/consultancies/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ConsultancyUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/consultancies/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/consultancies/{slug}`
 
@@ -174,8 +174,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Donation Impacts
 
@@ -185,53 +185,53 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/donation-impacts`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: DonationImpactCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/donation-impacts/id/{impact_id}/donations`
 
 List Impact Donations
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `impact_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `impact_id` (path, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/donation-impacts/id/{impact_id}/stories`
 
 List Impact Stories
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `impact_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `impact_id` (path, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PATCH /api/v1/donation-impacts/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: DonationImpactUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/donation-impacts/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/donation-impacts/{slug}`
 
@@ -239,8 +239,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Donation Settings
 
@@ -248,46 +248,46 @@ Get Item
 
 List Items
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/donation-settings`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: DonationSettingsCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/donation-settings/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: DonationSettingsUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/donation-settings/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/donation-settings/{slug}`
 
 Get Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Donation Stories
 
@@ -297,35 +297,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/donation-stories`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: DonationStoryCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/donation-stories/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: DonationStoryUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/donation-stories/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/donation-stories/{slug}`
 
@@ -333,8 +333,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Donations
 
@@ -342,37 +342,37 @@ Get Item
 
 List Items
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/donations`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: DonationCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/donations/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: DonationUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/donations/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/donations/submit`
 
@@ -380,26 +380,26 @@ Submit Public Donation
 
 - Auth: public
 - Request body: PublicDonationSubmission
-- Parameters: -
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string)
+- Success response: 201 SuccessEnvelope_PublicDonationSubmissionRead_
 
 ### `GET /api/v1/donations/summary`
 
 Get Donation Summary
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/donations/{slug}`
 
 Get Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Donors
 
@@ -407,55 +407,55 @@ Get Item
 
 List Items
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/donors`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: DonorCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/donors/id/{donor_id}/impacts`
 
 List Donor Impacts
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `donor_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `donor_id` (path, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PATCH /api/v1/donors/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: DonorUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/donors/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/donors/{slug}`
 
 Get Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Endowment Funds
 
@@ -465,35 +465,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/endowments`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: EndowmentFundCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/endowments/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: EndowmentFundUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/endowments/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/endowments/{slug}`
 
@@ -501,8 +501,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Expertise Tags
 
@@ -512,35 +512,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/expertise-tags`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ExpertiseTagCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/expertise-tags/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ExpertiseTagUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/expertise-tags/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/expertise-tags/{slug}`
 
@@ -548,8 +548,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Focus Areas
 
@@ -559,35 +559,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/focus-areas`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: FocusAreaCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/focus-areas/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: FocusAreaUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/focus-areas/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/focus-areas/{slug}`
 
@@ -595,8 +595,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Funding Sources
 
@@ -606,17 +606,17 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/funders`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: FundingCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/funders/id/{funder_id}/grants`
 
@@ -625,7 +625,7 @@ List Funder Grants
 - Auth: public
 - Request body: -
 - Parameters: `funder_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/funders/id/{funder_id}/projects`
 
@@ -634,25 +634,25 @@ List Funder Projects
 - Auth: public
 - Request body: -
 - Parameters: `funder_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PATCH /api/v1/funders/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: FundingUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/funders/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/funders/{slug}`
 
@@ -660,8 +660,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Grant Applications
 
@@ -669,64 +669,64 @@ Get Item
 
 List Items
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/grant-applications`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: GrantApplicationCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/grant-applications/id/{application_id}/reports`
 
 List Application Reports
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `application_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `application_id` (path, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/grant-applications/id/{application_id}/reviews`
 
 List Application Reviews
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `application_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `application_id` (path, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PATCH /api/v1/grant-applications/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: GrantApplicationUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/grant-applications/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/grant-applications/{slug}`
 
 Get Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Grant Guidelines
 
@@ -736,35 +736,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/grant-guidelines`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: GrantGuidelineCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/grant-guidelines/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: GrantGuidelineUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/grant-guidelines/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/grant-guidelines/{slug}`
 
@@ -772,8 +772,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Grant Reports
 
@@ -781,46 +781,46 @@ Get Item
 
 List Items
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/grant-reports`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: GrantReportCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/grant-reports/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: GrantReportUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/grant-reports/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/grant-reports/{slug}`
 
 Get Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Grant Reviews
 
@@ -828,46 +828,46 @@ Get Item
 
 List Items
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/grant-reviews`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: GrantReviewCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/grant-reviews/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: GrantReviewUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/grant-reviews/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/grant-reviews/{slug}`
 
 Get Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Grants
 
@@ -877,17 +877,17 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/grants`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: GrantCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/grants/id/{grant_id}/projects`
 
@@ -896,7 +896,7 @@ List Grant Projects
 - Auth: public
 - Request body: -
 - Parameters: `grant_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/grants/id/{grant_id}/themes`
 
@@ -905,43 +905,43 @@ List Grant Themes
 - Auth: public
 - Request body: -
 - Parameters: `grant_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/grants/id/{grant_id}/themes/{theme_id}`
 
 Add Grant Theme
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `grant_id` (path, string), `theme_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `grant_id` (path, string), `theme_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/grants/id/{grant_id}/themes/{theme_id}`
 
 Remove Grant Theme
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `grant_id` (path, string), `theme_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `grant_id` (path, string), `theme_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/grants/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: GrantUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/grants/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/grants/{slug}`
 
@@ -949,8 +949,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## HERI Public
 
@@ -963,7 +963,7 @@ Public partner directory feed consumed by the HERI Africa site.
 - Auth: public
 - Request body: -
 - Parameters: `center_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ## Health
 
@@ -974,7 +974,7 @@ Health
 - Auth: public
 - Request body: -
 - Parameters: -
-- Success response: 200 -
+- Success response: 200 SuccessResponse_HealthPayload_
 
 ## Impact Metrics
 
@@ -984,35 +984,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/impact-metrics`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ImpactMetricCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/impact-metrics/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ImpactMetricUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/impact-metrics/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/impact-metrics/{slug}`
 
@@ -1020,8 +1020,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Incubation Records
 
@@ -1031,107 +1031,107 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/incubation-records`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: IncubationRecordCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/incubation-records/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: IncubationRecordUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/incubation-records/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/incubation-records/id/{item_id}/approve`
 
 Approve Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/incubation-records/id/{item_id}/archive`
 
 Archive Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/incubation-records/id/{item_id}/assign-mentors`
 
 Assign Incubation Mentors
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: MentorAssignmentAction
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/incubation-records/id/{item_id}/feature`
 
 Feature Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/incubation-records/id/{item_id}/publish`
 
 Publish Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/incubation-records/id/{item_id}/stage`
 
 Set Incubation Stage
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: IncubationStageAction
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/incubation-records/id/{item_id}/unfeature`
 
 Unfeature Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/incubation-records/id/{item_id}/unpublish`
 
 Unpublish Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/incubation-records/{slug}`
 
@@ -1139,8 +1139,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Innovations
 
@@ -1150,17 +1150,17 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/innovations`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: InnovationCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/innovations/id/{innovation_id}/competition-entries`
 
@@ -1169,7 +1169,7 @@ List Innovation Competition Entries
 - Auth: public
 - Request body: -
 - Parameters: `innovation_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/innovations/id/{innovation_id}/incubation-records`
 
@@ -1178,7 +1178,7 @@ List Innovation Incubation Records
 - Auth: public
 - Request body: -
 - Parameters: `innovation_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/innovations/id/{innovation_id}/startups`
 
@@ -1187,7 +1187,7 @@ List Innovation Startups
 - Auth: public
 - Request body: -
 - Parameters: `innovation_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/innovations/id/{innovation_id}/technology-transfer-cases`
 
@@ -1196,25 +1196,25 @@ List Innovation Technology Transfer Cases
 - Auth: public
 - Request body: -
 - Parameters: `innovation_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PATCH /api/v1/innovations/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: InnovationUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/innovations/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/innovations/{slug}`
 
@@ -1222,10 +1222,21 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Internal
+
+### `POST /api/v1/internal/center-partners`
+
+List Internal Center Partner Links
+
+Return public partner links for a bounded set of centers in one query.
+
+- Auth: public
+- Request body: InternalCenterPartnersRequest
+- Parameters: `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null), `Idempotency-Key` (header, string)
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/internal/centers`
 
@@ -1234,7 +1245,7 @@ List Internal Centers
 - Auth: public
 - Request body: -
 - Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `GET /api/v1/internal/centers/{center_id}/partners`
 
@@ -1243,7 +1254,7 @@ List Internal Center Partners
 - Auth: public
 - Request body: -
 - Parameters: `center_id` (path, string), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `POST /api/v1/internal/imports/{resource}`
 
@@ -1256,8 +1267,8 @@ create route. Resource names and model columns are allow-listed here.
 
 - Auth: public
 - Request body: object
-- Parameters: `resource` (path, string), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
-- Success response: 200 -
+- Parameters: `resource` (path, string), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null), `Idempotency-Key` (header, string)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/internal/partners`
 
@@ -1266,7 +1277,7 @@ List Internal Partners
 - Auth: public
 - Request body: -
 - Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `partner_ids` (query, array<string> | null), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `GET /api/v1/internal/partners/{slug}`
 
@@ -1275,7 +1286,7 @@ Get Internal Partner
 - Auth: public
 - Request body: -
 - Parameters: `slug` (path, string), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/internal/stats`
 
@@ -1286,7 +1297,7 @@ Return the public Research statistics contract to authenticated peers.
 - Auth: public
 - Request body: -
 - Parameters: `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Journals
 
@@ -1296,35 +1307,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/journals`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: JournalCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/journals/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: JournalUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/journals/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/journals/{slug}`
 
@@ -1332,8 +1343,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Mentorship Applications
 
@@ -1341,46 +1352,46 @@ Get Item
 
 List Items
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/mentorship-applications`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: MentorshipApplicationCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/mentorship-applications/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: MentorshipApplicationUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/mentorship-applications/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/mentorship-applications/{slug}`
 
 Get Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Mentorship Matches
 
@@ -1388,46 +1399,46 @@ Get Item
 
 List Items
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/mentorship-matches`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: MentorshipMatchCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/mentorship-matches/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: MentorshipMatchUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/mentorship-matches/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/mentorship-matches/{slug}`
 
 Get Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Mentorship Programs
 
@@ -1437,35 +1448,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/mentorship`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: MentorshipProgramCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/mentorship/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: MentorshipProgramUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/mentorship/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/mentorship/{slug}`
 
@@ -1473,8 +1484,28 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
+
+## Page CMS Sources
+
+### `GET /api/v1/page-cms-sources/{source_type}`
+
+Search Page Cms Sources
+
+- Auth: public
+- Request body: -
+- Parameters: `source_type` (path, string), `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `center_id` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_PageCmsResearchSourceSummary__
+
+### `POST /api/v1/page-cms-sources/{source_type}/resolve`
+
+Resolve Page Cms Sources
+
+- Auth: public
+- Request body: PageCmsResearchSourceResolveRequest
+- Parameters: `source_type` (path, string), `Idempotency-Key` (header, string)
+- Success response: 200 SuccessEnvelope_list_PageCmsResearchSourceSummary__
 
 ## Partners
 
@@ -1484,35 +1515,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/partners`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PartnerCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/partners/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PartnerUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/partners/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/partners/id/{partner_id}/activities`
 
@@ -1521,7 +1552,7 @@ List Partner Activities
 - Auth: public
 - Request body: -
 - Parameters: `partner_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/partners/id/{partner_id}/competition-entries`
 
@@ -1530,7 +1561,7 @@ List Partner Competition Entries
 - Auth: public
 - Request body: -
 - Parameters: `partner_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/partners/id/{partner_id}/consultancies`
 
@@ -1539,7 +1570,7 @@ List Partner Consultancies
 - Auth: public
 - Request body: -
 - Parameters: `partner_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/partners/id/{partner_id}/farms`
 
@@ -1548,7 +1579,7 @@ List Partner Farms
 - Auth: public
 - Request body: -
 - Parameters: `partner_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/partners/id/{partner_id}/impact-metrics`
 
@@ -1557,7 +1588,7 @@ List Partner Impact Metrics
 - Auth: public
 - Request body: -
 - Parameters: `partner_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/partners/id/{partner_id}/impact-stories`
 
@@ -1566,7 +1597,7 @@ List Partner Impact Stories
 - Auth: public
 - Request body: -
 - Parameters: `partner_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/partners/id/{partner_id}/incubation-records`
 
@@ -1575,7 +1606,7 @@ List Partner Incubation Records
 - Auth: public
 - Request body: -
 - Parameters: `partner_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/partners/id/{partner_id}/projects`
 
@@ -1584,7 +1615,7 @@ List Partner Projects
 - Auth: public
 - Request body: -
 - Parameters: `partner_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/partners/id/{partner_id}/startups`
 
@@ -1593,7 +1624,7 @@ List Partner Startups
 - Auth: public
 - Request body: -
 - Parameters: `partner_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/partners/id/{partner_id}/sustainability`
 
@@ -1602,7 +1633,7 @@ List Partner Sustainability
 - Auth: public
 - Request body: -
 - Parameters: `partner_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/partners/id/{partner_id}/technology-transfer-cases`
 
@@ -1611,7 +1642,7 @@ List Partner Technology Transfer Cases
 - Auth: public
 - Request body: -
 - Parameters: `partner_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/partners/{slug}`
 
@@ -1619,8 +1650,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Publications
 
@@ -1630,35 +1661,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/publications`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PublicationCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/publications/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PublicationUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/publications/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/publications/{slug}`
 
@@ -1666,8 +1697,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Realtime
 
@@ -1678,7 +1709,7 @@ Get Item
 - Auth: public
 - Request body: -
 - Parameters: -
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Research Analytics
 
@@ -1686,9 +1717,18 @@ Get Item
 
 Get Research Dashboard Analytics
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `access_token` (cookie, string | null)
+- Parameters: `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 ResearchDashboardAnalyticsSuccessResponse
+
+### `GET /api/v1/research/analytics/dashboard`
+
+Get Research Dashboard Analytics
+
+- Auth: StrictHTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
 - Success response: 200 ResearchDashboardAnalyticsSuccessResponse
 
 ## Research Ask AI
@@ -1697,36 +1737,36 @@ Get Research Dashboard Analytics
 
 Ask Research Ai
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchAskAIRequest
-- Parameters: `access_token` (cookie, string | null)
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
 - Success response: 200 ResearchAskAISuccessResponse
 
 ### `GET /api/v1/ask-ai/conversations`
 
 List Ask Ai Conversations
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `access_token` (cookie, string | null)
+- Parameters: `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
 - Success response: 200 ResearchAskAIConversationListResponse
 
 ### `GET /api/v1/ask-ai/conversations/{conversation_id}/messages`
 
 List Ask Ai Messages
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `conversation_id` (path, string), `access_token` (cookie, string | null)
+- Parameters: `conversation_id` (path, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
 - Success response: 200 ResearchAskAIMessageListResponse
 
 ### `POST /api/v1/ask-ai/stream`
 
 Stream Research Ai
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchAskAIRequest
-- Parameters: `access_token` (cookie, string | null)
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
 - Success response: 200
 
 ## Research Centers
@@ -1737,17 +1777,17 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/centers`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchCenterCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/centers/id/{center_id}/farms`
 
@@ -1756,7 +1796,7 @@ List Center Farms
 - Auth: public
 - Request body: -
 - Parameters: `center_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/centers/id/{center_id}/focus-areas`
 
@@ -1765,25 +1805,25 @@ List Center Focus Areas
 - Auth: public
 - Request body: -
 - Parameters: `center_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/centers/id/{center_id}/focus-areas/{focus_area_id}`
 
 Add Center Focus Area
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `center_id` (path, string), `focus_area_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `center_id` (path, string), `focus_area_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/centers/id/{center_id}/focus-areas/{focus_area_id}`
 
 Remove Center Focus Area
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `center_id` (path, string), `focus_area_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `center_id` (path, string), `focus_area_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/centers/id/{center_id}/partners`
 
@@ -1792,25 +1832,25 @@ List Center Partners
 - Auth: public
 - Request body: -
 - Parameters: `center_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/centers/id/{center_id}/partners/{partner_id}`
 
 Add Center Partner
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: CenterPartnerLink | null
-- Parameters: `center_id` (path, string), `partner_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `center_id` (path, string), `partner_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/centers/id/{center_id}/partners/{partner_id}`
 
 Remove Center Partner
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `center_id` (path, string), `partner_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `center_id` (path, string), `partner_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/centers/id/{center_id}/programs`
 
@@ -1819,7 +1859,7 @@ List Center Programs
 - Auth: public
 - Request body: -
 - Parameters: `center_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/centers/id/{center_id}/projects`
 
@@ -1828,25 +1868,25 @@ List Center Projects
 - Auth: public
 - Request body: -
 - Parameters: `center_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PATCH /api/v1/centers/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchCenterUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/centers/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/centers/{slug}`
 
@@ -1854,8 +1894,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Research Exports
 
@@ -1863,36 +1903,36 @@ Get Item
 
 Get Research Export Job
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `job_id` (path, string), `access_token` (cookie, string | null)
+- Parameters: `job_id` (path, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
 - Success response: 200 ResearchExportJobSuccessResponse
 
 ### `GET /api/v1/exports/jobs/{job_id}/download`
 
 Download Research Export Job
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `job_id` (path, string), `access_token` (cookie, string | null)
+- Parameters: `job_id` (path, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
 - Success response: 200
 
 ### `GET /api/v1/exports/{resource_key}`
 
 Export Research Resource
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `resource_key` (path, string), `format` (query, string), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `publication_type` (query, string | null), `partner_type` (query, string | null), `consultancy_type` (query, string | null), `fund_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `initiative_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `grant_id` (query, string | null), `farm_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `limit` (query, integer), `access_token` (cookie, string | null)
+- Parameters: `resource_key` (path, string), `format` (query, string), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `publication_type` (query, string | null), `partner_type` (query, string | null), `consultancy_type` (query, string | null), `fund_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `initiative_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `grant_id` (query, string | null), `farm_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `limit` (query, integer), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
 - Success response: 200 object
 
 ### `POST /api/v1/exports/{resource_key}/jobs`
 
 Queue Research Export
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `resource_key` (path, string), `format` (query, string), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `publication_type` (query, string | null), `partner_type` (query, string | null), `consultancy_type` (query, string | null), `fund_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `initiative_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `grant_id` (query, string | null), `farm_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `limit` (query, integer), `access_token` (cookie, string | null)
+- Parameters: `resource_key` (path, string), `format` (query, string), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `publication_type` (query, string | null), `partner_type` (query, string | null), `consultancy_type` (query, string | null), `fund_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `initiative_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `grant_id` (query, string | null), `farm_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `limit` (query, integer), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
 - Success response: 202 ResearchExportJobSuccessResponse
 
 ## Research Farms
@@ -1903,17 +1943,17 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/farms`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchFarmCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/farms/id/{farm_id}/activities`
 
@@ -1922,7 +1962,7 @@ List Farm Activities
 - Auth: public
 - Request body: -
 - Parameters: `farm_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/farms/id/{farm_id}/impact-stories`
 
@@ -1931,7 +1971,7 @@ List Farm Impact Stories
 - Auth: public
 - Request body: -
 - Parameters: `farm_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/farms/id/{farm_id}/partners`
 
@@ -1940,7 +1980,7 @@ List Farm Partners
 - Auth: public
 - Request body: -
 - Parameters: `farm_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/farms/id/{farm_id}/projects`
 
@@ -1949,43 +1989,43 @@ List Farm Projects
 - Auth: public
 - Request body: -
 - Parameters: `farm_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/farms/id/{farm_id}/projects/{project_id}`
 
 Add Farm Project
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `farm_id` (path, string), `project_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `farm_id` (path, string), `project_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/farms/id/{farm_id}/projects/{project_id}`
 
 Remove Farm Project
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `farm_id` (path, string), `project_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `farm_id` (path, string), `project_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/farms/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchFarmUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/farms/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/farms/{slug}`
 
@@ -1993,8 +2033,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/farms/{slug}/detail`
 
@@ -2003,7 +2043,7 @@ Get Farm Detail
 - Auth: public
 - Request body: -
 - Parameters: `slug` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_ResearchFarmPublicDetail_
 
 ## Research Guidelines
 
@@ -2013,35 +2053,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/guidelines`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchGuidelineCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/guidelines/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchGuidelineUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/guidelines/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/guidelines/{slug}`
 
@@ -2049,8 +2089,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Research Outputs
 
@@ -2060,35 +2100,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/outputs`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchOutputCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/outputs/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchOutputUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/outputs/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/outputs/{slug}`
 
@@ -2096,8 +2136,32 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
+
+## Research Portal
+
+### `GET /api/v1/research-portal/capabilities`
+
+Get Research Portal Capabilities
+
+Return just the capability map, for cheap re-checks after a role change.
+
+- Auth: StrictHTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
+
+### `GET /api/v1/research-portal/context`
+
+Get Research Portal Context
+
+Return the caller's capabilities, navigation, and domain workspace.
+
+- Auth: StrictHTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Research Programs
 
@@ -2107,35 +2171,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/programs`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchProgramCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/programs/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchProgramUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/programs/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/programs/id/{program_id}/projects`
 
@@ -2144,7 +2208,7 @@ List Program Projects
 - Auth: public
 - Request body: -
 - Parameters: `program_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/programs/id/{program_id}/themes`
 
@@ -2153,25 +2217,25 @@ List Program Themes
 - Auth: public
 - Request body: -
 - Parameters: `program_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/programs/id/{program_id}/themes/{theme_id}`
 
 Add Program Theme
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `program_id` (path, string), `theme_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `program_id` (path, string), `theme_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/programs/id/{program_id}/themes/{theme_id}`
 
 Remove Program Theme
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `program_id` (path, string), `theme_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `program_id` (path, string), `theme_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/programs/{slug}`
 
@@ -2179,8 +2243,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Research Projects
 
@@ -2190,35 +2254,44 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/projects`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchProjectCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
+
+### `GET /api/v1/projects/featured`
+
+Get Featured Project
+
+- Auth: public
+- Request body: -
+- Parameters: -
+- Success response: 200 SuccessEnvelope_ResearchProjectPublicDetail_
 
 ### `PATCH /api/v1/projects/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchProjectUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/projects/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/projects/id/{project_id}/activities`
 
@@ -2227,7 +2300,7 @@ List Project Activities
 - Auth: public
 - Request body: -
 - Parameters: `project_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/projects/id/{project_id}/focus-areas`
 
@@ -2236,25 +2309,25 @@ List Project Focus Areas
 - Auth: public
 - Request body: -
 - Parameters: `project_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/projects/id/{project_id}/focus-areas/{focus_area_id}`
 
 Add Project Focus Area
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `project_id` (path, string), `focus_area_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `project_id` (path, string), `focus_area_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/projects/id/{project_id}/focus-areas/{focus_area_id}`
 
 Remove Project Focus Area
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `project_id` (path, string), `focus_area_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `project_id` (path, string), `focus_area_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/projects/id/{project_id}/funders`
 
@@ -2263,25 +2336,25 @@ List Project Funders
 - Auth: public
 - Request body: -
 - Parameters: `project_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/projects/id/{project_id}/funders/{funder_id}`
 
 Add Project Funder
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `project_id` (path, string), `funder_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `project_id` (path, string), `funder_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/projects/id/{project_id}/funders/{funder_id}`
 
 Remove Project Funder
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `project_id` (path, string), `funder_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `project_id` (path, string), `funder_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/projects/id/{project_id}/impact-metrics`
 
@@ -2290,7 +2363,7 @@ List Project Impact Metrics
 - Auth: public
 - Request body: -
 - Parameters: `project_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/projects/id/{project_id}/impact-stories`
 
@@ -2299,7 +2372,7 @@ List Project Impact Stories
 - Auth: public
 - Request body: -
 - Parameters: `project_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/projects/id/{project_id}/partners`
 
@@ -2308,25 +2381,25 @@ List Project Partners
 - Auth: public
 - Request body: -
 - Parameters: `project_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/projects/id/{project_id}/partners/{partner_id}`
 
 Add Project Partner
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `project_id` (path, string), `partner_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `project_id` (path, string), `partner_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/projects/id/{project_id}/partners/{partner_id}`
 
 Remove Project Partner
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `project_id` (path, string), `partner_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `project_id` (path, string), `partner_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/projects/{slug}`
 
@@ -2334,17 +2407,26 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/projects/{slug}/detail`
 
 Get Project Detail
 
+- Auth: StrictHTTPBearer
+- Request body: -
+- Parameters: `slug` (path, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_ResearchProjectAdminDetail_
+
+### `GET /api/v1/projects/{slug}/public-detail`
+
+Get Public Project Detail
+
 - Auth: public
 - Request body: -
 - Parameters: `slug` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_ResearchProjectPublicDetail_
 
 ## Research Resources
 
@@ -2354,35 +2436,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/resources`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchResourceCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/resources/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchResourceUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/resources/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/resources/{slug}`
 
@@ -2390,10 +2472,19 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Research Search
+
+### `GET /api/v1/research/search`
+
+Search Research
+
+- Auth: public
+- Request body: -
+- Parameters: `q` (query, string), `types` (query, string | null), `limit` (query, integer)
+- Success response: 200 ResearchSearchSuccessResponse
 
 ### `GET /api/v1/search`
 
@@ -2412,35 +2503,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/services`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchServiceCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/services/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchServiceUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/services/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/services/{slug}`
 
@@ -2448,8 +2539,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Research Themes
 
@@ -2459,35 +2550,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/themes`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchThemeCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/themes/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ResearchThemeUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/themes/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/themes/id/{theme_id}/focus-areas`
 
@@ -2496,7 +2587,7 @@ List Theme Focus Areas
 - Auth: public
 - Request body: -
 - Parameters: `theme_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `GET /api/v1/themes/id/{theme_id}/grants`
 
@@ -2505,25 +2596,25 @@ List Theme Grants
 - Auth: public
 - Request body: -
 - Parameters: `theme_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/themes/id/{theme_id}/grants/{grant_id}`
 
 Add Theme Grant
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `theme_id` (path, string), `grant_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `theme_id` (path, string), `grant_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/themes/id/{theme_id}/grants/{grant_id}`
 
 Remove Theme Grant
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `theme_id` (path, string), `grant_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `theme_id` (path, string), `grant_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/themes/id/{theme_id}/programs`
 
@@ -2532,25 +2623,25 @@ List Theme Programs
 - Auth: public
 - Request body: -
 - Parameters: `theme_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/themes/id/{theme_id}/programs/{program_id}`
 
 Add Theme Program
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `theme_id` (path, string), `program_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `theme_id` (path, string), `program_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/themes/id/{theme_id}/programs/{program_id}`
 
 Remove Theme Program
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `theme_id` (path, string), `program_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `theme_id` (path, string), `program_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/themes/id/{theme_id}/projects`
 
@@ -2559,25 +2650,25 @@ List Theme Projects
 - Auth: public
 - Request body: -
 - Parameters: `theme_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/themes/id/{theme_id}/projects/{project_id}`
 
 Add Theme Project
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `theme_id` (path, string), `project_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `theme_id` (path, string), `project_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/themes/id/{theme_id}/projects/{project_id}`
 
 Remove Theme Project
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `theme_id` (path, string), `project_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `theme_id` (path, string), `project_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/themes/id/{theme_id}/publications`
 
@@ -2586,25 +2677,25 @@ List Theme Publications
 - Auth: public
 - Request body: -
 - Parameters: `theme_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/themes/id/{theme_id}/publications/{publication_id}`
 
 Add Theme Publication
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `theme_id` (path, string), `publication_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `theme_id` (path, string), `publication_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/themes/id/{theme_id}/publications/{publication_id}`
 
 Remove Theme Publication
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `theme_id` (path, string), `publication_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `theme_id` (path, string), `publication_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/themes/{slug}`
 
@@ -2612,8 +2703,74 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
+
+## Research Workflow
+
+### `GET /api/v1/research-workflow/queue`
+
+Review Queue
+
+List records awaiting review across the caller's domains.
+
+- Auth: StrictHTTPBearer
+- Request body: -
+- Parameters: `resource` (query, string | null), `per_page` (query, integer), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
+
+### `POST /api/v1/research-workflow/{resource_key}/{item_id}/approve`
+
+Approve
+
+Approve and publish a pending record.
+
+- Auth: StrictHTTPBearer
+- Request body: WorkflowActionNote | null
+- Parameters: `resource_key` (path, string), `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
+
+### `GET /api/v1/research-workflow/{resource_key}/{item_id}/history`
+
+Workflow History
+
+- Auth: StrictHTTPBearer
+- Request body: -
+- Parameters: `resource_key` (path, string), `item_id` (path, string), `page` (query, integer), `per_page` (query, integer), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_list_WorkflowEventRead__
+
+### `POST /api/v1/research-workflow/{resource_key}/{item_id}/reject`
+
+Reject
+
+Send a pending record back to its author.
+
+- Auth: StrictHTTPBearer
+- Request body: WorkflowActionNote | null
+- Parameters: `resource_key` (path, string), `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
+
+### `POST /api/v1/research-workflow/{resource_key}/{item_id}/submit`
+
+Submit For Review
+
+Move a draft into the review queue. Available to the record's owner.
+
+- Auth: StrictHTTPBearer
+- Request body: WorkflowActionNote | null
+- Parameters: `resource_key` (path, string), `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
+
+### `POST /api/v1/research-workflow/{resource_key}/{item_id}/unpublish`
+
+Unpublish
+
+Take a live record off the public site.
+
+- Auth: StrictHTTPBearer
+- Request body: WorkflowActionNote | null
+- Parameters: `resource_key` (path, string), `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Scholarship Applications
 
@@ -2621,46 +2778,46 @@ Get Item
 
 List Items
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/scholarship-applications`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ScholarshipApplicationCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/scholarship-applications/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ScholarshipApplicationUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/scholarship-applications/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/scholarship-applications/{slug}`
 
 Get Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Scholarships
 
@@ -2670,35 +2827,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/scholarships`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ScholarshipCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/scholarships/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: ScholarshipUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/scholarships/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/scholarships/{slug}`
 
@@ -2706,8 +2863,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## School Publications
 
@@ -2715,64 +2872,64 @@ Get Item
 
 List School Publications
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/school-publications`
 
 Create School Publication
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: SchoolPublicationCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/school-publications/summary`
 
 Summarize School Publications
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/school-publications/{publication_id}`
 
 Get School Publication
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `publication_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `publication_id` (path, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/school-publications/{publication_id}`
 
 Update School Publication
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: SchoolPublicationUpdate
-- Parameters: `publication_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `publication_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/school-publications/{publication_id}/submit`
 
 Submit School Publication
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `publication_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `publication_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/school-publications/{publication_id}/withdraw`
 
 Withdraw School Publication
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `publication_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `publication_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Startup Ventures
 
@@ -2782,98 +2939,98 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/startups`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: StartupVentureCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/startups/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: StartupVentureUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/startups/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/startups/id/{item_id}/approve`
 
 Approve Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/startups/id/{item_id}/archive`
 
 Archive Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/startups/id/{item_id}/feature`
 
 Feature Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/startups/id/{item_id}/publish`
 
 Publish Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/startups/id/{item_id}/stage`
 
 Set Startup Stage
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: StartupStageAction
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/startups/id/{item_id}/unfeature`
 
 Unfeature Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/startups/id/{item_id}/unpublish`
 
 Unpublish Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/startups/{slug}`
 
@@ -2881,10 +3038,28 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Stats
+
+### `GET /api/v1/research/stats`
+
+Get Public Stats
+
+- Auth: public
+- Request body: -
+- Parameters: -
+- Success response: 200 SuccessEnvelope_PublicStatsResponse_
+
+### `GET /api/v1/research/stats/admin`
+
+Get Admin Stats
+
+- Auth: StrictHTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_PublicStatsResponse_
 
 ### `GET /api/v1/stats`
 
@@ -2893,16 +3068,16 @@ Get Public Stats
 - Auth: public
 - Request body: -
 - Parameters: -
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_PublicStatsResponse_
 
 ### `GET /api/v1/stats/admin`
 
 Get Admin Stats
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_PublicStatsResponse_
 
 ## Success Stories
 
@@ -2912,35 +3087,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/stories`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: SuccessStoryCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/stories/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: SuccessStoryUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/stories/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/stories/{slug}`
 
@@ -2948,8 +3123,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Sustainability
 
@@ -2959,35 +3134,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/sustainability`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: SustainabilityCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/sustainability/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: SustainabilityUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/sustainability/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/sustainability/id/{sustainability_id}/partners`
 
@@ -2996,25 +3171,25 @@ List Sustainability Partners
 - Auth: public
 - Request body: -
 - Parameters: `sustainability_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/sustainability/id/{sustainability_id}/partners/{partner_id}`
 
 Add Sustainability Partner
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `sustainability_id` (path, string), `partner_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `sustainability_id` (path, string), `partner_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/sustainability/id/{sustainability_id}/partners/{partner_id}`
 
 Remove Sustainability Partner
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `sustainability_id` (path, string), `partner_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `sustainability_id` (path, string), `partner_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/sustainability/id/{sustainability_id}/projects`
 
@@ -3023,25 +3198,25 @@ List Sustainability Projects
 - Auth: public
 - Request body: -
 - Parameters: `sustainability_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/sustainability/id/{sustainability_id}/projects/{project_id}`
 
 Add Sustainability Project
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `sustainability_id` (path, string), `project_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `sustainability_id` (path, string), `project_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/sustainability/id/{sustainability_id}/projects/{project_id}`
 
 Remove Sustainability Project
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `sustainability_id` (path, string), `project_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `sustainability_id` (path, string), `project_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/sustainability/id/{sustainability_id}/stories`
 
@@ -3050,25 +3225,25 @@ List Sustainability Stories
 - Auth: public
 - Request body: -
 - Parameters: `sustainability_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/sustainability/id/{sustainability_id}/stories/{story_id}`
 
 Add Sustainability Story
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `sustainability_id` (path, string), `story_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `sustainability_id` (path, string), `story_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/sustainability/id/{sustainability_id}/stories/{story_id}`
 
 Remove Sustainability Story
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `sustainability_id` (path, string), `story_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `sustainability_id` (path, string), `story_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/sustainability/id/{sustainability_id}/training`
 
@@ -3077,25 +3252,25 @@ List Sustainability Training
 - Auth: public
 - Request body: -
 - Parameters: `sustainability_id` (path, string)
-- Success response: 200 -
+- Success response: 200 SuccessEnvelope_list_dict_str__JsonValue___
 
 ### `PUT /api/v1/sustainability/id/{sustainability_id}/training/{training_id}`
 
 Add Sustainability Training
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `sustainability_id` (path, string), `training_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `sustainability_id` (path, string), `training_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/sustainability/id/{sustainability_id}/training/{training_id}`
 
 Remove Sustainability Training
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `sustainability_id` (path, string), `training_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `sustainability_id` (path, string), `training_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/sustainability/{slug}`
 
@@ -3103,8 +3278,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Technology Transfer Cases
 
@@ -3114,98 +3289,98 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/technology-transfer-cases`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: TechnologyTransferCaseCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/technology-transfer-cases/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: TechnologyTransferCaseUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/technology-transfer-cases/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/technology-transfer-cases/id/{item_id}/approve`
 
 Approve Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/technology-transfer-cases/id/{item_id}/archive`
 
 Archive Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/technology-transfer-cases/id/{item_id}/feature`
 
 Feature Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/technology-transfer-cases/id/{item_id}/publish`
 
 Publish Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/technology-transfer-cases/id/{item_id}/transfer-status`
 
 Set Technology Transfer Status
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: TechnologyTransferStatusAction
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/technology-transfer-cases/id/{item_id}/unfeature`
 
 Unfeature Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `POST /api/v1/technology-transfer-cases/id/{item_id}/unpublish`
 
 Unpublish Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: PathwayActionNote | null
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/technology-transfer-cases/{slug}`
 
@@ -3213,8 +3388,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Training Programs
 
@@ -3224,35 +3399,35 @@ List Items
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `is_university_journal` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `center_type` (query, string | null), `farm_type` (query, string | null), `publication_type` (query, string | null), `access_type` (query, string | null), `innovation_type` (query, string | null), `development_stage` (query, string | null), `ip_status` (query, string | null), `commercialization_status` (query, string | null), `partner_type` (query, string | null), `partnership_level` (query, string | null), `consultancy_type` (query, string | null), `client_type` (query, string | null), `venture_stage` (query, string | null), `registration_status` (query, string | null), `startup_id` (query, string | null), `incubation_type` (query, string | null), `stage` (query, string | null), `entry_type` (query, string | null), `entry_status` (query, string | null), `case_type` (query, string | null), `transfer_status` (query, string | null), `fund_type` (query, string | null), `event_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `resource_type` (query, string | null), `service_type` (query, string | null), `guideline_type` (query, string | null), `initiative_type` (query, string | null), `news_type` (query, string | null), `article_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `innovation_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `author_id` (query, string | null), `grant_id` (query, string | null), `funder_id` (query, string | null), `farm_id` (query, string | null), `focus_area_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `application_id` (query, string | null), `applicant_id` (query, string | null), `reviewer_id` (query, string | null), `submitter_id` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `month` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelopeWithMeta_list_dict_str__JsonValue___
 
 ### `POST /api/v1/training`
 
 Create Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: TrainingProgramCreate
-- Parameters: `access_token` (cookie, string | null)
-- Success response: 201 -
+- Parameters: `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 201 SuccessEnvelope_dict_str__JsonValue__
 
 ### `PATCH /api/v1/training/id/{item_id}`
 
 Update Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: TrainingProgramUpdate
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `DELETE /api/v1/training/id/{item_id}`
 
 Delete Item
 
-- Auth: HTTPBearer
+- Auth: StrictHTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 204 No Content
+- Parameters: `item_id` (path, string), `Idempotency-Key` (header, string), `ksu_access` (cookie, string | null), `access_token` (cookie, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ### `GET /api/v1/training/{slug}`
 
@@ -3260,8 +3435,8 @@ Get Item
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
-- Success response: 200 -
+- Parameters: `slug` (path, string), `user` (query, object), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 SuccessEnvelope_dict_str__JsonValue__
 
 ## Untagged
 
@@ -3272,7 +3447,7 @@ Download Guideline
 - Auth: public
 - Request body: -
 - Parameters: `item_id` (path, string)
-- Success response: 200 -
+- Success response: -
 
 ### `GET /api/v1/resources/{item_id}/download`
 
@@ -3281,11 +3456,11 @@ Download Resource
 - Auth: public
 - Request body: -
 - Parameters: `item_id` (path, string)
-- Success response: 200 -
+- Success response: -
 
 ## Schemas
 
-Generated component schemas: `123`
+Generated component schemas: `150`
 
 ### `CenterPartnerLink`
 
@@ -3969,6 +4144,12 @@ Generated component schemas: `123`
 
 - `detail`: `array<ValidationError>` (optional)
 
+### `HealthPayload`
+
+- `release`: `string` (required)
+- `service`: `string` (required)
+- `status`: `string` (required)
+
 ### `ImpactMetricCreate`
 
 - `baseline_value`: `number | string | null` (optional)
@@ -4125,6 +4306,10 @@ Generated component schemas: `123`
 - `title`: `string | null` (optional)
 - `trl_level`: `integer | null` (optional)
 
+### `InternalCenterPartnersRequest`
+
+- `center_ids`: `array<string>` (required)
+
 ### `JournalCreate`
 
 - `abbreviation`: `string | null` (optional)
@@ -4180,6 +4365,14 @@ Generated component schemas: `123`
 - `subject_areas`: `array<string> | null` (optional)
 - `submission_url`: `string | null` (optional)
 - `website`: `string | null` (optional)
+
+### `JsonValue-Input`
+
+- No direct properties documented.
+
+### `JsonValue-Output`
+
+- No direct properties documented.
 
 ### `MentorAssignmentAction`
 
@@ -4272,6 +4465,23 @@ Generated component schemas: `123`
 - `slug`: `string | null` (optional)
 - `status`: `string | null` (optional)
 
+### `PageCmsResearchSourceResolveRequest`
+
+- `center_id`: `string | null` (optional)
+- `ids`: `array<string>` (required)
+
+### `PageCmsResearchSourceSummary`
+
+- `id`: `string` (required)
+- `label`: `string` (required)
+- `metadata`: `object` (optional)
+- `published_at`: `string | null` (optional)
+- `secondary_label`: `string | null` (optional)
+- `selectable`: `boolean` (optional)
+- `source_type`: `string` (required)
+- `status`: `string` (required)
+- `thumbnail_url`: `string | null` (optional)
+
 ### `PartnerCreate`
 
 - `about`: `string | null` (optional)
@@ -4351,6 +4561,33 @@ Generated component schemas: `123`
 - `scholarship_id`: `string | null` (optional)
 - `tribute_name`: `string | null` (optional)
 - `tribute_type`: `string | null` (optional)
+
+### `PublicDonationSubmissionRead`
+
+- `amount`: `string` (required)
+- `currency`: `string` (required)
+- `designation`: `string` (required)
+- `donation_id`: `string` (required)
+- `donation_type`: `string` (required)
+- `donor_id`: `string` (required)
+- `payment_method`: `string | null` (required)
+- `recurring_frequency`: `string | null` (optional)
+- `status`: `string` (required)
+
+### `PublicStatItem`
+
+- `description`: `string` (required)
+- `href`: `string | null` (optional)
+- `key`: `string` (required)
+- `label`: `string` (required)
+- `suffix`: `string` (optional)
+- `value`: `integer | number` (required)
+
+### `PublicStatsResponse`
+
+- `scope`: `string` (required)
+- `stats`: `array<PublicStatItem>` (required)
+- `title`: `string` (required)
 
 ### `PublicationCreate`
 
@@ -4758,6 +4995,58 @@ Generated component schemas: `123`
 - `size_hectares`: `number | string | null` (optional)
 - `slug`: `string | null` (optional)
 
+### `ResearchFarmPublicDetail`
+
+- `attachment_media`: `array<object>` (optional)
+- `center`: `object | null` (optional)
+- `cover_image`: `object | null` (optional)
+- `display_order`: `integer` (required)
+- `document_media`: `array<object>` (optional)
+- `farm`: `object | null` (optional)
+- `gallery_media`: `array<object>` (optional)
+- `is_featured`: `boolean` (required)
+- `is_public`: `boolean` (required)
+- `partners`: `array<object>` (optional)
+- `program`: `object | null` (optional)
+- `record`: `ResearchFarmRead` (required)
+- `relationships`: `object` (optional)
+- `team_members`: `array<object>` (optional)
+
+### `ResearchFarmRead`
+
+- `about`: `string | null` (optional)
+- `activities`: `string | null` (optional)
+- `address`: `string | null` (optional)
+- `capacity_info`: `string | null` (optional)
+- `center`: `object | null` (optional)
+- `center_id`: `string | null` (optional)
+- `code`: `string | null` (optional)
+- `county`: `string | null` (optional)
+- `cover_image_url`: `string | null` (optional)
+- `created_at`: `string` (required)
+- `display_order`: `integer` (optional)
+- `email`: `string | null` (optional)
+- `facilities`: `string | null` (optional)
+- `farm_type`: `string` (optional)
+- `gallery`: `array<object> | null` (optional)
+- `gps_latitude`: `number | null` (optional)
+- `gps_longitude`: `number | null` (optional)
+- `id`: `string` (required)
+- `is_active`: `boolean` (optional)
+- `is_featured`: `boolean` (optional)
+- `is_public`: `boolean` (required)
+- `keywords`: `object | null` (optional)
+- `location`: `string | null` (optional)
+- `manager_name`: `string | null` (optional)
+- `meta_description`: `string | null` (optional)
+- `meta_title`: `string | null` (optional)
+- `name`: `string` (required)
+- `phone`: `string | null` (optional)
+- `products`: `string | null` (optional)
+- `size_hectares`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `updated_at`: `string` (required)
+
 ### `ResearchFarmUpdate`
 
 - `about`: `string | null` (optional)
@@ -4939,22 +5228,31 @@ Generated component schemas: `123`
 - `slug`: `string | null` (optional)
 - `status`: `string | null` (optional)
 
+### `ResearchProjectAdminDetail`
+
+- `record`: `object` (required)
+- `relationships`: `object` (required)
+
 ### `ResearchProjectCreate`
 
 - `abstract`: `string | null` (optional)
+- `attachment_media_ids`: `array<string> | null` (optional)
 - `background`: `string | null` (optional)
 - `budget`: `number | string | null` (optional)
 - `center_id`: `string | null` (optional)
 - `code`: `string | null` (optional)
+- `cover_image_id`: `string | null` (optional)
 - `cover_image_url`: `string | null` (optional)
 - `currency`: `string` (optional)
 - `deliverables`: `string | null` (optional)
 - `display_order`: `integer` (optional)
+- `document_media_ids`: `array<string> | null` (optional)
 - `documents`: `array<object> | null` (optional)
 - `end_date`: `string | null` (optional)
 - `expected_outcomes`: `string | null` (optional)
 - `farm_id`: `string | null` (optional)
 - `gallery`: `array<object> | null` (optional)
+- `gallery_media_ids`: `array<string> | null` (optional)
 - `grant_id`: `string | null` (optional)
 - `impact`: `string | null` (optional)
 - `is_active`: `boolean` (optional)
@@ -4974,6 +5272,43 @@ Generated component schemas: `123`
 - `status`: `string` (optional)
 - `summary`: `string | null` (optional)
 - `title`: `string` (required)
+
+### `ResearchProjectPublicDetail`
+
+- `abstract`: `string | null` (optional)
+- `attachment_media_ids`: `array<string> | null` (optional)
+- `background`: `string | null` (optional)
+- `budget`: `string | null` (optional)
+- `center_id`: `string | null` (optional)
+- `code`: `string | null` (optional)
+- `cover_image_id`: `string | null` (optional)
+- `created_at`: `string` (required)
+- `currency`: `string` (required)
+- `deliverables`: `string | null` (optional)
+- `document_media_ids`: `array<string> | null` (optional)
+- `end_date`: `string | null` (optional)
+- `expected_outcomes`: `string | null` (optional)
+- `farm_id`: `string | null` (optional)
+- `gallery_media_ids`: `array<string> | null` (optional)
+- `grant_id`: `string | null` (optional)
+- `id`: `string` (required)
+- `impact`: `string | null` (optional)
+- `is_active`: `boolean` (required)
+- `keywords`: `object | null` (optional)
+- `meta_description`: `string | null` (optional)
+- `meta_title`: `string | null` (optional)
+- `methodology`: `string | null` (optional)
+- `objectives`: `string | null` (optional)
+- `pi_id`: `string | null` (optional)
+- `program_id`: `string | null` (optional)
+- `progress_percentage`: `integer` (required)
+- `project_type`: `string` (required)
+- `slug`: `string` (required)
+- `start_date`: `string | null` (optional)
+- `status`: `string` (required)
+- `summary`: `string | null` (optional)
+- `title`: `string` (required)
+- `updated_at`: `string` (required)
 
 ### `ResearchProjectUpdate`
 
@@ -5429,6 +5764,81 @@ Generated component schemas: `123`
 - `venture_stage`: `string | null` (optional)
 - `website`: `string | null` (optional)
 
+### `SuccessEnvelopeWithMeta_list_PageCmsResearchSourceSummary__`
+
+- `data`: `array<PageCmsResearchSourceSummary> | null` (optional)
+- `message`: `string` (optional)
+- `meta`: `object | null` (optional)
+- `status`: `string` (optional)
+
+### `SuccessEnvelopeWithMeta_list_dict_str__JsonValue___`
+
+- `data`: `array<object> | null` (optional)
+- `message`: `string` (optional)
+- `meta`: `object | null` (optional)
+- `status`: `string` (optional)
+
+### `SuccessEnvelope_PublicDonationSubmissionRead_`
+
+- `data`: `PublicDonationSubmissionRead | null` (optional)
+- `message`: `string` (optional)
+- `status`: `string` (optional)
+
+### `SuccessEnvelope_PublicStatsResponse_`
+
+- `data`: `PublicStatsResponse | null` (optional)
+- `message`: `string` (optional)
+- `status`: `string` (optional)
+
+### `SuccessEnvelope_ResearchFarmPublicDetail_`
+
+- `data`: `ResearchFarmPublicDetail | null` (optional)
+- `message`: `string` (optional)
+- `status`: `string` (optional)
+
+### `SuccessEnvelope_ResearchProjectAdminDetail_`
+
+- `data`: `ResearchProjectAdminDetail | null` (optional)
+- `message`: `string` (optional)
+- `status`: `string` (optional)
+
+### `SuccessEnvelope_ResearchProjectPublicDetail_`
+
+- `data`: `ResearchProjectPublicDetail | null` (optional)
+- `message`: `string` (optional)
+- `status`: `string` (optional)
+
+### `SuccessEnvelope_dict_str__JsonValue__`
+
+- `data`: `object | null` (optional)
+- `message`: `string` (optional)
+- `status`: `string` (optional)
+
+### `SuccessEnvelope_list_PageCmsResearchSourceSummary__`
+
+- `data`: `array<PageCmsResearchSourceSummary> | null` (optional)
+- `message`: `string` (optional)
+- `status`: `string` (optional)
+
+### `SuccessEnvelope_list_WorkflowEventRead__`
+
+- `data`: `array<WorkflowEventRead> | null` (optional)
+- `message`: `string` (optional)
+- `status`: `string` (optional)
+
+### `SuccessEnvelope_list_dict_str__JsonValue___`
+
+- `data`: `array<object> | null` (optional)
+- `message`: `string` (optional)
+- `status`: `string` (optional)
+
+### `SuccessResponse_HealthPayload_`
+
+- `data`: `HealthPayload | null` (optional)
+- `message`: `string` (optional)
+- `meta`: `object | null` (optional)
+- `status`: `string` (optional)
+
 ### `SuccessStoryCreate`
 
 - `approach`: `string | null` (optional)
@@ -5674,3 +6084,18 @@ Generated component schemas: `123`
 - `loc`: `array<string | integer>` (required)
 - `msg`: `string` (required)
 - `type`: `string` (required)
+
+### `WorkflowActionNote`
+
+- `note`: `string | null` (optional)
+
+### `WorkflowEventRead`
+
+- `actor_id`: `string` (required)
+- `created_at`: `string` (required)
+- `id`: `string` (required)
+- `note`: `string | null` (required)
+- `previous_state`: `string` (required)
+- `resource_id`: `string` (required)
+- `resource_key`: `string` (required)
+- `target_state`: `string` (required)

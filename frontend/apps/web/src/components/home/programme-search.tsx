@@ -16,6 +16,7 @@ import {
 import { cn } from "@ksu/ui/lib/utils";
 import { focusVisibleStyles } from "@ksu/ui/motion";
 import { RevealGroup, RevealItem } from "@/components/home/motion-primitives";
+import { getSiteApi } from "@/lib/browser-api";
 import type {
   HomeProgrammeCard,
   HomeProgrammeFilters,
@@ -50,9 +51,11 @@ const EMPTY: Filters = { level: "", mode_of_study: "", school_id: "" };
 export function ProgrammeSearchPanel({
   schools,
   filters,
+  inlineFilters = false,
 }: {
   schools: HomeSchoolCard[];
   filters: HomeProgrammeFilters;
+  inlineFilters?: boolean;
 }) {
   const router = useRouter();
   const fieldId = useId();
@@ -68,8 +71,16 @@ export function ProgrammeSearchPanel({
   const [open, setOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const abortRef = useRef<AbortController | null>(null);
   const filterWrapRef = useRef<HTMLDivElement>(null);
+  const blurCloseTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (blurCloseTimerRef.current !== null) {
+        window.clearTimeout(blurCloseTimerRef.current);
+      }
+    };
+  }, []);
 
   const trimmed = query.trim();
   const appliedCount = Object.values(active).filter(Boolean).length;
@@ -141,7 +152,6 @@ export function ProgrammeSearchPanel({
     const term = query.trim();
     const hasFilter = Object.values(active).some(Boolean);
     if (term.length < 2 && !hasFilter) {
-      abortRef.current?.abort();
       setResults([]);
       setTotal(0);
       setState("idle");
@@ -150,41 +160,60 @@ export function ProgrammeSearchPanel({
     }
 
     setState("loading");
+    const controller = new AbortController();
     const timeout = window.setTimeout(async () => {
-      abortRef.current?.abort();
-      const controller = new AbortController();
-      abortRef.current = controller;
       const params = new URLSearchParams();
       if (term) params.set("q", term);
       if (active.level) params.set("level", active.level);
-      if (active.mode_of_study) params.set("mode_of_study", active.mode_of_study);
+      if (active.mode_of_study)
+        params.set("mode_of_study", active.mode_of_study);
       if (active.school_id) params.set("school_id", active.school_id);
 
       try {
-        const response = await fetch(
-          `/api/programme-search?${params.toString()}`,
-          { signal: controller.signal },
-        );
-        if (!response.ok) throw new Error("Programme search failed");
-        const payload = (await response.json()) as {
+        const payload = await getSiteApi().get<{
           results?: SearchResult[];
           total?: number;
           error?: boolean;
-        };
+        }>("/api/programme-search", Object.fromEntries(params), {
+          signal: controller.signal,
+          auth: "none",
+        });
+        if (controller.signal.aborted) return;
         if (payload.error) throw new Error("Programme search unavailable");
-        setResults(payload.results ?? []);
-        setTotal(payload.total ?? payload.results?.length ?? 0);
+        if (
+          !Array.isArray(payload.results) ||
+          !payload.results.every(
+            (result) =>
+              result &&
+              typeof result.id === "string" &&
+              typeof result.name === "string" &&
+              typeof result.href === "string",
+          )
+        )
+          throw new Error("Invalid programme search response");
+        setResults(payload.results);
+        setTotal(
+          typeof payload.total === "number" &&
+            Number.isFinite(payload.total) &&
+            payload.total >= 0
+            ? payload.total
+            : payload.results.length,
+        );
+        setActiveIndex(-1);
         setState("ready");
         setOpen(true);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return;
+      } catch {
+        if (controller.signal.aborted) return;
         setResults([]);
         setTotal(0);
         setState("error");
         setOpen(true);
       }
     }, 250);
-    return () => window.clearTimeout(timeout);
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
   }, [query, active]);
 
   const statusMessage =
@@ -207,7 +236,7 @@ export function ProgrammeSearchPanel({
   return (
     <div>
       <div className="relative">
-        <div className="flex min-w-0 gap-2">
+        <div className={cn("flex min-w-0 gap-2", inlineFilters && "block")}>
           {/* Search field */}
           <div className="relative flex min-w-0 flex-1 rounded-2xl bg-white shadow-[0_1px_2px_hsl(var(--brand-overlay)/0.06),0_12px_28px_-16px_hsl(var(--brand-overlay)/0.4)] ring-1 ring-brand-overlay/10 transition-shadow duration-300 focus-within:ring-2 focus-within:ring-primary">
             <Search
@@ -223,13 +252,14 @@ export function ProgrammeSearchPanel({
               name="q"
               autoComplete="off"
               role="combobox"
+              aria-label="Search programmes"
               aria-autocomplete="list"
               aria-expanded={open}
               aria-controls={listboxId}
               aria-activedescendant={
                 open && activeIndex >= 0 ? optionId(activeIndex) : undefined
               }
-              placeholder="Search programmes, e.g. nursing, education, law"
+              placeholder="Search for a programme, e.g. Biology, Education, Business..."
               value={query}
               onChange={(event) => {
                 setQuery(event.target.value);
@@ -237,9 +267,21 @@ export function ProgrammeSearchPanel({
               }}
               onKeyDown={onKeyDown}
               onFocus={() => {
+                if (blurCloseTimerRef.current !== null) {
+                  window.clearTimeout(blurCloseTimerRef.current);
+                  blurCloseTimerRef.current = null;
+                }
                 if (results.length > 0) setOpen(true);
               }}
-              onBlur={() => window.setTimeout(close, 160)}
+              onBlur={() => {
+                if (blurCloseTimerRef.current !== null) {
+                  window.clearTimeout(blurCloseTimerRef.current);
+                }
+                blurCloseTimerRef.current = window.setTimeout(() => {
+                  blurCloseTimerRef.current = null;
+                  close();
+                }, 160);
+              }}
               className="ksu-l-small min-h-14 min-w-0 flex-1 bg-transparent px-3 text-brand-overlay outline-none placeholder:text-brand-overlay/40"
             />
             {state === "loading" ? (
@@ -264,7 +306,10 @@ export function ProgrammeSearchPanel({
           </div>
 
           {/* Filters, behind one control */}
-          <div ref={filterWrapRef} className="relative shrink-0">
+          <div
+            ref={filterWrapRef}
+            className={cn("relative shrink-0", inlineFilters && "hidden")}
+          >
             <button
               type="button"
               onClick={() => setFiltersOpen((v) => !v)}
@@ -296,7 +341,9 @@ export function ProgrammeSearchPanel({
                 className="absolute right-0 top-full z-40 mt-2 w-[min(21rem,calc(100vw-2.5rem))] rounded-2xl bg-white p-5 shadow-xl ring-1 ring-brand-overlay/10"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <h4 className="ksu-l-small font-medium">Narrow your search</h4>
+                  <h4 className="ksu-l-small font-medium">
+                    Narrow your search
+                  </h4>
                   {appliedCount > 0 ? (
                     <button
                       type="button"
@@ -336,6 +383,49 @@ export function ProgrammeSearchPanel({
           </div>
         </div>
 
+        {inlineFilters ? (
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <FilterSelect
+              label="Level"
+              value={active.level}
+              options={filters.levels.map((level) => ({
+                value: level,
+                label: level,
+              }))}
+              onChange={(value) =>
+                setActive((current) => ({ ...current, level: value }))
+              }
+            />
+            <FilterSelect
+              label="School"
+              value={active.school_id}
+              options={schools
+                .filter((school) => Boolean(school.id))
+                .map((school) => ({
+                  value: school.id as string,
+                  label: school.title,
+                }))}
+              onChange={(value) =>
+                setActive((current) => ({ ...current, school_id: value }))
+              }
+            />
+            <FilterSelect
+              label="Mode"
+              value={active.mode_of_study}
+              options={filters.modes.map((mode) => ({
+                value: mode,
+                label: mode,
+              }))}
+              onChange={(value) =>
+                setActive((current) => ({
+                  ...current,
+                  mode_of_study: value,
+                }))
+              }
+            />
+          </div>
+        ) : null}
+
         <span role="status" aria-live="polite" className="sr-only">
           {statusMessage}
         </span>
@@ -370,7 +460,8 @@ export function ProgrammeSearchPanel({
                       onMouseEnter={() => setActiveIndex(index)}
                       className={cn(
                         "flex min-h-12 items-center gap-3 px-5 py-3 transition-colors",
-                        activeIndex === index && "bg-[hsl(var(--primary-soft))]",
+                        activeIndex === index &&
+                          "bg-[hsl(var(--primary-soft))]",
                         focusVisibleStyles.primary,
                       )}
                     >
@@ -463,6 +554,38 @@ export function ProgrammeSearchPanel({
   );
 }
 
+function FilterSelect({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="flex min-w-0 flex-col rounded-xl border border-brand-overlay/10 bg-white px-3 py-2 transition-colors focus-within:border-primary/45">
+      <span className="text-[0.68rem] font-medium leading-none text-brand-overlay/65">
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 min-w-0 appearance-none bg-transparent text-sm text-brand-overlay outline-none"
+      >
+        <option value="">All {label.toLowerCase()}s</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function FilterGroup({
   label,
   options,
@@ -517,16 +640,18 @@ function FilterGroup({
  */
 export function TopProgrammes({
   programmes,
+  compact = false,
 }: {
   programmes: HomeProgrammeCard[];
+  compact?: boolean;
 }) {
   if (programmes.length === 0) return null;
 
   return (
-    <div className="mt-8">
+    <div className={compact ? "mt-5" : "mt-8"}>
       <div className="flex flex-wrap items-baseline justify-between gap-4">
         <h4 className="ksu-l-small font-medium text-brand-overlay/70">
-          Featured programmes
+          {compact ? "Popular programmes" : "Featured programmes"}
         </h4>
         <Link
           href={CATALOGUE_HREF}
@@ -543,21 +668,38 @@ export function TopProgrammes({
         </Link>
       </div>
 
-      <RevealGroup as="ul" className="mt-3 grid gap-2 sm:grid-cols-2">
+      <RevealGroup
+        as="ul"
+        className={cn(
+          "mt-3 gap-2",
+          compact ? "flex flex-wrap" : "grid sm:grid-cols-2",
+        )}
+      >
         {programmes.map((programme) => (
-          <RevealItem as="li" key={programme.href} className="min-w-0">
+          <RevealItem
+            as="li"
+            key={programme.href}
+            className={cn("min-w-0", compact && "max-w-full")}
+          >
             <Link
               href={programme.href}
               className={cn(
-                "group flex h-full min-h-12 w-full items-center gap-3 rounded-2xl bg-white px-4 py-2.5 ring-1 ring-brand-overlay/10 transition-all duration-300 hover:-translate-y-0.5 hover:ring-[hsl(var(--secondary))]/50",
+                compact
+                  ? "group inline-flex min-h-9 max-w-full items-center gap-2 rounded-full border border-brand-overlay/12 bg-white px-3 py-1.5 text-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[hsl(var(--secondary))]/50"
+                  : "group flex h-full min-h-12 w-full items-center gap-3 rounded-2xl bg-white px-4 py-2.5 ring-1 ring-brand-overlay/10 transition-all duration-300 hover:-translate-y-0.5 hover:ring-[hsl(var(--secondary))]/50",
                 focusVisibleStyles.primary,
               )}
             >
-              <span className="ksu-l-small min-w-0 flex-1 truncate font-medium">
+              <span
+                className={cn(
+                  "min-w-0 truncate font-medium",
+                  !compact && "ksu-l-small flex-1",
+                )}
+              >
                 {programme.title}
               </span>
               <ArrowUpRight
-                className="h-3.5 w-3.5 shrink-0 text-brand-overlay/30 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:text-[hsl(var(--secondary-ink))]"
+                className="h-3.5 w-3.5 shrink-0 text-brand-overlay/30 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[hsl(var(--secondary-ink))]"
                 aria-hidden
               />
             </Link>

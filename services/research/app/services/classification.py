@@ -22,7 +22,7 @@ from ..models import (
     project_themes,
     publication_themes,
 )
-from ._crud import build_simple_service
+from ._crud import apply_public_visibility, build_simple_service
 
 ThemeService = build_simple_service(ResearchTheme, "name", "code", "description", "objectives")
 FocusAreaService = build_simple_service(FocusArea, "name", "code", "description", "key_questions")
@@ -42,7 +42,11 @@ def _brief(item: Any, *extra_fields: str) -> dict[str, Any]:
     return {key: value for key, value in payload.items() if value is not None}
 
 
-async def _related_many(db: AsyncSession, stmt, *extra_fields: str) -> list[dict[str, Any]]:
+async def _related_many(db: AsyncSession, stmt, *extra_fields: str, public: bool = True) -> list[dict[str, Any]]:
+    if public:
+        entity = next((item.get("entity") for item in stmt.column_descriptions if item.get("entity") is not None), None)
+        if entity is not None:
+            stmt = apply_public_visibility(entity, stmt)
     result = await db.execute(stmt)
     return [_brief(item, *extra_fields) for item in result.scalars().unique().all()]
 
@@ -59,7 +63,14 @@ class ThemeRelationshipService:
     """Manage research theme relationships backed by FK and theme association tables."""
 
     @staticmethod
-    async def _ensure_theme(db: AsyncSession, theme_id: uuid.UUID) -> ResearchTheme:
+    async def _ensure_theme(db: AsyncSession, theme_id: uuid.UUID, *, public: bool = False) -> ResearchTheme:
+        if public:
+            statement = apply_public_visibility(ResearchTheme, ResearchTheme.active_query().where(ResearchTheme.id == theme_id))
+            result = await db.execute(statement)
+            theme = result.scalar_one_or_none()
+            if theme is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Research theme not found")
+            return theme
         return await _get_or_404(db, ResearchTheme, theme_id, "Research theme not found")
 
     @staticmethod
@@ -80,7 +91,7 @@ class ThemeRelationshipService:
 
     @staticmethod
     async def list_focus_areas(db: AsyncSession, theme_id: uuid.UUID) -> list[dict[str, Any]]:
-        await ThemeRelationshipService._ensure_theme(db, theme_id)
+        await ThemeRelationshipService._ensure_theme(db, theme_id, public=True)
         return await _related_many(
             db,
             FocusArea.active_query()
@@ -89,11 +100,12 @@ class ThemeRelationshipService:
             "code",
             "icon",
             "color",
+            public=True,
         )
 
     @staticmethod
     async def list_projects(db: AsyncSession, theme_id: uuid.UUID) -> list[dict[str, Any]]:
-        await ThemeRelationshipService._ensure_theme(db, theme_id)
+        await ThemeRelationshipService._ensure_theme(db, theme_id, public=True)
         return await _related_many(
             db,
             ResearchProject.active_query()
@@ -103,6 +115,7 @@ class ThemeRelationshipService:
             "code",
             "project_type",
             "status",
+            public=True,
         )
 
     @staticmethod
@@ -126,7 +139,7 @@ class ThemeRelationshipService:
 
     @staticmethod
     async def list_programs(db: AsyncSession, theme_id: uuid.UUID) -> list[dict[str, Any]]:
-        await ThemeRelationshipService._ensure_theme(db, theme_id)
+        await ThemeRelationshipService._ensure_theme(db, theme_id, public=True)
         return await _related_many(
             db,
             ResearchProgram.active_query()
@@ -135,6 +148,7 @@ class ThemeRelationshipService:
             .order_by(ResearchProgram.start_date.desc().nullslast(), ResearchProgram.name.asc()),
             "code",
             "status",
+            public=True,
         )
 
     @staticmethod
@@ -158,7 +172,7 @@ class ThemeRelationshipService:
 
     @staticmethod
     async def list_publications(db: AsyncSession, theme_id: uuid.UUID) -> list[dict[str, Any]]:
-        await ThemeRelationshipService._ensure_theme(db, theme_id)
+        await ThemeRelationshipService._ensure_theme(db, theme_id, public=True)
         return await _related_many(
             db,
             Publication.active_query()
@@ -168,6 +182,7 @@ class ThemeRelationshipService:
             "publication_type",
             "year",
             "status",
+            public=True,
         )
 
     @staticmethod
@@ -191,7 +206,7 @@ class ThemeRelationshipService:
 
     @staticmethod
     async def list_grants(db: AsyncSession, theme_id: uuid.UUID) -> list[dict[str, Any]]:
-        await ThemeRelationshipService._ensure_theme(db, theme_id)
+        await ThemeRelationshipService._ensure_theme(db, theme_id, public=True)
         return await _related_many(
             db,
             Grant.active_query()
@@ -202,6 +217,7 @@ class ThemeRelationshipService:
             "grant_type",
             "status",
             "deadline",
+            public=True,
         )
 
     @staticmethod

@@ -1,5 +1,4 @@
 import {
-  CompactRecord,
   LibraryContentBand,
   LibraryHero,
   LibrarySectionHeading,
@@ -15,8 +14,11 @@ import {
   safeExternalUrl,
   shortText,
 } from "../../../lib/library-public-data";
+import { LibraryRecordsDisplay, type LibraryRecordDto } from "../../../components/library-records-display";
 
-export const dynamic = "force-dynamic";
+// Public guide detail pages are cacheable; the loader opts out per request
+// when an upstream failure is converted into a degraded result.
+export const revalidate = 300;
 
 type GuideDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -27,6 +29,27 @@ export default async function LibraryGuideDetailPage({ params }: GuideDetailPage
   const { guide, specialists, errors } = await getLibraryGuideDetail(slug);
   const record = guide.data;
   const sections = record?.sections.filter((section) => section.is_active) ?? [];
+  const sectionRecords: LibraryRecordDto[] = sections.map((section) => ({
+    id: section.id,
+    icon: section.section_type === "contact" ? "users" : "file",
+    eyebrow: formatLabel(section.section_type),
+    title: section.heading,
+    body: shortText(section.content, "Section content is being updated.", 320),
+    meta: [
+      section.resource_links?.length ? `${section.resource_links.length} resource links` : "",
+      section.file_ids?.length ? `${section.file_ids.length} files` : "",
+    ].filter(Boolean),
+  }));
+  const specialistRecords: LibraryRecordDto[] = specialists.data.slice(0, 3).map((specialist) => ({
+    id: specialist.id,
+    icon: "users",
+    eyebrow: "Library specialist",
+    title: specialist.subjects.join(", ") || "Library specialist",
+    body: specialist.support_areas.join(", ") || "Support areas are being updated.",
+    meta: [],
+    href: safeExternalUrl(specialist.booking_url) ?? "/specialists",
+    action: safeExternalUrl(specialist.booking_url) ? "Book support" : "View specialists",
+  }));
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
@@ -78,21 +101,7 @@ export default async function LibraryGuideDetailPage({ params }: GuideDetailPage
             ) : sections.length === 0 ? (
               <StatusMessage>No sections have been published for this guide yet.</StatusMessage>
             ) : (
-              <div className="grid gap-4">
-                {sections.map((section) => (
-                  <CompactRecord
-                    key={section.id}
-                    icon={section.section_type === "contact" ? "users" : "file"}
-                    eyebrow={formatLabel(section.section_type)}
-                    title={section.heading}
-                    body={shortText(section.content, "Section content is being updated.", 320)}
-                    meta={[
-                      section.resource_links?.length ? `${section.resource_links.length} resource links` : null,
-                      section.file_ids?.length ? `${section.file_ids.length} files` : null,
-                    ]}
-                  />
-                ))}
-              </div>
+              <LibraryRecordsDisplay records={sectionRecords} marker="library-guide-sections" />
             )}
           </div>
           <SidePanel title="Guide details" eyebrow="Context">
@@ -102,18 +111,7 @@ export default async function LibraryGuideDetailPage({ params }: GuideDetailPage
               <Meta label="Audience" value={record?.audience} />
               <Meta label="Type" value={formatLabel(record?.guide_type)} />
             </dl>
-            <div className="mt-6 grid gap-4">
-              {specialists.data.slice(0, 3).map((specialist) => (
-                <CompactRecord
-                  key={specialist.id}
-                  icon="users"
-                  title={specialist.subjects.join(", ") || "Library specialist"}
-                  body={specialist.support_areas.join(", ") || "Support areas are being updated."}
-                  href={safeExternalUrl(specialist.booking_url) ?? "/specialists"}
-                  action={safeExternalUrl(specialist.booking_url) ? "Book support" : "View specialists"}
-                />
-              ))}
-            </div>
+            <div className="mt-6"><LibraryRecordsDisplay records={specialistRecords} marker="library-guide-specialists" /></div>
           </SidePanel>
         </div>
       </LibraryContentBand>

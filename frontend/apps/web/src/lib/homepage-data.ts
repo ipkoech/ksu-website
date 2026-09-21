@@ -1,5 +1,9 @@
+import "server-only";
 import { cache } from "react";
+import { unstable_noStore as noStore } from "next/cache";
+import { unstable_rethrow } from "next/navigation";
 import {
+  ApiClientError,
   blogsApi,
   contactsApi,
   eventsApi,
@@ -25,7 +29,7 @@ import {
   type School,
   type Story,
   type UniversityInfo,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
 import {
   getLandingAnnouncements,
   getLandingHeroData,
@@ -39,6 +43,10 @@ import {
   libraryFrontendUrl,
   researchFrontendUrl,
 } from "@/lib/service-urls";
+import {
+  normalizePublicListResponse,
+  normalizePublicRecordResponse,
+} from "@/lib/web-response-shapes";
 
 export type HomeContactInfo = {
   address: string;
@@ -64,6 +72,7 @@ export type HomeMetric = {
   value: string;
   label: string;
   detail?: string;
+  href?: string;
 };
 
 export type HomeCard = {
@@ -123,6 +132,7 @@ export type HomeLeader = {
   name: string;
   title: string;
   image?: string | null;
+  messageTitle?: string | null;
   message?: string | null;
   href?: string;
 };
@@ -250,7 +260,6 @@ const serviceLinks: HomeLink[] = [
     external: true,
   },
   { label: "Governance", href: "/about/governance" },
-  { label: "Quality Assurance", href: "/about/quality-assurance" },
   { label: "Media Desk", href: "/media" },
 ];
 
@@ -315,6 +324,8 @@ async function safe<T>(
   try {
     return await task;
   } catch (error) {
+    unstable_rethrow(error);
+    if (!(error instanceof ApiClientError && error.status === 404)) noStore();
     if (logFailure && !isAbortError(error)) {
       console.warn(`Failed to load ${label}:`, error);
     }
@@ -327,7 +338,9 @@ async function getUniversityInfo(): Promise<UniversityInfo | null> {
     fields:
       "id,name,short_name,motto,overview,mission,founding_year,institution_type,charter_summary,email,phone,physical_address,city,county,social_links,quick_facts,vc_message_title,vc_message",
   });
-  return response.data ?? null;
+  const normalized = normalizePublicRecordResponse<UniversityInfo>(response);
+  if (normalized === undefined) throw new Error("Invalid homepage university response");
+  return normalized;
 }
 
 async function getMainContact() {
@@ -337,7 +350,9 @@ async function getMainContact() {
     fields:
       "id,name,email,phone,physical_address,building,room_number,is_main,is_public,status",
   });
-  return response.data?.[0] ?? null;
+  const normalized = normalizePublicListResponse<ContactDirectory>(response);
+  if (!normalized) throw new Error("Invalid homepage contact response");
+  return normalized.data[0] ?? null;
 }
 
 async function getSchoolsList() {
@@ -348,7 +363,9 @@ async function getSchoolsList() {
     include:
       "cover_image(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title)",
   });
-  return (response.data ?? []) as SchoolWithMedia[];
+  const normalized = normalizePublicListResponse<SchoolWithMedia>(response);
+  if (!normalized) throw new Error("Invalid homepage schools response");
+  return normalized.data;
 }
 
 async function getProgrammesList() {
@@ -359,7 +376,9 @@ async function getProgrammesList() {
     include:
       "cover_image(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title),department(id,name,school_id,school_name,school(id,name,code,slug))",
   });
-  return (response.data ?? []) as ProgrammeWithMedia[];
+  const normalized = normalizePublicListResponse<ProgrammeWithMedia>(response);
+  if (!normalized) throw new Error("Invalid homepage programmes response");
+  return normalized.data;
 }
 
 async function getProgrammesBySchool(schools: SchoolWithMedia[]) {
@@ -374,7 +393,9 @@ async function getProgrammesBySchool(schools: SchoolWithMedia[]) {
           "cover_image(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title),department(id,name,school_id,school_name,school(id,name,code,slug))",
       });
 
-      return [school.id, normalizeFeaturedProgrammes(response.data ?? [])] as const;
+      const normalized = normalizePublicListResponse<ProgrammeWithMedia>(response);
+      if (!normalized) throw new Error("Invalid school programmes response");
+      return [school.id, normalizeFeaturedProgrammes(normalized.data)] as const;
     }),
   );
 
@@ -387,9 +408,12 @@ async function getLatestNews() {
     per_page: 3,
     fields:
       "id,title,slug,summary,plain_text,category,published_at,is_main,is_featured,featured_media_id,created_at",
-    include: "featured_media(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title)",
+    include:
+      "featured_media(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title)",
   });
-  return response.data ?? [];
+  const normalized = normalizePublicListResponse<WithFeaturedMedia<News>>(response);
+  if (!normalized) throw new Error("Invalid homepage news response");
+  return normalized.data;
 }
 
 async function getUpcomingEvents() {
@@ -402,9 +426,12 @@ async function getUpcomingEvents() {
     per_page: 24,
     fields:
       "id,title,slug,summary,plain_text,event_type,start_date,end_date,location,venue,featured_media_id,is_featured,published_at,created_at",
-    include: "featured_media(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title)",
+    include:
+      "featured_media(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title)",
   });
-  return response.data ?? [];
+  const normalized = normalizePublicListResponse<WithFeaturedMedia<Event>>(response);
+  if (!normalized) throw new Error("Invalid homepage events response");
+  return normalized.data;
 }
 
 async function getLatestBlogs() {
@@ -413,9 +440,12 @@ async function getLatestBlogs() {
     per_page: 3,
     fields:
       "id,title,slug,summary,excerpt,plain_text,category,published_at,author_name,featured_media_id,created_at",
-    include: "featured_media(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title)",
+    include:
+      "featured_media(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title)",
   });
-  return response.data ?? [];
+  const normalized = normalizePublicListResponse<WithFeaturedMedia<Blog>>(response);
+  if (!normalized) throw new Error("Invalid homepage blogs response");
+  return normalized.data;
 }
 
 async function getFeaturedStories() {
@@ -424,9 +454,12 @@ async function getFeaturedStories() {
     per_page: 7,
     fields:
       "id,title,slug,summary,plain_text,story_type,category,published_at,featured_media_id,featured_media,contributor_name_snapshot,created_at",
-    include: "featured_media(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title)",
+    include:
+      "featured_media(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title)",
   });
-  return response.data ?? [];
+  const normalized = normalizePublicListResponse<WithFeaturedMedia<Story>>(response);
+  if (!normalized) throw new Error("Invalid homepage stories response");
+  return normalized.data;
 }
 
 async function getActiveIntakes() {
@@ -435,7 +468,9 @@ async function getActiveIntakes() {
     fields:
       "id,name,code,slug,application_start,application_end,late_application_end,is_active,is_open,cover_image_id,created_at,updated_at",
   });
-  const records = response.data ?? [];
+  const normalized = normalizePublicListResponse<Intake>(response);
+  if (!normalized) throw new Error("Invalid homepage intakes response");
+  const records = normalized.data;
   return Promise.all(
     records.map(async (record) => {
       try {
@@ -461,22 +496,36 @@ const getResearchPartners = cache(async () => {
     fields:
       "id,name,slug,acronym,website,logo_url,social_links,status,is_active,is_featured,display_order",
   });
-  return response.data ?? [];
+  const normalized = normalizePublicListResponse<Record<string, unknown>>(response);
+  if (!normalized) throw new Error("Invalid homepage research partners response");
+  return normalized.data;
 });
 
 const getHomepageStats = cache(async () => {
   const response = await statsApi.get({ scope: "university" });
-  return response.data ?? null;
+  const stats = normalizePublicRecordResponse<PublicStatsResponse>({
+    data: response.data,
+  });
+  if (stats === undefined) throw new Error("Invalid homepage stats response");
+  return stats;
 });
 
 const getResearchStats = cache(async () => {
   const response = await researchServiceApi.stats();
-  return response.data ?? null;
+  const stats = normalizePublicRecordResponse<PublicStatsResponse>({
+    data: response.data,
+  });
+  if (stats === undefined) throw new Error("Invalid research stats response");
+  return stats;
 });
 
 const getLibraryStats = cache(async () => {
   const response = await libraryServiceApi.stats();
-  return response.data ?? null;
+  const stats = normalizePublicRecordResponse<PublicStatsResponse>({
+    data: response.data,
+  });
+  if (stats === undefined) throw new Error("Invalid library stats response");
+  return stats;
 });
 
 function normalizeSocialLinks(value: unknown): HomeSocialLinks {
@@ -526,12 +575,28 @@ function buildFacts(
   stats?: PublicStatsResponse | null,
 ): HomeMetric[] {
   if (stats?.stats?.length) {
-    const visibleStats = stats.stats.filter((stat) => Number(stat.value) > 0);
+    const allStats = stats.stats;
+    const visibleStats = allStats.filter((stat) => Number(stat.value) > 0);
     if (visibleStats.length) {
-      return visibleStats.slice(0, 4).map((stat) => ({
-        value: `${stat.value}${stat.suffix ?? ""}`,
-        label: stat.label,
-      }));
+      const landingKeys = [
+        "students",
+        "postgraduate_students",
+        "schools",
+        "programmes",
+        "public_staff",
+        "alumni_records",
+      ];
+      const selectedStats = landingKeys
+        .map((key) => visibleStats.find((stat) => stat.key === key))
+        .filter((stat): stat is (typeof visibleStats)[number] => Boolean(stat));
+
+      return (selectedStats.length > 0 ? selectedStats : visibleStats.slice(0, 4)).map(
+        (stat) => ({
+          value: `${stat.value}${stat.suffix ?? ""}`,
+          label: stat.label,
+          detail: stat.description,
+        }),
+      );
     }
   }
 
@@ -583,6 +648,7 @@ function normalizeStats(stats?: PublicStatsResponse | null): HomeMetric[] {
         value: formatStatValue(stat.value, stat.suffix),
         label: stat.label,
         detail: stat.description,
+        ...(stat.href ? { href: stat.href } : {}),
       })) ?? []
   );
 }
@@ -907,6 +973,35 @@ function normalizePartners(records: Record<string, unknown>[]): HomePartner[] {
     .filter((partner): partner is HomePartner => partner !== null);
 }
 
+/** Shared headers/footers do not need homepage stories, programmes or service statistics. */
+export const getSiteChromeData = cache(
+  async (): Promise<
+    Pick<HomepageData, "contactInfo" | "socialLinks" | "miniQuickLinks">
+  > => {
+    const [university, contact] = await Promise.all([
+      safe(
+        universityInfoApi
+          .getCurrent({
+            fields: "id,email,phone,physical_address,city,county,social_links",
+          })
+          .then((response) => {
+            const normalized = normalizePublicRecordResponse<UniversityInfo>(response);
+            if (normalized === undefined) throw new Error("Invalid site chrome university response");
+            return normalized;
+          }),
+        null,
+        "university contact info",
+      ),
+      safe(getMainContact(), null, "main contact"),
+    ]);
+    return {
+      contactInfo: buildContactInfo(university, contact),
+      socialLinks: normalizeSocialLinks(university?.social_links),
+      miniQuickLinks: stablePortalLinks,
+    };
+  },
+);
+
 export async function getHomepageData(): Promise<HomepageData> {
   const [
     hero,
@@ -948,7 +1043,8 @@ export async function getHomepageData(): Promise<HomepageData> {
   const viceChancellorMessage =
     plainText(university?.vc_message) || viceChancellor?.message || null;
   const featuredProgrammes = normalizeFeaturedProgrammes(programmes);
-  const activeIntakeRecord = activeIntakes.find((intake) => intake.is_open) ?? activeIntakes[0];
+  const activeIntakeRecord =
+    activeIntakes.find((intake) => intake.is_open) ?? activeIntakes[0];
   const activeIntakeProgrammes = normalizeFeaturedProgrammes(
     (activeIntakeRecord?.programmes ?? [])
       .filter((item) => item.is_active && item.programme)
@@ -1001,6 +1097,7 @@ export async function getHomepageData(): Promise<HomepageData> {
           name: viceChancellor.name,
           title: viceChancellor.title,
           image: viceChancellor.image,
+          messageTitle: university?.vc_message_title?.trim() || null,
           message: viceChancellorMessage,
           href: viceChancellor.slug
             ? `/staff/${viceChancellor.slug}`

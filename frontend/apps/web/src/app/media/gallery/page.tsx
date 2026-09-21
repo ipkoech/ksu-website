@@ -8,6 +8,8 @@ export const metadata = {
     "Published image and video records from the Kisii University media library.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function GalleryPage({
   searchParams,
 }: {

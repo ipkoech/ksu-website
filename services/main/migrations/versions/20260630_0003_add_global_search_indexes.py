@@ -56,7 +56,16 @@ SEARCH_INDEXES = (
 
 
 def upgrade() -> None:
-    op.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
+    # Extensions are installed by the privileged database bootstrap. Service
+    # roles intentionally cannot create database extensions.
+    op.execute(
+        """DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_trgm') THEN
+                RAISE EXCEPTION 'pg_trgm extension must be installed by the database bootstrap before search migrations';
+            END IF;
+        END $$;"""
+    )
     for index_name, table_name, expression in SEARCH_INDEXES:
         op.execute(
             f"CREATE INDEX IF NOT EXISTS {index_name} "

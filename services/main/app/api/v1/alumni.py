@@ -7,18 +7,23 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import Alumni
 from ...schemas import AlumniCreate, AlumniUpdate
+from ...schemas.alumni import AlumniSnapshot
 from ...services import AlumniService
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[AlumniSnapshot]],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("page", "per_page", "school_id", "programme_id", "graduation_year", "mentor_only", "fields", "include"))
 async def list_alumni(
     db: DbSession,
@@ -44,7 +49,11 @@ async def list_alumni(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{item_id}")
+@router.get(
+    "/{item_id}",
+    response_model=SuccessResponse[AlumniSnapshot],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("item_id", "fields", "include"))
 async def get_alumnus(item_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Alumni, fields)
@@ -54,13 +63,24 @@ async def get_alumnus(item_id: uuid.UUID, db: DbSession, fields: FieldSelection 
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("alumni.manage"))])
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[AlumniSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("alumni.manage"))],
+)
 async def create_alumnus(data: AlumniCreate, db: DbSession, _: CurrentUser):
     item = await AlumniService.create(db, **data.model_dump())
     return success(data=item, message="Alumni profile created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("alumni.manage"))])
+@router.patch(
+    "/{item_id}",
+    response_model=SuccessResponse[AlumniSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("alumni.manage"))],
+)
 async def update_alumnus(item_id: uuid.UUID, data: AlumniUpdate, db: DbSession, _: CurrentUser):
     item = await AlumniService.get_by_id(db, item_id, public_only=False)
     if item is None:

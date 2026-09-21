@@ -22,6 +22,10 @@ import {
   Badge,
   Button,
   Input,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   Select,
   SelectContent,
   SelectItem,
@@ -44,6 +48,7 @@ export function SchoolNotificationsPage() {
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [search, setSearch] = useState("");
   const [priority, setPriority] = useState("all");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const queryKey = [...schoolPortalQueryKeys.notifications(school.id), { unreadOnly }];
   const notifications = useQuery({
     queryKey,
@@ -130,7 +135,7 @@ export function SchoolNotificationsPage() {
               <span className={`mt-0.5 rounded-full p-2 ${notification.is_read ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"}`}>
                 {notification.is_read ? <Bell className="size-4" /> : <BellDot className="size-4" />}
               </span>
-              <div className="min-w-0 flex-1">
+              <button type="button" className="min-w-0 flex-1 text-left" onClick={() => { setSelectedId(notification.id); if (!notification.is_read) markRead.mutate(notification.id); }}>
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-sm font-semibold">{notification.title}</h2>
                   {!notification.is_read ? <Badge>New</Badge> : null}
@@ -139,7 +144,7 @@ export function SchoolNotificationsPage() {
                 </div>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">{notification.message}</p>
                 <p className="mt-2 text-xs text-muted-foreground">{new Date(notification.created_at).toLocaleString()}</p>
-              </div>
+              </button>
               <div className="flex shrink-0 items-start gap-1">
                 {!notification.is_read ? (
                   <Button size="icon" variant="ghost" aria-label={`Mark ${notification.title} as read`} onClick={() => markRead.mutate(notification.id)}>
@@ -168,6 +173,7 @@ export function SchoolNotificationsPage() {
           ) : null}
         </section>
       )}
+      {selectedId ? (() => { const selected = allItems.find((item) => item.id === selectedId); return selected ? <Card><CardHeader><CardTitle className="text-base">Notification detail</CardTitle></CardHeader><CardContent className="space-y-2 text-sm"><p className="font-medium">{selected.title}</p><p className="whitespace-pre-wrap text-muted-foreground">{selected.message}</p><p className="text-xs text-muted-foreground">Received {new Date(selected.created_at).toLocaleString()} · {selected.notification_type.replaceAll("_", " ")}</p>{selected.action_url ? <Button asChild variant="outline"><Link href={selected.action_url}><ExternalLink className="mr-2 size-4" />Open related work</Link></Button> : null}</CardContent></Card> : null; })() : null}
     </SchoolWorkspace>
   );
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -11,10 +12,18 @@ import {
   Landmark,
   Sprout,
 } from "lucide-react";
-import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
+import {
+  researchServiceApi,
+  type ResearchGenericRecord,
+} from "@ksu/api-client/server";
 import { CampusPageHeader } from "@ksu/ui/components";
 import { PageShell } from "@/components/site-shell";
-import { DonationForm, type DonationFormState } from "./support-form";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
+import {
+  CompactDonationForm,
+  DonationForm,
+  type DonationFormState,
+} from "./support-form";
 
 export const revalidate = 300;
 
@@ -35,7 +44,8 @@ async function submitDonation(
   const amount = getDonationAmount(formData);
   if (!amount) return { error: "Please choose or enter a valid gift amount." };
 
-  const designationValue = getFormString(formData, "designation") || "unrestricted:general";
+  const designationValue =
+    getFormString(formData, "designation") || "unrestricted:general";
   const designation = designationValue.split(":")[0] || "unrestricted";
   const donationType = getFormString(formData, "donation_type") || "one_time";
 
@@ -52,16 +62,22 @@ async function submitDonation(
       currency: getFormString(formData, "currency") || "KES",
       donation_type: donationType,
       recurring_frequency:
-        donationType === "recurring" ? getFormString(formData, "recurring_frequency") : undefined,
+        donationType === "recurring"
+          ? getFormString(formData, "recurring_frequency")
+          : undefined,
       designation,
       purpose: getFormString(formData, "purpose"),
-      preferred_payment_method: getFormString(formData, "preferred_payment_method"),
+      preferred_payment_method: getFormString(
+        formData,
+        "preferred_payment_method",
+      ),
       message: getFormString(formData, "message"),
       dedication: getFormString(formData, "dedication"),
       is_tribute: getFormString(formData, "is_tribute") === "true",
       tribute_type: getFormString(formData, "tribute_type"),
       tribute_name: getFormString(formData, "tribute_name"),
-      recognition_public: getFormString(formData, "recognition_public") === "true",
+      recognition_public:
+        getFormString(formData, "recognition_public") === "true",
     });
     donationReference = response.data.donation_id;
   } catch {
@@ -77,7 +93,9 @@ function getDonationAmount(formData: FormData) {
   const customAmount = Number(getFormString(formData, "custom_amount"));
   if (Number.isFinite(customAmount) && customAmount > 0) return customAmount;
   const selectedAmount = Number(getFormString(formData, "amount"));
-  return Number.isFinite(selectedAmount) && selectedAmount > 0 ? selectedAmount : 0;
+  return Number.isFinite(selectedAmount) && selectedAmount > 0
+    ? selectedAmount
+    : 0;
 }
 
 function getFormString(formData: FormData, key: string) {
@@ -98,17 +116,113 @@ export default async function SupportKsuPage({
     .then((response) => response.data ?? [])
     .catch((error) => {
       console.error("Failed to fetch donation settings:", error);
-      return [] as ResearchGenericRecord[];
+      return uncachedPublicFallback([] as ResearchGenericRecord[]);
     });
   const settings = buildDonationSettings(settingsRecords);
 
   return (
     <PageShell>
-      <SupportHero contactHref={settings.contactHref} />
+      <section className="border-b border-border bg-white px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
+        <div className="mx-auto grid max-w-[1180px] gap-7 lg:grid-cols-[1.1fr_0.9fr] lg:items-start lg:gap-10">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">
+              Support KSU
+            </p>
+            <h1 className="mt-3 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-normal leading-tight text-brand-overlay sm:text-4xl lg:text-5xl">
+              Help a Kisii student move forward.
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+              Your gift can keep a student enrolled, support research that
+              solves local problems, or improve the spaces where learning
+              happens.
+            </p>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+              Choose a priority and we will email your reference and official
+              payment instructions.
+            </p>
+            <div className="mt-5 overflow-hidden rounded-md">
+              <Image
+                src="/images/headers/main-admin.jpg"
+                alt="Kisii University campus"
+                width={1200}
+                height={400}
+                className="h-36 w-full object-cover sm:h-44"
+              />
+            </div>
+          </div>
+          <div
+            id="make-a-gift"
+            className="rounded-md border border-border bg-surface-subtle p-4 sm:p-5"
+          >
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-normal text-brand-overlay">
+              Make a contribution
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Tell us what you would like to support.
+            </p>
+            <div className="mt-4">
+              <CompactDonationForm
+                currency={settings.currency}
+                givingOptions={givingPriorities.map(({ title, value }) => ({
+                  title,
+                  value,
+                }))}
+                action={submitDonation}
+              />
+            </div>
+            <a
+              href={settings.contactHref}
+              className="mt-5 inline-flex min-h-11 items-center text-sm font-medium text-primary underline underline-offset-4"
+            >
+              Prefer to talk? Contact us
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-surface-subtle px-4 py-5 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1180px]">
+          <h2 className="font-[family-name:var(--font-display)] text-xl font-normal text-brand-overlay">
+            Where your gift goes
+          </h2>
+          <div className="mt-3 grid gap-3 md:grid-cols-3 md:divide-x md:divide-border">
+            {[
+              ["Student opportunity", "Keep talented students learning."],
+              ["Research with purpose", "Back research with local impact."],
+              [
+                "Better learning spaces",
+                "Improve equipment and learning spaces.",
+              ],
+            ].map(([title, body]) => (
+              <div key={title} className="md:px-6 first:pl-0 last:pr-0">
+                <h3 className="text-base font-semibold text-brand-overlay">
+                  {title}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-border bg-white px-4 py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-center gap-4 text-center text-sm text-muted-foreground sm:justify-between sm:text-left">
+          <p>
+            We confirm every gift after payment is verified through an official
+            university channel.
+          </p>
+          <a
+            href="#make-a-gift"
+            className="font-medium text-primary underline underline-offset-4"
+          >
+            Payment details by email
+          </a>
+        </div>
+      </section>
 
       {params.submitted ? (
-        <section className="px-4 pt-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="mx-auto max-w-[1680px]">
+        <section className="px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1180px]">
             <DonationSuccessPanel
               referenceCode={params.submitted}
               bank={settings.bank}
@@ -117,7 +231,8 @@ export default async function SupportKsuPage({
           </div>
         </section>
       ) : null}
-      <section className="border-b border-border px-4 py-12 sm:px-6 lg:px-8 lg:py-14 xl:px-10 2xl:px-12">
+      {/* Detailed priority and major-gift sections remain below the concise entry point. */}
+      <section className="hidden">
         <div className="mx-auto grid max-w-[1680px] gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.85fr)] lg:items-start">
           <div>
             <SupportKicker>Your Impact</SupportKicker>
@@ -126,22 +241,26 @@ export default async function SupportKsuPage({
             </h2>
             <div className="mt-5 space-y-4 text-sm leading-7 text-muted-foreground sm:text-base sm:leading-8">
               <p>
-                Kisii University serves thousands of students, many of whom are the first in their
-                families to reach university. Tuition and public funding cover the basics of
-                teaching, but they rarely stretch to the things that transform an education:
-                keeping a bright student enrolled when their family hits hardship, equipping a
-                laboratory for hands-on discovery, or carrying research out of the campus and into
-                the communities of the Kisii region.
+                Kisii University serves thousands of students, many of whom are
+                the first in their families to reach university. Tuition and
+                public funding cover the basics of teaching, but they rarely
+                stretch to the things that transform an education: keeping a
+                bright student enrolled when their family hits hardship,
+                equipping a laboratory for hands-on discovery, or carrying
+                research out of the campus and into the communities of the Kisii
+                region.
               </p>
               <p>
-                That is the gap donor support fills. Gifts from alumni, friends, corporations, and
-                foundations let the university act where the need is most urgent and the impact is
-                most direct: quickly, and without diverting funds from core teaching.
+                That is the gap donor support fills. Gifts from alumni, friends,
+                corporations, and foundations let the university act where the
+                need is most urgent and the impact is most direct: quickly, and
+                without diverting funds from core teaching.
               </p>
               <p>
-                Every gift is recorded against a reference code, directed to the priority you
-                choose, and acknowledged by the advancement office. Donors to named funds and
-                endowments receive reports on how their fund is applied.
+                Every gift is recorded against a reference code, directed to the
+                priority you choose, and acknowledged by the advancement office.
+                Donors to named funds and endowments receive reports on how
+                their fund is applied.
               </p>
             </div>
           </div>
@@ -158,16 +277,21 @@ export default async function SupportKsuPage({
                       <Icon aria-hidden className="h-4 w-4" />
                     </span>
                     <div>
-                      <p className="text-sm font-semibold text-foreground">{use.title}</p>
-                      <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{use.body}</p>
+                      <p className="text-sm font-semibold text-foreground">
+                        {use.title}
+                      </p>
+                      <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                        {use.body}
+                      </p>
                     </div>
                   </li>
                 );
               })}
             </ul>
             <p className="mt-5 rounded-md bg-surface-subtle p-3 text-xs leading-5 text-muted-foreground">
-              Donations are applied to the giving area you select on the form. Unrestricted gifts
-              are allocated by the university to the most urgent of these needs.
+              Donations are applied to the giving area you select on the form.
+              Unrestricted gifts are allocated by the university to the most
+              urgent of these needs.
             </p>
           </aside>
         </div>
@@ -180,8 +304,9 @@ export default async function SupportKsuPage({
             Choose what your gift supports.
           </h2>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground">
-            Direct your gift to the area you care about most, or give unrestricted support and let
-            the university apply it where the need is greatest.
+            Direct your gift to the area you care about most, or give
+            unrestricted support and let the university apply it where the need
+            is greatest.
           </p>
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {givingPriorities.map((priority, index) => {
@@ -228,18 +353,25 @@ export default async function SupportKsuPage({
             Start your donation.
           </h2>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground">
-            Submitting this form records your gift with the advancement office. You will receive a
-            reference code and the payment details to complete your gift.
+            Submitting this form records your gift with the advancement office.
+            You will receive a reference code and the payment details to
+            complete your gift.
           </p>
           <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start">
             <DonationForm
               currency={settings.currency}
               amounts={settings.amounts}
-              givingOptions={givingPriorities.map(({ title, value }) => ({ title, value }))}
+              givingOptions={givingPriorities.map(({ title, value }) => ({
+                title,
+                value,
+              }))}
               action={submitDonation}
             />
             <div className="grid gap-6">
-              <DonationAccountPanel bank={settings.bank} contactEmail={settings.contactEmail} />
+              <DonationAccountPanel
+                bank={settings.bank}
+                contactEmail={settings.contactEmail}
+              />
               <WhyGivePanel />
             </div>
           </div>
@@ -260,9 +392,10 @@ export default async function SupportKsuPage({
                     Endowments, named funds, and institutional support
                   </h2>
                   <p className="mt-3 max-w-3xl text-sm leading-7 text-white/80">
-                    For named scholarships, equipment and facility support, corporate partnerships,
-                    planned giving, or endowment gifts, talk to the advancement office first. We
-                    will structure the gift around your intent.
+                    For named scholarships, equipment and facility support,
+                    corporate partnerships, planned giving, or endowment gifts,
+                    talk to the advancement office first. We will structure the
+                    gift around your intent.
                   </p>
                 </div>
               </div>
@@ -289,7 +422,7 @@ export default async function SupportKsuPage({
   );
 }
 
-function SupportHero({ contactHref }: { contactHref: string }) {
+function _SupportHero({ contactHref }: { contactHref: string }) {
   return (
     <CampusPageHeader
       image="main-admin"
@@ -430,8 +563,12 @@ function compact(value: unknown) {
     : "";
 }
 
-function buildDonationSettings(records: ResearchGenericRecord[]): DonationSettings {
-  const settings = new Map(records.map((record) => [compact(record.key), record]));
+function buildDonationSettings(
+  records: ResearchGenericRecord[],
+): DonationSettings {
+  const settings = new Map(
+    records.map((record) => [compact(record.key), record]),
+  );
   const getValue = (keys: string[]) => {
     for (const key of keys) {
       const record = settings.get(key);
@@ -442,19 +579,30 @@ function buildDonationSettings(records: ResearchGenericRecord[]): DonationSettin
   };
 
   const contactEmail =
-    getValue(["giving_email", "contact_email"]) || "research@kisiiuniversity.ac.ke";
+    getValue(["giving_email", "contact_email"]) ||
+    "research@kisiiuniversity.ac.ke";
 
   return {
     amounts: getSuggestedAmounts(
-      settings.get("suggested_amounts") ?? settings.get("donation_amounts") ?? settings.get("amounts"),
+      settings.get("suggested_amounts") ??
+        settings.get("donation_amounts") ??
+        settings.get("amounts"),
     ),
     currency: getValue(["currency", "default_currency"]) || "KES",
     contactEmail,
     contactHref: `mailto:${contactEmail}?subject=${encodeURIComponent("Support KSU — Giving Inquiry")}`,
     bank: {
       bankName: getValue(["bank_name", "donation_bank_name"]),
-      accountName: getValue(["account_name", "bank_account_name", "donation_account_name"]),
-      accountNumber: getValue(["account_number", "bank_account_number", "donation_account_number"]),
+      accountName: getValue([
+        "account_name",
+        "bank_account_name",
+        "donation_account_name",
+      ]),
+      accountNumber: getValue([
+        "account_number",
+        "bank_account_number",
+        "donation_account_number",
+      ]),
       swiftCode: getValue(["swift_code", "bank_swift_code"]),
       branch: getValue(["bank_branch", "branch"]),
       instructions: getValue([
@@ -469,7 +617,9 @@ function buildDonationSettings(records: ResearchGenericRecord[]): DonationSettin
 function getSuggestedAmounts(record?: ResearchGenericRecord) {
   const valueJson = record?.value_json;
   if (Array.isArray(valueJson)) {
-    const amounts = valueJson.map(Number).filter((amount) => Number.isFinite(amount) && amount > 0);
+    const amounts = valueJson
+      .map(Number)
+      .filter((amount) => Number.isFinite(amount) && amount > 0);
     if (amounts.length > 0) return amounts;
   }
   if (Array.isArray(valueJson?.amounts)) {
@@ -517,11 +667,16 @@ function DonationAccountPanel({
       {accountRows.length > 0 ? (
         <dl className="mt-5 divide-y divide-slate-200">
           {accountRows.map((row) => (
-            <div key={row.label} className="grid gap-1 py-3 first:pt-0 sm:grid-cols-[128px_1fr]">
+            <div
+              key={row.label}
+              className="grid gap-1 py-3 first:pt-0 sm:grid-cols-[128px_1fr]"
+            >
               <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                 {row.label}
               </dt>
-              <dd className="break-words text-sm font-semibold text-foreground">{row.value}</dd>
+              <dd className="break-words text-sm font-semibold text-foreground">
+                {row.value}
+              </dd>
             </div>
           ))}
         </dl>
@@ -553,8 +708,14 @@ function WhyGivePanel() {
       </div>
       <ul className="mt-5 grid gap-3">
         {points.map((point) => (
-          <li key={point} className="flex items-start gap-3 text-sm leading-6 text-muted-foreground">
-            <span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-secondary" />
+          <li
+            key={point}
+            className="flex items-start gap-3 text-sm leading-6 text-muted-foreground"
+          >
+            <span
+              aria-hidden
+              className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-secondary"
+            />
             {point}
           </li>
         ))}
@@ -598,8 +759,9 @@ function DonationSuccessPanel({
             Thank you for supporting Kisii University.
           </h2>
           <p className="mt-3 text-sm leading-7 text-muted-foreground">
-            Your gift has been recorded and the advancement office will follow up. Quote this
-            reference when completing payment or contacting the university.
+            Your gift has been recorded and the advancement office will follow
+            up. Quote this reference when completing payment or contacting the
+            university.
           </p>
           <div className="mt-5 rounded-md border border-secondary/25 bg-white p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
@@ -611,21 +773,29 @@ function DonationSuccessPanel({
           </div>
         </div>
         <div className="rounded-md border border-border bg-white p-4 sm:p-5">
-          <h3 className="text-base font-semibold text-foreground">Payment details</h3>
+          <h3 className="text-base font-semibold text-foreground">
+            Payment details
+          </h3>
           {accountRows.length > 0 ? (
             <dl className="mt-4 divide-y divide-slate-200">
               {accountRows.map((row) => (
-                <div key={row.label} className="grid gap-1 py-3 sm:grid-cols-[130px_1fr]">
+                <div
+                  key={row.label}
+                  className="grid gap-1 py-3 sm:grid-cols-[130px_1fr]"
+                >
                   <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                     {row.label}
                   </dt>
-                  <dd className="break-words text-sm font-semibold text-foreground">{row.value}</dd>
+                  <dd className="break-words text-sm font-semibold text-foreground">
+                    {row.value}
+                  </dd>
                 </div>
               ))}
             </dl>
           ) : null}
           <p className="mt-4 text-sm leading-6 text-muted-foreground">
-            {bank.instructions || `For payment instructions, contact ${contactEmail}.`}
+            {bank.instructions ||
+              `For payment instructions, contact ${contactEmail}.`}
           </p>
         </div>
       </div>

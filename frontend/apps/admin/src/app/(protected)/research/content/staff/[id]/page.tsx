@@ -1,5 +1,6 @@
 "use client";
 
+import { getResearchOfficeScope } from "../research-office-scope";
 import { staffApi, type ResearchGenericRecord } from "@ksu/api-client";
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
 import { ResearchAdminDetailPage, ResearchDetailRelationshipTabs } from "../../../_components/research-admin-detail-page";
@@ -8,10 +9,10 @@ import { RelatedRecordsCard, RelatedRecordsGrid } from "../../../_components/res
 export default function ResearchStaffDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Staff Assignment"
+      title="Staff Assignment"
       description="View research staff assignment, reporting relationships, term metadata, and audit history."
       resource={{
-        list: (params) => staffApi.listAssignments({ page: 1, per_page: 100, status: "all", entity_type: "research", ...params }),
+        list: async (params) => staffApi.listAssignments({ page: 1, per_page: 100, status: "all", ...params, ...await getResearchOfficeScope() }),
       }}
       backHref="/research/content/staff"
       slugParam="id"

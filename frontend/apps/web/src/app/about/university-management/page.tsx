@@ -8,6 +8,7 @@ import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import { getManagementData } from "@/lib/about-data";
 import { AboutReveal } from "@/components/about/about-reveal";
 import { ImageCurtainReveal } from "@/components/about/image-curtain-reveal";
+import { InactiveManagementRole } from "@/components/about/InactiveManagementRole";
 
 function present(value?: string | null) {
   const text = value?.trim();
@@ -85,15 +86,17 @@ function LeadershipCard({
 function ManagementBranch({
   deputy,
   reports,
+  showInactiveReirm = false,
 }: {
   deputy: BoardMember;
   reports: BoardMember[];
+  showInactiveReirm?: boolean;
 }) {
   return (
     <div className="flex min-w-0 flex-col items-center">
       <span aria-hidden className="h-6 w-px bg-secondary/70" />
       <LeadershipCard member={deputy} />
-      {reports.length ? (
+      {reports.length || showInactiveReirm ? (
         <>
           <span aria-hidden className="h-6 w-px bg-secondary/70" />
           <div className="relative grid w-full grid-cols-2 justify-items-center gap-4 pt-5">
@@ -113,6 +116,11 @@ function ManagementBranch({
                 <LeadershipCard member={member} compact />
               </div>
             ))}
+            {showInactiveReirm ? (
+              <div className="relative flex w-full justify-center pt-1 before:absolute before:-top-5 before:h-5 before:w-px before:bg-secondary/70">
+                <InactiveManagementRole />
+              </div>
+            ) : null}
           </div>
         </>
       ) : null}
@@ -120,10 +128,14 @@ function ManagementBranch({
   );
 }
 
+export const revalidate = 300;
+
 export default async function UniversityManagementPage() {
   const data = await getManagementData();
   const managementBoard = data.managementBoard;
   const members = (managementBoard?.members ?? []).filter(
+    (member) => !/\breirm\b|registrar.*research.*extension/i.test(member.role),
+  ).filter(
     (member, index, all) =>
       all.findIndex(
         (candidate) =>
@@ -221,6 +233,7 @@ export default async function UniversityManagementPage() {
                         <ManagementBranch
                           deputy={academicDeputy}
                           reports={academicReports}
+                          showInactiveReirm
                         />
                       ) : null}
                       {administrationDeputy ? (
@@ -240,6 +253,7 @@ export default async function UniversityManagementPage() {
                       compact={officers.includes(member)}
                     />
                   ))}
+                  <InactiveManagementRole />
                 </div>
               </>
             ) : null}

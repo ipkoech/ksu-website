@@ -12,12 +12,18 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from ksu_common import apply_field_selection, cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import DbSession
 from ...helpers.storage import get_media_public_url
+from ...helpers.person_photo import imported_person_photo
 from ...models import Board, Department, Division, Media, Person, School, StaffAssignment, UniversityInfo, Wing
 from ._fields import FieldSelection, FieldsDep
+from ...schemas.public_api import (
+    PublicAcademicOrganizationPayload,
+    PublicSchoolTeamPayload,
+    PublicTeamPayload,
+)
 
 router = APIRouter()
 
@@ -139,14 +145,14 @@ def _entity_payload(entity_type: str, entity: Any, entity_id: uuid.UUID | None) 
 
 async def _photo_urls(db: DbSession, people: list[Person]) -> dict[uuid.UUID, str | None]:
     photo_ids = [person.photo_id for person in people if person.photo_id]
-    if not photo_ids:
-        return {}
-    result = await db.execute(select(Media).where(Media.id.in_(photo_ids)))
-    media_by_id = {media.id: media for media in result.scalars().all()}
+    media_by_id = {}
+    if photo_ids:
+        result = await db.execute(select(Media).where(Media.id.in_(photo_ids)))
+        media_by_id = {media.id: media for media in result.scalars().all()}
     urls: dict[uuid.UUID, str | None] = {}
     for person in people:
         media = media_by_id.get(person.photo_id)
-        urls[person.id] = get_media_public_url(media)
+        urls[person.id] = get_media_public_url(media) or imported_person_photo(person.external_avatar_url)
     return urls
 
 
@@ -223,7 +229,11 @@ def _build_hierarchy(assignments: list[dict[str, Any]]) -> list[dict[str, Any]]:
     ]
 
 
-@router.get("/team")
+@router.get(
+    "/team",
+    response_model=SuccessResponse[PublicTeamPayload],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("entity_type", "entity_id"))
 async def get_public_team(
     request: Request,
@@ -290,8 +300,16 @@ async def get_public_team(
     )
 
 
-@router.get("/academic-organization")
-@router.get("/team/academic-organization")
+@router.get(
+    "/academic-organization",
+    response_model=SuccessResponse[PublicAcademicOrganizationPayload],
+    response_model_exclude_unset=True,
+)
+@router.get(
+    "/team/academic-organization",
+    response_model=SuccessResponse[PublicAcademicOrganizationPayload],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("fields", "include"))
 async def get_public_academic_organization(
     request: Request,
@@ -394,7 +412,7 @@ def _organization_entity_payload(entity_type: str, entity: Any) -> dict[str, Any
 def _organization_photo_url(person: Person, photos: dict[uuid.UUID, str | None] | None) -> str | None:
     if photos is not None and person.id in photos:
         return photos[person.id]
-    return get_media_public_url(getattr(person, "photo", None))
+    return get_media_public_url(getattr(person, "photo", None)) or imported_person_photo(getattr(person, "external_avatar_url", None))
 
 
 def _organization_member_payload(
@@ -895,7 +913,11 @@ async def _department_team_payload(db: DbSession, department_id: uuid.UUID) -> d
     }
 
 
-@router.get("/schools/{school_id}/team")
+@router.get(
+    "/schools/{school_id}/team",
+    response_model=SuccessResponse[PublicSchoolTeamPayload],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("school_id", "fields", "include"))
 async def get_public_school_team(
     request: Request,
@@ -907,7 +929,11 @@ async def get_public_school_team(
     return success(data=apply_field_selection(payload, fields, always_include={"id"}))
 
 
-@router.get("/departments/{department_id}/team")
+@router.get(
+    "/departments/{department_id}/team",
+    response_model=SuccessResponse[PublicSchoolTeamPayload],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("department_id", "fields", "include"))
 async def get_public_department_team(
     request: Request,

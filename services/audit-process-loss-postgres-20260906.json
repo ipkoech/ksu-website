@@ -1,0 +1,28 @@
+{
+  "behavior": [
+    "Child process claimed one relay row and committed its lease.",
+    "Child exited abruptly with os._exit without releasing the claim.",
+    "Parent reclaimed the expired lease and fenced the stale attempt."
+  ],
+  "captured_at": "2026-09-06",
+  "database": {
+    "database": "ksu_refactor_ci",
+    "disposable": true,
+    "engine": "PostgreSQL",
+    "host": "127.0.0.1",
+    "port": 55432,
+    "version": "18.6"
+  },
+  "limitations": [
+    "This is local PostgreSQL process-loss evidence, not deployed Celery/Redis visibility-timeout recovery.",
+    "No production data or external service was modified."
+  ],
+  "result": {
+    "duration_seconds": 4.09,
+    "lease_seconds": 1,
+    "passed": true,
+    "reclaimed_attempt": 2,
+    "tests": 1
+  },
+  "test": "services/common/tests/test_audit_process_loss_postgres.py::test_reclaims_audit_lease_after_worker_process_loss"
+}

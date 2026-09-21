@@ -10,16 +10,19 @@ from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.orm import selectinload
 
-from ksu_common import cached_public
+from ksu_common import cached_public, TokenPayload
+from ...security.workspace_scopes import active_workspace_actor
+from ...services.auth import _active_scope_grants
+from ...schemas.realtime import RealtimeConfigResponse, RealtimeMetricsResponse, RealtimeTicketResponse
 
 from ...core.config import get_settings
 from ...core.database import AsyncSessionLocal
-from ...deps import CurrentUser
+from ...deps import CurrentUser, CurrentToken
 from ...helpers.jwt import create_socket_token, decode_token
-from ...models import Notification, Person, Role, RolePermission, User, UserRole
+from ...models import Notification, Person, Role, RolePermission, User, UserRole, Session
 from ...realtime.connection_manager import manager
 from ...realtime.events import rooms_for_user
 from ...realtime.redis_subscriber import subscriber
@@ -65,22 +68,23 @@ def _research_realtime_config() -> dict[str, Any]:
     }
 
 
-@router.get("/realtime/research/config")
+@router.get("/realtime/research/config", response_model=RealtimeConfigResponse)
 @cached_public(timeout=300, vary_on=())
 async def get_research_realtime_config():
     return {"data": _research_realtime_config()}
 
 
-@router.post("/realtime/ticket")
-async def create_realtime_ticket(user: CurrentUser):
+@router.post("/realtime/ticket", response_model=RealtimeTicketResponse)
+async def create_realtime_ticket(user: CurrentUser, actor: CurrentToken):
     token = create_socket_token(
         str(user.id),
         ttl_seconds=settings.REALTIME_TICKET_TTL_SECONDS,
+        session_jti=actor.jti,
     )
     return {"data": {"ticket": token, "expires_in": settings.REALTIME_TICKET_TTL_SECONDS}}
 
 
-@router.get("/realtime/metrics")
+@router.get("/realtime/metrics", response_model=RealtimeMetricsResponse)
 async def get_realtime_metrics(_: CurrentUser):
     return {"data": manager.metrics()}
 
@@ -92,11 +96,25 @@ async def _resolve_websocket_user(token: str, *, socket_ticket_only: bool = Fals
         if payload.get("type") not in allowed_types:
             return None
         user_id = uuid.UUID(str(payload.get("sub")))
+        session_jti = payload.get("session_jti") if payload.get("type") == "socket" else payload.get("jti")
+        if not session_jti:
+            return None
     except Exception:
         return None
+    user = await _load_live_user(user_id, session_jti)
+    if user is not None:
+        user._realtime_session_jti = session_jti
+    return user
+
+
+async def _load_live_user(user_id, session_jti) -> User | None:
     async with AsyncSessionLocal() as db:
         result = await db.execute(
             select(User)
+            .join(Session, (Session.user_id == User.id) & (Session.jti == session_jti)
+                  & (Session.token_type == "refresh") & Session.is_active.is_(True)
+                  & Session.revoked_at.is_(None)
+                  & or_(Session.expires_at.is_(None), Session.expires_at > datetime.now(timezone.utc)))
             .options(
                 selectinload(User.person).selectinload(Person.assignments),
                 selectinload(User.role_assignments)
@@ -106,7 +124,12 @@ async def _resolve_websocket_user(token: str, *, socket_ticket_only: bool = Fals
             )
             .where(User.id == user_id, User.deleted_at.is_(None), User.is_active.is_(True))
         )
-        return result.scalar_one_or_none()
+        user = result.scalar_one_or_none()
+        if user is not None:
+            actor = TokenPayload(str(user.id), session_jti, raw={"scope_grants": _active_scope_grants(user)})
+            current = await active_workspace_actor(db, actor)
+            user._realtime_scope_grants = current.raw["scope_grants"]
+        return user
 
 
 async def _latest_unread_notifications(user_id: uuid.UUID) -> list[dict[str, Any]]:
@@ -157,6 +180,17 @@ async def realtime(websocket: WebSocket):
     except PermissionError:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
+    session_jti = user._realtime_session_jti
+
+    async def validate_access():
+        try:
+            async with asyncio.timeout(2):
+                current = await _load_live_user(user.id, session_jti)
+        except Exception:
+            return False
+        return current is not None and rooms_for_user(current) == connection.rooms
+
+    connection.validate_access = validate_access
     try:
         await manager.send(connection, {
             "type": "connected",
@@ -167,6 +201,9 @@ async def realtime(websocket: WebSocket):
         if last_event_id := websocket.query_params.get("last_event_id"):
             await subscriber.resume(connection, last_event_id)
         while True:
+            if not await validate_access():
+                await websocket.close(code=1008, reason="access_revoked")
+                break
             try:
                 raw = await asyncio.wait_for(
                     websocket.receive_text(),

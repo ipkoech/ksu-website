@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -369,9 +371,10 @@ function DocumentsSection({
   page: PublicInstitutionalPage;
 }) {
   const documents = section.documents.filter((document) => document.file?.url);
+  const linkedItems = section.items.filter((item) => item.link_url);
   const primaryHref = documentHref(page.primary_document);
 
-  if (!documents.length && !primaryHref) return null;
+  if (!documents.length && !linkedItems.length && !primaryHref) return null;
 
   return (
     <section className="bg-white px-5 py-14 sm:px-8 lg:px-10 lg:py-20">
@@ -406,6 +409,33 @@ function DocumentsSection({
                 className="mt-auto inline-flex min-h-11 items-end gap-2 pt-5 text-sm font-bold text-primary hover:underline"
               >
                 <Download className="h-4 w-4" aria-hidden /> Download document
+              </Link>
+            </article>
+          ))}
+          {linkedItems.map((item) => (
+            <article
+              key={item.id}
+              className="group flex min-h-52 flex-col rounded-2xl border border-primary/15 bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] p-6 transition-[border-color,box-shadow] hover:border-secondary hover:shadow-lg"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-secondary">
+                  <FileText className="h-6 w-6" aria-hidden />
+                </span>
+              </div>
+              <h3 className="mt-6 font-[family-name:var(--font-display)] text-xl font-normal tracking-tight text-primary">
+                {item.title}
+              </h3>
+              {item.description ? (
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {item.description}
+                </p>
+              ) : null}
+              <Link
+                href={item.link_url!}
+                className="mt-auto inline-flex min-h-11 items-end gap-2 pt-5 text-sm font-bold text-primary hover:underline"
+              >
+                <ArrowRight className="h-4 w-4" aria-hidden />
+                {item.link_label || "Open resource"}
               </Link>
             </article>
           ))}
@@ -581,7 +611,10 @@ export function InstitutionalDocumentPage({
   const primaryHref = documentHref(page.primary_document);
 
   return (
-    <main className="bg-white">
+    <main
+      className="bg-white"
+      data-server-data-display="web-institutional-document"
+    >
       <CampusPageHeader
         image="main-admin"
         variant="feature"

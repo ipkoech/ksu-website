@@ -7,7 +7,7 @@ export function ResearchRouteLoading() {
     <main id="research-main" className="min-h-screen bg-white" aria-busy="true" aria-label="Loading research content">
       <section className="relative isolate overflow-hidden bg-[#002f6c] px-4 py-10 text-white sm:px-6 lg:px-8">
         <Image
-          src="/images/research/research-home-hero.webp"
+          src="/images/research/verified/multidisciplinary-conference-2026.jpg"
           alt=""
           fill
           priority

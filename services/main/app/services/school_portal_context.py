@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -106,6 +106,7 @@ def allowed_school_navigation(permissions: tuple[str, ...] | list[str]) -> list[
 async def resolve_school_portal_context(
     db: AsyncSession,
     user: User,
+    selected_school: uuid.UUID | None = None,
 ) -> SchoolPortalContext:
     """Resolve one school exclusively from active scoped role assignments."""
     assignments = _active_school_assignments(user)
@@ -118,13 +119,15 @@ async def resolve_school_portal_context(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No school is assigned to this account",
         )
-    if len(school_ids) > 1:
+    if selected_school is not None and selected_school not in school_ids:
+        raise HTTPException(403, "Selected school is not assigned to this account")
+    if len(school_ids) > 1 and selected_school is None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Multiple schools are assigned to this account",
         )
 
-    school_id = next(iter(school_ids))
+    school_id = selected_school or next(iter(school_ids))
     result = await db.execute(
         select(School)
         .options(
@@ -144,6 +147,7 @@ async def resolve_school_portal_context(
         .where(
             School.id == school_id,
             School.deleted_at.is_(None),
+            School.is_active.is_(True),
         )
     )
     school = result.unique().scalar_one_or_none()
@@ -162,19 +166,11 @@ async def resolve_school_portal_context(
             }
         )
     )
-    if SCHOOL_ADMIN_ROLE in role_names:
-        permissions = SCHOOL_PORTAL_PERMISSIONS
-    else:
-        permissions = tuple(
-            sorted(
-                {
-                    permission
-                    for assignment in assignments
-                    if assignment.scope_id == school_id
-                    for permission in _role_permissions(assignment)
-                }
-            )
-        )
+    permissions = tuple(sorted({
+        permission for assignment in assignments
+        if assignment.scope_id == school_id
+        for permission in _role_permissions(assignment)
+    }))
 
     return SchoolPortalContext(
         school=school,
@@ -187,8 +183,9 @@ async def resolve_school_portal_context(
 async def get_current_school_context(
     db: DbSession,
     user: CurrentUser,
+    selected_school: uuid.UUID | None = Header(default=None, alias="X-School-ID"),
 ) -> SchoolPortalContext:
-    return await resolve_school_portal_context(db, user)
+    return await resolve_school_portal_context(db, user, selected_school)
 
 
 CurrentSchoolContext = Annotated[

@@ -56,6 +56,7 @@ import {
 } from "@ksu/ui/components";
 import { PageHeader } from "@/components/layout";
 import { DateTimePicker } from "@/components/shared/date-time-picker";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { RecordHistory } from "./record-history";
 import { WorkflowActions } from "./workflow-actions";
 
@@ -109,13 +110,13 @@ export function ReviewQueue() {
 
   const queueQuery = useQuery({
     queryKey: ["content-workflow", "queue", filters, search, page],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       contentWorkflowApi.listQueue({
         ...filters,
         ...(search ? { q: search } : {}),
         page,
         per_page: PER_PAGE,
-      }),
+      }, { signal }),
   });
   const items = useMemo(
     () => queueQuery.data?.data ?? [],
@@ -213,6 +214,9 @@ export function ReviewQueue() {
       }
       const failures = results.filter((result) => !result.ok);
       const okCount = results.length - failures.length;
+      if (okCount > 0) {
+        void revalidatePublicContent("main", "content-workflow");
+      }
       if (failures.length === 0) {
         toast.success(
           `${labels.done} ${okCount} item${okCount === 1 ? "" : "s"}.`,

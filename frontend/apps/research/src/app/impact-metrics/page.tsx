@@ -1,15 +1,35 @@
+import {
+  ResearchPageHero,
+  ResearchPageSummary,
+} from "../../components/research-page-hero";
 import Link from "next/link";
-import { ResearchImage } from "../../components/research-image";
+import { unstable_noStore as noStore } from "next/cache";
+
 import { ArrowRight, Database, Filter, LineChart, Search } from "lucide-react";
-import { researchServiceApi } from "@ksu/api-client";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import { Badge, StatusMessage } from "../../components/research-ui";
-import { compactText, formatDate, formatLabel, getImpactMetrics, getImpactMetricsFiltered } from "../../lib/research-public-data";
-import { getRecordSummary, getRecordTitle, getRecordYears } from "../../lib/research-page-model";
+import { researchServiceApi } from "@ksu/api-client/server";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
+import { StatusMessage } from "../../components/research-ui";
+import {
+  compactText,
+  formatDate,
+  formatLabel,
+  getImpactMetrics,
+  getImpactMetricsFiltered,
+} from "../../lib/research-public-data";
+import {
+  getRecordSummary,
+  getRecordTitle,
+  getRecordYears,
+} from "../../lib/research-page-model";
+import {
+  ImpactMetricTable,
+  type ImpactMetricRowDto,
+} from "../../components/impact-metric-table";
 
 export const metadata = {
   title: "Impact Metrics | KSU Research",
-  description: "Research impact metrics, statistics, and performance indicators.",
+  description:
+    "Research impact metrics, statistics, and performance indicators.",
 };
 
 export const revalidate = 300;
@@ -32,7 +52,15 @@ type StatItem = {
 };
 
 const metricTypes = ["input", "output", "outcome", "impact"];
-const metricCategories = ["research", "innovation", "capacity", "community", "economic", "environmental", "policy"];
+const metricCategories = [
+  "research",
+  "innovation",
+  "capacity",
+  "community",
+  "economic",
+  "environmental",
+  "policy",
+];
 const sortOptions = [
   { value: "reporting_year", label: "Reporting year" },
   { value: "value", label: "Value" },
@@ -63,30 +91,57 @@ export default async function ImpactDashboardPage({
   ]);
   const years = getRecordYears(allMetrics.data);
   const stats = statsResponse.stats;
-  const visibleStats = stats.filter((item) => Number(item.value) > 0).slice(0, 8);
-  const featuredMetric = metrics.data.find((item) => item.is_featured) ?? metrics.data[0];
-
-  const heroImage = "/images/research/research-demo-imagegen.webp";
+  const visibleStats = stats
+    .filter((item) => Number(item.value) > 0)
+    .slice(0, 8);
+  const featuredMetric =
+    metrics.data.find((item) => item.is_featured) ?? metrics.data[0];
+  const metricRows: ImpactMetricRowDto[] = metrics.data.map((metric) => ({
+    id: String(
+      metric.id ?? metric.slug ?? getRecordTitle(metric, "Impact metric"),
+    ),
+    title: getRecordTitle(metric, "Impact metric"),
+    summary: getRecordSummary(metric),
+    category: formatLabel(compactText(metric.category) || "metric"),
+    value: formatMetricValue(metric) || "Not published",
+    period:
+      compactText(metric.reporting_year) ||
+      formatDate(metric.period_end) ||
+      "Not published",
+    source: compactText(metric.data_source) || "Not published",
+    linkedWork: linkedWork(metric) || "Not linked",
+  }));
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ImpactMetricsHero statCount={visibleStats.length} metricCount={metrics.data.length} heroImage={heroImage} />
+      <ImpactMetricsHero
+        statCount={visibleStats.length}
+        metricCount={metrics.data.length}
+      />
 
       <section className="border-b border-border bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mx-auto grid max-w-[1680px] gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0">
             <ImpactMetricFilters params={params} years={years} />
-            {[statsResponse.error, metrics.error, allMetrics.error].filter(Boolean).map((error) => (
-              <div key={error} className="mt-4">
-                <StatusMessage tone="error">{error}</StatusMessage>
-              </div>
-            ))}
-            {visibleStats.length > 0 ? <StatChipGrid stats={visibleStats} /> : null}
+            {[statsResponse.error, metrics.error, allMetrics.error]
+              .filter(Boolean)
+              .map((error) => (
+                <div key={error} className="mt-4">
+                  <StatusMessage tone="error">{error}</StatusMessage>
+                </div>
+              ))}
+            {visibleStats.length > 0 ? (
+              <StatChipGrid stats={visibleStats} />
+            ) : null}
             <CategoryBands metrics={metrics.data} stats={stats} />
-            {metrics.data.length > 0 ? <MetricRecordTable records={metrics.data} /> : null}
+            {metrics.data.length > 0 ? (
+              <ImpactMetricTable records={metricRows} />
+            ) : null}
           </div>
           <aside className="grid gap-4 xl:sticky xl:top-28 xl:self-start">
-            {featuredMetric ? <MetricEvidencePanel metric={featuredMetric} /> : null}
+            {featuredMetric ? (
+              <MetricEvidencePanel metric={featuredMetric} />
+            ) : null}
             <MetricQuickLinks />
           </aside>
         </div>
@@ -95,66 +150,74 @@ export default async function ImpactDashboardPage({
   );
 }
 
-async function getResearchStats(): Promise<{ stats: StatItem[]; error: string | null }> {
+async function getResearchStats(): Promise<{
+  stats: StatItem[];
+  error: string | null;
+}> {
   try {
     const response = await researchServiceApi.stats();
-    const stats = ((response as { data?: { stats?: StatItem[] } }).data?.stats ?? []).filter(Boolean);
+    const stats = (
+      (response as { data?: { stats?: StatItem[] } }).data?.stats ?? []
+    ).filter(Boolean);
     return { stats, error: null };
   } catch {
-    return { stats: [], error: null };
+    noStore();
+    return {
+      stats: [],
+      error: "Impact statistics are temporarily unavailable.",
+    };
   }
 }
 
 function ImpactMetricsHero({
   statCount,
   metricCount,
-  heroImage,
 }: {
   statCount: number;
   metricCount: number;
-  heroImage?: string;
 }) {
   return (
-    <section className="relative overflow-hidden border-b border-border bg-[hsl(var(--brand-overlay))] px-4 py-8 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(2,22,50,0.96),rgba(0,82,70,0.78)),radial-gradient(circle_at_78%_28%,rgba(245,158,11,0.22),transparent_24%)]" />
-      <MetricIllustration />
-      <div className="relative mx-auto max-w-[1680px]">
-        <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-white/70" aria-label="Breadcrumb">
-          <Link href="/" className="transition hover:text-white">Home</Link>
-          <span>/</span>
-          <Link href="/community-impact" className="transition hover:text-white">Community Impact</Link>
-          <span>/</span>
-          <span className="text-white">Impact Metrics</span>
-        </nav>
-        <p className="inline-flex rounded-md border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em]">
-          Evidence Dashboard
-        </p>
-        <h1 className="mt-4 max-w-4xl text-balance font-display text-4xl font-semibold leading-tight sm:text-5xl">
-          Impact metrics that connect evidence to public value
-        </h1>
-        <p className="mt-4 max-w-2xl text-pretty text-sm leading-7 text-white/82 sm:text-base">
-          Published indicators, reporting periods, data sources, and linked research work in one compact dashboard.
-        </p>
-        <div className="mt-6 overflow-hidden rounded-2xl border border-white/15 bg-white/10 p-2 shadow-2xl backdrop-blur lg:ml-auto lg:max-w-[360px]">
-          <ResearchImage src={heroImage} fallback="/images/research/research-demo-imagegen.webp" alt="Impact metrics dashboard" width={720} height={384} className="h-48 w-full rounded-xl object-cover" />
-        </div>
-        {[statCount, metricCount].some((value) => value > 0) ? (
-          <dl className="mt-5 flex flex-wrap gap-2">
-            {statCount > 0 ? <HeroChip label="Live indicators" value={statCount} /> : null}
-            {metricCount > 0 ? <HeroChip label="Metric records" value={metricCount} /> : null}
-          </dl>
-        ) : null}
-      </div>
-    </section>
+    <>
+      <ResearchPageHero
+        title="Impact Metrics"
+        eyebrow="Impact"
+        description="Published indicators, reporting periods, data sources, and linked research work in one dashboard."
+        imageSrc="/images/research/headers/innovation-week-8147.jpg"
+        imageAlt="Kisii University Innovation Week"
+        breadcrumbs={[
+          { label: "Home", href: "/" },
+          { label: "Impact Metrics" },
+        ]}
+      />
+      <ResearchPageSummary
+        actions={[]}
+        facts={[
+          { label: "Live indicators", value: statCount },
+          { label: "Metric records", value: metricCount },
+        ].filter((fact) => fact.value > 0)}
+      ></ResearchPageSummary>
+    </>
   );
 }
 
-function ImpactMetricFilters({ params, years }: { params: MetricSearchParams; years: string[] }) {
+function ImpactMetricFilters({
+  params,
+  years,
+}: {
+  params: MetricSearchParams;
+  years: string[];
+}) {
   return (
-    <form action="/impact-metrics" className="mb-5 rounded-lg border border-border bg-white p-3 shadow-sm">
+    <form
+      action="/impact-metrics"
+      className="mb-5 rounded-lg border border-border bg-white p-3 shadow-sm"
+    >
       <div className="grid gap-2 lg:grid-cols-[minmax(220px,1fr)_auto_auto_auto]">
         <label className="relative block">
-          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70"
+          />
           <input
             name="q"
             defaultValue={params.q ?? ""}
@@ -162,7 +225,10 @@ function ImpactMetricFilters({ params, years }: { params: MetricSearchParams; ye
             className="h-11 w-full rounded-md border border-border bg-white pl-9 pr-3 text-sm font-medium text-foreground outline-none ring-primary/20 transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4"
           />
         </label>
-        <button type="submit" className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white">
+        <button
+          type="submit"
+          className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white"
+        >
           Search
         </button>
         <details className="group relative">
@@ -170,10 +236,30 @@ function ImpactMetricFilters({ params, years }: { params: MetricSearchParams; ye
             <Filter aria-hidden className="h-4 w-4" /> Filter
           </summary>
           <div className="absolute right-0 z-20 mt-2 grid w-[320px] gap-3 rounded-lg border border-border bg-white p-4 shadow-xl">
-            <SelectField name="category" label="Category" value={params.category} options={metricCategories} />
-            <SelectField name="type" label="Metric type" value={params.type} options={metricTypes} />
-            <SelectField name="year" label="Year" value={params.year} options={years} />
-            <SelectField name="active" label="Active state" value={params.active} options={["active", "inactive", "featured"]} />
+            <SelectField
+              name="category"
+              label="Category"
+              value={params.category}
+              options={metricCategories}
+            />
+            <SelectField
+              name="type"
+              label="Metric type"
+              value={params.type}
+              options={metricTypes}
+            />
+            <SelectField
+              name="year"
+              label="Year"
+              value={params.year}
+              options={years}
+            />
+            <SelectField
+              name="active"
+              label="Active state"
+              value={params.active}
+              options={["active", "inactive", "featured"]}
+            />
           </div>
         </details>
         <details className="group relative">
@@ -181,7 +267,13 @@ function ImpactMetricFilters({ params, years }: { params: MetricSearchParams; ye
             <LineChart aria-hidden className="h-4 w-4" /> Sort
           </summary>
           <div className="absolute right-0 z-20 mt-2 w-[260px] rounded-lg border border-border bg-white p-4 shadow-xl">
-            <SelectField name="sort" label="Sort" value={params.sort} options={sortOptions} includeBlank={false} />
+            <SelectField
+              name="sort"
+              label="Sort"
+              value={params.sort}
+              options={sortOptions}
+              includeBlank={false}
+            />
           </div>
         </details>
       </div>
@@ -192,13 +284,25 @@ function ImpactMetricFilters({ params, years }: { params: MetricSearchParams; ye
 function StatChipGrid({ stats }: { stats: StatItem[] }) {
   return (
     <section className="mb-5 rounded-lg border border-border bg-white p-4 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Impact at a glance</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+        Impact at a glance
+      </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Link key={stat.key} href={stat.href ?? "/impact-metrics"} className="rounded-lg border border-border bg-surface-subtle p-3 transition hover:border-primary/35 hover:bg-white">
-            <p className="text-xs font-semibold uppercase text-muted-foreground">{stat.label}</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">{stat.value.toLocaleString()}</p>
-            <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{stat.description}</p>
+          <Link
+            key={stat.key}
+            href={stat.href ?? "/impact-metrics"}
+            className="rounded-lg border border-border bg-surface-subtle p-3 transition hover:border-primary/35 hover:bg-white"
+          >
+            <p className="text-xs font-semibold uppercase text-muted-foreground">
+              {stat.label}
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-foreground">
+              {stat.value.toLocaleString()}
+            </p>
+            <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+              {stat.description}
+            </p>
           </Link>
         ))}
       </div>
@@ -211,7 +315,12 @@ function MetricEvidencePanel({ metric }: { metric: ResearchGenericRecord }) {
   const items = [
     { label: "Data source", value: compactText(metric.data_source) },
     { label: "Methodology", value: compactText(metric.methodology) },
-    { label: "Period", value: [formatDate(metric.period_start), formatDate(metric.period_end)].filter(Boolean).join(" - ") },
+    {
+      label: "Period",
+      value: [formatDate(metric.period_start), formatDate(metric.period_end)]
+        .filter(Boolean)
+        .join(" - "),
+    },
     { label: "Reporting year", value: compactText(metric.reporting_year) },
   ].filter((item) => item.value);
 
@@ -222,25 +331,40 @@ function MetricEvidencePanel({ metric }: { metric: ResearchGenericRecord }) {
           <Database aria-hidden className="h-5 w-5" />
         </span>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Evidence quality</p>
-          <h2 className="text-base font-semibold text-foreground">{getRecordTitle(metric, "Impact metric")}</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">
+            Evidence quality
+          </p>
+          <h2 className="text-base font-semibold text-foreground">
+            {getRecordTitle(metric, "Impact metric")}
+          </h2>
         </div>
       </div>
       <div className="mt-4 rounded-md bg-surface-subtle p-3">
         <div className="flex items-end justify-between gap-3">
-          <span className="text-sm font-semibold text-muted-foreground">Baseline to target</span>
-          <span className="text-sm font-semibold text-primary">{progress}%</span>
+          <span className="text-sm font-semibold text-muted-foreground">
+            Baseline to target
+          </span>
+          <span className="text-sm font-semibold text-primary">
+            {progress}%
+          </span>
         </div>
         <div className="mt-2 h-2 rounded-full bg-surface-muted">
-          <div className="h-2 rounded-full bg-primary" style={{ width: `${progress}%` }} />
+          <div
+            className="h-2 rounded-full bg-primary"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       </div>
       {items.length > 0 ? (
         <dl className="mt-4 divide-y divide-border">
           {items.map((item) => (
             <div key={item.label} className="py-3 first:pt-0 last:pb-0">
-              <dt className="text-xs font-semibold uppercase text-muted-foreground">{item.label}</dt>
-              <dd className="mt-1 text-sm leading-6 text-muted-foreground">{item.value}</dd>
+              <dt className="text-xs font-semibold uppercase text-muted-foreground">
+                {item.label}
+              </dt>
+              <dd className="mt-1 text-sm leading-6 text-muted-foreground">
+                {item.value}
+              </dd>
             </div>
           ))}
         </dl>
@@ -249,11 +373,20 @@ function MetricEvidencePanel({ metric }: { metric: ResearchGenericRecord }) {
   );
 }
 
-function CategoryBands({ metrics, stats }: { metrics: ResearchGenericRecord[]; stats: StatItem[] }) {
+function CategoryBands({
+  metrics,
+  stats,
+}: {
+  metrics: ResearchGenericRecord[];
+  stats: StatItem[];
+}) {
   const bands = metricCategories
     .map((category) => {
-      const count = metrics.filter((metric) => compactText(metric.category) === category).length;
-      const statValue = stats.find((stat) => stat.key.includes(category))?.value ?? 0;
+      const count = metrics.filter(
+        (metric) => compactText(metric.category) === category,
+      ).length;
+      const statValue =
+        stats.find((stat) => stat.key.includes(category))?.value ?? 0;
       return { category, value: count || statValue };
     })
     .filter((band) => band.value > 0);
@@ -263,58 +396,33 @@ function CategoryBands({ metrics, stats }: { metrics: ResearchGenericRecord[]; s
   const max = Math.max(...bands.map((band) => band.value), 1);
   return (
     <section className="mb-5 rounded-lg border border-border bg-white p-4 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Performance by category</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+        Performance by category
+      </p>
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {bands.map((band) => (
-          <div key={band.category} className="rounded-lg border border-border p-3">
+          <div
+            key={band.category}
+            className="rounded-lg border border-border p-3"
+          >
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-semibold text-foreground">{formatLabel(band.category)}</span>
-              <span className="text-sm font-semibold text-primary">{band.value.toLocaleString()}</span>
+              <span className="text-sm font-semibold text-foreground">
+                {formatLabel(band.category)}
+              </span>
+              <span className="text-sm font-semibold text-primary">
+                {band.value.toLocaleString()}
+              </span>
             </div>
             <div className="mt-3 h-2 rounded-full bg-surface-muted">
-              <div className="h-2 rounded-full bg-secondary" style={{ width: `${Math.max(10, Math.round((band.value / max) * 100))}%` }} />
+              <div
+                className="h-2 rounded-full bg-secondary"
+                style={{
+                  width: `${Math.max(10, Math.round((band.value / max) * 100))}%`,
+                }}
+              />
             </div>
           </div>
         ))}
-      </div>
-    </section>
-  );
-}
-
-function MetricRecordTable({ records }: { records: ResearchGenericRecord[] }) {
-  return (
-    <section className="rounded-lg border border-border bg-white shadow-sm">
-      <div className="border-b border-border p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Published metric records</p>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-surface-subtle text-xs uppercase tracking-[0.14em] text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3">Metric</th>
-              <th className="px-4 py-3">Category</th>
-              <th className="px-4 py-3">Value</th>
-              <th className="px-4 py-3">Period</th>
-              <th className="px-4 py-3">Source</th>
-              <th className="px-4 py-3">Linked work</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {records.map((metric) => (
-              <tr key={metric.id ?? metric.slug} className="transition hover:bg-surface-subtle">
-                <td className="px-4 py-3">
-                  <p className="font-semibold text-foreground">{getRecordTitle(metric, "Impact metric")}</p>
-                  <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{getRecordSummary(metric)}</p>
-                </td>
-                <td className="px-4 py-3"><Badge>{formatLabel(compactText(metric.category) || "metric")}</Badge></td>
-                <td className="px-4 py-3 font-semibold text-primary">{formatMetricValue(metric)}</td>
-                <td className="px-4 py-3 text-muted-foreground">{compactText(metric.reporting_year) || formatDate(metric.period_end)}</td>
-                <td className="px-4 py-3 text-muted-foreground">{compactText(metric.data_source)}</td>
-                <td className="px-4 py-3 text-muted-foreground">{linkedWork(metric)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
     </section>
   );
@@ -329,12 +437,21 @@ function MetricQuickLinks() {
   ];
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Trace evidence</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">
+        Trace evidence
+      </p>
       <div className="mt-3 divide-y divide-border">
         {links.map((link) => (
-          <Link key={link.href} href={link.href} className="flex items-center justify-between gap-4 py-3 text-sm font-semibold text-primary">
+          <Link
+            key={link.href}
+            href={link.href}
+            className="flex items-center justify-between gap-4 py-3 text-sm font-semibold text-primary"
+          >
             {link.label}
-            <ArrowRight aria-hidden className="h-4 w-4 text-muted-foreground/70" />
+            <ArrowRight
+              aria-hidden
+              className="h-4 w-4 text-muted-foreground/70"
+            />
           </Link>
         ))}
       </div>
@@ -357,24 +474,33 @@ function SelectField({
 }) {
   return (
     <label className="block">
-      <span className="text-xs font-semibold uppercase text-muted-foreground">{label}</span>
-      <select name={name} defaultValue={value ?? ""} className="mt-2 h-10 w-full rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground">
-        {includeBlank ? <option value="">All {label.toLowerCase()}</option> : null}
+      <span className="text-xs font-semibold uppercase text-muted-foreground">
+        {label}
+      </span>
+      <select
+        name={name}
+        defaultValue={value ?? ""}
+        className="mt-2 h-10 w-full rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground"
+      >
+        {includeBlank ? (
+          <option value="">All {label.toLowerCase()}</option>
+        ) : null}
         {options.map((option) => {
-          const normalized = typeof option === "string" ? { value: option, label: formatLabel(option) } : option;
-          return <option key={`${name}-${normalized.value}`} value={normalized.value}>{normalized.label}</option>;
+          const normalized =
+            typeof option === "string"
+              ? { value: option, label: formatLabel(option) }
+              : option;
+          return (
+            <option
+              key={`${name}-${normalized.value}`}
+              value={normalized.value}
+            >
+              {normalized.label}
+            </option>
+          );
         })}
       </select>
     </label>
-  );
-}
-
-function HeroChip({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-md border border-white/15 bg-white/10 px-4 py-2">
-      <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/65">{label}</dt>
-      <dd className="mt-1 text-xl font-semibold text-white">{value.toLocaleString()}</dd>
-    </div>
   );
 }
 
@@ -403,22 +529,4 @@ function getActiveFlags(value?: string) {
   if (value === "inactive") return { isActive: false };
   if (value === "featured") return { isActive: true, isFeatured: true };
   return { isActive: true };
-}
-
-function MetricIllustration() {
-  return (
-    <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 opacity-55 lg:block">
-      <svg viewBox="0 0 760 360" className="h-full w-full" role="img" aria-label="Impact metrics illustration">
-        <path d="M80 282 H690" stroke="#ffffff" strokeOpacity="0.12" />
-        <path d="M120 76 V302" stroke="#ffffff" strokeOpacity="0.08" />
-        <path d="M120 252 C222 208 280 224 356 164 C448 92 540 122 650 72" fill="none" stroke="#f59e0b" strokeWidth="4" strokeLinecap="round" opacity="0.75" />
-        {[170, 260, 350, 440, 530, 620].map((x, index) => (
-          <rect key={x} x={x} y={244 - index * 22} width="42" height={58 + index * 22} rx="8" fill="#ffffff" opacity={0.08 + index * 0.025} />
-        ))}
-        <circle cx="596" cy="104" r="80" fill="#00a86b" opacity="0.12" />
-        <circle cx="352" cy="164" r="10" fill="#f59e0b" />
-        <circle cx="650" cy="72" r="10" fill="#f59e0b" />
-      </svg>
-    </div>
-  );
 }

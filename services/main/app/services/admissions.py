@@ -116,9 +116,14 @@ class ProgrammeService:
         query = (
             select(Programme)
             .options(
-                selectinload(Programme.tutors),
-                selectinload(Programme.intakes),
+                selectinload(Programme.tutors).selectinload(ProgrammeTutor.person),
+                selectinload(Programme.intakes).selectinload(ProgrammeIntake.intake),
                 selectinload(Programme.department),
+                # ProgrammeRead exposes these relationships. Load them before
+                # the request session is released so response validation does
+                # not attempt lazy loading on detached ORM instances.
+                selectinload(Programme.cover_image),
+                selectinload(Programme.brochure),
                 selectinload(Programme.admission_requirements),
                 selectinload(Programme.fee_structures),
                 selectinload(Programme.admission_documents),

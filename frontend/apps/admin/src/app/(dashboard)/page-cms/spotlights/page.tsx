@@ -41,6 +41,7 @@ import {
   type PartnershipSpotlightWorkflowAction,
 } from "@/lib/api/page-cms";
 import { Sparkles } from "lucide-react";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 type SpotlightFormState = {
   id?: string;
@@ -160,22 +161,23 @@ export default function PageCmsSpotlightsPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
 
     const load = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await partnershipSpotlightsApi.listAdmin({ page: 1, per_page: 100 });
+        const response = await partnershipSpotlightsApi.listAdmin({ page: 1, per_page: 100 }, { signal: controller.signal });
         if (cancelled) return;
         const nextSpotlights = response.data ?? [];
         setSpotlights(nextSpotlights);
         if (nextSpotlights.length) {
-          const detail = await partnershipSpotlightsApi.get(nextSpotlights[0].id);
+          const detail = await partnershipSpotlightsApi.get(nextSpotlights[0].id, { signal: controller.signal });
           if (cancelled) return;
           setForm(formFromSpotlight(detail.data));
         }
       } catch {
-        if (!cancelled) {
+        if (!cancelled && !controller.signal.aborted) {
           setError("Failed to load partnership spotlight admin data.");
         }
       } finally {
@@ -188,6 +190,7 @@ export default function PageCmsSpotlightsPage() {
     void load();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, []);
 
@@ -248,6 +251,7 @@ export default function PageCmsSpotlightsPage() {
       });
       setForm(formFromSpotlight(saved));
       setPendingAttachments([]);
+      void revalidatePublicContent("main", "partnership-spotlights");
       toast.success(form.id ? "Spotlight updated." : "Spotlight created.");
     } catch {
       toast.error("Failed to save partnership spotlight.");
@@ -269,6 +273,7 @@ export default function PageCmsSpotlightsPage() {
       const updated = response.data;
       setSpotlights((current) => current.map((item) => (item.id === updated.id ? updated : item)));
       setForm(formFromSpotlight(updated));
+      void revalidatePublicContent("main", "partnership-spotlights");
       toast.success(`Spotlight ${action.replace(/_/g, " ")} complete.`);
     } catch {
       toast.error(`Failed to ${action.replace(/_/g, " ")} spotlight.`);

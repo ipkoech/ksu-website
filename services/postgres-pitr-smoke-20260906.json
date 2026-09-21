@@ -1,0 +1,53 @@
+{
+  "result": "passed",
+  "captured_at_utc": "2026-09-06T17:42:24Z",
+  "postgres_version": "18.6",
+  "platform": "Windows disposable local cluster",
+  "source": {
+    "host": "127.0.0.1",
+    "port": 55470,
+    "archive_mode": "on",
+    "wal_level": "replica",
+    "archive_timeout": "1s",
+    "archive_command": "cmd /c copy /Y %p to an isolated archive directory",
+    "base_backup": "pg_basebackup -Fp -X stream --checkpoint=fast"
+  },
+  "restore": {
+    "host": "127.0.0.1",
+    "port": 55471,
+    "target": "ksu_before_pitr_marker",
+    "target_action": "promote",
+    "archive_files_observed": 10,
+    "archive_replay_log_files": [
+      "000000010000000000000003",
+      "000000010000000000000004",
+      "000000010000000000000005",
+      "000000010000000000000006",
+      "000000010000000000000007",
+      "000000010000000000000008",
+      "000000010000000000000009"
+    ],
+    "query_result": {
+      "pg_is_in_recovery": false,
+      "row_count": 2,
+      "markers": [
+        "before_restore_point",
+        "after_restore_point"
+      ]
+    }
+  },
+  "assertions": {
+    "archive_mode_enabled": true,
+    "base_backup_created": true,
+    "wal_segments_archived": true,
+    "restore_point_reached": true,
+    "pre_target_rows_present": true,
+    "post_target_marker_absent": true,
+    "restore_promoted": true
+  },
+  "limitations": [
+    "Disposable loopback cluster only; no production database or external target was modified.",
+    "The archive destination was local for this drill; encrypted off-host retention remains a deployment gate.",
+    "This does not prove scheduled backup retention, operator access controls, or a full production failover drill."
+  ]
+}

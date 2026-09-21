@@ -1,17 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getStoredAccessToken } from "@ksu/auth";
+import { heriRequest } from "@/lib/api/heri";
 import { BarChart3, CalendarRange, Loader2, RefreshCw, Search, Send, TrendingUp } from "lucide-react";
 import { Alert, AlertDescription, Button, Card, CardContent, CardHeader, CardTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ksu/ui/components";
 import { SchoolMetricGrid, SchoolWorkspace, SchoolWorkspaceHeader } from "@/components/schools/shared/school-workspace";
 
 type Report = { total_events: number; page_views: number; content_views: number; form_submissions: number; downloads: number; registrations: number; top_pages: Array<{ path: string; count: number }>; top_search_terms: Array<{ term: string; count: number }>; cta_conversions: Array<{ cta: string; count: number }> };
-const API = process.env.NEXT_PUBLIC_HERI_API_URL ?? "http://localhost:8003/api/v1/heri";
 
 export default function HeriAnalyticsPage() {
   const [report, setReport] = useState<Report | null>(null); const [error, setError] = useState<string | null>(null); const [days, setDays] = useState("30"); const [loading, setLoading] = useState(false);
-  const load = useCallback(async () => { setLoading(true); try { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - Number(days)); const token = getStoredAccessToken(); const response = await fetch(`${API}/admin/analytics/report?start_date=${start.toISOString().slice(0, 10)}&end_date=${end.toISOString().slice(0, 10)}`, { credentials: "include", headers: token ? { Authorization: `Bearer ${token}` } : {} }); if (!response.ok) throw new Error("Unable to load analytics report"); setReport(await response.json() as Report); setError(null); } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to load analytics report"); } finally { setLoading(false); } }, [days]);
+  const load = useCallback(async () => { setLoading(true); try { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - Number(days)); const result = await heriRequest<Report>(`/admin/analytics/report?start_date=${start.toISOString().slice(0, 10)}&end_date=${end.toISOString().slice(0, 10)}`); setReport(result); setError(null); } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to load analytics report"); } finally { setLoading(false); } }, [days]);
   useEffect(() => { void load(); }, [load]);
   const breakdowns: Array<[string, Array<Record<string, string | number>>, typeof BarChart3, string]> = [["Top pages", (report?.top_pages ?? []) as Array<Record<string, string | number>>, BarChart3, "path"], ["Search terms", (report?.top_search_terms ?? []) as Array<Record<string, string | number>>, Search, "term"], ["CTA conversions", (report?.cta_conversions ?? []) as Array<Record<string, string | number>>, Send, "cta"]];
   return <SchoolWorkspace><SchoolWorkspaceHeader eyebrow="HERI Africa administration" title="Analytics & insights" description="Board-ready engagement reporting from the HERI research communication platform." icon={BarChart3} actions={<div className="flex gap-2"><Select value={days} onValueChange={setDays}><SelectTrigger className="w-32"><CalendarRange className="mr-2 size-4" /><SelectValue /></SelectTrigger><SelectContent>{[7, 30, 90].map((range) => <SelectItem key={range} value={String(range)}>{range} days</SelectItem>)}</SelectContent></Select><Button variant="outline" size="icon" aria-label="Refresh analytics" onClick={() => void load()} disabled={loading}>{loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}</Button></div>} />

@@ -16,6 +16,7 @@
     "build:heri": "pnpm --filter @ksu/heri-africa build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
+    "check:revalidation": "node scripts/check-public-revalidation-coverage.mjs",
     "test:accessibility:unit": "pnpm --filter @ksu/ui test",
     "test:e2e:accessibility": "playwright test --grep @accessibility",
     "test:e2e:school-portal": "playwright test school-portal.spec.ts --project=admin",

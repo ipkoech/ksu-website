@@ -33,6 +33,8 @@ import {
   TableHeader,
   TableRow,
 } from "@ksu/ui/components";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
+import { waitForTeamImportPoll } from "./team-import-polling";
 
 export function TeamImportDialog({
   open,
@@ -52,17 +54,44 @@ export function TeamImportDialog({
 
   useEffect(() => {
     if (!jobId || ["SUCCESS", "FAILURE"].includes(jobStatus)) return;
-    const timer = window.setInterval(async () => {
-      try {
-        const job = (await importsApi.getJob(jobId)).data;
-        setJobStatus(job.status);
-        if (job.status === "SUCCESS") await onComplete();
-        if (job.status === "FAILURE") setError(job.error || "The team import failed.");
-      } catch {
-        // A later poll can recover from a transient status request failure.
+    let active = true;
+    const controller = new AbortController();
+    const poll = async () => {
+      while (active && !controller.signal.aborted) {
+        try {
+          await waitForTeamImportPoll(controller.signal);
+        } catch {
+          return;
+        }
+        if (!active || controller.signal.aborted) return;
+        try {
+          const job = (await importsApi.getJob(jobId, { signal: controller.signal })).data;
+          if (!active) return;
+          setJobStatus(job.status);
+          if (job.status === "SUCCESS") {
+            active = false;
+            void revalidatePublicContent("main", "people");
+            try {
+              await onComplete();
+            } catch {
+              setError("Import completed, but refreshing the team list failed.");
+            }
+          }
+          if (job.status === "FAILURE") {
+            active = false;
+            setError(job.error || "The team import failed.");
+          }
+        } catch {
+          if (controller.signal.aborted) return;
+          // A later poll can recover from a transient status request failure.
+        }
       }
-    }, 1500);
-    return () => window.clearInterval(timer);
+    };
+    void poll();
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [jobId, jobStatus, onComplete]);
 
   const previewFile = async (file?: File) => {

@@ -4,7 +4,7 @@ import uuid
 
 from fastapi import APIRouter, HTTPException, Query, status
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ....deps import DbSession
 from ....schemas.school_portal_academics import (
@@ -12,6 +12,8 @@ from ....schemas.school_portal_academics import (
     SchoolDepartmentCreate,
     SchoolDepartmentUpdate,
 )
+from ....schemas.academic import DepartmentSnapshot
+from ....schemas.imports import ImportCommitRead, ImportPreviewRead
 from ....services.academic import DepartmentService
 from ....services.school_portal_academics import (
     create_school_department,
@@ -26,7 +28,11 @@ from ....services.school_portal_context import CurrentSchoolContext
 router = APIRouter()
 
 
-@router.get("/departments")
+@router.get(
+    "/departments",
+    response_model=SuccessResponse[list[DepartmentSnapshot]],
+    response_model_exclude_unset=True,
+)
 async def list_departments(
     db: DbSession,
     context: CurrentSchoolContext,
@@ -52,7 +58,12 @@ async def list_departments(
     return success(data=result.items, meta=result.meta)
 
 
-@router.post("/departments", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/departments",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[DepartmentSnapshot],
+    response_model_exclude_unset=True,
+)
 async def post_department(
     data: SchoolDepartmentCreate,
     db: DbSession,
@@ -61,7 +72,11 @@ async def post_department(
     return success(data=await create_school_department(db, context, data))
 
 
-@router.post("/departments/imports/preview")
+@router.post(
+    "/departments/imports/preview",
+    response_model=SuccessResponse[ImportPreviewRead],
+    response_model_exclude_unset=True,
+)
 async def preview_department_import(
     data: SchoolAcademicImportRequest,
     db: DbSession,
@@ -78,7 +93,11 @@ async def preview_department_import(
     )
 
 
-@router.post("/departments/imports")
+@router.post(
+    "/departments/imports",
+    response_model=SuccessResponse[ImportCommitRead],
+    response_model_exclude_unset=True,
+)
 async def commit_department_import(
     data: SchoolAcademicImportRequest,
     db: DbSession,
@@ -89,7 +108,11 @@ async def commit_department_import(
     return success(data=await commit_school_academic_import(db, context, data))
 
 
-@router.get("/departments/{department_id}")
+@router.get(
+    "/departments/{department_id}",
+    response_model=SuccessResponse[DepartmentSnapshot],
+    response_model_exclude_unset=True,
+)
 async def get_department(
     department_id: uuid.UUID,
     db: DbSession,
@@ -98,7 +121,11 @@ async def get_department(
     return success(data=await get_school_department(db, context, department_id))
 
 
-@router.patch("/departments/{department_id}")
+@router.patch(
+    "/departments/{department_id}",
+    response_model=SuccessResponse[DepartmentSnapshot],
+    response_model_exclude_unset=True,
+)
 async def patch_department(
     department_id: uuid.UUID,
     data: SchoolDepartmentUpdate,

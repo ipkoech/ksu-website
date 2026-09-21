@@ -1,12 +1,21 @@
 import type { NextConfig } from "next";
 import path from "node:path";
+import { createRequire } from "node:module";
+
+const { ensureSharedPublic } = createRequire(path.join(__dirname, "package.json"))(
+  "../../scripts/shared-public.cjs",
+);
+
+ensureSharedPublic(__dirname);
 
 const basePath = process.env.NEXT_BASE_PATH || "";
 
 const nextConfig: NextConfig = {
   ...(basePath ? { basePath } : {}),
   distDir: process.env.NEXT_DIST_DIR || ".next",
-  output: "standalone",
+  // Keep Windows production builds usable without pnpm symlink privileges;
+  // Linux deployment still emits the standalone runtime used by the image.
+  ...(process.platform === "win32" ? {} : { output: "standalone" as const }),
   outputFileTracingRoot: path.join(__dirname, "../.."),
   transpilePackages: ["@ksu/ui", "@ksu/api-client"],
   async redirects() {

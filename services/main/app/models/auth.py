@@ -51,10 +51,14 @@ class User(Base):
         sa.Boolean, nullable=False, server_default=sa.text("false")
     )
 
-    # Legacy storage retained for migration compatibility. These fields are
-    # deliberately not exposed until complete MFA challenge/recovery exists.
+    # Authenticator secrets are Fernet ciphertext. Generic account mutations
+    # cannot enroll or disable MFA; enrollment requires password and OTP proof.
     mfa_enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
     mfa_secret: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    mfa_pending_secret: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    mfa_pending_expires_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    mfa_last_counter: Mapped[Optional[int]] = mapped_column(sa.BigInteger, nullable=True)
+    mfa_recovery_hashes: Mapped[Optional[list[str]]] = mapped_column(JSONB, nullable=True)
 
     # Tracking
     last_login_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
@@ -153,6 +157,7 @@ class Session(Base):
     revoked_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
     revoked_reason: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True)  # logout | password_change | admin | expired
     last_used_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    mfa_verified_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
 
     is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
 

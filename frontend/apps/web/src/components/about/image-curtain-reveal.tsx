@@ -50,11 +50,11 @@ export function ImageCurtainReveal({
       </div>
       <span
         aria-hidden
-        className={`pointer-events-none absolute inset-0 z-30 bg-[hsl(var(--primary)/0.58)] transition-transform duration-700 ease-[cubic-bezier(.77,0,.18,1)] motion-reduce:hidden sm:duration-1000 ${visible ? "translate-y-full" : "translate-y-0"}`}
+      className={`pointer-events-none absolute inset-0 z-30 bg-[hsl(var(--primary)/0.58)] transition-transform duration-700 ease-in-out motion-reduce:hidden sm:duration-1000 ${visible ? "translate-y-full" : "translate-y-0"}`}
       />
       <span
         aria-hidden
-        className={`pointer-events-none absolute inset-0 z-40 border-t-[3px] border-secondary transition-transform duration-700 ease-[cubic-bezier(.77,0,.18,1)] motion-reduce:hidden sm:duration-1000 ${visible ? "translate-y-full" : "translate-y-0"}`}
+      className={`pointer-events-none absolute inset-0 z-40 border-t-[3px] border-secondary transition-transform duration-700 ease-in-out motion-reduce:hidden sm:duration-1000 ${visible ? "translate-y-full" : "translate-y-0"}`}
       />
     </div>
   );

@@ -16,6 +16,7 @@ import {
   useHeriResourceMutation,
   useHeriResourceQuery,
 } from "@/lib/api/heri";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import type { HeriRecord } from "@/lib/api/heri";
 
 type NavigationItem = {
@@ -112,6 +113,7 @@ export function HeriSettingsNavigationEditor() {
     if (!window.confirm(`Remove “${item.label}” from navigation?`)) return;
     try {
       await heriRequest(`/admin/navigation/${item.id}`, { method: "DELETE" });
+      void revalidatePublicContent("heri", "navigation");
       toast.success("Navigation item removed");
       await query.refetch();
     } catch (reason) {

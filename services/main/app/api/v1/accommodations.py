@@ -7,18 +7,23 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import Accommodation
 from ...schemas import AccommodationCreate, AccommodationUpdate
+from ...schemas.student_life import AccommodationSnapshot
 from ...services import AccommodationService
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[AccommodationSnapshot]],
+    response_model_exclude_unset=True,
+)
 @cached_public(
     timeout=300,
     vary_on=(
@@ -59,7 +64,11 @@ async def list_accommodations(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{slug}")
+@router.get(
+    "/{slug}",
+    response_model=SuccessResponse[AccommodationSnapshot],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_accommodation(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Accommodation, fields)
@@ -69,13 +78,24 @@ async def get_accommodation(slug: str, db: DbSession, fields: FieldSelection = F
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("student_life.manage_accommodations"))])
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[AccommodationSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("student_life.manage_accommodations"))],
+)
 async def create_accommodation(data: AccommodationCreate, db: DbSession, _: CurrentUser):
     item = await AccommodationService.create(db, **data.model_dump())
     return success(data=item, message="Accommodation created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("student_life.manage_accommodations"))])
+@router.patch(
+    "/{item_id}",
+    response_model=SuccessResponse[AccommodationSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("student_life.manage_accommodations"))],
+)
 async def update_accommodation(item_id: uuid.UUID, data: AccommodationUpdate, db: DbSession, _: CurrentUser):
     item = await AccommodationService.get_by_id(db, item_id)
     if item is None:

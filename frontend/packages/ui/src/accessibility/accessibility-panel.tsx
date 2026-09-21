@@ -121,6 +121,7 @@ export function AccessibilityPanel() {
   const [open, setOpen] = React.useState(false);
   const [profilesOpen, setProfilesOpen] = React.useState(false);
   const [view, setView] = React.useState<"controls" | "structure">("controls");
+  const navigationTimer = React.useRef<number | null>(null);
   const {
     preferences,
     effectiveReduceMotion,
@@ -128,6 +129,16 @@ export function AccessibilityPanel() {
     applyPreset,
     reset,
   } = useAccessibility();
+
+  React.useEffect(
+    () => () => {
+      if (navigationTimer.current !== null) {
+        window.clearTimeout(navigationTimer.current);
+        navigationTimer.current = null;
+      }
+    },
+    [],
+  );
 
   React.useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
@@ -161,8 +172,13 @@ export function AccessibilityPanel() {
   const navigateToStructureItem = (element: HTMLElement) => {
     setOpen(false);
     setView("controls");
-    window.setTimeout(
+    if (navigationTimer.current !== null) {
+      window.clearTimeout(navigationTimer.current);
+    }
+    navigationTimer.current = window.setTimeout(
       () => {
+        navigationTimer.current = null;
+        if (!element.isConnected) return;
         if (!element.hasAttribute("tabindex")) {
           element.setAttribute("tabindex", "-1");
         }

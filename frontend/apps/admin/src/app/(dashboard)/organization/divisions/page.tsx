@@ -29,6 +29,7 @@ import { TableSearch } from "@/components/shared/table-search";
 import { PageTransition } from "@/lib/animations";
 import { useDeleteConfirm } from "@/hooks/use-delete-confirm";
 import { usePermissions } from "@/hooks/use-permissions";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const listFields = [
   "id",
@@ -177,6 +178,7 @@ export default function DivisionsPage() {
     (division: Division) => {
       confirmDelete(division.name, async () => {
         await deleteDivision.mutateAsync(division.id);
+        void revalidatePublicContent("main", "organization");
         toast.success("Division deleted");
       });
     },

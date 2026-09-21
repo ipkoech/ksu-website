@@ -2,8 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import { ArrowRight, ExternalLink, Handshake, Mail, Phone } from "lucide-react";
 import { Badge, FilledBadge, StatusMessage } from "../../../components/research-ui";
 import { ResearchStoryAccordion } from "../../../components/research-rich-text";
@@ -11,24 +10,24 @@ import {
   compactText,
   formatDate,
   formatLabel,
-  generateSlugParams,
   getPartnerBySlug,
   getPartnerRelationshipBundle,
 } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
 import { researchRecordMetadata } from "../../../lib/research-metadata";
+import {
+  PartnerRelationshipsDisplay,
+  type PartnerRelationshipGroupDto,
+} from "../../../components/partner-relationships-display";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getPartnerBySlug(slug);
-  return researchRecordMetadata(data, { fallbackTitle: "Research partner", pathname: "/partners/" + slug });
-}
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.partners.list);
+  return researchRecordMetadata(data, { fallbackTitle: "Partner", pathname: "/partners/" + slug });
 }
 
 export default async function PartnerDetailPage({
@@ -50,6 +49,26 @@ export default async function PartnerDetailPage({
     { title: "Engagement window", fields: ["partnership_start", "partnership_end", "mou_signed_date", "mou_expiry_date"] },
   ]);
   const errors = error ? [error] : [];
+  const relationshipGroups: PartnerRelationshipGroupDto[] = [
+    ["Projects", "/projects", bundle.projects.data],
+    ["Startups", "/startups", bundle.startups.data],
+    ["Incubation records", "/incubation", bundle.incubationRecords.data],
+    ["Technology transfer", "/technology-transfer", bundle.technologyTransferCases.data],
+    ["Consultancies", "/consultancies", bundle.consultancies.data],
+    ["Competitions", "/competitions", bundle.competitionEntries.data],
+    ["Sustainability", "/sustainability", bundle.sustainability.data],
+    ["Impact stories", "/community-impact", bundle.impactStories.data],
+    ["Activities", "/events", bundle.activities.data],
+    ["Impact metrics", "/impact-metrics", bundle.impactMetrics.data],
+  ].map(([groupTitle, hrefBase, records]) => ({
+    title: groupTitle as string,
+    records: (records as ResearchGenericRecord[]).slice(0, 5).map((record, index) => ({
+      id: String(record.id ?? record.slug ?? `${groupTitle}-${index}`),
+      title: getRecordTitle(record, groupTitle as string),
+      href: recordDetailRoutes.has(hrefBase as string) && record.slug ? `${hrefBase}/${record.slug}` : hrefBase as string,
+      meta: relationshipMeta(record),
+    })),
+  }));
 
   return (
     <main id="research-main" className="min-h-screen bg-white text-foreground">
@@ -86,18 +105,7 @@ export default async function PartnerDetailPage({
                 <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">Linked work</p>
                 <h2 className="mt-2 font-display text-xl font-semibold text-foreground">Work with Kisii University</h2>
               </div>
-              <div className="grid gap-4 lg:grid-cols-2">
-                <RelationshipPanel title="Projects" hrefBase="/projects" records={bundle.projects.data} />
-                <RelationshipPanel title="Startups" hrefBase="/startups" records={bundle.startups.data} />
-                <RelationshipPanel title="Incubation records" hrefBase="/incubation" records={bundle.incubationRecords.data} />
-                <RelationshipPanel title="Technology transfer" hrefBase="/technology-transfer" records={bundle.technologyTransferCases.data} />
-                <RelationshipPanel title="Consultancies" hrefBase="/consultancies" records={bundle.consultancies.data} />
-                <RelationshipPanel title="Competitions" hrefBase="/competitions" records={bundle.competitionEntries.data} />
-                <RelationshipPanel title="Sustainability" hrefBase="/sustainability" records={bundle.sustainability.data} />
-                <RelationshipPanel title="Impact stories" hrefBase="/community-impact" records={bundle.impactStories.data} />
-                <RelationshipPanel title="Activities" hrefBase="/events" records={bundle.activities.data} />
-                <RelationshipPanel title="Impact metrics" hrefBase="/impact-metrics" records={bundle.impactMetrics.data} />
-              </div>
+              <PartnerRelationshipsDisplay groups={relationshipGroups} />
             </section>
           </div>
 
@@ -199,37 +207,6 @@ function HeroButton({ href, primary = false, children }: { href: string; primary
   );
 }
 
-function RelationshipPanel({
-  title,
-  hrefBase,
-  records,
-}: {
-  title: string;
-  hrefBase: string;
-  records: ResearchGenericRecord[];
-}) {
-  if (!records.length) return null;
-  return (
-    <section className="min-w-0 rounded-lg border border-border bg-surface-subtle p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="font-semibold text-primary">{title}</h3>
-        <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-muted-foreground">{records.length}</span>
-      </div>
-      <div className="divide-y divide-border rounded-md border border-border bg-white">
-        {records.slice(0, 5).map((record) => (
-          <Link key={String(record.id)} href={recordHref(hrefBase, record)} className="group flex items-start justify-between gap-3 px-3 py-3">
-            <span className="min-w-0">
-              <span className="line-clamp-2 text-sm font-semibold leading-5 text-foreground">{getRecordTitle(record, title)}</span>
-              <span className="mt-1 line-clamp-1 text-xs text-muted-foreground">{relationshipMeta(record)}</span>
-            </span>
-            <ArrowRight aria-hidden className="mt-1 h-4 w-4 shrink-0 text-muted-foreground/70 transition group-hover:translate-x-1 group-hover:text-primary" />
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 const recordDetailRoutes = new Set([
   "/projects",
   "/consultancies",
@@ -239,10 +216,6 @@ const recordDetailRoutes = new Set([
   "/outputs",
   "/publications",
 ]);
-
-function recordHref(hrefBase: string, record: ResearchGenericRecord) {
-  return recordDetailRoutes.has(hrefBase) && record.slug ? `${hrefBase}/${record.slug}` : hrefBase;
-}
 
 function PartnerFactsSidebar({ partner }: { partner: ResearchGenericRecord }) {
   const facts = [

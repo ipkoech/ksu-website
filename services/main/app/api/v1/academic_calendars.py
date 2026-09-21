@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession
@@ -24,6 +24,12 @@ from ...schemas import (
     AcademicCalendarEventUpdate,
     AcademicCalendarUpdate,
     ContentWorkflowActionRequest,
+)
+from ...schemas.academic import (
+    AcademicCalendarComposition,
+    AcademicCalendarDocumentSnapshot,
+    AcademicCalendarEventSnapshot,
+    AcademicCalendarSnapshot,
 )
 from ...services.content_workflow import ContentWorkflowService
 from ...services._base import apply_updates, paginate_query
@@ -62,7 +68,7 @@ async def _require_academic_calendar_scope(
         )
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[AcademicCalendarSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "academic_year", "status", "fields", "include"))
 async def list_academic_calendars(
     db: DbSession,
@@ -92,7 +98,7 @@ async def list_academic_calendars(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin")
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[AcademicCalendarSnapshot]])
 async def list_admin_academic_calendars(
     db: DbSession,
     user: CurrentUser,
@@ -122,7 +128,7 @@ async def list_admin_academic_calendars(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/composition/current")
+@router.get("/composition/current", response_model=SuccessResponse[AcademicCalendarComposition])
 @cached_public(timeout=300, vary_on=("academic_year", "semester"))
 async def get_current_calendar_composition(
     db: DbSession,
@@ -175,7 +181,7 @@ async def get_current_calendar_composition(
     return success(data={"calendar": calendar_summary, "events": events, "documents": documents})
 
 
-@router.get("/{calendar_id}/events")
+@router.get("/{calendar_id}/events", response_model=SuccessResponse[list[AcademicCalendarEventSnapshot]])
 @cached_public(timeout=300, vary_on=("event_type", "date_from", "date_to"))
 async def list_public_calendar_events(
     calendar_id: uuid.UUID,
@@ -201,7 +207,7 @@ async def list_public_calendar_events(
     return success(data=events)
 
 
-@router.get("/id/{calendar_id}")
+@router.get("/id/{calendar_id}", response_model_exclude_unset=True, response_model=SuccessResponse[AcademicCalendarSnapshot])
 async def get_academic_calendar(calendar_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(AcademicCalendar, fields)
     query = AcademicCalendar.active_query().where(AcademicCalendar.id == calendar_id)
@@ -214,7 +220,7 @@ async def get_academic_calendar(calendar_id: uuid.UUID, db: DbSession, _: Curren
     return success(data=selector.apply(calendar))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", response_model_exclude_unset=True, response_model=SuccessResponse[AcademicCalendarSnapshot], status_code=status.HTTP_201_CREATED)
 async def create_academic_calendar(data: AcademicCalendarCreate, db: DbSession, user: CurrentUser):
     await _require_academic_calendar_scope(
         db,
@@ -228,7 +234,7 @@ async def create_academic_calendar(data: AcademicCalendarCreate, db: DbSession, 
     return success(data=calendar, message="Academic calendar created")
 
 
-@router.patch("/{calendar_id}")
+@router.patch("/{calendar_id}", response_model_exclude_unset=True, response_model=SuccessResponse[AcademicCalendarSnapshot])
 async def update_academic_calendar(calendar_id: uuid.UUID, data: AcademicCalendarUpdate, db: DbSession, user: CurrentUser):
     result = await db.execute(AcademicCalendar.active_query().where(AcademicCalendar.id == calendar_id))
     calendar = result.scalar_one_or_none()
@@ -246,7 +252,7 @@ async def update_academic_calendar(calendar_id: uuid.UUID, data: AcademicCalenda
     return success(data=calendar, message="Academic calendar updated")
 
 
-@router.post("/{calendar_id}/events", status_code=status.HTTP_201_CREATED)
+@router.post("/{calendar_id}/events", response_model_exclude_unset=True, response_model=SuccessResponse[AcademicCalendarEventSnapshot], status_code=status.HTTP_201_CREATED)
 async def create_calendar_event(calendar_id: uuid.UUID, data: AcademicCalendarEventCreate, db: DbSession, user: CurrentUser):
     await _require_academic_calendar_scope(db, user, ACADEMIC_CALENDAR_MANAGE_PERMISSIONS)
     calendar = (await db.execute(AcademicCalendar.active_query().where(AcademicCalendar.id == calendar_id))).scalar_one_or_none()
@@ -261,7 +267,7 @@ async def create_calendar_event(calendar_id: uuid.UUID, data: AcademicCalendarEv
     return success(data=event, message="Calendar event created")
 
 
-@router.patch("/{calendar_id}/events/{event_id}")
+@router.patch("/{calendar_id}/events/{event_id}", response_model_exclude_unset=True, response_model=SuccessResponse[AcademicCalendarEventSnapshot])
 async def update_calendar_event(calendar_id: uuid.UUID, event_id: uuid.UUID, data: AcademicCalendarEventUpdate, db: DbSession, user: CurrentUser):
     await _require_academic_calendar_scope(db, user, ACADEMIC_CALENDAR_MANAGE_PERMISSIONS)
     event = (await db.execute(AcademicCalendarEvent.active_query().where(
@@ -277,7 +283,7 @@ async def update_calendar_event(calendar_id: uuid.UUID, event_id: uuid.UUID, dat
     return success(data=event, message="Calendar event updated")
 
 
-@router.post("/{calendar_id}/documents", status_code=status.HTTP_201_CREATED)
+@router.post("/{calendar_id}/documents", response_model_exclude_unset=True, response_model=SuccessResponse[AcademicCalendarDocumentSnapshot], status_code=status.HTTP_201_CREATED)
 async def attach_calendar_document(calendar_id: uuid.UUID, data: AcademicCalendarDocumentCreate, db: DbSession, user: CurrentUser):
     await _require_academic_calendar_scope(db, user, ACADEMIC_CALENDAR_MANAGE_PERMISSIONS)
     calendar = (await db.execute(AcademicCalendar.active_query().where(AcademicCalendar.id == calendar_id))).scalar_one_or_none()
@@ -292,7 +298,7 @@ async def attach_calendar_document(calendar_id: uuid.UUID, data: AcademicCalenda
     return success(data=link, message="Document attached to calendar")
 
 
-@router.post("/{calendar_id}/workflow/{action}")
+@router.post("/{calendar_id}/workflow/{action}", response_model_exclude_unset=True, response_model=SuccessResponse[AcademicCalendarSnapshot])
 async def transition_academic_calendar(
     calendar_id: uuid.UUID,
     action: str,
@@ -326,7 +332,7 @@ async def transition_academic_calendar(
     return success(data=calendar, message=f"Academic calendar workflow action '{action}' completed")
 
 
-@router.post("/{calendar_id}/events/{event_id}/workflow/{action}")
+@router.post("/{calendar_id}/events/{event_id}/workflow/{action}", response_model_exclude_unset=True, response_model=SuccessResponse[AcademicCalendarEventSnapshot])
 async def transition_calendar_event(
     calendar_id: uuid.UUID,
     event_id: uuid.UUID,

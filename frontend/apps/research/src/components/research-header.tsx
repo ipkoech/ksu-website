@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,21 +10,16 @@ import {
   ArrowRight,
   ChevronDown,
   Heart,
-  Linkedin,
-  Mail,
   Menu,
-  MapPin,
-  Phone,
   Search,
   X,
-  Youtube,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@ksu/ui/components";
 import { Dialog, DialogContent, DialogTitle } from "@ksu/ui/components";
 import { Input } from "@ksu/ui/components";
 import { Button } from "@ksu/ui/components";
-import { institutionContact, institutionLinks, institutionSocialLinks } from "../config/institution";
+import { institutionLinks } from "../config/institution";
 
 function useScrollState() {
 const [isScrolled, setIsScrolled] = useState(false);
@@ -66,61 +60,19 @@ export function ResearchHeader({
         )}
       >
         <div className="flex min-h-9 w-full items-center justify-between gap-4 px-4 py-1.5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="flex items-center gap-5 text-[11px] font-medium">
-            <span className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5" />
-              {institutionContact.address}
-            </span>
-            <a href={institutionContact.emailHref} className="flex items-center gap-1.5 transition hover:text-white/80">
-              <Mail className="h-3.5 w-3.5" />
-              {institutionContact.email}
-            </a>
-            <a href={institutionContact.phoneHref} className="flex items-center gap-1.5 transition hover:text-white/80">
-              <Phone className="h-3.5 w-3.5" />
-              {institutionContact.phone}
-            </a>
-          </div>
-          <div className="flex items-center gap-5">
-            <nav className="flex items-center gap-5" aria-label="Research utility">
-              <Link href="/training" className="text-[11px] font-semibold transition-colors hover:text-white/80">
-                Student Portal
-              </Link>
-              <Link href={institutionLinks.nacosti} target="_blank" rel="noopener noreferrer" className="text-[11px] font-semibold transition-colors hover:text-white/80">
-                Apply NACOSTI
-              </Link>
-              <Link href="/team" className="text-[11px] font-semibold transition-colors hover:text-white/80">
-                Staff Portal
-              </Link>
-              <Link href="/resources-tools" className="text-[11px] font-semibold transition-colors hover:text-white/80">
-                Library
-              </Link>
-              <Link href="/news" className="text-[11px] font-semibold transition-colors hover:text-white/80">
-                News & Events
-              </Link>
-            </nav>
-            <span className="h-5 w-px bg-white/25" />
-            <div className="flex items-center gap-3">
-              <Link href={institutionSocialLinks.linkedin} aria-label="Kisii University LinkedIn" className="transition hover:text-white/80">
-                <Linkedin className="h-3.5 w-3.5" />
-              </Link>
-              <Link href={institutionSocialLinks.twitter} aria-label="Kisii University X" className="text-[11px] font-bold transition hover:text-white/80">
-                X
-              </Link>
-              <Link href={institutionSocialLinks.youtube} aria-label="Kisii University YouTube" className="transition hover:text-white/80">
-                <Youtube className="h-3.5 w-3.5" />
-              </Link>
-              <Link href={institutionSocialLinks.facebook} aria-label="Kisii University Facebook" className="text-[11px] font-bold transition hover:text-white/80">
-                f
-              </Link>
-            </div>
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="inline-flex p-1.5 rounded-md transition-colors hover:bg-white/10"
-              aria-label="Search research"
-            >
-              <Search className="h-4 w-4" />
+          <Link href={publicHref} className="text-[11px] font-semibold hover:underline">Main University</Link>
+          <nav className="flex items-center gap-5" aria-label="Research utility">
+            <Link href="/farm" className="text-[11px] font-semibold hover:underline">University Farm</Link>
+            <a href="https://innovationweek.kisiiuniversity.ac.ke/" target="_blank" rel="noopener noreferrer" className="text-[11px] font-semibold hover:underline">Innovation Lobby<span className="sr-only"> (opens in a new tab)</span></a>
+            <Link href={institutionLinks.nacosti} target="_blank" rel="noopener noreferrer" className="text-[11px] font-semibold hover:underline">Apply NACOSTI</Link>
+            <Link href="/donate" className="inline-flex min-h-9 items-center gap-2 rounded-md bg-secondary px-3 text-[11px] font-semibold text-white transition hover:bg-secondary/90">
+              <Heart aria-hidden className="h-3.5 w-3.5" />
+              Support Research
+            </Link>
+            <button type="button" onClick={() => setSearchOpen(true)} className="inline-flex h-9 w-9 items-center justify-center rounded-md transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" aria-label="Search">
+              <Search aria-hidden className="h-4 w-4" />
             </button>
-          </div>
+          </nav>
         </div>
       </div>
 
@@ -129,16 +81,16 @@ export function ResearchHeader({
         className={cn(
           "sticky top-0 z-[100] w-full border-b border-border transition-all duration-300 ease-out",
           isScrolled
-            ? "bg-white/95 shadow-lg shadow-primary/10 backdrop-blur"
-            : "bg-white",
+            ? "bg-background/95 shadow-lg shadow-primary/10 backdrop-blur"
+            : "bg-background",
         )}
       >
         <nav
-          className="mx-auto flex h-[92px] max-w-[1920px] items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+          className="mx-auto flex min-h-[104px] max-w-[1920px] items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
           aria-label="Research navigation"
         >
           {/* Logo & Brand */}
-          <Link href="/" className="group flex max-w-[250px] min-w-0 shrink items-center gap-2 sm:max-w-none sm:gap-3">
+          <Link href="/" className="group flex min-w-0 items-center gap-3 py-3 sm:shrink-0 sm:gap-4">
             <motion.div
               className="shrink-0"
               whileHover={{ scale: 1.05 }}
@@ -147,16 +99,16 @@ export function ResearchHeader({
               <Image
                 src="/logos/ksu-logo.png"
                 alt="Kisii University"
-                width={58}
-                height={58}
-                className="h-12 w-12 object-contain sm:h-[58px] sm:w-[58px]"
+                width={76}
+                height={76}
+                className="h-16 w-16 object-contain sm:h-[76px] sm:w-[76px]"
               />
             </motion.div>
             <div className="flex min-w-0 flex-col">
-              <p className="truncate font-display text-base font-normal uppercase tracking-tight text-foreground sm:text-xl">
-                Kisii <em className="italic">University</em>
+              <p className="font-[family-name:var(--font-display)] text-xl font-normal not-italic uppercase leading-tight tracking-tight text-foreground sm:text-2xl">
+                Kisii University
               </p>
-              <p className="hidden max-w-[230px] text-[8px] font-bold uppercase leading-4 tracking-[0.1em] text-primary sm:block sm:text-[9px]">
+              <p className="mt-1 max-w-[220px] font-sans text-[10px] font-normal not-italic uppercase leading-[1.5] tracking-normal text-primary sm:max-w-[280px] sm:text-xs">
                 Research, Extension, Innovation & Resource Mobilization
               </p>
             </div>
@@ -177,7 +129,7 @@ export function ResearchHeader({
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        "relative rounded-lg px-3 py-2 text-xs font-bold tracking-tight whitespace-nowrap transition-all 2xl:px-4 2xl:text-sm",
+                        "relative rounded-lg px-3 py-2 text-xs font-normal uppercase tracking-normal whitespace-nowrap transition-all 2xl:px-4 2xl:text-sm",
                         isActive
                           ? "bg-primary/10 text-primary"
                           : "text-muted-foreground hover:bg-primary/5 hover:text-primary",
@@ -213,7 +165,7 @@ export function ResearchHeader({
                         )
                       }
                       className={cn(
-                        "flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold tracking-tight whitespace-nowrap transition-all 2xl:px-4 2xl:text-sm",
+                        "flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-normal uppercase tracking-normal whitespace-nowrap transition-all 2xl:px-4 2xl:text-sm",
                         isActive
                           ? "bg-primary/10 text-primary"
                           : "text-muted-foreground hover:bg-primary/5 hover:text-primary",
@@ -230,40 +182,18 @@ export function ResearchHeader({
 
                     <div
                       className={cn(
-                        "invisible absolute top-full z-50 -translate-y-2 pt-3 opacity-0 transition-all duration-300 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100",
+                        "invisible absolute top-full z-50 w-max -translate-y-2 pt-3 opacity-0 transition-all duration-300 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100",
                         isOpen ? "visible translate-y-0 opacity-100" : undefined,
                         index > 2 ? "right-0" : "left-1/2 -translate-x-1/2",
                       )}
                     >
                       <div className="overflow-hidden rounded-2xl ring-1 ring-primary/10 bg-white shadow-2xl">
-                        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr]">
-                          {/* Featured panel */}
-                          <div className="flex flex-col justify-between border-b border-border bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] p-6 md:border-b-0 md:border-r">
-                            <div>
-                              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] text-primary ring-1 ring-primary/10">
-                                <item.icon className="h-6 w-6" />
-                              </div>
-                              <h3 className="mt-4 font-display text-lg font-normal tracking-tight text-foreground">
-                                {item.title}
-                              </h3>
-                              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                                {item.description}
-                              </p>
-                            </div>
-                            <Link
-                              href={item.href}
-                              className="mt-6 inline-flex items-center gap-1 text-sm font-bold text-primary transition-colors hover:text-primary/80"
-                            >
-                              Go to section
-                              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                            </Link>
-                          </div>
-
+                        <div className="grid grid-cols-1">
                           {/* Sub-items */}
-                          <div className="grid gap-6 p-6 sm:grid-cols-2 min-w-[400px] lg:min-w-[500px]">
+                          <div className="grid gap-6 p-5" style={{ gridTemplateColumns: `repeat(${item.columns.length}, minmax(180px, 1fr))` }}>
                             {item.columns.map((col, colIdx) => (
                               <div key={col.heading} className="space-y-1">
-                                <h4 className="border-b border-border pb-3 mb-2 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+                                <h4 className="border-b border-border pb-3 mb-2 text-xs font-normal uppercase tracking-[0.18em] text-secondary">
                                   {col.heading}
                                 </h4>
                                 {col.items.map((sub, sIdx) => (
@@ -279,11 +209,8 @@ export function ResearchHeader({
                                       href={sub.href}
                                       className="block rounded-2xl border border-transparent p-3 transition-all hover:border-border hover:bg-surface-subtle hover:shadow-sm"
                                     >
-                                      <p className="text-sm font-bold text-foreground transition-colors hover:text-primary">
+                                      <p className="text-sm font-normal text-foreground transition-colors hover:text-primary">
                                         {sub.title}
-                                      </p>
-                                      <p className="mt-0.5 line-clamp-1 text-[11px] font-medium text-muted-foreground">
-                                        {sub.description}
                                       </p>
                                     </Link>
                                   </motion.div>
@@ -300,44 +227,9 @@ export function ResearchHeader({
             </nav>
           </div>
 
-          {/* Desktop Actions */}
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="hidden h-11 w-11 items-center justify-center rounded-md border border-border text-muted-foreground transition hover:bg-primary/5 hover:text-primary xl:flex"
-              aria-label="Search"
-            >
-              <Search className="h-5 w-5" />
-            </button>
-            <Button
-              asChild
-              className="hidden h-11 rounded-md px-6 text-sm font-bold normal-case tracking-normal bg-secondary hover:bg-secondary/90 text-white sm:inline-flex"
-            >
-              <Link href="/donate" className="flex items-center gap-2">
-                <Heart className="h-4 w-4" />
-                Support Research
-              </Link>
-            </Button>
-
-            {/* Mobile Menu */}
-            <div className="flex items-center gap-1 xl:hidden">
-              <Button
-                asChild
-                size="sm"
-                className="hidden h-9 w-9 rounded-lg bg-secondary p-0 text-white hover:bg-secondary/90 sm:inline-flex"
-              >
-                <Link href="/donate" aria-label="Support research">
-                  <Heart className="h-3.5 w-3.5" />
-                  <span className="sr-only">Support research</span>
-                </Link>
-              </Button>
-              <button
-                onClick={() => setSearchOpen(true)}
-                className="hidden h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-primary/5 hover:text-primary sm:flex xl:hidden"
-                aria-label="Search"
-              >
-                <Search className="h-5 w-5" />
-              </button>
+          {/* Mobile Menu */}
+          <div className="flex shrink-0 items-center xl:hidden">
+            <div className="flex items-center gap-1">
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
                   <button
@@ -426,7 +318,7 @@ export function ResearchHeader({
                               href={item.href}
                               onClick={() => setMobileOpen(false)}
                               className={cn(
-                                "flex items-center gap-4 rounded-xl px-4 py-4 text-lg font-bold transition-all",
+                                "flex items-center gap-4 rounded-xl px-4 py-4 text-lg font-normal uppercase transition-all",
                                 isActive
                                   ? "bg-primary text-white"
                                   : "text-muted-foreground hover:bg-surface-subtle hover:text-primary",
@@ -475,7 +367,7 @@ export function ResearchHeader({
                       </Link>
                       <Button
                         asChild
-                        className="h-12 w-full rounded-lg text-sm font-black uppercase tracking-widest bg-secondary hover:bg-secondary/90 text-white"
+                        className="h-12 w-full rounded-lg text-sm font-black uppercase tracking-widest bg-secondary hover:bg-secondary/90 text-foreground"
                       >
                         <Link href="/donate">
                           <Heart className="mr-2 h-4 w-4" />

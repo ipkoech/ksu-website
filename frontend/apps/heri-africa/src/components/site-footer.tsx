@@ -32,7 +32,7 @@ export function SiteFooter() {
           </nav>
         </div>
       </div>
-      <div className="mx-auto mt-8 max-w-7xl border-t border-white/20 pt-5 text-xs text-white/60">
+      <div className="mx-auto mt-8 max-w-7xl border-t border-white/20 pt-5 text-xs text-white/70">
         © {new Date().getFullYear()} HERI Africa Language Education Research Chair
         Chair. All rights reserved.
       </div>

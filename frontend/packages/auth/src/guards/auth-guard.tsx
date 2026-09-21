@@ -3,6 +3,7 @@
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../hooks/use-auth";
+import { SessionError } from "./session-error";
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -16,7 +17,7 @@ export function AuthGuard({
   redirectTo = "/login",
 }: AuthGuardProps) {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, checkAuth } = useAuth();
+  const { user, isAuthenticated, isLoading, error, checkAuth } = useAuth();
 
   useEffect(() => {
     if (!user) {
@@ -25,19 +26,22 @@ export function AuthGuard({
   }, [checkAuth, user]);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && !error) {
       const separator = redirectTo.includes("?") ? "&" : "?";
       router.push(`${redirectTo}${separator}reason=session-expired`);
     }
-  }, [isLoading, isAuthenticated, router, redirectTo]);
+  }, [isLoading, isAuthenticated, error, router, redirectTo]);
 
   if (isLoading) {
     return fallback || <AuthLoadingSkeleton />;
   }
 
   if (!isAuthenticated) {
+    if (error) return <SessionError retry={checkAuth} />;
     return fallback || null;
   }
+
+  if (error) return <SessionError retry={checkAuth} />;
 
   return <>{children}</>;
 }

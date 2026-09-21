@@ -30,6 +30,25 @@ type AttentionItem = SchoolPortalDashboardResponse["attention_items"][number];
 type ActivityItem = SchoolPortalDashboardResponse["recent_activity"][number];
 type QuickAction = SchoolPortalDashboardResponse["quick_actions"][number];
 
+export function SchoolDataFreshnessPanel({ generatedAt }: { generatedAt: string }) {
+  return <Card className="h-full shadow-sm"><CardHeader><CardTitle className="text-base">Data freshness</CardTitle><CardDescription>Current school data health</CardDescription></CardHeader><CardContent className="flex h-48 flex-col justify-between"><div className="space-y-4 text-sm"><div className="flex justify-between gap-4"><span className="text-muted-foreground">Last updated</span><strong>{new Date(generatedAt).toLocaleString()}</strong></div><div className="flex items-center justify-between"><span className="text-muted-foreground">Source health</span><Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">● Healthy</Badge></div></div><Button asChild variant="link" className="h-auto justify-start px-0 text-xs"><Link href="/schools/synchronization">Open synchronization <ArrowRight className="ml-1 size-3.5" /></Link></Button></CardContent></Card>;
+}
+
+export function SchoolPortfolioPanel({ dashboard }: { dashboard: SchoolPortalDashboardResponse }) {
+  const programmes = dashboard.distributions.programmes_by_level ?? dashboard.distributions.programmes ?? [];
+  return <Card className="h-full shadow-sm"><CardHeader className="flex-row items-start justify-between"><div><CardTitle className="text-base">Academic portfolio</CardTitle><CardDescription>Programmes and departments</CardDescription></div><BookOpen className="size-5 text-primary" /></CardHeader><CardContent className="space-y-2 text-sm">{programmes.slice(0, 5).map((item) => <div key={item.key} className="flex justify-between border-b pb-2"><span>{item.label}</span><strong>{item.value}</strong></div>)}{!programmes.length ? <p className="text-muted-foreground">No programme data available.</p> : null}<Button asChild variant="link" className="h-auto px-0 text-xs"><Link href="/schools/programmes">Go to academic portfolio <ArrowRight className="ml-1 size-3.5" /></Link></Button></CardContent></Card>;
+}
+
+export function SchoolPeoplePanel({ dashboard }: { dashboard: SchoolPortalDashboardResponse }) {
+  const staff = dashboard.summary_cards.find((item) => /staff/i.test(item.key + item.label));
+  return <Card className="h-full shadow-sm"><CardHeader className="flex-row items-start justify-between"><div><CardTitle className="text-base">People & leadership</CardTitle><CardDescription>School team coverage</CardDescription></div><CircleUserRound className="size-5 text-primary" /></CardHeader><CardContent className="space-y-3 text-sm"><div className="flex justify-between"><span>Active staff</span><strong>{staff?.value ?? "—"}</strong></div><div className="flex justify-between"><span>Profile completeness</span><strong>{dashboard.profile_completeness.percent}%</strong></div><Button asChild variant="link" className="h-auto px-0 text-xs"><Link href="/schools/team">Go to people & leadership <ArrowRight className="ml-1 size-3.5" /></Link></Button></CardContent></Card>;
+}
+
+export function SchoolDocumentsPanel({ dashboard }: { dashboard: SchoolPortalDashboardResponse }) {
+  const docs = dashboard.distributions.documents_by_status ?? dashboard.distributions.documents ?? [];
+  return <Card className="h-full shadow-sm"><CardHeader className="flex-row items-start justify-between"><div><CardTitle className="text-base">Documents & evidence</CardTitle><CardDescription>Required school evidence</CardDescription></div><FilePenLine className="size-5 text-primary" /></CardHeader><CardContent className="space-y-2 text-sm">{docs.slice(0, 4).map((item) => <div key={item.key} className="flex justify-between border-b pb-2"><span>{item.label}</span><strong>{item.value}</strong></div>)}{!docs.length ? <p className="text-muted-foreground">No document data available.</p> : null}<Button asChild variant="link" className="h-auto px-0 text-xs"><Link href="/schools/documents">Go to documents & evidence <ArrowRight className="ml-1 size-3.5" /></Link></Button></CardContent></Card>;
+}
+
 const CHART_COLORS = ["#16a34a", "#f59e0b", "#0ea5e9", "#f97316", "#94a3b8", "#8b5cf6"];
 
 export function SchoolActivityPanel({

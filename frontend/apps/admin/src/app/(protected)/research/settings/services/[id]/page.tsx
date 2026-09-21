@@ -7,7 +7,7 @@ import { SettingsOperationalDetail } from "../../_components/settings-operationa
 export default function ResearchServiceDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Service"
+      title="Service"
       description="View service access details, contact metadata, and center binding."
       resource={researchServiceApi.services}
       backHref="/research/settings/services"

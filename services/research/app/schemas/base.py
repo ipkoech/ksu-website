@@ -11,7 +11,9 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 T = TypeVar("T")
 JsonScalar = str | int | float | bool | uuid.UUID | datetime | None
-JsonValue = JsonScalar | list[JsonScalar] | dict[str, JsonScalar]
+# Research's legacy v1 envelopes carry nested relationship snapshots. Keep the
+# wire shape compatible while allowing the complete JSON tree to validate.
+type JsonValue = JsonScalar | list[JsonValue] | dict[str, JsonValue]
 JsonObject = dict[str, JsonValue]
 
 

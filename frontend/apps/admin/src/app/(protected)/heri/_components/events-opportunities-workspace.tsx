@@ -19,6 +19,7 @@ import {
   useHeriResourceQuery,
   type HeriRecord,
 } from "@/lib/api/heri";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 type Item = HeriRecord & {
   slug?: string;
@@ -158,6 +159,7 @@ export function EventsOpportunitiesWorkspace({
       return;
     try {
       await heriRequest(`/admin/${kind}/${item.id}`, { method: "DELETE" });
+      void revalidatePublicContent("heri", kind);
       await query.refetch();
       toast.success(`${label.slice(0, -1)} deleted`);
     } catch {

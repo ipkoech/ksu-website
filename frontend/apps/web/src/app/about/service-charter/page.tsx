@@ -5,6 +5,8 @@ import { getPublicInstitutionalPage } from "@/lib/public-about-data";
 
 export const metadata = { title: "University Service Charter" };
 
+export const revalidate = 300;
+
 export default async function ServiceCharterPage() {
   const page = await getPublicInstitutionalPage("service-charter");
   if (!page) notFound();

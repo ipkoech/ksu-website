@@ -7,15 +7,20 @@ import uuid
 from fastapi import APIRouter, Query
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import DbSession
+from ...schemas.contact_directory import PublicContactDirectorySnapshot
 from ...services import PublicContactDirectoryService
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[PublicContactDirectorySnapshot],
+    response_model_exclude_unset=True,
+)
 @cached_public(
     timeout=300,
     vary_on=("q", "contact_type", "scope_type", "scope_id", "page", "per_page"),

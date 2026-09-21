@@ -16,14 +16,18 @@ from .seed_cover_images import seed_cover_images
 from .seed_divisions import seed_divisions
 from .seed_featured_stories import seed_featured_stories
 from .seed_homepage_admissions import seed_homepage_admissions
+from .seed_institutional_images import seed_institutional_images
 from .import_programme_covers import seed_bundled_programme_covers
 from .seed_student_life_stories import seed_student_life_stories
 from .seed_governance import seed_governance
 from .seed_management import seed_management
 from .seed_leadership_media import seed_leadership_media
+from .seed_leadership_profiles import seed_leadership_profiles
+from .seed_agenda_cods import seed_agenda_cods
 from .seed_page_cms import seed_page_cms
 from .seed_programmes import seed_programmes
 from .seed_research_partner_media import seed_research_partner_media
+from .seed_research_sources import seed_research_sources
 from .seed_public_records import seed_public_records
 from .seed_public_site_pages import seed_public_site_pages
 from .seed_portal_users import seed_portal_users
@@ -50,6 +54,7 @@ async def run() -> None:
             await seed_leadership_media(db, ctx)
             await seed_research_partner_media(db, ctx)
             await seed_university_info(db, ctx)
+            await seed_institutional_images(db, ctx)
             await seed_programmes(db, ctx)
             await seed_bundled_programme_covers(db)
             await seed_homepage_admissions(db, ctx)
@@ -65,12 +70,17 @@ async def run() -> None:
             await seed_page_cms(db, ctx)
             await seed_vc_activities(db, ctx)
             await seed_admin_departments(db, ctx)
-            await seed_staff_profiles(db, ctx)
             await seed_cover_images(db, ctx)
             await seed_staff_assignments(db, ctx)
             await seed_vice_chancellor_hub(db, ctx)
             await seed_system_settings(db)
+            await seed_research_sources(db, ctx)
             await seed_portal_users(db, ctx)
+            await seed_leadership_profiles(db, ctx)
+            # Agenda COD reconciliation matches against the public staff
+            # directory, so profiles must exist before the appointments run.
+            await seed_staff_profiles(db, ctx)
+            await seed_agenda_cods(db, ctx)
             await db.commit()
         except Exception:
             await db.rollback()

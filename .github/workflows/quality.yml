@@ -24,6 +24,11 @@ jobs:
         run: |
           git diff --check
           python -m compileall -q scripts services/common/ksu_common
+      - name: Test audit alert rules
+        run: >-
+          docker run --rm --entrypoint /bin/promtool
+          -v "$PWD/monitoring:/work:ro" -w /work
+          prom/prometheus:v2.55.1 test rules audit-alerts.test.yml
       - name: Scan newly committed content for secrets
         run: |
           git diff --diff-filter=ACMR --name-only -z HEAD^ HEAD | xargs -0 -r detect-secrets-hook --baseline .secrets.baseline
@@ -65,15 +70,38 @@ jobs:
           SMTP_HOST: smtp.example.edu
           SMTP_PASSWORD: ci-smtp-password-at-least-thirty-two-characters # pragma: allowlist secret
           EMAIL_FROM: noreply@example.edu
+          POSTGRES_ARCHIVE_MODE: "on"
+          POSTGRES_ARCHIVE_COMMAND: "/bin/sh /usr/local/bin/ksu-archive-wal.sh %p %f"
+          POSTGRES_WAL_ARCHIVE_HOST_DIR: /tmp/ksu-wal-archive
+          BACKUP_OFFSITE_DIR: /tmp/ksu-offsite-backups
+          REQUIRE_OFFSITE_BACKUP: "true"
+          BACKUP_RETENTION_DAYS: "14"
         run: |
           python scripts/validate_production_env.py --env production --service main
           if DEBUG=true python scripts/validate_production_env.py --env production --service main; then
             echo "production DEBUG validation unexpectedly passed" >&2
             exit 1
           fi
+      - name: Smoke test WAL archive helper
+        run: |
+          sh -n scripts/postgres-archive-wal.sh
+          probe=$(mktemp -d)
+          trap 'rm -rf "$probe"' EXIT
+          mkdir -p "$probe/data/pg_wal" "$probe/archive"
+          printf 'ci-wal-segment' > "$probe/data/pg_wal/000000010000000000000001"
+          PGDATA="$probe/data" POSTGRES_WAL_ARCHIVE_DIR="$probe/archive" \
+            sh scripts/postgres-archive-wal.sh \
+            pg_wal/000000010000000000000001 000000010000000000000001
+          cmp "$probe/data/pg_wal/000000010000000000000001" \
+            "$probe/archive/000000010000000000000001"
+          if PGDATA="$probe/data" POSTGRES_WAL_ARCHIVE_DIR="$probe/archive" \
+            sh scripts/postgres-archive-wal.sh pg_wal/../../escape ../../escape 2>/dev/null; then
+            echo "path-like WAL segment was accepted" >&2
+            exit 1
+          fi
       - name: Inspect Dockerfiles for root runtime
         run: |
-          ! rg -n '^USER root$|^USER 0$' services/*/Dockerfile frontend/Dockerfile
+          ! rg -n '^USER root$|^USER 0$' services/Dockerfile frontend/Dockerfile
 
   backend:
     runs-on: ubuntu-latest
@@ -99,6 +127,8 @@ jobs:
       - name: Compile
         working-directory: services/${{ matrix.service }}
         run: python -m compileall -q .
+      - name: Run isolated service tests
+        run: python scripts/run_backend_tests.py "${{ matrix.service }}"
       - name: Ruff regression check
         run: python scripts/ruff_baseline.py check --baseline .ruff-baseline.json --paths services/${{ matrix.service }}
       - name: Check installed dependencies
@@ -123,6 +153,14 @@ jobs:
           pip install -e services/main -e services/research -e services/library -e services/heri_africa
       - name: Verify applications and structural baseline
         run: python scripts/structural_snapshot.py /tmp/ksu-structure.json --expect scripts/structural-baseline.json
+      - name: Verify response-model coverage
+        run: python scripts/validate_response_model_coverage.py
+      - name: Verify generated HERI frontend contract
+        run: |
+          python scripts/generate_api_contracts.py main library research heri_africa
+          git diff --exit-code -- contracts/main contracts/research contracts/library contracts/heri_africa
+      - name: Verify service lifecycle cleanup
+        run: python scripts/service_lifecycle_smoke.py
 
   request-correctness:
     runs-on: ubuntu-latest
@@ -164,6 +202,50 @@ jobs:
           pip install -e .
       - name: Validate migration history and source
         run: python scripts/ci_environment.py "${{ matrix.service }}" -- scripts/validate_migrations.sh "${{ matrix.service }}"
+
+  migration-application:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ksu_migrations_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-admin-password # pragma: allowlist secret
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ksu_migrations_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install backend services
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e services/common -e services/contracts
+          pip install -e services/main -e services/research -e services/library -e services/heri_africa
+      - name: Provision isolated service roles and schemas
+        env:
+          POSTGRES_DB: ksu_migrations_ci
+          DATABASE_ADMIN_USER: postgres
+          DATABASE_ADMIN_PASSWORD: ci-admin-password # pragma: allowlist secret
+          DATABASE_HOST: 127.0.0.1
+          MAIN_DB_PASSWORD: ci-main-password # pragma: allowlist secret
+          RESEARCH_DB_PASSWORD: ci-research-password # pragma: allowlist secret
+          LIBRARY_DB_PASSWORD: ci-library-password # pragma: allowlist secret
+          HERI_DB_PASSWORD: ci-heri-password # pragma: allowlist secret
+        run: scripts/init-database-ownership.sh
+      - name: Apply every service migration as its owned role
+        env:
+          MIGRATION_DATABASE_HOST: 127.0.0.1
+          MIGRATION_DATABASE_NAME: ksu_migrations_ci
+          MAIN_DB_PASSWORD: ci-main-password # pragma: allowlist secret
+          RESEARCH_DB_PASSWORD: ci-research-password # pragma: allowlist secret
+          LIBRARY_DB_PASSWORD: ci-library-password # pragma: allowlist secret
+          HERI_DB_PASSWORD: ci-heri-password # pragma: allowlist secret
+        run: python scripts/apply_migrations.py
 
   database-ownership:
     runs-on: ubuntu-latest
@@ -272,7 +354,37 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install real service test dependencies
-        run: pip install asyncpg redis
+        run: pip install asyncpg redis -e services/common -e services/contracts -e services/main -e services/research -e services/library -e services/heri_africa -r requirements/ci.txt
+      - name: Verify shared transactions, outboxes and service audit relays
+        env:
+          KSU_TEST_REDIS_URL: redis://127.0.0.1:6379/0
+          KSU_TEST_DATABASE_URL: postgresql+asyncpg://ksu_ci:ksu_ci_password@127.0.0.1:5432/ksu_ci # pragma: allowlist secret
+        run: python scripts/run_backend_tests.py --parallel --max-workers 2 common main research library heri_africa
+      - name: Verify live worker queue isolation
+        env:
+          KSU_TEST_REDIS_URL: redis://127.0.0.1:6379/0
+          KSU_TEST_DATABASE_URL: postgresql+asyncpg://ksu_ci:ksu_ci_password@127.0.0.1:5432/ksu_ci # pragma: allowlist secret
+        run: python scripts/celery_queue_smoke.py
+      - name: Verify live Beat scheduler delivery
+        env:
+          KSU_TEST_REDIS_URL: redis://127.0.0.1:6379/0
+        run: python scripts/celery_beat_smoke.py
+      - name: Validate audit schedules and worker policy
+        run: python scripts/validate_celery_schedules.py
+      - name: Capture bounded audit query plans
+        env:
+          KSU_TEST_DATABASE_URL: postgresql+asyncpg://ksu_ci:ksu_ci_password@127.0.0.1:5432/ksu_ci # pragma: allowlist secret
+        run: |
+          python scripts/inspect_audit_query_plan.py /tmp/audit-query-plan.json
+          python scripts/inspect_audit_relay_plan.py /tmp/audit-relay-plan.json
+      - name: Upload bounded audit query-plan evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-query-plans
+          path: |
+            /tmp/audit-query-plan.json
+            /tmp/audit-relay-plan.json
       - name: Verify PostgreSQL and Redis connectivity
         env:
           DATABASE_URL: postgresql://ksu_ci:ksu_ci_password@127.0.0.1:5432/ksu_ci # pragma: allowlist secret

@@ -1,25 +1,21 @@
 import { notFound } from "next/navigation";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import { ResearchDetailHero, ResearchDetailSidebar } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import { getResearchRecordDownloadHref } from "../../../lib/research-downloads";
-import { compactText, formatDate, generateSlugParams, getGuidelineBySlug } from "../../../lib/research-public-data";
+import { compactText, formatDate, getGuidelineBySlug } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
 import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getGuidelineBySlug(slug);
-  return researchRecordMetadata(data, { fallbackTitle: "Research guideline", pathname: "/guidelines/" + slug });
-}
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.guidelines.list);
+  return researchRecordMetadata(data, { fallbackTitle: "Guideline", pathname: "/guidelines/" + slug });
 }
 
 export default async function GuidelineDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -38,7 +34,7 @@ export default async function GuidelineDetailPage({ params }: { params: Promise<
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
-      <ResearchDetailHero eyebrow="Guideline" title={title} body={getRecordSummary(guideline) || compactText(guideline.scope)} breadcrumbs={[{ label: "Home", href: "/" }, { label: "Guidelines", href: "/guidelines" }, { label: title }]} labels={[guideline.guideline_type, guideline.category, guideline.status, guideline.is_mandatory ? "mandatory" : null, guideline.is_featured ? "featured" : null]} facts={[{ label: "Version", value: guideline.version }, { label: "Effective", value: formatDate(guideline.effective_date) }, { label: "Review", value: formatDate(guideline.review_date) }, { label: "Approved by", value: guideline.approved_by }]} actions={[{ label: "Back to guidelines", href: "/guidelines", variant: "secondary" }, ...(downloadHref ? [{ label: "Download document", href: downloadHref }] : [])]} imageSrc="/images/research/research-events-hero.svg" imageAlt="Research guideline document control and download information" />
+      <ResearchDetailHero eyebrow="Guideline" title={title} body={getRecordSummary(guideline) || compactText(guideline.scope)} breadcrumbs={[{ label: "Home", href: "/" }, { label: "Guidelines", href: "/guidelines" }, { label: title }]} labels={[guideline.guideline_type, guideline.category, guideline.status, guideline.is_mandatory ? "mandatory" : null, guideline.is_featured ? "featured" : null]} facts={[{ label: "Version", value: guideline.version }, { label: "Effective", value: formatDate(guideline.effective_date) }, { label: "Review", value: formatDate(guideline.review_date) }, { label: "Approved by", value: guideline.approved_by }]} actions={[{ label: "Back to guidelines", href: "/guidelines", variant: "secondary" }, ...(downloadHref ? [{ label: "Download document", href: downloadHref }] : [])]} imageSrc="/images/research/verified/multidisciplinary-conference-2026.jpg" imageAlt="Research guideline document control and download information" />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
       <ResearchSection eyebrow="Document Story" title="Scope, use, and controlled version" body="Document fields are grouped into compact sections for quick scanning while keeping the source record backend-backed." tone="white">
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">

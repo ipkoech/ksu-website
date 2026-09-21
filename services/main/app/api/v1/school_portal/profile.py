@@ -4,7 +4,7 @@ import uuid
 
 from fastapi import APIRouter
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ....deps import DbSession
 from ....schemas.school_portal import (
@@ -72,12 +72,20 @@ async def _profile_payload(db: DbSession, context: CurrentSchoolContext) -> dict
     return payload.model_dump(mode="json")
 
 
-@router.get("/profile")
+@router.get(
+    "/profile",
+    response_model=SuccessResponse[SchoolPortalProfileResponse],
+    response_model_exclude_unset=True,
+)
 async def get_school_profile(db: DbSession, context: CurrentSchoolContext):
     return success(data=await _profile_payload(db, context))
 
 
-@router.patch("/profile")
+@router.patch(
+    "/profile",
+    response_model=SuccessResponse[SchoolPortalProfileResponse],
+    response_model_exclude_unset=True,
+)
 async def patch_school_profile(
     data: SchoolPortalProfileUpdate,
     db: DbSession,
@@ -87,7 +95,11 @@ async def patch_school_profile(
     return success(data=await _profile_payload(db, context))
 
 
-@router.put("/profile/dean")
+@router.put(
+    "/profile/dean",
+    response_model=SuccessResponse[SchoolPortalProfileResponse],
+    response_model_exclude_unset=True,
+)
 async def put_school_dean(
     data: SchoolPortalDeanUpdate,
     db: DbSession,
@@ -97,7 +109,11 @@ async def put_school_dean(
     return success(data=await _profile_payload(db, context))
 
 
-@router.post("/profile/media")
+@router.post(
+    "/profile/media",
+    response_model=SuccessResponse[SchoolPortalProfileResponse],
+    response_model_exclude_unset=True,
+)
 async def post_school_profile_media(
     data: SchoolPortalMediaLinkCreate,
     db: DbSession,
@@ -107,7 +123,11 @@ async def post_school_profile_media(
     return success(data=await _profile_payload(db, context))
 
 
-@router.delete("/profile/media/{link_id}")
+@router.delete(
+    "/profile/media/{link_id}",
+    response_model=SuccessResponse[SchoolPortalProfileResponse],
+    response_model_exclude_unset=True,
+)
 async def delete_school_profile_media(
     link_id: uuid.UUID,
     db: DbSession,

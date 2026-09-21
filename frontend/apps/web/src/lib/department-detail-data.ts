@@ -1,4 +1,5 @@
-import { departmentsApi, mainApi, statsApi } from "@ksu/api-client";
+import "server-only";
+import { departmentsApi, mainApi, statsApi } from "@ksu/api-client/server";
 import { resolvePublicMediaUrl } from "@/lib/public-media";
 import type {
   Department,
@@ -11,7 +12,7 @@ import type {
   ProgrammeFeeStructure,
   PublicStatsResponse,
   StaffAssignment,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
 import type { Leader } from "@ksu/ui/components";
 import { getHOD, getLeaderByRole } from "@/lib/get-leadership";
 import {
@@ -23,6 +24,11 @@ import {
   getPublicEntityTeam,
   type PublicEntityTeam,
 } from "@/lib/public-team-data";
+import { uncachedPublicFallback } from "@/lib/public-fetch";
+import {
+  normalizePublicListResponse,
+  normalizePublicRecordResponse,
+} from "@/lib/web-response-shapes";
 
 type DepartmentResponse = {
   data?: DepartmentWithRelations;
@@ -304,7 +310,9 @@ async function getDepartmentBySlug(
 
   try {
     const response = await departmentsApi.getBySlug(slug, params);
-    return (response.data as DepartmentWithRelations | undefined) ?? null;
+    const department = normalizePublicRecordResponse<DepartmentWithRelations>(response);
+    if (department === undefined) throw new Error("Invalid department response");
+    return department;
   } catch {
     try {
       const response = await mainApi.get<DepartmentResponse>(
@@ -312,9 +320,11 @@ async function getDepartmentBySlug(
         params,
       );
 
-      return response.data ?? null;
+      const department = normalizePublicRecordResponse<DepartmentWithRelations>(response);
+      if (department === undefined) throw new Error("Invalid department response");
+      return department;
     } catch {
-      return null;
+      return uncachedPublicFallback(null);
     }
   }
 }
@@ -324,9 +334,13 @@ async function getDepartmentStats(
 ): Promise<PublicStatsResponse | null> {
   try {
     const response = await statsApi.get({ scope: "department", slug });
-    return response.data ?? null;
+    const stats = normalizePublicRecordResponse<PublicStatsResponse>({
+      data: response.data,
+    });
+    if (stats === undefined) throw new Error("Invalid department stats response");
+    return stats;
   } catch {
-    return null;
+    return uncachedPublicFallback(null);
   }
 }
 
@@ -335,9 +349,12 @@ async function getList<T>(
   params?: Record<string, string | number | boolean | undefined>,
 ): Promise<ListResponse<T>> {
   try {
-    return await mainApi.get<ListResponse<T>>(path, params);
+    const response = await mainApi.get<ListResponse<T>>(path, params);
+    const normalized = normalizePublicListResponse<T>(response);
+    if (!normalized) throw new Error("Invalid department related-list response");
+    return normalized;
   } catch {
-    return { data: [] };
+    return uncachedPublicFallback({ data: [] });
   }
 }
 

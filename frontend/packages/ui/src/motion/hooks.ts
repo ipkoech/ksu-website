@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useInView, useAnimation } from "framer-motion";
 import { timing, stagger } from "./transitions";
 
@@ -72,40 +72,51 @@ export function useCountUp(
 ) {
   const { duration = 2000, delay = 0, startOnView = true } = options;
   const [count, setCount] = useState(0);
-  const [hasStarted, setHasStarted] = useState(false);
+  const hasStarted = useRef(false);
+  const currentCount = useRef(0);
+  const reducedMotion = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.5 });
 
   useEffect(() => {
-    if (startOnView && !isInView) return;
-    if (hasStarted) return;
-
-    const startTime = Date.now() + delay;
-    setHasStarted(true);
+    if (reducedMotion || duration <= 0 || !Number.isFinite(duration)) {
+      currentCount.current = end;
+      setCount(end);
+      return;
+    }
+    if (startOnView && !isInView && !hasStarted.current) return;
+    hasStarted.current = true;
+    const from = currentCount.current;
+    if (from === end) return;
+    const wait = Number.isFinite(delay) ? Math.max(0, delay) : 0;
+    const startTime = Date.now() + wait;
+    let frame: number | undefined;
+    let delayTimer: ReturnType<typeof setTimeout> | undefined;
 
     const animate = () => {
-      const now = Date.now();
-      if (now < startTime) {
-        requestAnimationFrame(animate);
-        return;
-      }
-
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
+      const elapsed = Date.now() - startTime;
+      const progress = Math.max(0, Math.min(elapsed / duration, 1));
       const easeOut = 1 - Math.pow(1 - progress, 3);
-      const current = Math.floor(easeOut * end);
+      const current = progress === 1 ? end : Math.floor(from + easeOut * (end - from));
 
+      currentCount.current = current;
       setCount(current);
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        setCount(end);
+        frame = requestAnimationFrame(animate);
       }
     };
 
-    requestAnimationFrame(animate);
-  }, [end, duration, delay, startOnView, isInView, hasStarted]);
+    if (wait > 0) {
+      delayTimer = setTimeout(() => { frame = requestAnimationFrame(animate); }, wait);
+    } else {
+      frame = requestAnimationFrame(animate);
+    }
+    return () => {
+      if (frame !== undefined) cancelAnimationFrame(frame);
+      if (delayTimer !== undefined) clearTimeout(delayTimer);
+    };
+  }, [end, duration, delay, startOnView, isInView, reducedMotion]);
 
   return { ref, count, isInView };
 }
@@ -115,14 +126,17 @@ export function useReducedMotion(): boolean {
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mediaQuery.matches);
-
-    const handler = (event: MediaQueryListEvent) => {
-      setReducedMotion(event.matches);
+    const handler = () => {
+      setReducedMotion(mediaQuery.matches || document.documentElement.getAttribute("data-a11y-reduce-motion") === "true");
     };
-
+    handler();
+    const observer = new MutationObserver(handler);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-a11y-reduce-motion"] });
     mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
+    return () => {
+      observer.disconnect();
+      mediaQuery.removeEventListener("change", handler);
+    };
   }, []);
 
   return reducedMotion;
@@ -134,24 +148,33 @@ export function useImageRotation(
 ) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    if (images.length <= 1) return;
+    setIsTransitioning(false);
+    if (images.length <= 1 || reducedMotion) return;
+    let transitionTimer: ReturnType<typeof setTimeout> | undefined;
 
     const timer = setInterval(() => {
+      if (transitionTimer !== undefined) return;
       setIsTransitioning(true);
-      setTimeout(() => {
+      transitionTimer = setTimeout(() => {
+        transitionTimer = undefined;
         setCurrentIndex((prev) => (prev + 1) % images.length);
         setIsTransitioning(false);
       }, timing.slow);
     }, interval);
 
-    return () => clearInterval(timer);
-  }, [images.length, interval]);
+    return () => {
+      clearInterval(timer);
+      if (transitionTimer !== undefined) clearTimeout(transitionTimer);
+    };
+  }, [images.length, interval, reducedMotion]);
 
+  const safeIndex = images.length ? currentIndex % images.length : 0;
   return {
-    currentImage: images[currentIndex],
-    currentIndex,
+    currentImage: images[safeIndex],
+    currentIndex: safeIndex,
     isTransitioning,
     totalImages: images.length,
   };

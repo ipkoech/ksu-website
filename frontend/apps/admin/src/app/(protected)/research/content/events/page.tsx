@@ -12,7 +12,7 @@ import { contentAttachmentRoles } from "@/components/content/content-attachment-
 export default function ResearchEventsPage() {
   return (
     <ResearchContentResourcePage
-      title="Research Events"
+      title="Events"
       description="Manage event records scoped to research."
       queryKey={["research", "content", "events"]}
       resource={{

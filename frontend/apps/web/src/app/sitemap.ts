@@ -9,7 +9,6 @@ const staticPages: MetadataRoute.Sitemap = [
   { url: "/about/mission-vision", priority: 0.7, changeFrequency: "monthly" },
   { url: "/about/governance", priority: 0.7, changeFrequency: "monthly" },
   { url: "/about/university-management", priority: 0.7, changeFrequency: "monthly" },
-  { url: "/about/quality-assurance", priority: 0.6, changeFrequency: "monthly" },
   { url: "/about/service-charter", priority: 0.6, changeFrequency: "monthly" },
   { url: "/about/strategic-plan", priority: 0.6, changeFrequency: "monthly" },
   { url: "/admissions", priority: 0.9, changeFrequency: "weekly" },

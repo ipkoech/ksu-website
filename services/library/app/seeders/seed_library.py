@@ -4,25 +4,38 @@ from __future__ import annotations
 
 import asyncio
 import re
-from datetime import date
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 
 from app.core.database import AsyncSessionLocal
+from app.core.config import get_settings
 from app.models import (
     ElectronicResource,
     ElectronicResourceGuide,
     Library,
     LibraryCharge,
     LibraryExternalLink,
+    LibraryFile,
     LibraryHours,
+    LibraryPolicyPage,
     LibraryRegulation,
     LibraryResource,
     LibraryService,
     LibraryStatistics,
 )
+from ksu_common.live_library_site import (
+    LIVE_LIBRARY_BRANCHES,
+    LIVE_LIBRARY_CHARGES,
+    LIVE_LIBRARY_ELECTRONIC_RESOURCES,
+    LIVE_LIBRARY_FILES,
+    LIVE_LIBRARY_HOURS,
+    LIVE_LIBRARY_REGULATIONS,
+    LIVE_LIBRARY_SERVICES,
+    LIVE_LIBRARY_RULES,
+)
+from ksu_common.internal_client import get_integration_pool
 
 
 def slugify(value: str) -> str:
@@ -31,10 +44,11 @@ def slugify(value: str) -> str:
 
 
 async def upsert_by_slug(db, model, slug: str, payload: dict[str, Any]):
-    result = await db.execute(select(model).where(model.slug == slug))
+    normalized_slug = slugify(slug)
+    result = await db.execute(select(model).where(model.slug == normalized_slug))
     row = result.scalar_one_or_none()
     if row is None:
-        row = model(slug=slug, **payload)
+        row = model(slug=normalized_slug, **payload)
         db.add(row)
     else:
         for field, value in payload.items():
@@ -73,57 +87,6 @@ async def upsert_named(db, model, where_clause, payload: dict[str, Any]):
     return row
 
 
-BRANCHES = [
-    {
-        "name": "Main Campus Library",
-        "short_name": "Main Library",
-        "slug": "main-campus-library",
-        "description": "The central library serving undergraduate, postgraduate, and academic staff needs at Main Campus.",
-        "objectives": "Provide scholarly resources, study spaces, information literacy training, and research support.",
-        "mission": "To connect Kisii University learners and researchers with credible knowledge resources.",
-        "vision": "A responsive academic library supporting teaching, learning, innovation, and community engagement.",
-        "address": "Main Campus, Kisii University, Kisii",
-        "phone": "+254720875082",
-        "email": "library@kisiiuniversity.ac.ke",
-        "website_url": "https://library.kisiiuniversity.ac.ke",
-        "latitude": -0.681306,
-        "longitude": 34.777061,
-        "library_type": "main",
-        "sort_order": 10,
-    },
-    {
-        "name": "Digital Library",
-        "short_name": "Digital",
-        "slug": "digital-library",
-        "description": "Online access point for subscribed databases, repository resources, guides, and remote access support.",
-        "address": "Online services desk",
-        "phone": "+254720875082",
-        "email": "eresources@kisiiuniversity.ac.ke",
-        "website_url": "https://library.kisiiuniversity.ac.ke",
-        "library_type": "digital",
-        "sort_order": 20,
-    },
-    {
-        "name": "Town Campus Library",
-        "short_name": "Town Campus",
-        "slug": "town-campus-library",
-        "description": "Branch library supporting evening, professional, and town campus programmes.",
-        "address": "Kisii Town Campus",
-        "phone": "+254720875082",
-        "email": "townlibrary@kisiiuniversity.ac.ke",
-        "library_type": "branch",
-        "sort_order": 30,
-    },
-]
-
-SERVICES = [
-    ("Borrowing and returns", "borrowing", "Undergraduate and postgraduate students, staff, and approved external users.", "Visit the circulation desk with a valid university ID.", "circulation@kisiiuniversity.ac.ke"),
-    ("Reference and research help", "reference", "Students, faculty, researchers, and visiting scholars.", "Book a consultation or visit the reference desk.", "reference@kisiiuniversity.ac.ke"),
-    ("Information literacy training", "training", "Classes, departments, postgraduate groups, and researchers.", "Request a session through the library training desk.", "training@kisiiuniversity.ac.ke"),
-    ("Printing, scanning, and photocopying", "printing", "Library users with valid access to branch services.", "Request support at the circulation counter.", "library@kisiiuniversity.ac.ke"),
-    ("Inter-library loan", "inter_library_loan", "Researchers and postgraduate students requiring material outside the collection.", "Submit bibliographic details to the reference librarian.", "ill@kisiiuniversity.ac.ke"),
-]
-
 CATALOG = [
     # Verified against the public Kisii University Koha OPAC on 2026-08-10.
     ("Scientific Data Management", "Arie Shoshani", "CRC Press", 2010, "book", "Q 183.9.S56 2010", "011090", 1, 1, ["electronic data processing", "data management"]),
@@ -133,64 +96,12 @@ CATALOG = [
     ("Mapambazuko ya Machweo na Hadithi Nyingine", "D. W. Lutomia; Phibbian I. Muthama", "Mountain Top Educational Publishers Limited", 2021, "book", "PL 8704 .A2 M37 2021", "000000009972", 1, 1, ["kiswahili", "short stories"]),
 ]
 
-ELECTRONIC = [
-    {
-        "name": "Institutional Repository",
-        "slug": "institutional-repository",
-        "provider": "Kisii University",
-        "description": "Open access theses, dissertations, publications, and institutional scholarly outputs.",
-        "access_url": "http://repository.kisiiuniversity.ac.ke:8080/xmlui/",
-        "section_letter": "I",
-        "resource_type": "reference",
-        "subjects": ["Research outputs", "Theses", "Open access"],
-        "access_level": "all",
-        "access_type": "both",
-        "is_featured": True,
-        "sort_order": 10,
-    },
-    {
-        "name": "MyLOFT Remote Access",
-        "slug": "myloft-remote-access",
-        "provider": "MyLOFT",
-        "description": "Remote access gateway for subscribed library resources and reading lists.",
-        "access_url": "https://app.myloft.xyz/user/login?institute=cl4pou55huc740960l7k1mftg",
-        "section_letter": "M",
-        "resource_type": "database",
-        "subjects": ["Remote access", "Databases"],
-        "access_level": "students",
-        "access_type": "off_campus",
-        "requires_registration": True,
-        "is_featured": True,
-        "sort_order": 20,
-    },
-    {
-        "name": "DOAJ",
-        "slug": "doaj",
-        "provider": "Directory of Open Access Journals",
-        "description": "Peer-reviewed open access journals across disciplines.",
-        "access_url": "https://doaj.org/",
-        "section_letter": "D",
-        "resource_type": "ejournal_aggregator",
-        "subjects": ["Open access", "Journals"],
-        "access_level": "all",
-        "access_type": "both",
-        "is_featured": True,
-        "sort_order": 30,
-    },
-    {
-        "name": "PubMed",
-        "slug": "pubmed",
-        "provider": "National Library of Medicine",
-        "description": "Biomedical literature search platform for health sciences research.",
-        "access_url": "https://pubmed.ncbi.nlm.nih.gov/",
-        "section_letter": "P",
-        "resource_type": "database",
-        "subjects": ["Medicine", "Health sciences"],
-        "access_level": "all",
-        "access_type": "both",
-        "sort_order": 40,
-    },
-]
+BRANCHES = LIVE_LIBRARY_BRANCHES
+SERVICES = LIVE_LIBRARY_SERVICES
+ELECTRONIC = LIVE_LIBRARY_ELECTRONIC_RESOURCES
+
+LEGACY_LIBRARY_SLUGS = {"digital-library", "town-campus-library"}
+LEGACY_ELECTRONIC_SLUGS = {"myloft-remote-access", "doaj", "pubmed"}
 
 
 async def seed_libraries(db) -> dict[str, Library]:
@@ -203,25 +114,42 @@ async def seed_libraries(db) -> dict[str, Library]:
             "is_public": True,
         }
         payload.pop("slug")
+        if slug == "main-campus-library":
+            payload["regulations"] = LIVE_LIBRARY_RULES
         libraries[slug] = await upsert_by_slug(db, Library, slug, payload)
+
+    await db.execute(
+        update(Library)
+        .where(Library.slug.in_(LEGACY_LIBRARY_SLUGS))
+        .values(is_active=False, is_public=False)
+    )
 
     for library in libraries.values():
         await db.execute(delete(LibraryHours).where(LibraryHours.library_id == library.id))
         db.add_all(
             [
-                LibraryHours(library_id=library.id, day_type="weekday", opens_at="08:00", closes_at="21:00", note="Semester hours"),
-                LibraryHours(library_id=library.id, day_type="saturday", opens_at="09:00", closes_at="17:00", note="Weekend service"),
-                LibraryHours(library_id=library.id, day_type="sunday", is_closed=True, note="Closed"),
-                LibraryHours(library_id=library.id, day_type="public_holiday", is_closed=True, note="Closed on public holidays"),
+                LibraryHours(library_id=library.id, is_closed=False, **hours)
+                for hours in LIVE_LIBRARY_HOURS[library.slug]
             ]
         )
 
     main = libraries["main-campus-library"]
     links = [
-        ("opac", "Online catalog", "https://library.kisiiuniversity.ac.ke", "Search library holdings.", "book-open", 10),
-        ("repository", "Institutional repository", "http://repository.kisiiuniversity.ac.ke:8080/xmlui/", "Browse KSU scholarly output.", "database", 20),
-        ("myloft", "MyLOFT", "https://app.myloft.xyz/user/login?institute=cl4pou55huc740960l7k1mftg", "Access subscribed resources remotely.", "shield", 30),
+        ("opac", "LIBRARY CATALOGUE", "http://library.kisiiuniversity.ac.ke/", "Official Library Catalogue.", "book-open", 10),
+        ("repository", "INSTITUTIONAL REPOSITORY", "http://repository.kisiiuniversity.ac.ke:8080/xmlui/", "Official Institutional Repository.", "database", 20),
+        ("myloft", "MYLOFT E-RESOURCE ACCESS", "https://app.myloft.xyz/user/login?institute=cl4pou55huc740960l7k1mftg", "Access Electronic Resources off campus through MYLOFT Application.", "shield", 30),
     ]
+    links.extend(
+        (
+            "other",
+            spec["title"],
+            spec["source_url"],
+            spec["description"],
+            "file-text",
+            40 + index * 10,
+        )
+        for index, spec in enumerate(LIVE_LIBRARY_FILES)
+    )
     for link_type, label, url, description, icon, sort_order in links:
         await upsert_named(
             db,
@@ -240,30 +168,61 @@ async def seed_libraries(db) -> dict[str, Library]:
             },
         )
 
+    await db.execute(
+        update(LibraryExternalLink)
+        .where(
+            (LibraryExternalLink.library_id == main.id)
+            & LibraryExternalLink.label.not_in(
+                {link[1] for link in links}
+            )
+        )
+        .values(is_active=False)
+    )
+
     return libraries
 
 
 async def seed_services(db, libraries: dict[str, Library]) -> None:
-    for library in libraries.values():
-        for index, (name, service_type, eligibility, how_to_access, contact) in enumerate(SERVICES, start=1):
-            slug = slugify(f"{library.slug}-{name}")
-            await upsert_by_slug(
-                db,
-                LibraryService,
-                slug,
-                {
-                    "library_id": library.id,
-                    "name": name,
-                    "description": f"{name} support for {library.name}.",
-                    "eligibility": eligibility,
-                    "service_type": service_type,
-                    "how_to_access": how_to_access,
-                    "contact_info": contact,
-                    "is_public": True,
-                    "is_active": True,
-                    "sort_order": index * 10,
-                },
+    main = libraries["main-campus-library"]
+    official_slugs = set()
+    for index, spec in enumerate(SERVICES, start=1):
+        slug = slugify(f"{main.slug}-{spec['name']}")
+        official_slugs.add(slug)
+        await upsert_by_slug(
+            db,
+            LibraryService,
+            slug,
+            {
+                "library_id": main.id,
+                "name": spec["name"],
+                "description": spec["description"],
+                "eligibility": None,
+                "service_type": spec["service_type"],
+                "how_to_access": None,
+                "contact_info": None,
+                "is_public": True,
+                "is_active": True,
+                "sort_order": index * 10,
+            },
+        )
+
+    await db.execute(
+        update(LibraryService)
+        .where(
+            (LibraryService.library_id == main.id)
+            & LibraryService.slug.not_in(official_slugs)
+        )
+        .values(is_public=False, is_active=False)
+    )
+    await db.execute(
+        update(LibraryService)
+        .where(
+            LibraryService.library_id.in_(
+                select(Library.id).where(Library.slug.in_(LEGACY_LIBRARY_SLUGS))
             )
+        )
+        .values(is_public=False, is_active=False)
+    )
 
 
 async def seed_catalog(db, libraries: dict[str, Library]) -> None:
@@ -295,66 +254,72 @@ async def seed_catalog(db, libraries: dict[str, Library]) -> None:
 
 
 async def seed_electronic(db, libraries: dict[str, Library]) -> None:
-    digital = libraries["digital-library"]
+    main = libraries["main-campus-library"]
+    official_slugs = set()
     for spec in ELECTRONIC:
-        payload = {**spec, "library_id": digital.id, "is_active": True}
+        payload = {**spec, "library_id": main.id, "is_active": True}
         slug = payload.pop("slug")
+        official_slugs.add(slugify(slug))
         resource = await upsert_by_slug(db, ElectronicResource, slug, payload)
-        await upsert_named(
-            db,
-            ElectronicResourceGuide,
-            (ElectronicResourceGuide.electronic_resource_id == resource.id)
-            & (ElectronicResourceGuide.title == "Getting started"),
-            {
-                "electronic_resource_id": resource.id,
-                "title": "Getting started",
-                "summary": f"Access guide for {resource.name}.",
-                "access_steps": [
-                    {"step": 1, "instruction": "Open the resource link from the Library portal."},
-                    {"step": 2, "instruction": "Use institutional credentials or follow the registration note where required."},
-                    {"step": 3, "instruction": "Contact the digital library desk if access fails."},
-                ],
-                "search_tips": "Start broad, then filter by year, subject, author, or document type.",
-                "recommended_subjects": spec.get("subjects", []),
-                "guide_type": "html",
-                "is_active": True,
-                "sort_order": 10,
-            },
+        await db.execute(
+            update(ElectronicResourceGuide)
+            .where(
+                (ElectronicResourceGuide.electronic_resource_id == resource.id)
+                & (ElectronicResourceGuide.title == "Getting started")
+            )
+            .values(is_active=False)
         )
+
+    await db.execute(
+        update(ElectronicResource)
+        .where(
+            ElectronicResource.slug.in_(LEGACY_ELECTRONIC_SLUGS)
+            | (
+                (ElectronicResource.library_id == main.id)
+                & ElectronicResource.slug.not_in(official_slugs)
+            )
+        )
+        .values(is_active=False)
+    )
+    await db.execute(
+        update(ElectronicResourceGuide)
+        .where(ElectronicResourceGuide.title == "Getting started")
+        .values(is_active=False)
+    )
 
 
 async def seed_charges_regulations_stats(db, libraries: dict[str, Library]) -> None:
     main = libraries["main-campus-library"]
-    charges = [
-        ("Overdue fine", "overdue_fine", Decimal("10.00"), "per_day", "Fine charged per overdue day."),
-        ("Photocopying", "photocopy", Decimal("5.00"), "per_page", "Standard photocopying rate."),
-        ("Lost item processing", "lost_item", Decimal("1500.00"), "flat", "Administrative fee before replacement cost assessment."),
-    ]
-    for name, charge_type, amount, rate_unit, description in charges:
+    for spec in LIVE_LIBRARY_CHARGES:
         await upsert_named(
             db,
             LibraryCharge,
-            (LibraryCharge.library_id == main.id) & (LibraryCharge.name == name),
+            (LibraryCharge.library_id == main.id) & (LibraryCharge.name == spec["name"]),
             {
                 "library_id": main.id,
-                "name": name,
-                "description": description,
-                "charge_type": charge_type,
-                "amount": amount,
-                "rate_unit": rate_unit,
+                "name": spec["name"],
+                "description": spec["description"],
+                "charge_type": spec["charge_type"],
+                "amount": Decimal(spec["amount"]),
+                "rate_unit": spec["rate_unit"],
                 "currency": "KES",
                 "is_active": True,
-                "effective_from": date(2026, 1, 1),
+                "effective_from": None,
             },
         )
 
-    regulations = [
-        ("Borrowing rules", "borrowing", "Borrowers must present a valid university ID. Items should be returned or renewed before the due date."),
-        ("Library conduct", "conduct", "Users should maintain a quiet study environment, protect library property, and follow staff guidance."),
-        ("Electronic resource access", "access", "Subscribed e-resources are for authorized academic use. Sharing credentials is not permitted."),
-        ("Fees and fines", "fees", "Overdue, lost, damaged, photocopying, and printing charges are applied using the active fee schedule."),
-    ]
-    for title, category, content in regulations:
+    await db.execute(
+        update(LibraryCharge)
+        .where(
+            (LibraryCharge.library_id == main.id)
+            & LibraryCharge.name.in_(
+                {"Overdue fine", "Photocopying", "Lost item processing"}
+            )
+        )
+        .values(is_active=False)
+    )
+
+    for title, category, content in LIVE_LIBRARY_REGULATIONS:
         await upsert_named(
             db,
             LibraryRegulation,
@@ -364,34 +329,99 @@ async def seed_charges_regulations_stats(db, libraries: dict[str, Library]) -> N
                 "title": title,
                 "category": category,
                 "content": content,
-                "effective_date": date(2026, 1, 1),
+                "effective_date": None,
                 "status": "active",
+                "is_public": True,
             },
         )
 
+    await db.execute(
+        update(LibraryRegulation)
+        .where(
+            (LibraryRegulation.library_id == main.id)
+            & LibraryRegulation.title.in_(
+                {"Borrowing rules", "Library conduct", "Electronic resource access", "Fees and fines"}
+            )
+        )
+        .values(status="archived", is_public=False)
+    )
+    await db.execute(
+        delete(LibraryStatistics).where(
+            (LibraryStatistics.library_id == main.id)
+            & (LibraryStatistics.notes == "Seeded annual snapshot for UI iteration.")
+        )
+    )
+
+
+async def resolve_main_media_id(*, source_url: str, filename: str):
+    settings = get_settings()
+    response = await get_integration_pool().request_internal(
+        "main-public-media",
+        settings.MAIN_SERVICE_URL.rstrip("/"),
+        "POST",
+        "/api/v1/internal/media/resolve-by-source",
+        api_key=settings.MAIN_SERVICE_API_KEY,
+        json={"sources": [{"source_url": source_url, "filename": filename}]},
+        timeout=5.0,
+    )
+    response.raise_for_status()
+    body = response.json()
+    matches = body.get("data") if isinstance(body, dict) else None
+    if not isinstance(matches, list) or not matches:
+        raise RuntimeError(f"Public Main media not found for Library file: {filename}")
+    media_id = matches[0].get("media_id")
+    if not media_id:
+        raise RuntimeError(f"Main media resolver returned no ID for Library file: {filename}")
+    return media_id
+
+
+async def seed_files_and_policies(db, libraries: dict[str, Library]) -> None:
+    main = libraries["main-campus-library"]
+    files_by_title = {}
+    for index, spec in enumerate(LIVE_LIBRARY_FILES, start=1):
+        media_id = await resolve_main_media_id(
+            source_url=spec["source_url"], filename=spec["media_filename"]
+        )
+        file_record = await upsert_named(
+            db,
+            LibraryFile,
+            (LibraryFile.library_id == main.id) & (LibraryFile.title == spec["title"]),
+            {
+                "library_id": main.id,
+                "media_id": media_id,
+                "title": spec["title"],
+                "description": spec["description"],
+                "file_category": spec["file_category"],
+                "access_level": "public",
+                "is_public": True,
+                "sort_order": index * 10,
+            },
+        )
+        files_by_title[file_record.title] = file_record
+
+    rules = await db.scalar(
+        select(LibraryRegulation).where(
+            (LibraryRegulation.library_id == main.id)
+            & (LibraryRegulation.title == "General Library Rules And Regulations")
+        )
+    )
+    rules_file = files_by_title.get("LIBRARY RULES AND REGULATIONS.pdf")
     await upsert_named(
         db,
-        LibraryStatistics,
-        (LibraryStatistics.library_id == main.id)
-        & (LibraryStatistics.period_type == "annual")
-        & (LibraryStatistics.period_start == date(2026, 1, 1)),
+        LibraryPolicyPage,
+        (LibraryPolicyPage.library_id == main.id)
+        & (LibraryPolicyPage.slug == "general-library-rules-and-regulations"),
         {
             "library_id": main.id,
-            "period_type": "annual",
-            "period_start": date(2026, 1, 1),
-            "period_end": date(2026, 12, 31),
-            "total_books": 42500,
-            "total_journals": 320,
-            "total_theses": 1800,
-            "total_ebooks": 120000,
-            "total_loans": 8400,
-            "total_renewals": 1650,
-            "total_reservations": 740,
-            "total_visits": 98000,
-            "fines_collected": Decimal("142500.00"),
-            "currency": "KES",
-            "extra": {"study_seats": 620, "training_sessions": 48},
-            "notes": "Seeded annual snapshot for UI iteration.",
+            "policy_type": "conduct",
+            "title": "General Library Rules And Regulations",
+            "slug": "general-library-rules-and-regulations",
+            "content": LIVE_LIBRARY_RULES,
+            "related_regulation_id": rules.id if rules else None,
+            "file_id": rules_file.id if rules_file else None,
+            "is_public": True,
+            "status": "active",
+            "sort_order": 10,
         },
     )
 
@@ -404,6 +434,7 @@ async def run() -> None:
             await seed_catalog(db, libraries)
             await seed_electronic(db, libraries)
             await seed_charges_regulations_stats(db, libraries)
+            await seed_files_and_policies(db, libraries)
             await db.commit()
         except Exception:
             await db.rollback()

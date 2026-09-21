@@ -5001,7 +5001,7 @@ const researchCenterPortalScope = {
 const researchResources: Record<string, PortalResourceConfig<any, any>> = {
   projects: {
     key: "projects",
-    title: "Research Projects",
+    title: "Projects",
     description:
       "Manage research projects, investigators, status, and publication state.",
     backHref: "/research",
@@ -5031,6 +5031,9 @@ const researchResources: Record<string, PortalResourceConfig<any, any>> = {
           allowClear: true,
         },
       },
+      { name: "principal_investigator_name", label: "Investigator Names from Register", type: "textarea" },
+      { name: "school_name", label: "School from Register" },
+      { name: "funder_name", label: "Funding Organizations from Register", type: "textarea" },
       { name: "project_type", label: "Project Type" },
       { name: "summary", label: "Summary", type: "textarea" },
       { name: "start_date", label: "Start Date", type: "date" },
@@ -5095,7 +5098,7 @@ const researchResources: Record<string, PortalResourceConfig<any, any>> = {
   } as PortalResourceConfig<ResearchProject, ResearchProjectPayload>,
   centers: genericResearchResource(
     "centers",
-    "Research Centers",
+    "Centers",
     "Manage research centers and institutes.",
     researchServiceApi.centers,
     ["research.manage_projects"],
@@ -5103,7 +5106,7 @@ const researchResources: Record<string, PortalResourceConfig<any, any>> = {
   farms: {
     ...genericResearchResource(
       "farms",
-      "Research Farms",
+      "Farms",
       "Manage research farms and field sites.",
       researchServiceApi.farms,
       ["research.manage_projects"],
@@ -5156,7 +5159,7 @@ const researchResources: Record<string, PortalResourceConfig<any, any>> = {
   programs: {
     ...genericResearchResource(
       "programs",
-      "Research Programs",
+      "Programs",
       "Manage research programs.",
       researchServiceApi.programs,
       ["research.manage_projects", "research_program.manage"],
@@ -5200,7 +5203,7 @@ const researchResources: Record<string, PortalResourceConfig<any, any>> = {
   } as PortalResourceConfig<ResearchGenericRecord, ResearchGenericPayload>,
   themes: genericResearchResource(
     "themes",
-    "Research Themes",
+    "Themes",
     "Manage research themes and classifications.",
     researchServiceApi.themes,
     ["research.manage_projects", "research_theme.manage"],
@@ -5505,6 +5508,7 @@ const researchResources: Record<string, PortalResourceConfig<any, any>> = {
       { name: "target_users", label: "Target Users", type: "textarea" },
       { name: "ip_status", label: "IP Status" },
       { name: "patent_number", label: "Patent Number" },
+      { name: "copyright_number", label: "Copyright Registration" },
       { name: "patent_filing_date", label: "Patent Filing Date", type: "date" },
       { name: "patent_grant_date", label: "Patent Grant Date", type: "date" },
       { name: "license_type", label: "License Type" },
@@ -5533,7 +5537,7 @@ const researchResources: Record<string, PortalResourceConfig<any, any>> = {
   } as PortalResourceConfig<ResearchGenericRecord, ResearchGenericPayload>,
   outputs: genericResearchResource(
     "outputs",
-    "Research Outputs",
+    "Outputs",
     "Manage research outputs and reports.",
     researchServiceApi.outputs,
     ["research.manage_reports"],
@@ -5547,7 +5551,7 @@ const researchResources: Record<string, PortalResourceConfig<any, any>> = {
   ),
   stories: genericResearchResource(
     "stories",
-    "Research Stories",
+    "Stories",
     "Manage research impact stories.",
     researchServiceApi.stories,
     ["sustainability.manage"],
@@ -6106,21 +6110,21 @@ const researchResources: Record<string, PortalResourceConfig<any, any>> = {
   } as PortalResourceConfig<ResearchGenericRecord, ResearchGenericPayload>,
   resources: genericResearchResource(
     "resources",
-    "Research Resources",
+    "Resources",
     "Manage research office resources.",
     researchServiceApi.resources,
     ["research.manage_resources", "research.manage_guidelines"],
   ),
   services: genericResearchResource(
     "services",
-    "Research Services",
+    "Services",
     "Manage research office services.",
     researchServiceApi.services,
     ["research.manage_services"],
   ),
   guidelines: genericResearchResource(
     "guidelines",
-    "Research Guidelines",
+    "Guidelines",
     "Manage research guidelines and policy help.",
     researchServiceApi.guidelines,
     ["research.manage_guidelines"],
@@ -8283,6 +8287,55 @@ export const portalConfigs: Record<string, PortalConfig> = {
         navKey: "dashboard",
       },
       {
+        title: "Editorial Work",
+        href: "/corporate-communication/editorial-work",
+        icon: Newspaper,
+        scope: ["content.view", "content.manage", "content.review"],
+        navKey: "communications.editorial",
+      },
+      {
+        title: "Publishing Calendar",
+        href: "/corporate-communication/publishing-calendar",
+        icon: CalendarDays,
+        scope: ["content.view", "content.publish"],
+        navKey: "communications.calendar",
+      },
+      {
+        title: "Reports",
+        href: "/corporate-communication/reports",
+        icon: BarChart3,
+        scope: ["content.view", "audit.view"],
+        navKey: "communications.reports",
+      },
+      {
+        title: "Media Library",
+        href: "/corporate-communication/media-library",
+        icon: ImageIcon,
+        scope: ["media.view", "media.manage", "media.upload"],
+        navKey: "communications.media",
+      },
+      {
+        title: "Social Publishing",
+        href: "/corporate-communication/social-publishing",
+        icon: Share2,
+        scope: ["marketing.manage_social", "marketing.view_social"],
+        navKey: "communications.social",
+      },
+      {
+        title: "Newsletters & Audience",
+        href: "/corporate-communication/newsletters-audience",
+        icon: Mail,
+        scope: ["marketing.manage_newsletters", "support.manage_contacts"],
+        navKey: "communications.newsletters",
+      },
+      {
+        title: "Notifications",
+        href: "/corporate-communication/notifications",
+        icon: Bell,
+        scope: "content.view",
+        navKey: "communications.notifications",
+      },
+      {
         title: "Workflow",
         href: "/corporate-communication/review-queue",
         icon: ClipboardCheck,
@@ -8883,7 +8936,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         group: "Partnerships & Services",
       },
       {
-        title: "Research Resources",
+        title: "Resources",
         href: "/research/resources",
         navKey: "resources",
         icon: BookOpen,
@@ -8891,7 +8944,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         group: "Partnerships & Services",
       },
       {
-        title: "Research Services",
+        title: "Services",
         href: "/research/services",
         navKey: "services",
         icon: ClipboardCheck,
@@ -8907,7 +8960,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         group: "Partnerships & Services",
       },
       {
-        title: "Research News",
+        title: "News",
         href: "/research/content/news",
         navKey: "content-news",
         icon: Newspaper,
@@ -8915,7 +8968,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         group: "Content",
       },
       {
-        title: "Research Blogs",
+        title: "Blogs",
         href: "/research/content/blogs",
         navKey: "content-blogs",
         icon: Newspaper,
@@ -8931,7 +8984,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         group: "Content",
       },
       {
-        title: "Research Events",
+        title: "Events",
         href: "/research/content/events",
         navKey: "content-events",
         icon: CalendarDays,
@@ -8939,7 +8992,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         group: "Content",
       },
       {
-        title: "Research Sliders",
+        title: "Sliders",
         href: "/research/content/sliders",
         navKey: "content-sliders",
         icon: PanelsTopLeft,
@@ -9043,7 +9096,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         group: "Research Administration",
       },
       {
-        title: "Research Profile",
+        title: "Profile",
         href: "/research/settings/profile",
         navKey: "settings-profile",
         icon: Building2,
@@ -9084,7 +9137,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       },
     ],
     dashboard: dashboard(
-      "Research Office Dashboard",
+      "Office Dashboard",
       "Manage the research office pipeline without mixing publication submissions into the main office screen.",
       [
         stat(

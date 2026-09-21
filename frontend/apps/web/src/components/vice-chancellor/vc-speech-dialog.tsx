@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CalendarDays, Loader2, MapPin, X } from "lucide-react";
 import { VcVideoPlayer } from "./vc-video-player";
+import { getSiteApi } from "@/lib/browser-api";
 
 export interface SpeechSummary {
   id: string;
@@ -75,26 +76,30 @@ export function VcSpeechDialog({
       setLoadingVideo(false);
       return;
     }
-    let cancelled = false;
+    const controller = new AbortController();
     setLoadingVideo(true);
     setVideo(null);
-    fetch(`/api/vc-speech/${encodeURIComponent(speech.slug)}`)
-      .then((response) => (response.ok ? response.json() : null))
+    getSiteApi()
+      .get<{ videos?: SpeechVideo[] }>(
+        `/api/vc-speech/${encodeURIComponent(speech.slug)}`,
+        undefined,
+        { signal: controller.signal, auth: "none" },
+      )
       .then((payload) => {
-        if (cancelled) return;
         const first = payload?.videos?.[0] ?? null;
         setVideo(first);
       })
       .catch(() => {
+        if (controller.signal.aborted) return;
         // A missing recording is not an error worth showing: the address
         // itself is already on screen and readable.
-        if (!cancelled) setVideo(null);
+        setVideo(null);
       })
       .finally(() => {
-        if (!cancelled) setLoadingVideo(false);
+        if (!controller.signal.aborted) setLoadingVideo(false);
       });
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [open, speech]);
 

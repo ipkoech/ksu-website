@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import Field
 
-from .base import BaseReadSchema, BaseSchema, CodeStr, PhoneStr, SlugStr, UrlStr
+from .base import BaseReadSchema, BaseSchema, CodeStr, PhoneStr, SlugStr, UrlStr, optional_snapshot
 
 
 class CampusCreate(BaseSchema):
@@ -402,3 +402,50 @@ class AcademicCalendarDocumentCreate(BaseSchema):
     document_id: uuid.UUID
     relationship_type: str = Field(default="supporting", max_length=32)
     display_order: int = 100
+
+
+CampusSnapshot = optional_snapshot("CampusSnapshot", CampusRead)
+SchoolSnapshot = optional_snapshot("SchoolSnapshot", SchoolRead)
+DepartmentSnapshot = optional_snapshot("DepartmentSnapshot", DepartmentRead)
+DepartmentServiceSnapshot = optional_snapshot("DepartmentServiceSnapshot", DepartmentServiceRead)
+AcademicCalendarSnapshot = optional_snapshot("AcademicCalendarSnapshot", AcademicCalendarRead)
+
+
+class AcademicCalendarEventSnapshot(BaseSchema):
+    id: uuid.UUID | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    calendar_id: uuid.UUID | None = None
+    title: str | None = None
+    event_type: str | None = None
+    description: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    audience: str | None = None
+    location: str | None = None
+    document_id: uuid.UUID | None = None
+    is_highlighted: bool | None = None
+    display_order: int | None = None
+    status: str | None = None
+    is_public: bool | None = None
+    is_published: bool | None = None
+    published_at: datetime | None = None
+    archived_at: datetime | None = None
+    document: dict[str, Any] | None = None
+
+
+class AcademicCalendarDocumentSnapshot(BaseSchema):
+    id: uuid.UUID | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    calendar_id: uuid.UUID | None = None
+    document_id: uuid.UUID | None = None
+    relationship_type: str | None = None
+    display_order: int | None = None
+    document: dict[str, Any] | None = None
+
+
+class AcademicCalendarComposition(BaseSchema):
+    calendar: AcademicCalendarSnapshot
+    events: list[AcademicCalendarEventSnapshot]
+    documents: list[AcademicCalendarDocumentSnapshot]

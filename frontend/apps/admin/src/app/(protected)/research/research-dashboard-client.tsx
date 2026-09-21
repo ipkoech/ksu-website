@@ -184,7 +184,7 @@ export function ResearchDashboardClient() {
   return (
     <div>
       <PageHeader
-        title="Research Office Dashboard"
+        title="Office Dashboard"
         description="Dense operational analytics for portfolio health, funding, outputs, partnerships, reviews, and admin activity."
         primaryAction={{ label: "Projects", href: "/research/projects" }}
         secondaryActions={[
@@ -237,7 +237,7 @@ export function ResearchDashboardClient() {
           </div>
 
           <div className="flex min-w-0 flex-col gap-6">
-            <ResearchSectionGuide title="Research Dashboard" />
+            <ResearchSectionGuide title="Dashboard" />
 
             <AttentionStrip items={data?.attention} loading={analytics.isLoading} compact />
 

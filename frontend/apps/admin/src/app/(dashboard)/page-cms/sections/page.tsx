@@ -61,6 +61,7 @@ import {
   type PageSectionStatus,
   type PageSectionWorkflowAction,
 } from "@/lib/api/page-cms";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 function workflowActionsForStatus(status: PageSectionStatus): PageSectionWorkflowAction[] {
   const actions: PageSectionWorkflowAction[] = [];
@@ -327,6 +328,7 @@ export default function PageCmsSectionsPage() {
         current.map((s) => (s.id === section.id ? response.data : s)),
       );
       toast.success(`Section ${action.replace(/_/g, " ")} complete.`);
+      void revalidatePublicContent("main", "page-cms");
       setPendingWorkflowAction(null);
       setWorkflowReason("");
     } catch {
@@ -388,6 +390,7 @@ export default function PageCmsSectionsPage() {
       setCreateOpen(false);
       setNewSection(emptyNewSectionForm());
       toast.success("Section created");
+      void revalidatePublicContent("main", "page-cms");
       router.push(`/corporate-communication/page-cms/sections/${created.id}`);
     } catch {
       toast.error("Failed to create section.");

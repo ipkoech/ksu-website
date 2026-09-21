@@ -21,18 +21,23 @@ import {
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
 import { useAuth } from "@ksu/auth";
+import { portalAccessApi, workspacesApi } from "@ksu/api-client";
 import { CheckCircle2 } from "lucide-react";
-import { resolvePostLoginDestination } from "@/lib/auth-routing";
+import { isSafeInternalPath, resolvePortalAccessDestination } from "@/lib/auth-routing";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
+  mfa_code: z.string().max(64).optional(),
 });
 
 type LoginValues = z.infer<typeof loginSchema>;
 
 function loginErrorMessage(error: unknown) {
   const message = error instanceof Error ? error.message.toLowerCase() : "";
+  if (message.includes("mfa")) {
+    return "Enter a current authenticator code or an unused recovery code.";
+  }
 
   if (
     message.includes("credential") ||
@@ -52,14 +57,14 @@ function loginErrorMessage(error: unknown) {
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, switchService } = useAuth();
+  const { login, logout, switchService } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [redirectChecked, setRedirectChecked] = useState(false);
   const [isRedirecting, startTransition] = useTransition();
 
   const redirect = useMemo(() => {
     const value = searchParams.get("redirect");
-    if (value && value.startsWith("/")) {
+    if (isSafeInternalPath(value)) {
       return value;
     }
     return null;
@@ -68,14 +73,14 @@ export function LoginForm() {
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", mfa_code: "" },
   });
 
   async function onSubmit(values: LoginValues) {
     setError(null);
 
     try {
-      const { user, services } = await login(values);
+      const { user, services } = await login({ ...values, mfa_code: values.mfa_code?.trim() || undefined });
 
       if (user.mustChangePassword) {
         startTransition(() => {
@@ -85,18 +90,35 @@ export function LoginForm() {
       }
 
       if (services.length === 0) {
-        setError("You do not have access to any admin services.");
+        startTransition(() => router.push("/access-denied"));
         return;
       }
 
-      toast.success("Login successful", {
-        description: `Welcome back, ${user.name}!`,
-      });
-
-      const destination = resolvePostLoginDestination(
+      const access = await portalAccessApi.get();
+      const workspaces = access.data.workspaces ?? [];
+      const selectedWorkspace = access.data.preferred_workspace ?? (workspaces.length === 1 ? workspaces[0] : null);
+      if (selectedWorkspace && !selectedWorkspace.selection_required) {
+        const scope = selectedWorkspace.selected_scope ??
+          (selectedWorkspace.scopes.length === 1 ? selectedWorkspace.scopes[0] : undefined);
+        await workspacesApi.activate(selectedWorkspace.workspace, {
+          scope,
+        });
+      } else if (workspaces.length > 1 || selectedWorkspace?.selection_required) {
+        const query = redirect ? `?redirect=${encodeURIComponent(redirect)}` : "";
+        startTransition(() => router.push(`/workspace-selection${query}`));
+        return;
+      }
+      if (workspaces.length === 0 && access.data.portals.length === 0) {
+        startTransition(() => router.push("/access-denied"));
+        return;
+      }
+      const destination = resolvePortalAccessDestination(
+        access.data.portals,
         user,
         redirect && redirectChecked ? redirect : null,
       );
+
+      toast.success("Login successful", { description: `Welcome back, ${user.name}!` });
 
       if (destination.service) {
         switchService(destination.service);
@@ -114,6 +136,10 @@ export function LoginForm() {
   useEffect(() => {
     setRedirectChecked(true);
   }, []);
+
+  if (reason === "session-expired") {
+    return <div className="space-y-4 text-center" role="alert"><div><h2 className="text-lg font-semibold text-[#102a43]">Your session has expired</h2><p className="mt-2 text-sm text-muted-foreground">For your security, please sign in again to continue.</p></div><Button type="button" className="w-full" onClick={() => router.replace("/login")}>Sign in again</Button><Button type="button" variant="outline" className="w-full" onClick={() => logout().then(() => router.replace("/login"))}>Sign out</Button></div>;
+  }
 
   return (
     <Form {...form}>
@@ -163,6 +189,20 @@ export function LoginForm() {
                   placeholder="Enter your password"
                   {...field}
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="mfa_code"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Authenticator or recovery code (if enabled)</FormLabel>
+              <FormControl>
+                <Input autoComplete="one-time-code" maxLength={64} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

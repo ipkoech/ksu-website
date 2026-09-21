@@ -1,9 +1,9 @@
-import { getStoredAccessToken } from "../auth-tokens";
-import { mainApi, researchApi } from "../client";
+import { ApiClientError, mainApi, researchApi } from "../client";
 import type { FieldSelectionParams, QueryParams } from "../client";
 import type { PaginatedResponse } from "../main/types";
 import type { PublicStatsResponse } from "../main/types";
 import { getResearchApiBaseUrl } from "../service-urls";
+import type { FetchCacheOptions } from "../transport";
 
 type ListParams<
   T extends Record<string, string | number | boolean | undefined> = Record<
@@ -114,6 +114,10 @@ export interface PublicDonationSubmissionRead {
 }
 
 export interface ResearchProject {
+  principal_investigator_name?: string | null;
+  school_name?: string | null;
+  funder_name?: string | null;
+  source_references?: Record<string, unknown>[] | null;
   id: string;
   title: string;
   name?: string | null;
@@ -160,6 +164,10 @@ export interface ResearchProject {
 }
 
 export interface ResearchProjectPayload {
+  principal_investigator_name?: string | null;
+  school_name?: string | null;
+  funder_name?: string | null;
+  source_references?: Record<string, unknown>[] | null;
   title: string;
   slug?: string | null;
   code?: string | null;
@@ -933,44 +941,24 @@ export const researchServiceApi = {
       "/api/v1/donations/submit",
       data,
     ),
-  streamAskAI: (data: ResearchAskAIRequest, onEvent: (event: ResearchAskAIStreamEvent) => void) =>
-    streamResearchAskAI(data, onEvent),
-  listAskAIConversations: () =>
-    researchApi.get<{ data: ResearchAIConversation[] }>("/api/v1/ask-ai/conversations"),
-  listAskAIMessages: (conversationId: string) =>
-    researchApi.get<{ data: ResearchAIMessage[] }>(`/api/v1/ask-ai/conversations/${conversationId}/messages`),
+  streamAskAI: (data: ResearchAskAIRequest, onEvent: (event: ResearchAskAIStreamEvent) => void, signal?: AbortSignal) =>
+    streamResearchAskAI(data, onEvent, signal),
+  listAskAIConversations: (options?: FetchCacheOptions) =>
+    researchApi.get<{ data: ResearchAIConversation[] }>("/api/v1/ask-ai/conversations", undefined, options),
+  listAskAIMessages: (conversationId: string, options?: FetchCacheOptions) =>
+    researchApi.get<{ data: ResearchAIMessage[] }>(`/api/v1/ask-ai/conversations/${conversationId}/messages`, undefined, options),
   exportResourceUrl: (resource: string, params?: ResearchExportParams) =>
     buildResearchExportUrl(resource, params),
-  startExport: (resource: string, params?: ResearchExportParams) =>
-    researchApi.request<{ data: ResearchExportJob }>("POST", `/api/v1/exports/${resource}/jobs`, { params }),
-  getExportJob: (jobId: string) =>
-    researchApi.get<{ data: ResearchExportJob }>(`/api/v1/exports/jobs/${jobId}`),
-  downloadExportJob: async (jobId: string) => {
-    const token = getStoredAccessToken();
-    const response = await fetch(
-      `${getResearchApiBaseUrl()}/api/v1/exports/jobs/${jobId}/download`,
-      {
-        credentials: "include",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      },
-    );
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || error.message || "Research export download failed");
-    }
-    return response.blob();
+  startExport: (resource: string, params?: ResearchExportParams, options?: FetchCacheOptions) =>
+    researchApi.request<{ data: ResearchExportJob }>("POST", `/api/v1/exports/${resource}/jobs`, { params, ...options }),
+  getExportJob: (jobId: string, options?: FetchCacheOptions) =>
+    researchApi.get<{ data: ResearchExportJob }>(`/api/v1/exports/jobs/${jobId}`, undefined, options),
+  downloadExportJob: async (jobId: string, options?: FetchCacheOptions) => {
+    return researchApi.download(`/api/v1/exports/jobs/${jobId}/download`, undefined, options);
   },
   downloadExport: async (resource: string, params?: ResearchExportParams) => {
-    const token = getStoredAccessToken();
-    const response = await fetch(buildResearchExportUrl(resource, params), {
-      credentials: "include",
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    });
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || error.message || "Research export failed");
-    }
-    return response.blob();
+    const url = new URL(buildResearchExportUrl(resource, params));
+    return researchApi.download(`${url.pathname}${url.search}`);
   },
   projects: crudApi<ResearchProject, ResearchProjectPayload>(
     "/api/v1/projects",
@@ -1197,41 +1185,35 @@ function buildResearchExportUrl(resource: string, params?: ResearchExportParams)
 async function streamResearchAskAI(
   data: ResearchAskAIRequest,
   onEvent: (event: ResearchAskAIStreamEvent) => void,
+  signal?: AbortSignal,
 ) {
-  const token = getStoredAccessToken();
-  const response = await fetch(`${getResearchApiBaseUrl()}/api/v1/ask-ai/stream`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  return researchApi.request<void>("POST", "/api/v1/ask-ai/stream", {
+    body: data,
+    signal,
+    timeoutMs: 120000,
+    consume: async (response) => {
+      if (!response.body) throw new ApiClientError("Ask AI stream has no body", response.status, undefined, "INVALID_RESPONSE");
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
+          buffer = buffer.replace(/\r\n/g, "\n");
+          const records = buffer.split("\n\n");
+          buffer = records.pop() ?? "";
+          for (const record of records) dispatchResearchAskAIStreamRecord(record, onEvent);
+          if (buffer.length > 1024 * 1024) throw new ApiClientError("Ask AI stream record is too large", 200, undefined, "INVALID_RESPONSE");
+          if (done) break;
+        }
+        if (buffer.trim()) dispatchResearchAskAIStreamRecord(buffer, onEvent);
+      } finally {
+        await reader.cancel().catch(() => undefined);
+        reader.releaseLock();
+      }
     },
-    body: JSON.stringify(data),
   });
-
-  if (!response.ok || !response.body) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || error.message || "Ask AI stream failed");
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const records = buffer.split("\n\n");
-    buffer = records.pop() ?? "";
-    for (const record of records) {
-      dispatchResearchAskAIStreamRecord(record, onEvent);
-    }
-  }
-
-  if (buffer.trim()) {
-    dispatchResearchAskAIStreamRecord(buffer, onEvent);
-  }
 };
 
 function dispatchResearchAskAIStreamRecord(
@@ -1251,9 +1233,12 @@ function dispatchResearchAskAIStreamRecord(
 
   if (!event || !dataText) return;
 
+  let data: unknown;
   try {
-    onEvent({ event, data: JSON.parse(dataText) } as ResearchAskAIStreamEvent);
+    data = JSON.parse(dataText);
   } catch {
     onEvent({ event: "error", data: { message: "Ask AI stream returned invalid data." } });
+    return;
   }
+  onEvent({ event, data } as ResearchAskAIStreamEvent);
 }

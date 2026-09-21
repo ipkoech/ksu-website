@@ -16,7 +16,7 @@ export function ServiceAccordion({ items }: { items: ServiceAccordionItem[] }) {
   if (items.length === 0) return <StatusMessage>No public services are available yet.</StatusMessage>;
 
   return (
-    <div className="divide-y divide-border border-y border-border">
+    <div className="divide-y divide-border border-y border-border" data-server-data-display="library-services">
       {items.map((item) => {
         const open = openId === item.id;
         return (

@@ -15,6 +15,7 @@ from typing import Any, Union, get_args, get_origin
 from zipfile import BadZipFile, ZipFile
 
 from ksu_common.internal_client import get_integration_pool
+from ksu_common.actor_context import sign_actor_context
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -248,13 +249,17 @@ def _make_research_create(api_path: str) -> CreateFunc:
     """Factory that creates records by POSTing to the research service."""
 
     async def _create(db: AsyncSession, payload: dict[str, Any]) -> None:
+        actor_id = payload.pop("_actor_id", None)
+        headers = {"X-KSU-Proxy": "main-imports"}
+        if actor_id:
+            headers["X-KSU-Actor-Context"] = sign_actor_context(str(actor_id), _settings.RESEARCH_SERVICE_API_KEY or "")
         response = await get_integration_pool().request_internal(
             "research-imports",
             _settings.RESEARCH_SERVICE_URL.rstrip("/"),
             "POST",
             f"/api/v1/internal/imports/{api_path.rsplit('/', 1)[-1]}",
             api_key=_settings.RESEARCH_SERVICE_API_KEY,
-            headers={"X-KSU-Proxy": "main-imports"},
+            headers=headers,
             json=payload,
         )
         response.raise_for_status()
@@ -1330,6 +1335,8 @@ class ImportService:
         db: AsyncSession,
         config: ImportResourceConfig,
         request: ImportCommitRequest,
+        *,
+        actor_id: str | None = None,
     ) -> ImportCommitRead:
         preview = await ImportService.preview(db, config, request.rows)
         if request.mode == "all_or_nothing" and preview.valid_rows != preview.total_rows:
@@ -1349,13 +1356,19 @@ class ImportService:
                 continue
 
             if request.mode == "all_or_nothing":
-                item = await config.create(db, _clean_payload(config, preview_row.payload))
+                create_payload = _clean_payload(config, preview_row.payload)
+                if actor_id and config.key.startswith("research-"):
+                    create_payload["_actor_id"] = actor_id
+                item = await config.create(db, create_payload)
                 results.append(ImportCommitRowRead(row_number=preview_row.row_number, status="created", id=str(item.id)))
                 continue
 
             try:
                 async with db.begin_nested():
-                    item = await config.create(db, _clean_payload(config, preview_row.payload))
+                    create_payload = _clean_payload(config, preview_row.payload)
+                    if actor_id and config.key.startswith("research-"):
+                        create_payload["_actor_id"] = actor_id
+                    item = await config.create(db, create_payload)
                     item_id = str(item.id)
             except Exception as exc:  # noqa: BLE001 - per-row import failure is returned to the user.
                 results.append(ImportCommitRowRead(row_number=preview_row.row_number, status="failed", errors=[str(exc)]))

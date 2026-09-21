@@ -40,7 +40,10 @@ rmSync("out", { recursive: true, force: true });
 
 const build = spawn(process.execPath, [DEFAULT_NODE_HEAP, nextCli, "build"], {
   stdio: "inherit",
-  shell: process.platform === "win32",
+  // Passing an executable path through a Windows shell breaks when the
+  // workspace lives under a path containing spaces (for example
+  // `C:\\Program Files`). Keep argv structured on every platform.
+  shell: false,
   env: {
     ...process.env,
     NEXT_WEBPACK_PARALLELISM: process.env.NEXT_WEBPACK_PARALLELISM || "1",

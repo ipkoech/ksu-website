@@ -1,5 +1,12 @@
 import type { NextConfig } from "next";
 import path from "node:path";
+import { createRequire } from "node:module";
+
+const { ensureSharedPublic } = createRequire(path.join(__dirname, "package.json"))(
+  "../../scripts/shared-public.cjs",
+);
+
+ensureSharedPublic(__dirname);
 
 const researchFrontendUrl =
   process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL ||
@@ -16,11 +23,28 @@ const withHeriPath = (path: string) =>
 
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
-  output: "standalone",
+  // Next's standalone tracer preserves pnpm symlinks; Windows cannot create
+  // those links without elevated/developer-mode support. Keep local Windows
+  // builds runnable with `next start`; Linux deployment remains standalone.
+  ...(process.platform === "win32" ? {} : { output: "standalone" as const }),
   outputFileTracingRoot: path.join(__dirname, "../.."),
   transpilePackages: ["@ksu/ui", "@ksu/api-client"],
+  // Public prerendering shares the backend's finite database request budget.
+  experimental: { cpus: 1, staticGenerationMaxConcurrency: 2 },
   async redirects() {
     return [
+      {
+        // HERI owns its Next runtime and RSC payload. A full navigation keeps
+        // its basePath, client build ID and static assets on the HERI origin.
+        source: "/heri-africa",
+        destination: withHeriPath(""),
+        permanent: false,
+      },
+      {
+        source: "/heri-africa/:path*",
+        destination: withHeriPath("/:path*"),
+        permanent: false,
+      },
       {
         source: "/landing",
         destination: "/",
@@ -230,18 +254,6 @@ const nextConfig: NextConfig = {
         source: "/students/admissions/center",
         destination: "https://digital.kisiiuniversity.ac.ke/students/admissions/center",
         permanent: true,
-      },
-    ];
-  },
-  async rewrites() {
-    return [
-      {
-        source: "/heri-africa",
-        destination: withHeriPath(""),
-      },
-      {
-        source: "/heri-africa/:path*",
-        destination: withHeriPath("/:path*"),
       },
     ];
   },

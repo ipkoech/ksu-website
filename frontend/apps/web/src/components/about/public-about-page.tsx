@@ -434,13 +434,33 @@ export function PublicAboutPage({
   const [tourOpen, setTourOpen] = useState(false);
   const historyTriggerRef = useRef<HTMLButtonElement>(null);
   const tourTriggerRef = useRef<HTMLButtonElement>(null);
+  const historyFocusTimerRef = useRef<number | null>(null);
+  const tourFocusTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (historyFocusTimerRef.current !== null) {
+        window.clearTimeout(historyFocusTimerRef.current);
+      }
+      if (tourFocusTimerRef.current !== null) {
+        window.clearTimeout(tourFocusTimerRef.current);
+      }
+    };
+  }, []);
   const content = data.content;
   const university = data.university;
   const pickAboutImage = createAboutImagePicker("about");
+  const institutionalSections = data.institutional_page?.sections ?? [];
+  const mandateSection = institutionalSections.find(
+    (section) => section.slug === "university-mandate",
+  );
   // The hero band is now a fixed campus landmark, but the picker is stateful:
   // claim the hero's slot anyway so the images below it keep their old order.
   pickAboutImage(content?.hero_media?.url);
-  const identityImage = pickAboutImage(content?.identity_media?.url);
+  // Use the supplied campus image attached to the published mandate section
+  // when the legacy identity slot has no editorial media yet.
+  const identityMedia = content?.identity_media || mandateSection?.primary_media;
+  const identityImage = pickAboutImage(identityMedia?.url);
   const oldCampusImage = pickAboutImage(content?.old_campus_media?.url);
   const modernCampusImage = pickAboutImage(content?.modern_campus_media?.url);
   const heroParagraphs = paragraphs(
@@ -452,12 +472,8 @@ export function PublicAboutPage({
     .filter(Boolean);
   const quickFacts = university.quick_facts ?? {};
   const publishedFacts = facts?.groups.flatMap((group) => group.items) ?? [];
-  const institutionalSections = data.institutional_page?.sections ?? [];
   const coreValuesSection = institutionalSections.find(
     (section) => section.slug === "core-values",
-  );
-  const mandateSection = institutionalSections.find(
-    (section) => section.slug === "university-mandate",
   );
   const displayedValues = coreValuesSection?.items.length
     ? coreValuesSection.items
@@ -477,12 +493,30 @@ export function PublicAboutPage({
     router.replace(open ? `${pathname}?history=open` : pathname, {
       scroll: false,
     });
-    if (!open) window.setTimeout(() => historyTriggerRef.current?.focus(), 0);
+    if (historyFocusTimerRef.current !== null) {
+      window.clearTimeout(historyFocusTimerRef.current);
+      historyFocusTimerRef.current = null;
+    }
+    if (!open) {
+      historyFocusTimerRef.current = window.setTimeout(() => {
+        historyFocusTimerRef.current = null;
+        historyTriggerRef.current?.focus();
+      }, 0);
+    }
   };
 
   const setTour = (open: boolean) => {
     setTourOpen(open);
-    if (!open) window.setTimeout(() => tourTriggerRef.current?.focus(), 0);
+    if (tourFocusTimerRef.current !== null) {
+      window.clearTimeout(tourFocusTimerRef.current);
+      tourFocusTimerRef.current = null;
+    }
+    if (!open) {
+      tourFocusTimerRef.current = window.setTimeout(() => {
+        tourFocusTimerRef.current = null;
+        tourTriggerRef.current?.focus();
+      }, 0);
+    }
   };
 
   const totalStudents = findFact(publishedFacts, [
@@ -567,7 +601,10 @@ export function PublicAboutPage({
   );
 
   return (
-    <div className="bg-surface text-foreground">
+    <div
+      className="bg-surface text-foreground"
+      data-server-data-display="web-about-overview"
+    >
       <CampusPageHeader
         image="main-admin"
         variant="feature"
@@ -650,7 +687,7 @@ export function PublicAboutPage({
             <Image
               src={identityImage}
               alt={mediaAlt(
-                content?.identity_media,
+                identityMedia,
                 "Sakagwa Teaching Complex at Kisii University",
               )}
               fill

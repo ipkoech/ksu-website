@@ -38,6 +38,7 @@ import {
 import { MediaPicker } from "@/components/media";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PageTransition } from "@/lib/animations";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import {
   aboutContentApi,
   historyMilestonesApi,
@@ -169,6 +170,7 @@ export function AboutKsuWorkspace() {
       return aboutContentApi.update(about.id, payload);
     },
     onSuccess: async () => {
+      void revalidatePublicContent("main", "about");
       toast.success("About KSU page content saved");
       await queryClient.invalidateQueries({ queryKey: ABOUT_QUERY_KEY });
     },
@@ -404,7 +406,7 @@ function AboutContentEditor({
 function MilestoneCard({ milestone, index, totalCount, aboutId, allMilestones, canManage, onEdit, onChanged }: { milestone: HistoryMilestone; index: number; totalCount: number; aboutId: string; allMilestones: HistoryMilestone[]; canManage: boolean; onEdit: () => void; onChanged: () => Promise<void> }) {
   const deleteMutation = useMutation({
     mutationFn: () => historyMilestonesApi.delete(milestone.id),
-    onSuccess: async () => { toast.success("Milestone deleted"); await onChanged(); },
+    onSuccess: async () => { void revalidatePublicContent("main", "about"); toast.success("Milestone deleted"); await onChanged(); },
     onError: () => toast.error("Published milestones must be unpublished before deletion"),
   });
 
@@ -416,7 +418,7 @@ function MilestoneCard({ milestone, index, totalCount, aboutId, allMilestones, c
       [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
       return historyMilestonesApi.reorder(aboutId, ordered.map((m, i) => ({ id: m.id, display_order: (i + 1) * 10 })));
     },
-    onSuccess: async () => { toast.success("Milestone order updated"); await onChanged(); },
+    onSuccess: async () => { void revalidatePublicContent("main", "about"); toast.success("Milestone order updated"); await onChanged(); },
     onError: () => toast.error("Milestones could not be reordered"),
   });
 
@@ -476,7 +478,7 @@ function MilestoneEditorDialog({ aboutId, record, onOpenChange, onSaved }: { abo
       }
       return historyMilestonesApi.create(payload);
     },
-    onSuccess: async () => { toast.success(editing ? "Milestone updated" : "Milestone created"); await onSaved(); },
+    onSuccess: async () => { void revalidatePublicContent("main", "about"); toast.success(editing ? "Milestone updated" : "Milestone created"); await onSaved(); },
     onError: () => toast.error("Check the milestone fields and source information"),
   });
 
@@ -534,7 +536,7 @@ function AboutContentCreate({ onCreated, canManage }: { onCreated: () => Promise
       hero_introduction: heroIntro.trim() || null,
       is_enabled: true,
     } as Parameters<typeof aboutContentApi.create>[0]),
-    onSuccess: async () => { toast.success("About KSU content created"); await onCreated(); },
+    onSuccess: async () => { void revalidatePublicContent("main", "about"); toast.success("About KSU content created"); await onCreated(); },
     onError: () => toast.error("About content could not be created"),
   });
 

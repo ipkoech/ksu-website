@@ -7,18 +7,23 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import StudentGovernance
 from ...schemas import StudentGovernanceCreate, StudentGovernanceUpdate
+from ...schemas.student_life import StudentGovernanceSnapshot
 from ...services import StudentGovernanceService
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[StudentGovernanceSnapshot]],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("page", "per_page", "governance_type", "school_id", "is_active", "fields", "include"))
 async def list_student_governance(
     db: DbSession,
@@ -42,7 +47,11 @@ async def list_student_governance(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{slug}")
+@router.get(
+    "/{slug}",
+    response_model=SuccessResponse[StudentGovernanceSnapshot],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_student_governance(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(StudentGovernance, fields)
@@ -52,13 +61,24 @@ async def get_student_governance(slug: str, db: DbSession, fields: FieldSelectio
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("student_life.manage_governance"))])
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[StudentGovernanceSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("student_life.manage_governance"))],
+)
 async def create_student_governance(data: StudentGovernanceCreate, db: DbSession, _: CurrentUser):
     item = await StudentGovernanceService.create(db, **data.model_dump())
     return success(data=item, message="Student governance body created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("student_life.manage_governance"))])
+@router.patch(
+    "/{item_id}",
+    response_model=SuccessResponse[StudentGovernanceSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("student_life.manage_governance"))],
+)
 async def update_student_governance(item_id: uuid.UUID, data: StudentGovernanceUpdate, db: DbSession, _: CurrentUser):
     item = await StudentGovernanceService.get_by_id(db, item_id)
     if item is None:

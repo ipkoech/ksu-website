@@ -4,8 +4,8 @@ import Image, { getImageProps } from "next/image";
 import Link from "next/link";
 import { Play } from "lucide-react";
 import { useEffect, useState } from "react";
-import vcOfficial from "../../../../../public/images/vc/vc-official.jpg";
-import vcPortrait from "../../../../../public/images/vc/vc-main-potrait.jpg";
+import vcOfficial from "../../../public/images/vc/vc-official.jpg";
+import vcPortrait from "../../../public/images/vc/vc-main-potrait.jpg";
 
 /**
  * Below this the landscape frame has to be cropped so hard that the

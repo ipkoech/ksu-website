@@ -7,27 +7,42 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./server": "./src/server.ts",
+    "./browser": "./src/browser.ts",
+    "./service-urls": "./src/service-urls.ts",
     "./types/admin": "./src/types/admin.ts",
     "./main": "./src/main/index.ts",
     "./research": "./src/research/index.ts",
     "./library": "./src/library/index.ts",
     "./hooks": "./src/hooks/index.ts",
-    "./hooks/admin": "./src/hooks/admin/index.ts"
+    "./hooks/admin": "./src/hooks/admin/index.ts",
+    "./runtime": {
+      "react-server": "./src/server-runtime.ts",
+      "default": "./src/browser-runtime.ts"
+    },
+    "./media": "./src/media.ts",
+    "./revalidation": "./src/revalidation.ts",
+    "./revalidation-route": "./src/revalidation-route.ts",
+    "./transport": "./src/transport.ts"
   },
   "scripts": {
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run --maxWorkers=1 --minWorkers=1 --testTimeout=10000",
     "generate": "node scripts/generate-openapi.mjs"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.76.0"
+    "@tanstack/react-query": "^5.76.0",
+    "server-only": "0.0.1"
   },
   "peerDependencies": {
-    "react": ">=19.0.0"
+    "react": ">=19.0.0",
+    "next": "^15.5.18"
   },
   "devDependencies": {
     "@types/node": "^22",
     "@types/react": "^19",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "next": "15.5.18"
   }
 }

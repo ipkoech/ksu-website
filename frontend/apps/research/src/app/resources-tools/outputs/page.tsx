@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { permanentRedirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Research Outputs",
+  title: "Outputs",
   description: "Research output records.",
   alternates: { canonical: "/outputs" },
 };

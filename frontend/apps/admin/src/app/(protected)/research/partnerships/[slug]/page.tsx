@@ -7,7 +7,7 @@ import { RelatedRecordsCard, RelatedRecordsGrid } from "../../_components/resear
 export default function ResearchPartnerDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Partner"
+      title="Partner"
       description="View partner profile, collaboration areas, contact details, and public status."
       resource={researchServiceApi.partners}
       backHref="/research/partnerships"

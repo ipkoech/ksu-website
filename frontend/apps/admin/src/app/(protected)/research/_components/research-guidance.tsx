@@ -62,7 +62,7 @@ export const researchFirstLoginTour = [
 ];
 
 const defaultGuidance: ResearchGuidanceConfig = {
-  title: "Research Section Guide",
+  title: "Section Guide",
   description: "Use this section to maintain research records and keep the public portal accurate.",
   steps: [
     "Create the core record with a clear title, summary, and owner.",
@@ -80,7 +80,7 @@ const defaultGuidance: ResearchGuidanceConfig = {
 
 const guidanceByTitle: Record<string, ResearchGuidanceConfig> = {
   "Research Dashboard": {
-    title: "Research Office Workflow",
+    title: "Office Workflow",
     description: "Use the dashboard to decide what needs attention before editing individual records.",
     steps: [
       "Check activity and metrics to understand recent changes.",
@@ -404,7 +404,7 @@ const defaultDetailGuidance: ResearchDetailGuidanceConfig = {
 
 export function getResearchGuidance(title?: string): ResearchGuidanceConfig | undefined {
   if (!title) return defaultGuidance;
-  const direct = guidanceByTitle[title];
+  const direct = guidanceByTitle[title] ?? guidanceByTitle[`Research ${title}`];
   if (direct) return direct;
   const normalized = title.toLowerCase();
   if (normalized.includes("project")) return guidanceByTitle.Projects;
@@ -421,7 +421,7 @@ export function getResearchGuidance(title?: string): ResearchGuidanceConfig | un
 
 export function getResearchDetailGuidance(title?: string): ResearchDetailGuidanceConfig | undefined {
   if (!title) return defaultDetailGuidance;
-  const direct = detailGuidanceByTitle[title];
+  const direct = detailGuidanceByTitle[title] ?? detailGuidanceByTitle[`Research ${title}`];
   if (direct) return direct;
   const normalized = title.toLowerCase();
   if (normalized.includes("project")) return detailGuidanceByTitle["Research Project"];

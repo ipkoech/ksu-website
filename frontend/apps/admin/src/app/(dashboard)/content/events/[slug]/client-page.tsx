@@ -38,6 +38,7 @@ import {
 import { toast } from "@ksu/ui";
 import { useCreateEvent, useEvent, useUpdateEvent } from "@ksu/api-client";
 import type { Event } from "@ksu/api-client";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const eventSchema = z
   .object({
@@ -270,6 +271,7 @@ export default function EventFormPage() {
         }
         toast.success("Event updated successfully");
       }
+      void revalidatePublicContent("main", "events");
       router.push("/content/events");
     } catch {
       toast.error(isNew ? "Failed to create event" : "Failed to update event");

@@ -186,21 +186,21 @@ type CampusHeaderVariant = "compact" | "default" | "feature";
 /** Band heights, 15% shorter than the first cut so the photograph reads as a
  *  banner rather than a splash screen. The image band starts at `md`. */
 const variantHeights: Record<CampusHeaderVariant, string> = {
-  compact: "min-h-[185px] lg:min-h-[212px]",
-  default: "min-h-[272px] lg:min-h-[323px]",
-  feature: "min-h-[374px] lg:min-h-[442px]",
+  compact: "min-h-[148px] lg:min-h-[170px]",
+  default: "min-h-[218px] lg:min-h-[258px]",
+  feature: "min-h-[299px] lg:min-h-[354px]",
 };
 
 const variantTitle: Record<CampusHeaderVariant, string> = {
-  compact: "text-2xl lg:text-[2.35rem]",
-  default: "text-3xl lg:text-[2.9rem]",
-  feature: "text-4xl lg:text-[3.4rem]",
+  compact: "text-2xl lg:text-[1.88rem]",
+  default: "text-3xl lg:text-[2.32rem]",
+  feature: "text-4xl lg:text-[2.72rem]",
 };
 
 const variantPadding: Record<CampusHeaderVariant, string> = {
-  compact: "pb-5 pt-9",
-  default: "pb-8 pt-12",
-  feature: "pb-11 pt-16",
+  compact: "pb-4 pt-7",
+  default: "pb-6 pt-10",
+  feature: "pb-8 pt-13",
 };
 
 export type CampusPageHeaderProps = {

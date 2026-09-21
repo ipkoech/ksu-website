@@ -7,7 +7,7 @@ type ResearchImageProps = Omit<ImageProps, "src"> & {
 
 export function ResearchImage({
   src,
-  fallback = "/images/research/research-home-hero.webp",
+  fallback = "/images/research/verified/multidisciplinary-conference-2026.jpg",
   alt,
   sizes = "(min-width: 1024px) 40vw, 100vw",
   ...props

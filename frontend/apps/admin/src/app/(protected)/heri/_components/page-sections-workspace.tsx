@@ -17,6 +17,7 @@ import {
   useHeriResourceQuery,
   type HeriRecord,
 } from "@/lib/api/heri";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 type Page = HeriRecord & { slug?: string; title?: string; status?: string };
 type Section = HeriRecord & {
@@ -122,6 +123,7 @@ export function PageSectionsWorkspace() {
       await heriRequest(`/admin/page-sections/${section.id}`, {
         method: "DELETE",
       });
+      void revalidatePublicContent("heri", "page-sections");
       await sectionsQuery.refetch();
       toast.success("Page section deleted");
     } catch {

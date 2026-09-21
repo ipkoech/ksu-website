@@ -8,13 +8,14 @@ from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import ValidationError
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession
 from ...models import Intake
 from ...security.scopes import can_access_scope
-from ...schemas import IntakeCreate, IntakeHomepageAdmissionUpdate, IntakeUpdate
+from ...schemas import IntakeCreate, IntakeHomepageAdmissionRead, IntakeHomepageAdmissionUpdate, IntakeUpdate
+from ...schemas.admissions import IntakeSnapshot
 from ...services import IntakeHomepageAdmissionService, IntakeService
 
 router = APIRouter()
@@ -46,7 +47,11 @@ async def _require_intake_scope(
         )
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[IntakeSnapshot]],
+    response_model_exclude_unset=True,
+)
 @cached_public(
     timeout=300,
     vary_on=(
@@ -78,7 +83,11 @@ async def list_intakes(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin")
+@router.get(
+    "/admin",
+    response_model=SuccessResponse[list[IntakeSnapshot]],
+    response_model_exclude_unset=True,
+)
 async def list_admin_intakes(
     db: DbSession,
     user: CurrentUser,
@@ -103,7 +112,11 @@ async def list_admin_intakes(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{slug}")
+@router.get(
+    "/{slug}",
+    response_model=SuccessResponse[IntakeSnapshot],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_intake(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Intake, fields)
@@ -115,7 +128,11 @@ async def get_intake(slug: str, db: DbSession, fields: FieldSelection = FieldsDe
     return success(data=selector.apply(intake))
 
 
-@router.get("/id/{intake_id}")
+@router.get(
+    "/id/{intake_id}",
+    response_model=SuccessResponse[IntakeSnapshot],
+    response_model_exclude_unset=True,
+)
 async def get_intake_by_id(
     intake_id: uuid.UUID,
     db: DbSession,
@@ -131,7 +148,11 @@ async def get_intake_by_id(
     return success(data=selector.apply(intake))
 
 
-@router.get("/id/{intake_id}/homepage-admission")
+@router.get(
+    "/id/{intake_id}/homepage-admission",
+    response_model=SuccessResponse[IntakeHomepageAdmissionRead],
+    response_model_exclude_unset=True,
+)
 async def get_homepage_admission(
     intake_id: uuid.UUID, db: DbSession, user: CurrentUser
 ):
@@ -142,7 +163,11 @@ async def get_homepage_admission(
     return success(data=config)
 
 
-@router.patch("/id/{intake_id}/homepage-admission")
+@router.patch(
+    "/id/{intake_id}/homepage-admission",
+    response_model=SuccessResponse[IntakeHomepageAdmissionRead],
+    response_model_exclude_unset=True,
+)
 async def update_homepage_admission(
     intake_id: uuid.UUID,
     data: IntakeHomepageAdmissionUpdate,
@@ -165,14 +190,23 @@ async def update_homepage_admission(
     return success(data=config, message="Homepage admission configuration updated")
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[IntakeSnapshot],
+    response_model_exclude_unset=True,
+)
 async def create_intake(data: IntakeCreate, db: DbSession, user: CurrentUser):
     await _require_intake_scope(db, user, INTAKE_MANAGE_PERMISSIONS)
     intake = await IntakeService.create(db, **data.model_dump())
     return success(data=intake, message="Intake created")
 
 
-@router.patch("/{intake_id}")
+@router.patch(
+    "/{intake_id}",
+    response_model=SuccessResponse[IntakeSnapshot],
+    response_model_exclude_unset=True,
+)
 async def update_intake(
     intake_id: uuid.UUID, data: IntakeUpdate, db: DbSession, user: CurrentUser
 ):

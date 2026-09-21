@@ -8,17 +8,18 @@ from fastapi import APIRouter, Query, Request
 
 from ksu_common import cached_public, rate_limit
 from ksu_common.field_selection import parse_field_selection
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import DbSession
 from ...models import Announcement, Blog, Department, Event, News, Person, School
 from ...services import SearchService
+from ...schemas.search import SearchResponse
 from ._fields import build_selector
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get("", response_model=SuccessResponse[SearchResponse], response_model_exclude_unset=True)
 @rate_limit(requests=30, window=60, prefix="main:search:ip")
 @cached_public(
     timeout=120,

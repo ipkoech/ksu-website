@@ -7,7 +7,7 @@ import { RelatedRecordsCard, RelatedRecordsGrid } from "../../_components/resear
 export default function ResearchOutputDetailPage() {
   return (
     <ResearchAdminDetailPage
-      title="Research Output"
+      title="Output"
       description="View output metadata, access links, project/center binding, related publications, and audit history."
       resource={researchServiceApi.outputs}
       backHref="/research/outputs"

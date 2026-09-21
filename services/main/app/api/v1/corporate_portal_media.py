@@ -14,10 +14,11 @@ import uuid
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import CurrentUser, DbSession
 from ...security.scopes import can_access_scope
+from ...schemas.upload_batch import PortalUploadBatchRead
 from ...services.media import MediaService
 from ...services.upload_batch import UploadBatchService
 
@@ -48,7 +49,7 @@ async def _require_scope(
     )
 
 
-@router.post("/media/batches", status_code=status.HTTP_201_CREATED)
+@router.post("/media/batches", status_code=status.HTTP_201_CREATED, response_model=SuccessResponse[PortalUploadBatchRead])
 async def create_media_batch(
     db: DbSession,
     user: CurrentUser,
@@ -80,7 +81,7 @@ async def create_media_batch(
     return success(data=batch)
 
 
-@router.get("/media/batches/{batch_id}")
+@router.get("/media/batches/{batch_id}", response_model=SuccessResponse[PortalUploadBatchRead])
 async def get_media_batch(
     batch_id: uuid.UUID,
     db: DbSession,
@@ -96,7 +97,7 @@ async def get_media_batch(
     )
 
 
-@router.post("/media/batches/{batch_id}/files/{file_id}/retry")
+@router.post("/media/batches/{batch_id}/files/{file_id}/retry", response_model=SuccessResponse[PortalUploadBatchRead])
 async def retry_media_file(
     batch_id: uuid.UUID,
     file_id: uuid.UUID,

@@ -47,7 +47,7 @@ class Person(Base):
     full_name: Mapped[str] = mapped_column(sa.String(255), nullable=False)  # Computed/denormalized
 
     # Contact
-    email: Mapped[str] = mapped_column(sa.String(320), unique=True, nullable=False, index=True)
+    email: Mapped[Optional[str]] = mapped_column(sa.String(320), unique=True, nullable=True, index=True)
     external_source: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True, index=True)
     external_source_id: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True, index=True)
     external_updated_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
@@ -186,9 +186,11 @@ class Person(Base):
     @property
     def photo_url(self) -> Optional[str]:
         """Resolved profile photo URL for API clients."""
+        from ..helpers.person_photo import imported_person_photo
+
         if self.photo:
             return self.photo.url
-        return None
+        return imported_person_photo(self.external_avatar_url)
 
     @property
     def slug(self) -> str:

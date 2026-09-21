@@ -107,28 +107,51 @@ test.describe("HERI public browser matrix", () => {
   test("all primary public routes render meaningful headings", async ({
     page,
   }) => {
+    // A cold Next dev server may compile several route trees during this one
+    // navigation matrix; keep the assertion timeout independent of that cost.
+    test.setTimeout(180_000);
+    const browserApiRequests: string[] = [];
+    page.on("request", (request) => {
+      if (request.url().includes("/api/v1/heri/")) browserApiRequests.push(request.url());
+    });
     const routes = [
-      ["/", /Africa-led language research/i],
-      ["/about", /Africa-led research/i],
-      ["/our-work", /Research that moves from evidence to action/i],
+      ["/", /Research that moves from evidence to action/i],
+      ["/about", /Africa-led research for language and learning/i],
+      [
+        "/our-work",
+        /Language education research that moves from evidence to action/i,
+      ],
       ["/team", /African expertise/i],
       ["/partners", /Who we work with/i],
       ["/events", /^Events$/i],
       ["/research/projects", /Research projects/i],
       ["/research/publications", /Publications and resources/i],
       ["/news-insights", /Research, Events & Stories/i],
-      ["/contact", /Connect With the Research Chair/i],
-      ["/partner-with-us", /Partner With Us to/i],
+      ["/contact", null],
+      ["/partner-with-us", /Collaboration That Moves Research Into Action/i],
     ] as const;
     for (const [route, heading] of routes) {
       await page.goto(heriRoute(route));
-      await expect(
-        page.getByRole("heading", { name: heading }).first(),
-      ).toBeVisible();
+      if (route === "/contact") {
+        await expect(page).toHaveURL(/\/heri-africa\/partner-with-us#partnership-enquiry$/);
+        await expect(page.locator("#partnership-enquiry")).toBeVisible();
+      } else {
+        await expect(
+          page.getByRole("heading", { name: heading }).first(),
+        ).toBeVisible();
+      }
     }
+    expect(
+      browserApiRequests,
+      "initial HERI data for public routes must be fetched by Server Components",
+    ).toEqual([]);
   });
 
   test("news detail route renders the selected story", async ({ page }) => {
+    const browserApiRequests: string[] = [];
+    page.on("request", (request) => {
+      if (request.url().includes("/api/v1/heri/")) browserApiRequests.push(request.url());
+    });
     await page.route("**/api/v1/heri/news/reading-in-kisii", (route) =>
       route.fulfill({ json: { ...news[0], body: "Full story content." } }),
     );
@@ -136,6 +159,7 @@ test.describe("HERI public browser matrix", () => {
     await expect(
       page.getByRole("heading", { name: news[0].title }),
     ).toBeVisible();
+    expect(browserApiRequests).toEqual([]);
   });
 
   test("contact form validates required consent and submits successfully", async ({
@@ -185,38 +209,36 @@ test.describe("HERI public browser matrix", () => {
 
   test("partnership enquiry submits the backend contract", async ({ page }) => {
     let payload: Record<string, unknown> | undefined;
-    await page.route(
-      "**/api/v1/heri/partnership-applications",
-      async (route) => {
-        payload = route.request().postDataJSON() as Record<string, unknown>;
-        await route.fulfill({
-          status: 202,
-          json: {
-            status: "received",
-            message: "Partnership enquiry received.",
-          },
-        });
-      },
-    );
+    await page.route("**/api/v1/heri/contact", async (route) => {
+      payload = route.request().postDataJSON() as Record<string, unknown>;
+      await route.fulfill({
+        status: 202,
+        json: {
+          status: "received",
+          message: "Thank you for contacting HERI Africa.",
+        },
+      });
+    });
     await page.goto("./partner-with-us");
     await page.getByLabel(/Full name/).fill("Amina Otieno");
     await page.getByLabel(/Email address/).fill("amina@example.org");
     await page.getByLabel(/Organisation/).fill("Kisii Literacy Network");
-    await page.getByLabel(/Country/).fill("Kenya");
     await page
-      .getByLabel(/Partnership interest/)
-      .selectOption({ label: "Research collaboration" });
+      .getByLabel(/Enquiry category/)
+      .selectOption({ label: "Partnership enquiry" });
     await page
-      .getByLabel(/Proposed collaboration/)
+      .getByLabel(/Message/)
       .fill("Co-design an early grade literacy study.");
-    await page.getByLabel(/I confirm this information/).check();
+    await page.getByLabel(/I consent/).check();
     await page
-      .getByRole("button", { name: /submit partnership enquiry/i })
+      .getByRole("button", { name: /send enquiry/i })
       .click();
-    await expect(page.getByText("Partnership enquiry received.")).toBeVisible();
+    await expect(
+      page.getByText("Thank you for contacting HERI Africa."),
+    ).toBeVisible();
     expect(payload).toMatchObject({
       organisation: "Kisii Literacy Network",
-      partnership_interest: "Research collaboration",
+      subject: "Partnership enquiry",
       consent: true,
     });
   });

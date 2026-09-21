@@ -56,6 +56,7 @@ async def _generate_export(job_id: str, resource_key: str, options: dict[str, An
         media_type = "text/csv"
 
     return {
+        "actor_id": str(options.get("actor_id")) if options.get("actor_id") else None,
         "resource": config.key,
         "filename": filename,
         "file_path": str(file_path),

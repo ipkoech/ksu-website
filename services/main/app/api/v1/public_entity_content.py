@@ -8,16 +8,21 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from ksu_common import apply_field_selection, cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import DbSession
 from ...services import PublicEntityContentService
 from ._fields import FieldSelection, FieldsDep
+from ...schemas.public_api import PublicEntityContentPayload
 
 router = APIRouter()
 
 
-@router.get("/{entity_type}/{entity_id}")
+@router.get(
+    "/{entity_type}/{entity_id}",
+    response_model=SuccessResponse[PublicEntityContentPayload],
+    response_model_exclude_unset=True,
+)
 @cached_public(
     timeout=300,
     vary_on=("entity_type", "entity_id", "content_type", "page", "per_page", "search", "fields", "include"),

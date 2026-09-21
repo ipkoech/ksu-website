@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -8,6 +8,7 @@ import { ChevronDown, ExternalLink, Home, Menu } from "lucide-react";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -152,6 +153,9 @@ export function EntityHeader({
                       <span className="block truncate text-base">{title}</span>
                     </span>
                   </SheetTitle>
+                  <SheetDescription className="sr-only">
+                    Navigate the {title} section.
+                  </SheetDescription>
                 </SheetHeader>
                 <div className="border-b px-4 py-3">
                   <Link
@@ -208,14 +212,14 @@ function EntityHeaderLink({
     null,
   );
 
-  const clearCloseTimeout = () => {
+  const clearCloseTimeout = useCallback(() => {
     if (closeTimeoutRef.current) {
       clearTimeout(closeTimeoutRef.current);
       closeTimeoutRef.current = null;
     }
-  };
+  }, []);
 
-  const getDropdownFrame = (): DropdownFrame | null => {
+  const getDropdownFrame = useCallback((): DropdownFrame | null => {
     if (!triggerRef.current || typeof window === "undefined") return null;
 
     const rect = triggerRef.current.getBoundingClientRect();
@@ -236,14 +240,14 @@ function EntityHeaderLink({
       top: (headerRect?.height ?? rect.bottom) + 1,
       width,
     };
-  };
+  }, [item.children?.length]);
 
-  const updateDropdownFrame = () => {
+  const updateDropdownFrame = useCallback(() => {
     const nextFrame = getDropdownFrame();
     if (nextFrame) {
       setDropdownFrame(nextFrame);
     }
-  };
+  }, [getDropdownFrame]);
 
   const openDropdown = () => {
     clearCloseTimeout();
@@ -264,7 +268,7 @@ function EntityHeaderLink({
     }, 280);
   };
 
-  useEffect(() => clearCloseTimeout, []);
+  useEffect(() => clearCloseTimeout, [clearCloseTimeout]);
 
   useEffect(() => {
     if (!open || !hasDropdown) {
@@ -282,7 +286,7 @@ function EntityHeaderLink({
       window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("scroll", handleViewportChange, true);
     };
-  }, [hasDropdown, item.children?.length, open]);
+  }, [hasDropdown, item.children?.length, open, updateDropdownFrame]);
 
   if (hasDropdown) {
     return (

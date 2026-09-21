@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { ResearchGenericRecord, ResearchPublication } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord, ResearchPublication } from "@ksu/api-client/server";
 import {
   ResearchDetailHero,
   ResearchDetailSidebar,
@@ -11,7 +10,6 @@ import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import {
   compactText,
   formatDate,
-  generateSlugParams,
   getPublicationBySlug,
 } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
@@ -19,15 +17,12 @@ import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../..
 import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getPublicationBySlug(slug);
   return researchRecordMetadata(data, { fallbackTitle: "Publication", pathname: "/publications/" + slug });
-}
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.publications.list);
 }
 
 export default async function PublicationDetailPage({
@@ -44,7 +39,7 @@ export default async function PublicationDetailPage({
   const center = publication.center as ResearchGenericRecord | undefined;
   const storySections = getNarrativeSections(publication, [
     { title: "What this publication covers", fields: ["abstract", "summary", "description"] },
-    { title: "Research support", fields: ["funding_acknowledgment", "funding_acknowledgement"] },
+    { title: "Support", fields: ["funding_acknowledgment", "funding_acknowledgement"] },
     { title: "Where it appeared", fields: ["journal_name", "publisher", "conference_name", "book_title"] },
     { title: "How to access it", fields: ["access_type", "url", "pdf_url", "doi"] },
   ]);
@@ -82,7 +77,7 @@ export default async function PublicationDetailPage({
           { label: "Back to publications", href: "/publications", variant: "secondary" },
           ...accessLinks.slice(0, 2).map(([label, href]) => ({ label, href })),
         ]}
-        imageSrc="/images/research/research-home-hero.svg"
+        imageSrc="/images/research/verified/multidisciplinary-conference-2026.jpg"
         imageAlt="Publication record and research evidence"
       />
 

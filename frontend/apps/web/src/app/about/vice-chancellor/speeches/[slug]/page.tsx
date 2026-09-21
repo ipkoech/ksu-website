@@ -4,6 +4,8 @@ import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { VcVideoPlayer } from "@/components/vice-chancellor/vc-video-player";
 import { getPublicVcSpeech } from "@/lib/vice-chancellor-data";
 
+export const revalidate = 300;
+
 export default async function ViceChancellorSpeechPage({
   params,
 }: {

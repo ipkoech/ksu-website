@@ -1,3 +1,6 @@
+import "server-only";
+import { cache } from "react";
+import { uncachedPublicFallback } from "./public-fetch";
 import {
   clubsApi,
   departmentsApi,
@@ -5,8 +8,8 @@ import {
   navigationApi,
   schoolsApi,
   wingsApi,
-} from "@ksu/api-client";
-import type { NavigationData } from "@ksu/api-client";
+} from "@ksu/api-client/server";
+import type { NavigationData } from "@ksu/api-client/server";
 import type {
   MegaMenuData,
   NavAdminUnit,
@@ -14,32 +17,40 @@ import type {
   NavDepartment,
   NavSchool,
 } from "@ksu/ui/layout/public";
+import { normalizePublicListResponse, normalizePublicRecordResponse } from "./web-response-shapes";
 
-export async function getNavData(): Promise<MegaMenuData> {
+export const getNavData = cache(async (): Promise<MegaMenuData> => {
   try {
     const response = await navigationApi.get();
-    if (!response?.data) {
+    const normalized = normalizePublicRecordResponse<NavigationData>(response);
+    if (normalized === undefined || normalized === null) {
       throw new Error("Empty navigation payload");
     }
-    return mapNavigationData(response.data);
+    return mapNavigationData(normalized);
   } catch (error) {
+    uncachedPublicFallback(null);
     console.warn(
       "Aggregated navigation endpoint unavailable; composing the menu from individual endpoints.",
       error instanceof Error ? error.message : String(error),
     );
     return getNavDataFallback();
   }
-}
+});
 
 function mapNavigationData(data: NavigationData): MegaMenuData {
-  const schools: NavSchool[] = (data.schools ?? []).map((school) => ({
+  const schoolsData = nestedList<NavigationData["schools"][number]>(data.schools, "schools");
+  const divisionsData = nestedList<NavigationData["divisions"][number]>(data.divisions, "divisions");
+  const wingsData = nestedList<NavigationData["wings"][number]>(data.wings, "wings");
+  const departmentsData = nestedList<NavigationData["departments"][number]>(data.departments, "departments");
+  const clubsData = nestedList<NavigationData["clubs"][number]>(data.clubs, "clubs");
+  const schools: NavSchool[] = schoolsData.map((school) => ({
     id: school.id,
     name: school.name,
     slug: school.slug,
   }));
 
   const divisions: NavAdminUnit[] = uniqueNavUnits(
-    (data.divisions ?? [])
+    divisionsData
       .filter((division) => division.division_type === "division")
       .map((division) => ({
         id: division.id,
@@ -49,7 +60,7 @@ function mapNavigationData(data: NavigationData): MegaMenuData {
   );
 
   const wings: NavAdminUnit[] = uniqueNavUnits(
-    (data.wings ?? []).map((wing) => ({
+    wingsData.map((wing) => ({
       id: wing.id,
       name: wing.name,
       slug: wing.slug,
@@ -58,7 +69,7 @@ function mapNavigationData(data: NavigationData): MegaMenuData {
   );
 
   const adminUnits: NavAdminUnit[] = uniqueNavUnits(
-    (data.departments ?? []).map((department) => ({
+    departmentsData.map((department) => ({
       id: department.id,
       name: department.name,
       slug: department.slug,
@@ -67,7 +78,7 @@ function mapNavigationData(data: NavigationData): MegaMenuData {
   );
 
   const departments: NavDepartment[] = uniqueNavUnits(
-    (data.departments ?? []).map((department) => ({
+    departmentsData.map((department) => ({
       id: department.id,
       name: department.name,
       slug: department.slug,
@@ -77,7 +88,7 @@ function mapNavigationData(data: NavigationData): MegaMenuData {
     })),
   );
 
-  const clubs: NavClub[] = (data.clubs ?? []).map((club) => ({
+  const clubs: NavClub[] = clubsData.map((club) => ({
     id: club.id,
     name: club.name,
     slug: club.slug,
@@ -91,6 +102,18 @@ function mapNavigationData(data: NavigationData): MegaMenuData {
     adminUnits,
     clubs,
   };
+}
+
+function nestedList<T>(value: unknown, label: string): T[] {
+  const normalized = normalizePublicListResponse<T>({ data: value });
+  if (!normalized) throw new Error(`Invalid navigation ${label} response`);
+  return normalized.data;
+}
+
+function settledList<T>(result: PromiseSettledResult<unknown>): T[] {
+  if (result.status !== "fulfilled") return [];
+  const normalized = normalizePublicListResponse<T>(result.value);
+  return normalized ? normalized.data : uncachedPublicFallback([]);
 }
 
 async function getNavDataFallback(): Promise<MegaMenuData> {
@@ -141,26 +164,22 @@ async function getNavDataFallback(): Promise<MegaMenuData> {
   }
 
   const schools: NavSchool[] =
-    schoolsResult.status === "fulfilled"
-      ? (schoolsResult.value.data ?? []).map((school) => ({
+    settledList<NavigationData["schools"][number]>(schoolsResult).map((school) => ({
           id: school.id,
           name: school.name,
           slug: school.slug,
-        }))
-      : [];
+        }));
 
   const divisions: NavAdminUnit[] =
-    divisionsResult.status === "fulfilled"
-      ? uniqueNavUnits(
-          (divisionsResult.value.data ?? [])
+    uniqueNavUnits(
+          settledList<NavigationData["divisions"][number]>(divisionsResult)
             .filter((division) => division.division_type === "division")
             .map((division) => ({
               id: division.id,
               name: division.name,
               slug: division.slug,
             })),
-        )
-      : [];
+        );
 
   const wingsResult = await Promise.allSettled(
     divisions.map((division) =>
@@ -183,51 +202,46 @@ async function getNavDataFallback(): Promise<MegaMenuData> {
 
   const wings: NavAdminUnit[] = uniqueNavUnits(
     wingsResult.flatMap((result) =>
-      result.status === "fulfilled"
-        ? (result.value.data ?? []).map((wing) => ({
+      settledList<NavigationData["wings"][number]>(result).map((wing) => ({
             id: wing.id,
             name: wing.name,
             slug: wing.slug,
-            code: wing.code,
-          }))
-        : [],
+        code: wing.code ?? undefined,
+          })),
     ),
   );
 
-  const adminUnits: NavAdminUnit[] =
-    adminDepartmentsResult.status === "fulfilled"
-      ? uniqueNavUnits(
-          (adminDepartmentsResult.value.data ?? []).map((department) => ({
-            id: department.id,
-            name: department.name,
-            slug: department.slug,
-            code: department.code,
-          })),
-        )
-      : [];
+  const adminUnits: NavAdminUnit[] = uniqueNavUnits(
+    settledList<NavigationData["departments"][number]>(adminDepartmentsResult).map(
+      (department) => ({
+        id: department.id,
+        name: department.name,
+        slug: department.slug,
+        code: department.code ?? undefined,
+      }),
+    ),
+  );
 
-  const departments: NavDepartment[] =
-    adminDepartmentsResult.status === "fulfilled"
-      ? uniqueNavUnits(
-          (adminDepartmentsResult.value.data ?? []).map((department) => ({
-            id: department.id,
-            name: department.name,
-            slug: department.slug,
-            code: department.code,
-            school_id: department.school_id ?? undefined,
-            department_type: department.department_type ?? undefined,
-          })),
-        )
-      : [];
+  const departments: NavDepartment[] = uniqueNavUnits(
+    settledList<NavigationData["departments"][number]>(adminDepartmentsResult).map(
+      (department) => ({
+        id: department.id,
+        name: department.name,
+        slug: department.slug,
+        code: department.code ?? undefined,
+        school_id: department.school_id ?? undefined,
+        department_type: department.department_type ?? undefined,
+      }),
+    ),
+  );
 
-  const clubs: NavClub[] =
-    clubsResult.status === "fulfilled"
-      ? (clubsResult.value.data ?? []).map((club) => ({
-          id: club.id,
-          name: club.name,
-          slug: club.slug,
-        }))
-      : [];
+  const clubs: NavClub[] = settledList<NavigationData["clubs"][number]>(clubsResult).map(
+    (club) => ({
+      id: club.id,
+      name: club.name,
+      slug: club.slug,
+    }),
+  );
 
   return {
     schools,

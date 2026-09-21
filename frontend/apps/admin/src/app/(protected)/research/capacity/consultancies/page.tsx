@@ -17,7 +17,7 @@ const consultancyColumns: Array<EditableRecordColumn<ResearchGenericRecord>> = [
 export default function ResearchConsultanciesPage() {
   return (
     <ResearchResourcePage
-      title="Research Consultancies"
+      title="Consultancies"
       description="Manage advisory, policy, evaluation, training, and technical consultancy engagements."
       queryKey={["research", "consultancies", "capacity"]}
       resource={researchServiceApi.consultancies}

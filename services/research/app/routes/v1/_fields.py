@@ -11,8 +11,19 @@ def ResearchFieldsQuery(fields: str | None = None, include: str | None = None) -
     return FieldsQuery(always_include={"id"})(fields=fields, include=include)
 
 
+class ResearchFieldSelector(FieldSelector):
+    def apply(self, data):
+        def public_contract(value):
+            if isinstance(value, dict):
+                return {key: public_contract(item) for key, item in value.items() if key != "editorial_state"}
+            if isinstance(value, list):
+                return [public_contract(item) for item in value]
+            return value
+        return public_contract(super().apply(data))
+
+
 def build_selector(model_class: Type, fields: FieldSelection) -> FieldSelector:
-    return FieldSelector(model_class, fields, always_include={"id"})
+    return ResearchFieldSelector(model_class, fields, always_include={"id"})
 
 
 def serialize_full_record(model_class: Type, data):

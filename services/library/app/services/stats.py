@@ -23,6 +23,7 @@ from ..models import (
     SupportTicket,
 )
 from ..schemas.stats import PublicStatItem, PublicStatsResponse
+from .report_scope import report_scope
 
 
 async def _sum(db: AsyncSession, column, *conditions) -> int:
@@ -53,16 +54,19 @@ def _item(
     )
 
 
-async def _latest_snapshot(db: AsyncSession) -> LibraryStatistics | None:
+async def _latest_snapshot(db: AsyncSession, *conditions) -> LibraryStatistics | None:
     return await db.scalar(
         select(LibraryStatistics)
-        .where(LibraryStatistics.deleted_at.is_(None))
+        .where(LibraryStatistics.deleted_at.is_(None), *conditions)
         .order_by(desc(LibraryStatistics.period_start), desc(LibraryStatistics.created_at))
         .limit(1)
     )
 
 
 async def public_library_stats(db: AsyncSession) -> PublicStatsResponse:
+    public_branches = select(Library.id).where(
+        Library.deleted_at.is_(None), Library.is_active.is_(True), Library.is_public.is_(True),
+    )
     guides_and_files = sum(
         [
             await _count(
@@ -104,6 +108,7 @@ async def public_library_stats(db: AsyncSession) -> PublicStatsResponse:
                 LibraryResource,
                 LibraryResource.is_active.is_(True),
                 LibraryResource.status != "withdrawn",
+                LibraryResource.library_id.in_(public_branches),
             ),
             "Active library-facing catalogue resources",
             "/library/resources",
@@ -116,6 +121,7 @@ async def public_library_stats(db: AsyncSession) -> PublicStatsResponse:
                 LibraryResource.available_copies,
                 LibraryResource.is_active.is_(True),
                 LibraryResource.status != "withdrawn",
+                LibraryResource.library_id.in_(public_branches),
             ),
             "Physical copies currently marked available",
             "/library/resources",
@@ -152,7 +158,7 @@ async def public_library_stats(db: AsyncSession) -> PublicStatsResponse:
         ),
     ]
 
-    snapshot = await _latest_snapshot(db)
+    snapshot = await _latest_snapshot(db, LibraryStatistics.library_id.in_(public_branches))
     if snapshot is not None:
         snapshot_fields = [
             ("snapshot_books", "Books", snapshot.total_books, "Books in the latest library snapshot"),
@@ -175,37 +181,43 @@ async def public_library_stats(db: AsyncSession) -> PublicStatsResponse:
     )
 
 
-async def admin_library_stats(db: AsyncSession) -> PublicStatsResponse:
+async def admin_library_stats(db: AsyncSession, *, scope_ids: set[str] | None) -> PublicStatsResponse:
     """Operational library stats for admin dashboards."""
 
-    latest_snapshot = await _latest_snapshot(db)
+    async def scoped_count(db, model, *conditions):
+        return await _count(db, model, report_scope(model, scope_ids), *conditions)
+
+    async def scoped_sum(db, column, *conditions):
+        return await _sum(db, column, report_scope(LibraryResource, scope_ids), *conditions)
+
+    latest_snapshot = await _latest_snapshot(db, report_scope(LibraryStatistics, scope_ids))
     snapshot_books = int(latest_snapshot.total_books or 0) if latest_snapshot else 0
     snapshot_visits = int(latest_snapshot.total_visits or 0) if latest_snapshot else 0
 
     stats = [
-        _item("branches", "Branches", await _count(db, Library), "Library branch records", "/library/branches"),
-        _item("active_branches", "Active Branches", await _count(db, Library, Library.is_active.is_(True)), "Active library branch records", "/library/branches"),
-        _item("catalogue_resources", "Catalogue Resources", await _count(db, LibraryResource), "Catalogue resource records", "/library/resources"),
-        _item("available_resources", "Available Resources", await _count(db, LibraryResource, LibraryResource.status == "available"), "Catalogue resources marked available", "/library/resources"),
-        _item("total_copies", "Total Copies", await _sum(db, LibraryResource.total_copies, LibraryResource.is_active.is_(True)), "Total catalogue copies", "/library/resources"),
-        _item("available_copies", "Available Copies", await _sum(db, LibraryResource.available_copies, LibraryResource.is_active.is_(True)), "Available catalogue copies", "/library/resources"),
-        _item("electronic_resources", "Electronic Resources", await _count(db, ElectronicResource), "Electronic resource records", "/library/electronic"),
-        _item("active_electronic_resources", "Active E-resources", await _count(db, ElectronicResource, ElectronicResource.is_active.is_(True)), "Active electronic resources", "/library/electronic"),
-        _item("guides", "Guides", await _count(db, ElectronicResourceGuide), "Electronic resource guide records", "/library/guides"),
-        _item("services", "Services", await _count(db, LibraryService), "Library service records", "/library/services"),
-        _item("staff", "Staff", await _count(db, LibraryStaff), "Library staff records", "/library/staff"),
-        _item("public_files", "Public Files", await _count(db, LibraryFile, LibraryFile.is_public.is_(True)), "Public library file records", "/library/files"),
-        _item("regulations", "Regulations", await _count(db, LibraryRegulation), "Library regulation records", "/library/regulations"),
-        _item("active_regulations", "Active Regulations", await _count(db, LibraryRegulation, LibraryRegulation.status == "active"), "Active regulation records", "/library/regulations"),
-        _item("loans", "Loans", await _count(db, LibraryLoan), "Loan records", "/library/circulation"),
-        _item("active_loans", "Active Loans", await _count(db, LibraryLoan, LibraryLoan.status.in_(("active", "overdue"))), "Active and overdue loans", "/library/circulation"),
-        _item("reservations", "Reservations", await _count(db, LibraryResourceReservation), "Reservation records", "/library/circulation"),
-        _item("active_reservations", "Active Reservations", await _count(db, LibraryResourceReservation, LibraryResourceReservation.status.in_(("pending", "ready"))), "Pending and ready reservations", "/library/circulation"),
-        _item("inquiries", "Inquiries", await _count(db, LibraryInquiry), "Ask-a-librarian inquiries", "/library/inquiries"),
-        _item("open_inquiries", "Open Inquiries", await _count(db, LibraryInquiry, LibraryInquiry.status.in_(("open", "pending"))), "Inquiries awaiting response", "/library/inquiries"),
-        _item("tickets", "Support Tickets", await _count(db, SupportTicket), "Library support tickets", "/library/tickets"),
-        _item("open_tickets", "Open Tickets", await _count(db, SupportTicket, SupportTicket.status.in_(("open", "in_progress"))), "Library tickets still open", "/library/tickets"),
-        _item("saved_publications", "Saved Publications", await _count(db, SavedPublication), "Saved publication records", "/library/publications"),
+        _item("branches", "Branches", await scoped_count(db, Library), "Library branch records", "/library/branches"),
+        _item("active_branches", "Active Branches", await scoped_count(db, Library, Library.is_active.is_(True)), "Active library branch records", "/library/branches"),
+        _item("catalogue_resources", "Catalogue Resources", await scoped_count(db, LibraryResource), "Catalogue resource records", "/library/resources"),
+        _item("available_resources", "Available Resources", await scoped_count(db, LibraryResource, LibraryResource.status == "available"), "Catalogue resources marked available", "/library/resources"),
+        _item("total_copies", "Total Copies", await scoped_sum(db, LibraryResource.total_copies, LibraryResource.is_active.is_(True)), "Total catalogue copies", "/library/resources"),
+        _item("available_copies", "Available Copies", await scoped_sum(db, LibraryResource.available_copies, LibraryResource.is_active.is_(True)), "Available catalogue copies", "/library/resources"),
+        _item("electronic_resources", "Electronic Resources", await scoped_count(db, ElectronicResource), "Electronic resource records", "/library/electronic"),
+        _item("active_electronic_resources", "Active E-resources", await scoped_count(db, ElectronicResource, ElectronicResource.is_active.is_(True)), "Active electronic resources", "/library/electronic"),
+        _item("guides", "Guides", await scoped_count(db, ElectronicResourceGuide), "Electronic resource guide records", "/library/guides"),
+        _item("services", "Services", await scoped_count(db, LibraryService), "Library service records", "/library/services"),
+        _item("staff", "Staff", await scoped_count(db, LibraryStaff), "Library staff records", "/library/staff"),
+        _item("public_files", "Public Files", await scoped_count(db, LibraryFile, LibraryFile.is_public.is_(True)), "Public library file records", "/library/files"),
+        _item("regulations", "Regulations", await scoped_count(db, LibraryRegulation), "Library regulation records", "/library/regulations"),
+        _item("active_regulations", "Active Regulations", await scoped_count(db, LibraryRegulation, LibraryRegulation.status == "active"), "Active regulation records", "/library/regulations"),
+        _item("loans", "Loans", await scoped_count(db, LibraryLoan), "Loan records", "/library/circulation"),
+        _item("active_loans", "Active Loans", await scoped_count(db, LibraryLoan, LibraryLoan.status.in_(("active", "overdue"))), "Active and overdue loans", "/library/circulation"),
+        _item("reservations", "Reservations", await scoped_count(db, LibraryResourceReservation), "Reservation records", "/library/circulation"),
+        _item("active_reservations", "Active Reservations", await scoped_count(db, LibraryResourceReservation, LibraryResourceReservation.status.in_(("pending", "ready"))), "Pending and ready reservations", "/library/circulation"),
+        _item("inquiries", "Inquiries", await scoped_count(db, LibraryInquiry), "Ask-a-librarian inquiries", "/library/inquiries"),
+        _item("open_inquiries", "Open Inquiries", await scoped_count(db, LibraryInquiry, LibraryInquiry.status.in_(("open", "pending"))), "Inquiries awaiting response", "/library/inquiries"),
+        _item("tickets", "Support Tickets", await scoped_count(db, SupportTicket), "Library support tickets", "/library/tickets"),
+        _item("open_tickets", "Open Tickets", await scoped_count(db, SupportTicket, SupportTicket.status.in_(("open", "in_progress"))), "Library tickets still open", "/library/tickets"),
+        _item("saved_publications", "Saved Publications", await scoped_count(db, SavedPublication), "Saved publication records", "/library/publications"),
         _item("snapshot_books", "Snapshot Books", snapshot_books, "Books in the latest statistics snapshot", "/library/statistics"),
         _item("snapshot_visits", "Snapshot Visits", snapshot_visits, "Visits in the latest statistics snapshot", "/library/statistics"),
     ]

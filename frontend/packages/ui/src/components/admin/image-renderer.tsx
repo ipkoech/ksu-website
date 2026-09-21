@@ -1,5 +1,5 @@
 import { ImageIcon } from "lucide-react";
-import type * as React from "react";
+import * as React from "react";
 import { cn } from "../../lib";
 
 export type RenderableImage =
@@ -23,6 +23,7 @@ export interface ImageRendererProps {
   alt?: string;
   caption?: string | null;
   aspectRatio?: number;
+  loading?: "lazy" | "eager";
   className?: string;
   imageClassName?: string;
   emptyFallback?: React.ReactNode;
@@ -47,6 +48,7 @@ export function ImageRenderer({
   alt,
   caption,
   aspectRatio,
+  loading = "lazy",
   className,
   imageClassName,
   emptyFallback,
@@ -54,6 +56,19 @@ export function ImageRenderer({
   const resolvedSrc = imageSource(image, src);
   const resolvedAlt = imageAlt(image, alt);
   const resolvedCaption = caption ?? (typeof image === "object" && image ? image.caption : null);
+  const intrinsicWidth =
+    typeof image === "object" && image && image.width && image.width > 0
+      ? image.width
+      : undefined;
+  const intrinsicHeight =
+    typeof image === "object" && image && image.height && image.height > 0
+      ? image.height
+      : undefined;
+  const resolvedAspectRatio =
+    aspectRatio ??
+    (intrinsicWidth && intrinsicHeight
+      ? intrinsicWidth / intrinsicHeight
+      : undefined);
 
   if (!resolvedSrc) {
     return emptyFallback ? (
@@ -72,8 +87,11 @@ export function ImageRenderer({
         src={resolvedSrc}
         alt={resolvedAlt}
         className={cn("w-full object-cover", imageClassName)}
-        style={aspectRatio ? { aspectRatio } : undefined}
-        loading="lazy"
+        width={intrinsicWidth}
+        height={intrinsicHeight}
+        style={resolvedAspectRatio ? { aspectRatio: resolvedAspectRatio } : undefined}
+        loading={loading}
+        decoding="async"
       />
       {resolvedCaption ? (
         <figcaption className="border-t bg-muted/40 px-3 py-2 text-sm text-muted-foreground">

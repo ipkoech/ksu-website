@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AskLibraryClient } from "./ask-library-client";
@@ -72,6 +72,27 @@ describe("AskLibraryClient", () => {
 
     expect(await screen.findByText("A verification code is on its way.")).toBeVisible();
     expect(screen.getByLabelText("Verification code")).toBeVisible();
-    expect(mocks.requestVerification).toHaveBeenCalledWith("reader@example.com");
+    expect(mocks.requestVerification).toHaveBeenCalledWith(
+      "reader@example.com",
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
+  it("aborts an in-flight answer when the assistant unmounts", async () => {
+    let requestSignal: AbortSignal | undefined;
+    mocks.answer.mockImplementationOnce((_data, options) => {
+      requestSignal = options?.signal;
+      return new Promise(() => {});
+    });
+    const view = render(<AskLibraryClient contexts={[]} />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByRole("textbox", { name: "Your question" }), "Where are the opening hours?");
+    await user.click(screen.getByRole("button", { name: "Ask the Library" }));
+    await waitFor(() => expect(requestSignal).toBeDefined());
+
+    view.unmount();
+
+    expect(requestSignal?.aborted).toBe(true);
   });
 });

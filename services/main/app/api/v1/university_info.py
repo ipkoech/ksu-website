@@ -7,18 +7,18 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import UniversityInfo
-from ...schemas import UniversityInfoCreate, UniversityInfoUpdate
+from ...schemas import UniversityInfoCreate, UniversityInfoSnapshot, UniversityInfoUpdate
 from ...services import UniversityInfoService
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[UniversityInfoSnapshot])
 @cached_public(timeout=600, vary_on=("fields", "include"))
 async def get_university_info(db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(UniversityInfo, fields)
@@ -28,7 +28,7 @@ async def get_university_info(db: DbSession, fields: FieldSelection = FieldsDep)
     return success(data=selector.apply(item))
 
 
-@router.get("/{slug}")
+@router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[UniversityInfoSnapshot])
 @cached_public(timeout=600, vary_on=("slug", "fields", "include"))
 async def get_university_info_by_slug(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(UniversityInfo, fields)
@@ -38,7 +38,7 @@ async def get_university_info_by_slug(slug: str, db: DbSession, fields: FieldSel
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("about.manage"))])
+@router.post("", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[UniversityInfoSnapshot], dependencies=[Depends(require_scope("about.manage"))])
 async def create_university_info(data: UniversityInfoCreate, db: DbSession, _: CurrentUser):
     try:
         item = await UniversityInfoService.create(db, **data.model_dump())
@@ -47,7 +47,7 @@ async def create_university_info(data: UniversityInfoCreate, db: DbSession, _: C
     return success(data=item, message="University info created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("about.manage"))])
+@router.patch("/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[UniversityInfoSnapshot], dependencies=[Depends(require_scope("about.manage"))])
 async def update_university_info(item_id: uuid.UUID, data: UniversityInfoUpdate, db: DbSession, _: CurrentUser):
     item = await UniversityInfoService.get_by_id(db, item_id)
     if item is None:

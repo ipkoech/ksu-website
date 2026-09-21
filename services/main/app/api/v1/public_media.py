@@ -10,13 +10,14 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import selectinload
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ...deps import DbSession
 from ...models import Media, MediaFolder, MediaLink
 from ...services import MediaService
 from ...services._base import ilike_any, paginate_query
 from ...core.config import public_media_rate_limit
+from ...schemas.media import MediaLinkSnapshot, MediaSnapshot
 
 router = APIRouter()
 
@@ -80,7 +81,11 @@ def public_media_link_payload(link: MediaLink) -> dict[str, object | None]:
     }
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[MediaSnapshot]],
+    response_model_exclude_unset=True,
+)
 @public_media_rate_limit
 @cached_public(
     timeout=300,
@@ -128,7 +133,11 @@ async def list_public_media(
     )
 
 
-@router.get("/links")
+@router.get(
+    "/links",
+    response_model=SuccessResponse[list[MediaLinkSnapshot]],
+    response_model_exclude_unset=True,
+)
 @public_media_rate_limit
 @cached_public(timeout=300, vary_on=("entity_type", "entity_id", "role", "per_page"))
 async def list_public_media_links(
@@ -163,7 +172,11 @@ async def list_public_media_links(
     return success(data=[public_media_link_payload(link) for link in links])
 
 
-@router.get("/{media_id}")
+@router.get(
+    "/{media_id}",
+    response_model=SuccessResponse[MediaSnapshot],
+    response_model_exclude_unset=True,
+)
 @public_media_rate_limit
 @cached_public(timeout=300, vary_on=("media_id",))
 async def get_public_media(request: Request, media_id: uuid.UUID, db: DbSession):

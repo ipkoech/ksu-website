@@ -162,6 +162,11 @@ def decode_token(
         options={"require": ["exp", "iat", "nbf", "jti", "sub"]},
     )
 
+    for claim in ("sub", "jti"):
+        value = payload.get(claim)
+        if not isinstance(value, str) or not value.strip():
+            raise jwt.InvalidTokenError(f"token {claim} must be a nonempty string")
+
     if expected_type is not None and payload.get("type") != expected_type:
         raise jwt.InvalidTokenError(
             f"expected {expected_type!r} token, got {payload.get('type')!r}"

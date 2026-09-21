@@ -7,11 +7,12 @@ import uuid
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._scoped import require_scoped_record
 from ...deps import CurrentUser, DbSession, user_has_scope
 from ...models import ContentWorkflowLog, Media
+from ...schemas.content_workflow import ContentWorkflowRecordSnapshot
 from .announcements import ANNOUNCEMENT_MANAGE_PERMISSIONS
 from .content_workflow import CONTENT_MODELS
 from .events import EVENT_MANAGE_PERMISSIONS
@@ -66,7 +67,7 @@ async def _authorize_recovery(db: DbSession, user: CurrentUser, content_type: st
         )
 
 
-@router.post("/{content_type}/{record_id}/restore")
+@router.post("/{content_type}/{record_id}/restore", response_model_exclude_unset=True, response_model=SuccessResponse[ContentWorkflowRecordSnapshot])
 async def restore_record(content_type: str, record_id: uuid.UUID, db: DbSession, user: CurrentUser):
     model = RECOVERY_MODELS.get(content_type)
     if model is None:

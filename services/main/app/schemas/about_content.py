@@ -9,7 +9,7 @@ from typing import Any, Literal
 
 from pydantic import ConfigDict, Field, model_validator
 
-from .base import BaseReadSchema, BaseSchema, SlugStr
+from .base import BaseReadSchema, BaseSchema, SlugStr, optional_snapshot
 
 
 def _valid_link(value: str | None) -> bool:
@@ -358,6 +358,26 @@ class InstitutionalPageItemRead(BaseReadSchema, InstitutionalPageItemCreate):
     published_at: datetime | None = None
 
 
+class FactEditionRead(BaseReadSchema, FactEditionCreate):
+    status: str
+    workflow_status: str
+    published_at: datetime | None = None
+    source_document: dict[str, Any] | None = None
+
+
+class FactGroupRead(BaseReadSchema, FactGroupCreate):
+    status: str
+    workflow_status: str
+    published_at: datetime | None = None
+    image: dict[str, Any] | None = None
+
+
+class FactItemRead(BaseReadSchema, FactItemCreate):
+    status: str
+    workflow_status: str
+    published_at: datetime | None = None
+
+
 class InstitutionalSectionDocumentCreate(StrictContentSchema):
     document_id: uuid.UUID
     public_label: str | None = Field(default=None, max_length=255)
@@ -371,6 +391,25 @@ class InstitutionalSectionDocumentUpdate(StrictContentSchema):
     display_order: int | None = None
     is_featured: bool | None = None
     is_enabled: bool | None = None
+
+
+class InstitutionalSectionDocumentRead(BaseReadSchema, InstitutionalSectionDocumentCreate):
+    document: dict[str, Any] | None = None
+
+
+# Admin endpoints can return partial ORM projections in future field-selection
+# paths. Keep the response field set bounded while allowing omitted columns.
+AboutPageContentSnapshot = optional_snapshot("AboutPageContentSnapshot", AboutPageContentRead)
+HistoryMilestoneSnapshot = optional_snapshot("HistoryMilestoneSnapshot", HistoryMilestoneRead)
+FactEditionSnapshot = optional_snapshot("FactEditionSnapshot", FactEditionRead)
+FactGroupSnapshot = optional_snapshot("FactGroupSnapshot", FactGroupRead)
+FactItemSnapshot = optional_snapshot("FactItemSnapshot", FactItemRead)
+InstitutionalPageSnapshot = optional_snapshot("InstitutionalPageSnapshot", InstitutionalPageRead)
+InstitutionalPageSectionSnapshot = optional_snapshot("InstitutionalPageSectionSnapshot", InstitutionalPageSectionRead)
+InstitutionalPageItemSnapshot = optional_snapshot("InstitutionalPageItemSnapshot", InstitutionalPageItemRead)
+InstitutionalSectionDocumentSnapshot = optional_snapshot(
+    "InstitutionalSectionDocumentSnapshot", InstitutionalSectionDocumentRead
+)
 
 
 class AboutWorkflowAction(StrictContentSchema):
@@ -400,6 +439,7 @@ class PublicAboutRead(BaseSchema):
     university: dict[str, Any]
     content: dict[str, Any] | None = None
     history: PublicHistoryRead
+    institutional_page: dict[str, Any] | None = None
 
 
 class PublicFactsRead(BaseSchema):
@@ -408,4 +448,23 @@ class PublicFactsRead(BaseSchema):
     available_years: list[int]
 
 
-__all__ = [name for name in globals() if name.startswith(("About", "History", "Fact", "Public", "Reorder"))]
+class PublicInstitutionalPageRead(BaseSchema):
+    id: str
+    page_type: str
+    slug: str
+    eyebrow: str | None = None
+    title: str
+    introduction: str
+    hero_media: dict[str, Any] | None = None
+    mobile_hero_media: dict[str, Any] | None = None
+    hero_alt_text: str | None = None
+    primary_document: dict[str, Any] | None = None
+    reporting_period_label: str | None = None
+    effective_date: date | None = None
+    review_date: date | None = None
+    seo_title: str | None = None
+    seo_description: str | None = None
+    sections: list[dict[str, Any]]
+
+
+__all__ = [name for name in globals() if name.startswith(("About", "History", "Fact", "Public", "Reorder", "Institutional"))]

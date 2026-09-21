@@ -12,6 +12,12 @@ independent of the application VM. A second directory on the same VM does not
 qualify. Production may set `REQUIRE_OFFSITE_BACKUP=true` to fail backup and
 deployment when that mount is unavailable.
 
+The production configuration validator requires an absolute managed off-host
+`BACKUP_OFFSITE_DIR`, `REQUIRE_OFFSITE_BACKUP=true` and a positive
+`BACKUP_RETENTION_DAYS`. The deployment wrapper also forces the off-site
+requirement on whenever `ENV_NAME=production`, so an omitted or false override
+cannot silently skip the backup copy.
+
 ## Backup schedule
 
 Run the following daily from the VM scheduler using deployment secrets:
@@ -95,9 +101,17 @@ write-latency target.
 
 ## Point-in-time recovery
 
-Logical dumps are the current proven recovery mechanism. WAL archiving is not
-enabled by this phase because an archive on the same VM is not disaster recovery,
-and an untested archive is operationally misleading. Add pgBackRest or equivalent
-only with an independent encrypted repository, retention monitoring, and a
-successful point-in-time restore drill. Until then, the declared RPO remains the
+Compose exposes opt-in `POSTGRES_ARCHIVE_MODE`, `POSTGRES_ARCHIVE_COMMAND` and
+`POSTGRES_WAL_ARCHIVE_HOST_DIR`. Production must set archive mode to `on`, use
+both `%p` and `%f` in the command, and point the archive directory at a writable
+encrypted store whose lifecycle is independent of the application VM. The
+checked-in archive helper validates segment names, writes with private
+permissions and moves each segment atomically.
+
+A disposable PostgreSQL 18.6 archive/PITR drill passed locally: WAL was archived,
+a base backup was taken, and recovery promoted at a named restore point while
+excluding a later marker (`services/postgres-pitr-smoke-20260906.json`). Before
+rollout, verify `SHOW archive_mode, archive_command` on the running instance and
+perform the same drill against the independent off-host target. Until that
+deployment drill and retention monitoring pass, the production RPO remains the
 daily-backup interval.

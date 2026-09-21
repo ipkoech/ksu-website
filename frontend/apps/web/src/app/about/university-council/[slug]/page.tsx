@@ -10,6 +10,8 @@ function detail(value?: string | null) {
   return trimmed && trimmed.length ? trimmed : null;
 }
 
+export const revalidate = 300;
+
 export default async function UniversityCouncilProfileRoute({
   params,
 }: {

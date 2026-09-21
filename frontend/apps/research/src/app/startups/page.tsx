@@ -8,7 +8,7 @@ import {
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Research Startups",
+  title: "Startups",
   description: "Research-born startups, ventures, and field-ready enterprises from Kisii University innovation work.",
 };
 

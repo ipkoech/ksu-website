@@ -10,6 +10,7 @@ from typing import Sequence
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ksu_common.errors import ResourceNotFound
 from ksu_common.pagination import PaginatedResult, paginate
 
 from ..models import Library, LibraryExternalLink, LibraryFile, LibraryHours
@@ -49,7 +50,7 @@ async def get_library(
     result = await db.execute(query)
     library = result.scalar_one_or_none()
     if library is None:
-        raise ValueError(f"Library {library_id} not found")
+        raise ResourceNotFound(f"Library {library_id} not found")
     return library
 
 
@@ -58,15 +59,18 @@ async def get_public_library(db: AsyncSession, library_id: uuid.UUID) -> Library
     result = await db.execute(public_libraries_query().where(Library.id == library_id))
     library = result.scalar_one_or_none()
     if library is None:
-        raise ValueError(f"Library {library_id} not found")
+        raise ResourceNotFound(f"Library {library_id} not found")
     return library
 
 
 async def get_library_entity(db: AsyncSession, library_id: uuid.UUID) -> Library:
     """Get raw Library entity (for internal use)."""
-    return await Library.get_or_raise(
-        db, library_id, error_message=f"Library {library_id} not found"
-    )
+    try:
+        return await Library.get_or_raise(
+            db, library_id, error_message=f"Library {library_id} not found"
+        )
+    except ValueError as exc:
+        raise ResourceNotFound(str(exc)) from exc
 
 
 async def get_library_by_slug(db: AsyncSession, slug: str) -> Library:
@@ -75,7 +79,7 @@ async def get_library_by_slug(db: AsyncSession, slug: str) -> Library:
     result = await db.execute(query)
     library = result.scalar_one_or_none()
     if library is None:
-        raise ValueError(f"Library with slug '{slug}' not found")
+        raise ResourceNotFound(f"Library with slug '{slug}' not found")
     return library
 
 
@@ -88,13 +92,13 @@ async def list_libraries(
     per_page: int = 20,
     include_total: bool = True,
     load_options: Sequence = (),
-    library_ids: Sequence[uuid.UUID | str] = (),
+    library_ids: Sequence[uuid.UUID | str] | None = None,
 ) -> PaginatedResult:
     """List libraries with optional eager loading."""
     query = public_libraries_query() if public_only else Library.active_query()
     if active_only and not public_only:
         query = query.where(Library.is_active.is_(True))
-    if library_ids:
+    if library_ids is not None:
         query = query.where(Library.id.in_([uuid.UUID(str(item)) for item in library_ids]))
     if load_options:
         query = query.options(*load_options)
@@ -118,7 +122,7 @@ async def create_library(db: AsyncSession, data: LibraryCreate) -> Library:
         raise ValueError(f"Library with slug '{data.slug}' already exists")
     library = Library(**data.model_dump())
     db.add(library)
-    await db.commit()
+    await db.flush()
     await db.refresh(library)
     return library
 
@@ -130,7 +134,7 @@ async def update_library(
     library = await get_library_entity(db, library_id)
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(library, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(library)
     return library
 
@@ -139,7 +143,7 @@ async def delete_library(db: AsyncSession, library_id: uuid.UUID) -> None:
     """Soft-delete a library."""
     library = await get_library_entity(db, library_id)
     library.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 # ── LibraryHours ──────────────────────────────────────────────────────────────
@@ -162,7 +166,7 @@ async def set_library_hours(
         for entry in hours_list
     ]
     db.add_all(new_hours)
-    await db.commit()
+    await db.flush()
     for h in new_hours:
         await db.refresh(h)
     return [LibraryHoursOut.model_validate(h) for h in new_hours]
@@ -312,7 +316,7 @@ async def create_external_link(
     await get_library_entity(db, library_id)
     link = LibraryExternalLink(library_id=library_id, **data.model_dump())
     db.add(link)
-    await db.commit()
+    await db.flush()
     await db.refresh(link)
     return LibraryExternalLinkOut.model_validate(link)
 
@@ -328,7 +332,7 @@ async def update_external_link(
     )
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(link, field, value)
-    await db.commit()
+    await db.flush()
     await db.refresh(link)
     return LibraryExternalLinkOut.model_validate(link)
 
@@ -346,7 +350,7 @@ async def delete_external_link(db: AsyncSession, link_id: uuid.UUID) -> None:
         db, link_id, error_message=f"External link {link_id} not found"
     )
     link.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 async def toggle_external_link(
@@ -357,7 +361,7 @@ async def toggle_external_link(
         db, link_id, error_message=f"External link {link_id} not found"
     )
     link.is_active = is_active
-    await db.commit()
+    await db.flush()
     await db.refresh(link)
     return LibraryExternalLinkOut.model_validate(link)
 
@@ -394,7 +398,7 @@ async def create_library_file(
     await get_library_entity(db, library_id)
     file = LibraryFile(library_id=library_id, **data.model_dump())
     db.add(file)
-    await db.commit()
+    await db.flush()
     await db.refresh(file)
     return LibraryFileOut.model_validate(file)
 
@@ -405,7 +409,7 @@ async def delete_library_file(db: AsyncSession, file_id: uuid.UUID) -> None:
         db, file_id, error_message=f"Library file {file_id} not found"
     )
     file.soft_delete()
-    await db.commit()
+    await db.flush()
 
 
 async def get_library_file_library_id(db: AsyncSession, file_id: uuid.UUID) -> uuid.UUID:

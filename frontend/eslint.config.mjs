@@ -1,4 +1,5 @@
 import { FlatCompat } from "@eslint/eslintrc";
+import nextPlugin from "@next/eslint-plugin-next";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -11,6 +12,11 @@ const compat = new FlatCompat({
 
 export default [
   {
+    plugins: {
+      "@next/next": nextPlugin,
+    },
+  },
+  {
     ignores: [
       "**/.next/**",
       "**/.next-build/**",
@@ -19,6 +25,7 @@ export default [
       "**/.next-root-owned-backup-*/**",
       "**/.next-codex/**",
       "**/.next-codex-*/**",
+      "**/.next-shared-*/**",
       "**/tmp/ksu-*-next/**",
       "**/tmp/**",
       "**/out/**",

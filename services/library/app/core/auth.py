@@ -6,6 +6,8 @@ import uuid
 
 from fastapi import HTTPException, status
 from ksu_common.auth import TokenPayload, build_user_dependencies
+from ksu_common.assurance import require_recent_mfa
+from ksu_common.identity_freshness import build_identity_validator
 from ksu_contracts.rbac import (
     AuthorizationDecision,
     AuthorizationScope,
@@ -22,6 +24,9 @@ _user_dependencies = build_user_dependencies(
     issuer=settings.JWT_ISSUER,
     audience=settings.JWT_AUDIENCE,
     key_id=settings.JWT_KEY_ID,
+    validate_identity=build_identity_validator(
+        base_url=settings.MAIN_SERVICE_URL, service_key=settings.MAIN_SERVICE_API_KEY,
+    ),
 )
 get_current_user = _user_dependencies.current_user
 get_optional_user = _user_dependencies.optional_user
@@ -49,16 +54,23 @@ def can_access_library_scope(
     return authorize_library_scope(user, permission, library_id).allowed
 
 
+def has_library_permission(user: TokenPayload, permission: str) -> bool:
+    """Check a Library capability from the complete signed permission subject."""
+    return authorize_permission(user, permission).allowed
+
+
 def allowed_library_scope_ids(user: TokenPayload, permission: str) -> set[str] | None:
     """Return assigned branch IDs for a structured token, or None for global access."""
     if not authorize_permission(user, permission).allowed:
         return set()
+    if authorize_permission(user, permission, AuthorizationScope("global")).allowed:
+        return None
 
     grants = [
         grant for grant in user.raw.get("scope_grants", []) or [] if isinstance(grant, dict)
     ]
     if not grants:
-        return None
+        return set()
 
     matching = [
         grant
@@ -70,13 +82,21 @@ def allowed_library_scope_ids(user: TokenPayload, permission: str) -> set[str] |
 
     scope_ids: set[str] = set()
     for grant in matching:
-        grant_scope_type = str(grant.get("scope_type") or "global").strip().lower()
+        grant_scope_type = str(grant.get("scope_type") or "").strip().lower()
         grant_scope_id = None if grant.get("scope_id") in (None, "") else str(grant["scope_id"])
         if grant_scope_type in {"global", "university"}:
             return None
         if grant_scope_type == "library" and grant_scope_id:
             scope_ids.add(grant_scope_id)
     return scope_ids
+
+
+def require_library_transfer(user: TokenPayload, current_library_id, target_library_id) -> None:
+    if current_library_id == target_library_id:
+        return
+    require_library_scope(user, "library.transfer", current_library_id)
+    require_library_scope(user, "library.transfer", target_library_id)
+    require_recent_mfa(user)
 
 
 def require_library_scope(

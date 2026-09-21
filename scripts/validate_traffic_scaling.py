@@ -17,8 +17,10 @@ def require(condition: bool, message: str) -> None:
 
 def main() -> int:
     nginx = (ROOT / "gateway/nginx.conf").read_text(encoding="utf-8")
+    research_nginx = (ROOT / "gateway/research.nginx.conf").read_text(encoding="utf-8")
     cache = (ROOT / "gateway/public-api-cache.inc").read_text(encoding="utf-8")
     compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+    vm_compose = (ROOT / "docker-compose.vm.yml").read_text(encoding="utf-8")
     scenarios = json.loads(
         (ROOT / "docs/operations/performance-scenarios.json").read_text(encoding="utf-8")
     )["endpoints"]
@@ -37,6 +39,16 @@ def main() -> int:
     require(re.search(r"proxy_cache_valid\s+(?:4\d\d|5\d\d)", cache) is None, "error responses must not be cached")
     require("proxy_cache_lock on" in cache, "edge cache must collapse concurrent misses")
     require("KSU_CACHE_REDIS_FAILURE_MODE: ${KSU_CACHE_REDIS_FAILURE_MODE:-fallback}" in compose, "cache outage fallback is not configured")
+    require("ipv4_address: 172.30.0.2" in compose, "standard gateway must have a stable trusted API-network address")
+    for alias in ("aliases: [main-api]", "aliases: [research-api]", "aliases: [library-api]"):
+        require(alias in compose, f"API network alias is missing: {alias}")
+    for upstream in ("server main-api:8000", "server research-api:8001", "server library-api:8002"):
+        require(upstream in research_nginx, f"research VM gateway does not use API-network alias {upstream}")
+    require("ipv4_address: 172.30.0.8" in vm_compose, "research VM gateway must have a stable trusted API-network address")
+    require(
+        vm_compose.count("172.30.0.2,172.30.0.8") == 3,
+        "research VM APIs must trust both gateway addresses for forwarded client IPs",
+    )
 
     for service in ("MAIN", "RESEARCH", "LIBRARY", "HERI"):
         require(f"{service}_CACHE_REDIS_URL" in compose, f"{service} cache URL is not independently configurable")

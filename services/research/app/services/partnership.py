@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models import (
@@ -22,7 +23,7 @@ from ..models import (
     project_partners,
     sustainability_partners,
 )
-from ._crud import build_simple_service
+from ._crud import apply_public_visibility, build_simple_service
 from .core import MainScopedEventService
 
 PartnerService = build_simple_service(Partner, "name", "acronym", "about", "country", "partner_type")
@@ -53,6 +54,9 @@ def _brief(item: Any, *extra_fields: str) -> dict[str, Any]:
 
 
 async def _related_many(db: AsyncSession, statement, *extra_fields: str) -> list[dict[str, Any]]:
+    entity = next((item.get("entity") for item in statement.column_descriptions if item.get("entity") is not None), None)
+    if entity is not None:
+        statement = apply_public_visibility(entity, statement)
     result = await db.execute(statement)
     return [_brief(item, *extra_fields) for item in result.scalars().all()]
 
@@ -62,7 +66,12 @@ class PartnerRelationshipService:
 
     @staticmethod
     async def _ensure_partner(db: AsyncSession, partner_id: uuid.UUID) -> Partner:
-        return await Partner.get_or_raise(db, partner_id, error_message="Partner not found")
+        statement = apply_public_visibility(Partner, Partner.active_query().where(Partner.id == partner_id))
+        result = await db.execute(statement)
+        partner = result.scalar_one_or_none()
+        if partner is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Partner not found")
+        return partner
 
     @staticmethod
     async def list_projects(db: AsyncSession, partner_id: uuid.UUID) -> list[dict[str, Any]]:

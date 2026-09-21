@@ -2,16 +2,17 @@
 
 import * as React from "react";
 import {
-  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  ScrollArea,
-} from "../ui";
-import { cn } from "../../lib";
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { ScrollArea } from "../ui/scroll-area";
+import { cn } from "../../lib/utils";
+import { useDialogAction } from "./use-dialog-action";
 
 export interface FormDialogProps {
   open: boolean;
@@ -43,27 +44,49 @@ export function FormDialog({
   isSubmitting = false,
   size = "md",
 }: FormDialogProps) {
+  const action = useDialogAction({
+    open,
+    onAction: onSubmit,
+    pending: isSubmitting,
+  });
+
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => !isSubmitting && onOpenChange(nextOpen)}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => action.canDismiss() && onOpenChange(nextOpen)}
+    >
       <DialogContent className={cn(sizeClasses[size], "gap-0 p-0")}>
         <form
           onSubmit={async (event) => {
             event.preventDefault();
-            await onSubmit();
+            await action.run();
           }}
+          aria-busy={action.pending}
         >
           <DialogHeader className="border-b px-6 py-4">
             <DialogTitle>{title}</DialogTitle>
-            {description ? <DialogDescription>{description}</DialogDescription> : null}
+            {description ? (
+              <DialogDescription>{description}</DialogDescription>
+            ) : null}
           </DialogHeader>
           <ScrollArea className="max-h-[70vh] px-6 py-4">
             <div className="space-y-4">{children}</div>
+            {action.failed ? (
+              <p role="alert" className="mt-4 text-sm text-destructive">
+                Unable to save changes. Please try again.
+              </p>
+            ) : null}
           </ScrollArea>
           <DialogFooter className="border-t px-6 py-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={action.pending}
+            >
               Cancel
             </Button>
-            <Button type="submit" loading={isSubmitting}>
+            <Button type="submit" loading={action.pending}>
               {submitLabel}
             </Button>
           </DialogFooter>

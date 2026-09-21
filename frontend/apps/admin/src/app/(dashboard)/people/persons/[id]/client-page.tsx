@@ -13,12 +13,13 @@ import { StaffAssignmentEditor } from "@/components/staff/staff-assignment-edito
 import { usePermissions } from "@/hooks/use-permissions";
 import { hasChangedPayload, pickChangedPayload, type PayloadFieldMap } from "@/lib/changed-fields";
 import { richTextToEditorValue, richTextToPayloadValue } from "@/lib/rich-text-form";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { Badge, Button, ConfirmDialog, Input, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Switch, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, JsonObjectEditor, RichTextEditor, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue, type JsonEditorField } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
 import { resolveMainMediaUrl, useActivatePerson, useDeactivatePerson, usePerson, useCreatePerson, useUpdatePerson, useRemovePersonPhoto, useStaffAssignments, useUploadPersonPhoto, type Person, type PersonCreatePayload, type PersonUpdatePayload, type StaffAssignment } from "@ksu/api-client";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { Briefcase, Building2, Calendar, Camera, Clock, Edit, ImageIcon, Mail, MapPin, Phone, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const personSchema = z.object({
     first_name: z.string().min(1, "First name is required").max(100),
@@ -396,6 +397,14 @@ export default function PersonFormPage() {
     const deactivatePerson = useDeactivatePerson();
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const photoPreviewRef = useRef<string | null>(null);
+    const releasePhotoPreview = useCallback(() => {
+        const preview = photoPreviewRef.current;
+        if (preview) {
+            URL.revokeObjectURL(preview);
+            photoPreviewRef.current = null;
+        }
+    }, []);
     const [shouldRemovePhoto, setShouldRemovePhoto] = useState(false);
     const [assignmentEditorOpen, setAssignmentEditorOpen] = useState(false);
     const [assignmentEditorMode, setAssignmentEditorMode] = useState<AssignmentEditorMode>("create");
@@ -416,6 +425,7 @@ export default function PersonFormPage() {
             form.reset(personValues(personData.data));
             setSelectedSchoolId(personData.data.department?.school_id || "");
             setPhotoFile(null);
+            releasePhotoPreview();
             setPhotoPreview(null);
             setShouldRemovePhoto(false);
             setHasHydratedRecord(true);
@@ -423,7 +433,9 @@ export default function PersonFormPage() {
             form.reset(defaultValues);
             setHasHydratedRecord(true);
         }
-    }, [form, isNew, personData?.data]);
+    }, [form, isNew, personData?.data, releasePhotoPreview]);
+
+    useEffect(() => releasePhotoPreview, [releasePhotoPreview]);
 
     useEffect(() => {
         if (!selectedSchoolId && personData?.data?.department?.school_id) {
@@ -538,6 +550,7 @@ export default function PersonFormPage() {
         if (isNew) {
             const response = await createPerson.mutateAsync(payload);
             savedId = response.data.id;
+            void revalidatePublicContent("main", "people");
             toast.success("Person created successfully");
         } else {
             const updatePayload: PersonUpdatePayload = payload;
@@ -555,6 +568,7 @@ export default function PersonFormPage() {
             if (hasProfileChanges) {
                 const response = await updatePerson.mutateAsync({ id, data: patch });
                 form.reset(personValues(response.data));
+                void revalidatePublicContent("main", "people");
                 toast.success("Person updated successfully");
             }
         }
@@ -564,12 +578,15 @@ export default function PersonFormPage() {
             if (!isNew) {
                 form.reset(personValues(response.data));
             }
+            void revalidatePublicContent("main", "people");
             setPhotoFile(null);
+            releasePhotoPreview();
             setPhotoPreview(null);
             toast.success("Profile image updated");
         } else if (shouldRemovePhoto && !isNew) {
             const response = await removePhoto.mutateAsync(savedId);
             form.reset(personValues(response.data));
+            void revalidatePublicContent("main", "people");
             setShouldRemovePhoto(false);
             toast.success("Profile image removed");
         }
@@ -656,9 +673,11 @@ export default function PersonFormPage() {
             onConfirm: async () => {
                 if (isActive) {
                     await deactivatePerson.mutateAsync(id);
+                    void revalidatePublicContent("main", "people");
                     toast.success("Person deactivated");
                 } else {
                     await activatePerson.mutateAsync(id);
+                    void revalidatePublicContent("main", "people");
                     toast.success("Person activated");
                 }
             },
@@ -739,9 +758,12 @@ export default function PersonFormPage() {
                         className="sr-only"
                         onChange={(event) => {
                             const file = event.target.files?.[0] ?? null;
+                            releasePhotoPreview();
                             setPhotoFile(file);
                             setShouldRemovePhoto(false);
-                            setPhotoPreview(file ? URL.createObjectURL(file) : null);
+                            const nextPreview = file ? URL.createObjectURL(file) : null;
+                            photoPreviewRef.current = nextPreview;
+                            setPhotoPreview(nextPreview);
                         }}
                     />
                 </label>
@@ -762,6 +784,7 @@ export default function PersonFormPage() {
                         variant: "destructive",
                         onConfirm: async () => {
                             setPhotoFile(null);
+                            releasePhotoPreview();
                             setPhotoPreview(null);
                             setShouldRemovePhoto(true);
                         },

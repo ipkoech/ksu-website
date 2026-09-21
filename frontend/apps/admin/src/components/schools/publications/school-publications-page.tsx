@@ -48,6 +48,7 @@ import {
   Textarea,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import { SchoolDepartmentSelect } from "@/components/schools/shared/school-reference-selectors";
 import {
   SchoolFilterBar,
@@ -237,12 +238,12 @@ function PublicationDialog({
       const payload = { ...values, keywords: keywords.split(",").map((item) => item.trim()).filter(Boolean) };
       return publication ? schoolPortalApi.publications.update(publication.id, payload) : schoolPortalApi.publications.create(payload);
     },
-    onSuccess: async () => { await onSaved(); onOpenChange(false); },
+    onSuccess: async () => { void revalidatePublicContent("main", "school-publications"); await onSaved(); onOpenChange(false); },
     onError: (caught) => setError(caught instanceof Error ? caught.message : "Unable to save publication."),
   });
   const workflow = useMutation({
     mutationFn: (action: "submit" | "withdraw") => schoolPortalApi.publications.action(publication!.id, action),
-    onSuccess: onSaved,
+    onSuccess: async () => { void revalidatePublicContent("main", "school-publications"); await onSaved(); },
     onError: (caught) => setError(caught instanceof Error ? caught.message : "Publication workflow action failed."),
   });
 

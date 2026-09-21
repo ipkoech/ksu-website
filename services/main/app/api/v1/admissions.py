@@ -7,7 +7,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession, require_scope
@@ -36,6 +36,15 @@ from ...schemas import (
     ProgrammeFeeStructureCreate,
     ProgrammeFeeStructureUpdate,
 )
+from ...schemas.admissions import (
+    AdmissionDocumentSnapshot,
+    AdmissionFaqSnapshot,
+    AdmissionInfoSnapshot,
+    AdmissionPageSectionSnapshot,
+    AdmissionPathwaySnapshot,
+    AdmissionRequirementSnapshot,
+    ProgrammeFeeStructureSnapshot,
+)
 from ...services import (
     AdmissionDocumentService,
     AdmissionFaqService,
@@ -49,7 +58,7 @@ from ...services import (
 router = APIRouter()
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[AdmissionInfoSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "content_type", "audience_level", "school_id", "fields", "include"))
 async def list_admission_info(
     db: DbSession,
@@ -73,7 +82,7 @@ async def list_admission_info(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin", dependencies=[Depends(require_scope("admissions.manage_info"))])
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[AdmissionInfoSnapshot]], dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def list_admin_admission_info(
     db: DbSession,
     _: CurrentUser,
@@ -99,7 +108,7 @@ async def list_admin_admission_info(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/pathways")
+@router.get("/pathways", response_model_exclude_unset=True, response_model=SuccessResponse[list[AdmissionPathwaySnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "applicant_type", "fields", "include"))
 async def list_admission_pathways(
     db: DbSession,
@@ -119,7 +128,7 @@ async def list_admission_pathways(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/pathways/{slug}")
+@router.get("/pathways/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionPathwaySnapshot])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_admission_pathway(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(AdmissionPathway, fields)
@@ -129,13 +138,13 @@ async def get_admission_pathway(slug: str, db: DbSession, fields: FieldSelection
     return success(data=selector.apply(item))
 
 
-@router.post("/pathways", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
+@router.post("/pathways", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionPathwaySnapshot], status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def create_admission_pathway(data: AdmissionPathwayCreate, db: DbSession, _: CurrentUser):
     item = await AdmissionPathwayService.create(db, **data.model_dump())
     return success(data=item, message="Admission pathway created")
 
 
-@router.patch("/pathways/{item_id}", dependencies=[Depends(require_scope("admissions.manage_info"))])
+@router.patch("/pathways/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionPathwaySnapshot], dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def update_admission_pathway(item_id: uuid.UUID, data: AdmissionPathwayUpdate, db: DbSession, _: CurrentUser):
     item = await AdmissionPathwayService.get_by_id(db, item_id)
     if item is None:
@@ -152,7 +161,7 @@ async def delete_admission_pathway(item_id: uuid.UUID, db: DbSession, _: Current
     await AdmissionPathwayService.delete(db, item)
 
 
-@router.get("/requirements")
+@router.get("/requirements", response_model_exclude_unset=True, response_model=SuccessResponse[list[AdmissionRequirementSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "programme_id", "school_id", "intake_id", "pathway_id", "applicant_type", "level", "fields", "include"))
 async def list_admission_requirements(
     db: DbSession,
@@ -182,7 +191,7 @@ async def list_admission_requirements(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/requirements/{item_id}")
+@router.get("/requirements/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionRequirementSnapshot])
 @cached_public(timeout=300, vary_on=("item_id", "fields", "include"))
 async def get_admission_requirement(item_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(AdmissionRequirement, fields)
@@ -192,13 +201,13 @@ async def get_admission_requirement(item_id: uuid.UUID, db: DbSession, fields: F
     return success(data=selector.apply(item))
 
 
-@router.post("/requirements", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
+@router.post("/requirements", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionRequirementSnapshot], status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def create_admission_requirement(data: AdmissionRequirementCreate, db: DbSession, _: CurrentUser):
     item = await AdmissionRequirementService.create(db, **data.model_dump())
     return success(data=item, message="Admission requirement created")
 
 
-@router.patch("/requirements/{item_id}", dependencies=[Depends(require_scope("admissions.manage_info"))])
+@router.patch("/requirements/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionRequirementSnapshot], dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def update_admission_requirement(item_id: uuid.UUID, data: AdmissionRequirementUpdate, db: DbSession, _: CurrentUser):
     item = await AdmissionRequirementService.get_by_id(db, item_id)
     if item is None:
@@ -215,7 +224,7 @@ async def delete_admission_requirement(item_id: uuid.UUID, db: DbSession, _: Cur
     await AdmissionRequirementService.delete(db, item)
 
 
-@router.get("/fee-structures")
+@router.get("/fee-structures", response_model_exclude_unset=True, response_model=SuccessResponse[list[ProgrammeFeeStructureSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "programme_id", "intake_id", "applicant_type", "fee_category", "fields", "include"))
 async def list_programme_fee_structures(
     db: DbSession,
@@ -241,7 +250,7 @@ async def list_programme_fee_structures(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/fee-structures/{item_id}")
+@router.get("/fee-structures/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[ProgrammeFeeStructureSnapshot])
 @cached_public(timeout=300, vary_on=("item_id", "fields", "include"))
 async def get_programme_fee_structure(item_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(ProgrammeFeeStructure, fields)
@@ -251,13 +260,13 @@ async def get_programme_fee_structure(item_id: uuid.UUID, db: DbSession, fields:
     return success(data=selector.apply(item))
 
 
-@router.post("/fee-structures", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
+@router.post("/fee-structures", response_model_exclude_unset=True, response_model=SuccessResponse[ProgrammeFeeStructureSnapshot], status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def create_programme_fee_structure(data: ProgrammeFeeStructureCreate, db: DbSession, _: CurrentUser):
     item = await ProgrammeFeeStructureService.create(db, **data.model_dump())
     return success(data=item, message="Programme fee structure created")
 
 
-@router.patch("/fee-structures/{item_id}", dependencies=[Depends(require_scope("admissions.manage_info"))])
+@router.patch("/fee-structures/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[ProgrammeFeeStructureSnapshot], dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def update_programme_fee_structure(item_id: uuid.UUID, data: ProgrammeFeeStructureUpdate, db: DbSession, _: CurrentUser):
     item = await ProgrammeFeeStructureService.get_by_id(db, item_id)
     if item is None:
@@ -274,7 +283,7 @@ async def delete_programme_fee_structure(item_id: uuid.UUID, db: DbSession, _: C
     await ProgrammeFeeStructureService.delete(db, item)
 
 
-@router.get("/documents")
+@router.get("/documents", response_model_exclude_unset=True, response_model=SuccessResponse[list[AdmissionDocumentSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "document_type", "applicant_type", "pathway_id", "programme_id", "intake_id", "fields", "include"))
 async def list_admission_documents(
     db: DbSession,
@@ -302,7 +311,7 @@ async def list_admission_documents(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/documents/{slug}")
+@router.get("/documents/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionDocumentSnapshot])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_admission_document(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(AdmissionDocument, fields)
@@ -312,13 +321,13 @@ async def get_admission_document(slug: str, db: DbSession, fields: FieldSelectio
     return success(data=selector.apply(item))
 
 
-@router.post("/documents", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
+@router.post("/documents", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionDocumentSnapshot], status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def create_admission_document(data: AdmissionDocumentCreate, db: DbSession, _: CurrentUser):
     item = await AdmissionDocumentService.create(db, **data.model_dump())
     return success(data=item, message="Admission document created")
 
 
-@router.patch("/documents/{item_id}", dependencies=[Depends(require_scope("admissions.manage_info"))])
+@router.patch("/documents/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionDocumentSnapshot], dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def update_admission_document(item_id: uuid.UUID, data: AdmissionDocumentUpdate, db: DbSession, _: CurrentUser):
     item = await AdmissionDocumentService.get_by_id(db, item_id)
     if item is None:
@@ -335,7 +344,7 @@ async def delete_admission_document(item_id: uuid.UUID, db: DbSession, _: Curren
     await AdmissionDocumentService.delete(db, item)
 
 
-@router.get("/faqs")
+@router.get("/faqs", response_model_exclude_unset=True, response_model=SuccessResponse[list[AdmissionFaqSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "category", "applicant_type", "pathway_id", "fields", "include"))
 async def list_admission_faqs(
     db: DbSession,
@@ -359,7 +368,7 @@ async def list_admission_faqs(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/faqs/{item_id}")
+@router.get("/faqs/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionFaqSnapshot])
 @cached_public(timeout=300, vary_on=("item_id", "fields", "include"))
 async def get_admission_faq(item_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(AdmissionFaq, fields)
@@ -369,13 +378,13 @@ async def get_admission_faq(item_id: uuid.UUID, db: DbSession, fields: FieldSele
     return success(data=selector.apply(item))
 
 
-@router.post("/faqs", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
+@router.post("/faqs", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionFaqSnapshot], status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def create_admission_faq(data: AdmissionFaqCreate, db: DbSession, _: CurrentUser):
     item = await AdmissionFaqService.create(db, **data.model_dump())
     return success(data=item, message="Admission FAQ created")
 
 
-@router.patch("/faqs/{item_id}", dependencies=[Depends(require_scope("admissions.manage_info"))])
+@router.patch("/faqs/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionFaqSnapshot], dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def update_admission_faq(item_id: uuid.UUID, data: AdmissionFaqUpdate, db: DbSession, _: CurrentUser):
     item = await AdmissionFaqService.get_by_id(db, item_id)
     if item is None:
@@ -392,7 +401,7 @@ async def delete_admission_faq(item_id: uuid.UUID, db: DbSession, _: CurrentUser
     await AdmissionFaqService.delete(db, item)
 
 
-@router.get("/page-sections")
+@router.get("/page-sections", response_model_exclude_unset=True, response_model=SuccessResponse[list[AdmissionPageSectionSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "page_key", "fields", "include"))
 async def list_admission_page_sections(
     db: DbSession,
@@ -412,7 +421,7 @@ async def list_admission_page_sections(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/page-sections/{item_id}")
+@router.get("/page-sections/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionPageSectionSnapshot])
 @cached_public(timeout=300, vary_on=("item_id", "fields", "include"))
 async def get_admission_page_section(item_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(AdmissionPageSection, fields)
@@ -422,13 +431,13 @@ async def get_admission_page_section(item_id: uuid.UUID, db: DbSession, fields: 
     return success(data=selector.apply(item))
 
 
-@router.post("/page-sections", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
+@router.post("/page-sections", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionPageSectionSnapshot], status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def create_admission_page_section(data: AdmissionPageSectionCreate, db: DbSession, _: CurrentUser):
     item = await AdmissionPageSectionService.create(db, **data.model_dump())
     return success(data=item, message="Admission page section created")
 
 
-@router.patch("/page-sections/{item_id}", dependencies=[Depends(require_scope("admissions.manage_info"))])
+@router.patch("/page-sections/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionPageSectionSnapshot], dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def update_admission_page_section(item_id: uuid.UUID, data: AdmissionPageSectionUpdate, db: DbSession, _: CurrentUser):
     item = await AdmissionPageSectionService.get_by_id(db, item_id)
     if item is None:
@@ -445,7 +454,7 @@ async def delete_admission_page_section(item_id: uuid.UUID, db: DbSession, _: Cu
     await AdmissionPageSectionService.delete(db, item)
 
 
-@router.get("/id/{item_id}")
+@router.get("/id/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionInfoSnapshot])
 async def get_admission_info_by_id(item_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(AdmissionInfo, fields)
     item = await AdmissionInfoService.get_by_id(db, item_id, load_options=selector.load_options)
@@ -454,7 +463,7 @@ async def get_admission_info_by_id(item_id: uuid.UUID, db: DbSession, _: Current
     return success(data=selector.apply(item))
 
 
-@router.get("/{slug}")
+@router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionInfoSnapshot])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_admission_info(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(AdmissionInfo, fields)
@@ -464,13 +473,13 @@ async def get_admission_info(slug: str, db: DbSession, fields: FieldSelection = 
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
+@router.post("", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionInfoSnapshot], status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def create_admission_info(data: AdmissionInfoCreate, db: DbSession, _: CurrentUser):
     item = await AdmissionInfoService.create(db, **data.model_dump())
     return success(data=item, message="Admission information created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("admissions.manage_info"))])
+@router.patch("/{item_id}", response_model_exclude_unset=True, response_model=SuccessResponse[AdmissionInfoSnapshot], dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def update_admission_info(item_id: uuid.UUID, data: AdmissionInfoUpdate, db: DbSession, _: CurrentUser):
     item = await AdmissionInfoService.get_by_id(db, item_id)
     if item is None:

@@ -20,9 +20,23 @@ depends_on = None
 
 def upgrade() -> None:
     bind = op.get_bind()
-    Base.metadata.create_all(bind=bind)
+    # This baseline migration runs before later additive revisions. Exclude
+    # tables introduced after the baseline, otherwise current ORM metadata
+    # would create them early and their own migrations would fail with
+    # duplicate-table errors on a fresh database.
+    tables = [
+        table
+        for table_name, table in Base.metadata.tables.items()
+        if table_name != "library.audit_relay"
+    ]
+    Base.metadata.create_all(bind=bind, tables=tables)
 
 
 def downgrade() -> None:
     bind = op.get_bind()
-    Base.metadata.drop_all(bind=bind)
+    tables = [
+        table
+        for table_name, table in Base.metadata.tables.items()
+        if table_name != "library.audit_relay"
+    ]
+    Base.metadata.drop_all(bind=bind, tables=tables)

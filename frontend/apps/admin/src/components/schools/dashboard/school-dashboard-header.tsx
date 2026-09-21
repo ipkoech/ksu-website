@@ -1,6 +1,7 @@
-import { CalendarDays, CheckCircle2, RefreshCw } from "lucide-react";
+import { CalendarDays, CheckCircle2, RefreshCw, FileText, ExternalLink } from "lucide-react";
 import {
   Badge,
+  Button,
   Select,
   SelectContent,
   SelectItem,
@@ -15,13 +16,6 @@ const RANGE_DAYS: Record<SchoolPortalDashboardRange, number> = {
   "90d": 90,
   "12m": 365,
 };
-
-function greeting(date: Date) {
-  const hour = date.getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
-}
 
 function dateRange(endValue: string, range: SchoolPortalDashboardRange) {
   const end = new Date(endValue);
@@ -42,6 +36,7 @@ export function SchoolDashboardHeader({
   range,
   fetching,
   onRangeChange,
+  onRefresh,
 }: {
   userName: string;
   schoolName: string;
@@ -49,10 +44,8 @@ export function SchoolDashboardHeader({
   range: SchoolPortalDashboardRange;
   fetching: boolean;
   onRangeChange: (range: SchoolPortalDashboardRange) => void;
+  onRefresh: () => void;
 }) {
-  const generated = new Date(generatedAt);
-  const firstName = userName.trim().split(/\s+/)[0] || "School Admin";
-
   return (
     <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div className="min-w-0">
@@ -68,15 +61,13 @@ export function SchoolDashboardHeader({
             </span>
           ) : null}
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          {greeting(generated)}, {firstName}
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">School overview</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Here&apos;s what is happening in your school today.
+          Welcome, {userName}. Here&apos;s what is happening in your school today.
         </p>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
         <Select value={range} onValueChange={(value) => onRangeChange(value as SchoolPortalDashboardRange)}>
           <SelectTrigger aria-label="Dashboard date range" className="w-[14rem] bg-background">
@@ -89,6 +80,9 @@ export function SchoolDashboardHeader({
             <SelectItem value="12m">Last 12 months</SelectItem>
           </SelectContent>
         </Select>
+        <Button variant="outline" size="sm" onClick={onRefresh} disabled={fetching} aria-label="Refresh school overview"><RefreshCw className={fetching ? "mr-2 size-4 animate-spin" : "mr-2 size-4"} />Refresh</Button>
+        <Button size="sm" className="bg-[#082b5c]" onClick={() => window.print()}><FileText className="mr-2 size-4" />Generate school status report</Button>
+        <Button asChild variant="ghost" size="sm"><a href={`/schools/profile`}><ExternalLink className="mr-2 size-4" />Public profile</a></Button>
       </div>
     </header>
   );

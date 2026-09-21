@@ -21,6 +21,7 @@ import {
 import { toast } from "@ksu/ui";
 import { libraryServiceApi, type LibraryStaff } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 type StaffRecord = LibraryStaff & Record<string, unknown>;
 
@@ -82,10 +83,12 @@ export default function LibraryStaffPage() {
 
   const createStaff = useMutation({
     mutationFn: libraryServiceApi.staff.create,
-    onSuccess: () =>
-      queryClient.invalidateQueries({
+    onSuccess: () => {
+      void revalidatePublicContent("library", "staff");
+      return queryClient.invalidateQueries({
         queryKey: ["library", "staff", libraryId],
-      }),
+      });
+    },
   });
   const updateStaff = useMutation({
     mutationFn: ({
@@ -95,17 +98,21 @@ export default function LibraryStaffPage() {
       id: string;
       payload: Record<string, any>;
     }) => libraryServiceApi.staff.update(id, payload),
-    onSuccess: () =>
-      queryClient.invalidateQueries({
+    onSuccess: () => {
+      void revalidatePublicContent("library", "staff");
+      return queryClient.invalidateQueries({
         queryKey: ["library", "staff", libraryId],
-      }),
+      });
+    },
   });
   const deleteStaff = useMutation({
     mutationFn: libraryServiceApi.staff.delete,
-    onSuccess: () =>
-      queryClient.invalidateQueries({
+    onSuccess: () => {
+      void revalidatePublicContent("library", "staff");
+      return queryClient.invalidateQueries({
         queryKey: ["library", "staff", libraryId],
-      }),
+      });
+    },
   });
 
   const edit = (member: StaffRecord) => {

@@ -19,6 +19,14 @@ SEED_OWNER = "page-cms-homepage-v1"
 SEED_VERSION = 7
 PENDING_HERI_AFRICA_SOURCE_ID = uuid.UUID("8d724ec7-3b5b-54f8-b3f3-8770f627dd6a")
 PENDING_HERI_AFRICA_HEADLINE = "Heri Africa partnership spotlight pending"
+_UNVERIFIED_LEADERSHIP_ACTIVITY_SLUGS = frozenset(
+    {
+        "ai-data-science-centre-launched",
+        "mou-university-of-pretoria",
+        "unesco-delegation-visits-kisii-university",
+        "student-leaders-engagement-forum",
+    }
+)
 
 
 HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
@@ -431,13 +439,11 @@ def _replace_section_items(section: PageSection, item_specs: tuple[dict[str, Any
 
 
 async def _seed_leadership_activity_news(db: AsyncSession) -> dict[str, uuid.UUID]:
+    # The former implementation created four unverified homepage stories.
+    # Current homepage stories are imported from the live-site crawl by
+    # seed_content.py, so this hook must not manufacture replacements.
     now = datetime.now(timezone.utc)
-    records = (
-        ("AI & Data Science Centre launched", "ai-data-science-centre-launched", "Kisii University expands its capacity in artificial intelligence, data science and applied digital innovation."),
-        ("MoU signed with the University of Pretoria", "mou-university-of-pretoria", "A strategic academic partnership supporting collaboration, mobility and shared research."),
-        ("UNESCO delegation visits Kisii University", "unesco-delegation-visits-kisii-university", "University leadership welcomed UNESCO representatives for discussions on education, research and community impact."),
-        ("Student leaders engagement forum", "student-leaders-engagement-forum", "The Vice Chancellor met student representatives to discuss student experience, leadership and institutional priorities."),
-    )
+    records: tuple[tuple[str, str, str], ...] = ()
     linked: dict[str, uuid.UUID] = {}
     for title, slug, summary in records:
         item = (await db.execute(select(News).where(News.slug == slug))).scalar_one_or_none()
@@ -463,6 +469,19 @@ async def _seed_leadership_activity_news(db: AsyncSession) -> dict[str, uuid.UUI
     return linked
 
 
+async def _archive_unverified_leadership_activity_news(db: AsyncSession) -> None:
+    records = (
+        await db.execute(
+            select(News).where(News.slug.in_(_UNVERIFIED_LEADERSHIP_ACTIVITY_SLUGS))
+        )
+    ).scalars().all()
+    for item in records:
+        item.is_public = False
+        item.is_published = False
+        item.status = "archived"
+        item.workflow_status = "archived"
+
+
 async def _seed_homepage_sections(db: AsyncSession) -> None:
     result = await db.execute(select(PageSection))
     existing = {
@@ -472,6 +491,7 @@ async def _seed_homepage_sections(db: AsyncSession) -> None:
     }
 
     now = datetime.now(timezone.utc)
+    await _archive_unverified_leadership_activity_news(db)
 
     # Retire seed-owned homepage sections whose spec has been removed
     # (e.g. the old "pulse" strip replaced by the facts overlap card).

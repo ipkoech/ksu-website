@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import type { ResearchGenericRecord } from "@ksu/api-client";
-import { researchServiceApi } from "@ksu/api-client";
+import type { ResearchGenericRecord } from "@ksu/api-client/server";
 import {
   ResearchFact,
 } from "../../../components/research-detail";
@@ -19,22 +18,18 @@ import {
 import {
   compactText,
   formatDate,
-  generateSlugParams,
   getGrantBySlug,
 } from "../../../lib/research-public-data";
 
 import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { data } = await getGrantBySlug(slug);
   return researchRecordMetadata(data, { fallbackTitle: "Funding opportunity", pathname: "/funding/" + slug });
-}
-
-export async function generateStaticParams() {
-  return generateSlugParams(researchServiceApi.grants.list);
 }
 
 export default async function FundingDetailPage({

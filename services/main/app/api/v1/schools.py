@@ -7,13 +7,16 @@ import uuid
 from fastapi import APIRouter, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession
 from ...models import Department, Person, Programme, School
 from ...security.scopes import can_access_scope
 from ...schemas import SchoolCreate, SchoolUpdate
+from ...schemas.academic import DepartmentSnapshot, SchoolSnapshot
+from ...schemas.admissions import ProgrammeSnapshot
+from ...schemas.person import PersonSnapshot
 from ...services import ProgrammeService, SchoolService
 
 router = APIRouter()
@@ -47,7 +50,7 @@ async def _require_school_scope(
         )
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[SchoolSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "campus_id", "administrative_wing_id", "search", "fields", "include"))
 async def list_schools(
     db: DbSession,
@@ -71,7 +74,7 @@ async def list_schools(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin")
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[SchoolSnapshot]])
 async def list_admin_schools(
     db: DbSession,
     user: CurrentUser,
@@ -105,7 +108,7 @@ async def list_admin_schools(
     return success(data=selector.apply(items), meta=meta)
 
 
-@router.get("/{slug}")
+@router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[SchoolSnapshot])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_school(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(School, fields)
@@ -115,7 +118,7 @@ async def get_school(slug: str, db: DbSession, fields: FieldSelection = FieldsDe
     return success(data=selector.apply(school))
 
 
-@router.get("/id/{school_id}")
+@router.get("/id/{school_id}", response_model_exclude_unset=True, response_model=SuccessResponse[SchoolSnapshot])
 async def get_school_by_id(school_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(School, fields)
     school = await SchoolService.get_by_id(db, school_id, load_options=selector.load_options)
@@ -124,7 +127,7 @@ async def get_school_by_id(school_id: uuid.UUID, db: DbSession, _: CurrentUser, 
     return success(data=selector.apply(school))
 
 
-@router.get("/{slug}/departments")
+@router.get("/{slug}/departments", response_model_exclude_unset=True, response_model=SuccessResponse[list[DepartmentSnapshot]])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_school_departments(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     school = await SchoolService.get_by_slug(db, slug)
@@ -135,7 +138,7 @@ async def get_school_departments(slug: str, db: DbSession, fields: FieldSelectio
     return success(data=selector.apply(school.departments if school else []))
 
 
-@router.get("/{slug}/staff")
+@router.get("/{slug}/staff", response_model_exclude_unset=True, response_model=SuccessResponse[list[PersonSnapshot]])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_school_staff(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     school = await SchoolService.get_by_slug(db, slug)
@@ -146,7 +149,7 @@ async def get_school_staff(slug: str, db: DbSession, fields: FieldSelection = Fi
     return success(data=selector.apply(staff))
 
 
-@router.get("/{slug}/programmes")
+@router.get("/{slug}/programmes", response_model_exclude_unset=True, response_model=SuccessResponse[list[ProgrammeSnapshot]])
 @cached_public(timeout=300, vary_on=("slug", "page", "per_page", "fields", "include"))
 async def get_school_programmes(
     slug: str,
@@ -163,7 +166,7 @@ async def get_school_programmes(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", response_model_exclude_unset=True, response_model=SuccessResponse[SchoolSnapshot], status_code=status.HTTP_201_CREATED)
 async def create_school(data: SchoolCreate, db: DbSession, user: CurrentUser):
     if not await can_access_scope(db, user, "academic.manage_schools", "university", None):
         raise HTTPException(
@@ -174,7 +177,7 @@ async def create_school(data: SchoolCreate, db: DbSession, user: CurrentUser):
     return success(data=school, message="School created")
 
 
-@router.patch("/{school_id}")
+@router.patch("/{school_id}", response_model_exclude_unset=True, response_model=SuccessResponse[SchoolSnapshot])
 async def update_school(school_id: uuid.UUID, data: SchoolUpdate, db: DbSession, user: CurrentUser):
     school = await SchoolService.get_by_id(db, school_id)
     if school is None:

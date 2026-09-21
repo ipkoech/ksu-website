@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { hasChangedPayload, pickChangedPayloadWithRecord, type PayloadFieldMap } from "@/lib/changed-fields";
 import { richTextToEditorValue, richTextToPayloadValue } from "@/lib/rich-text-form";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 import {
   Button,
   Card,
@@ -243,6 +244,7 @@ export default function SchoolFormPage() {
     try {
       if (isNew) {
         await createSchool.mutateAsync(payload);
+        void revalidatePublicContent("main", "academic-schools");
         toast.success("School created successfully");
         router.push("/academic/schools");
       } else {
@@ -258,6 +260,7 @@ export default function SchoolFormPage() {
         }
         const response = await updateSchool.mutateAsync({ id: school!.id, data: patch });
         form.reset(schoolValues(response.data));
+        void revalidatePublicContent("main", "academic-schools");
         toast.success("School updated successfully");
       }
     } catch {

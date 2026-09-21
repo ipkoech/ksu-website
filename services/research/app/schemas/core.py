@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from pydantic import Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from .base import (
     BaseSchema,
     BaseReadSchema,
+    JsonObject,
     SEOFieldsMixin,
     SlugMixin,
     StatusMixin,
@@ -235,6 +236,10 @@ class ResearchProgramList(BaseReadSchema):
 
 
 class ResearchProjectBase(BaseSchema, SlugMixin, SEOFieldsMixin):
+    principal_investigator_name: str | None = None
+    school_name: str | None = Field(None, max_length=255)
+    funder_name: str | None = None
+    source_references: list[dict[str, Any]] | None = None
     title: str = Field(max_length=500)
     code: str | None = Field(None, max_length=32)
     program_id: uuid.UUID | None = None
@@ -277,6 +282,10 @@ class ResearchProjectCreate(ResearchProjectBase, StatusMixin):
 
 
 class ResearchProjectUpdate(BaseSchema):
+    principal_investigator_name: str | None = None
+    school_name: str | None = Field(None, max_length=255)
+    funder_name: str | None = None
+    source_references: list[dict[str, Any]] | None = None
     title: str | None = Field(None, max_length=500)
     slug: SlugStr | None = None
     code: str | None = Field(None, max_length=32)
@@ -319,6 +328,93 @@ class ResearchProjectRead(ResearchProjectBase, BaseReadSchema, StatusMixin):
     center: dict[str, Any] | None = None
     farm: dict[str, Any] | None = None
     team_members: list[dict[str, Any]] | None = None
+
+
+class ResearchProjectAdminDetail(BaseSchema):
+    """Typed envelope payload for the authenticated aggregate detail view."""
+
+    record: dict[str, Any]
+    relationships: dict[str, Any]
+
+
+class ResearchProjectPublicDetail(BaseSchema):
+    """Public project detail fields with typed relationship boundaries."""
+
+    # Keep the v1 fields consumed by the Research frontend explicit while
+    # dropping ORM-only columns (for example ``deleted_at``) during response
+    # validation.  Relationship snapshots remain intentionally bounded maps.
+    model_config = ConfigDict(extra="ignore")
+
+    principal_investigator_name: str | None = None
+    school_name: str | None = None
+    funder_name: str | None = None
+    source_references: list[dict[str, Any]] | None = None
+
+    id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    title: str
+    slug: str
+    code: str | None = None
+    program_id: uuid.UUID | None = None
+    center_id: uuid.UUID | None = None
+    farm_id: uuid.UUID | None = None
+    pi_id: uuid.UUID | None = None
+    project_type: str
+    start_date: date | None = None
+    end_date: date | None = None
+    summary: str | None = None
+    abstract: str | None = None
+    background: str | None = None
+    objectives: str | None = None
+    methodology: str | None = None
+    expected_outcomes: str | None = None
+    impact: str | None = None
+    deliverables: str | None = None
+    budget: Decimal | None = None
+    currency: str
+    grant_id: uuid.UUID | None = None
+    cover_image_id: uuid.UUID | None = None
+    gallery_media_ids: list[uuid.UUID] | None = None
+    attachment_media_ids: list[uuid.UUID] | None = None
+    document_media_ids: list[uuid.UUID] | None = None
+    meta_title: str | None = None
+    meta_description: str | None = None
+    keywords: dict[str, Any] | None = None
+    status: str
+    progress_percentage: int
+    is_active: bool
+    is_featured: bool = False
+    is_public: bool = True
+    display_order: int = 100
+    center: dict[str, Any] | None = None
+    program: dict[str, Any] | None = None
+    farm: dict[str, Any] | None = None
+    cover_image: dict[str, Any] | None = None
+    gallery_media: list[dict[str, Any]] = Field(default_factory=list)
+    attachment_media: list[dict[str, Any]] = Field(default_factory=list)
+    document_media: list[dict[str, Any]] = Field(default_factory=list)
+    team_members: list[dict[str, Any]] = Field(default_factory=list)
+    partners: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class ResearchFarmPublicDetail(BaseSchema):
+    """Public farm aggregate with a bounded record and relationship lists."""
+
+    record: ResearchFarmRead
+    relationships: dict[str, list[JsonObject]] = Field(default_factory=dict)
+    is_featured: bool
+    is_public: bool
+    display_order: int
+    center: dict[str, Any] | None = None
+    program: dict[str, Any] | None = None
+    farm: dict[str, Any] | None = None
+    cover_image: dict[str, Any] | None = None
+    gallery_media: list[dict[str, Any]] = Field(default_factory=list)
+    attachment_media: list[dict[str, Any]] = Field(default_factory=list)
+    document_media: list[dict[str, Any]] = Field(default_factory=list)
+    team_members: list[dict[str, Any]] = Field(default_factory=list)
+    partners: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ResearchProjectList(BaseReadSchema):

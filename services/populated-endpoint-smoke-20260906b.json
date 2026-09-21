@@ -1,0 +1,309 @@
+{
+  "captured_at": "2026-09-06",
+  "database": {
+    "database": "ksu_refactor_ci",
+    "engine": "PostgreSQL",
+    "host": "127.0.0.1",
+    "port": 55432,
+    "seeded_services": [
+      "main",
+      "research",
+      "library",
+      "heri_africa"
+    ],
+    "version": "18.6",
+    "writes_production_data": false
+  },
+  "endpoint_probe": {
+    "cache": "real Redis-backed public cache; cache keys observed after reads; edge-cache header is not emitted by the local API",
+    "commands": [
+      "python scripts/performance_harness.py --base-url http://127.0.0.1:18080 --scenario-file .tmp/main-populated-scenarios.json --requests 25 --concurrency 5 --warmup 2 --output .tmp/main-populated-real-performance.json",
+      "python scripts/performance_harness.py --base-url http://127.0.0.1:18081 --scenario-file .tmp/research-populated-scenarios.json --requests 30 --concurrency 5 --warmup 2 --output .tmp/research-populated-real-performance.json",
+      "python scripts/performance_harness.py --base-url http://127.0.0.1:18082 --scenario-file .tmp/library-populated-scenarios.json --requests 30 --concurrency 5 --warmup 2 --output .tmp/library-populated-real-performance.json",
+      "python scripts/performance_harness.py --base-url http://127.0.0.1:18083 --scenario-file .tmp/heri-populated-scenarios.json --requests 30 --concurrency 5 --warmup 2 --output .tmp/heri-populated-real-performance.json"
+    ],
+    "expected_status": [
+      200
+    ],
+    "method": "GET",
+    "rate_limiter": "real Redis-backed limiter",
+    "response_body_required": true,
+    "services": {
+      "heri": {
+        "base_url": "http://127.0.0.1:18083",
+        "concurrency": 5,
+        "endpoints": {
+          "article": {
+            "errors": 0,
+            "p95_ms": 234.422,
+            "path": "/api/v1/heri/news/heri-africa-launch-at-kisii-university",
+            "successes": 4
+          },
+          "chair": {
+            "errors": 0,
+            "p95_ms": 63.638,
+            "path": "/api/v1/heri/chair",
+            "successes": 4
+          },
+          "health": {
+            "errors": 0,
+            "p95_ms": 46.625,
+            "path": "/api/v1/heri/health",
+            "successes": 5
+          },
+          "news": {
+            "errors": 0,
+            "p95_ms": 274.61,
+            "path": "/api/v1/heri/news",
+            "successes": 4
+          },
+          "project": {
+            "errors": 0,
+            "p95_ms": 206.582,
+            "path": "/api/v1/heri/research/projects/heri-africa-research-chairs",
+            "successes": 4
+          },
+          "projects": {
+            "errors": 0,
+            "p95_ms": 250.121,
+            "path": "/api/v1/heri/research/projects",
+            "successes": 4
+          },
+          "site": {
+            "errors": 0,
+            "p95_ms": 248.306,
+            "path": "/api/v1/heri/site",
+            "successes": 5
+          }
+        },
+        "passed": true,
+        "requests": 30,
+        "summary": {
+          "count": 30,
+          "edge_cache": {
+            "hit_ratio": null,
+            "hits": 0,
+            "observations": 0
+          },
+          "error_rate": 0.0,
+          "errors": 0,
+          "latency_ms": {
+            "max": 274.61,
+            "min": 13.894,
+            "p50": 55.764,
+            "p95": 250.121,
+            "p99": 274.61
+          },
+          "successes": 30,
+          "throughput_rps": 48.932
+        },
+        "warmup_per_endpoint": 2
+      },
+      "library": {
+        "base_url": "http://127.0.0.1:18082",
+        "concurrency": 5,
+        "endpoints": {
+          "branch": {
+            "errors": 0,
+            "p95_ms": 256.698,
+            "path": "/api/v1/library/branches/b8ec94c9-09cf-4699-96cb-4c7ea1cbc6f3",
+            "successes": 5
+          },
+          "branches": {
+            "errors": 0,
+            "p95_ms": 118.115,
+            "path": "/api/v1/library/branches/",
+            "successes": 5
+          },
+          "health": {
+            "errors": 0,
+            "p95_ms": 48.302,
+            "path": "/api/v1/health",
+            "successes": 5
+          },
+          "resource": {
+            "errors": 0,
+            "p95_ms": 134.818,
+            "path": "/api/v1/library/resources/5f3e12bf-4c64-4e5e-8d48-af6e200c7315",
+            "successes": 5
+          },
+          "resources": {
+            "errors": 0,
+            "p95_ms": 241.415,
+            "path": "/api/v1/library/resources/?library_id=b8ec94c9-09cf-4699-96cb-4c7ea1cbc6f3",
+            "successes": 5
+          },
+          "services": {
+            "errors": 0,
+            "p95_ms": 314.711,
+            "path": "/api/v1/library/services/?library_id=b8ec94c9-09cf-4699-96cb-4c7ea1cbc6f3",
+            "successes": 5
+          }
+        },
+        "passed": true,
+        "requests": 30,
+        "summary": {
+          "count": 30,
+          "edge_cache": {
+            "hit_ratio": null,
+            "hits": 0,
+            "observations": 0
+          },
+          "error_rate": 0.0,
+          "errors": 0,
+          "latency_ms": {
+            "max": 314.711,
+            "min": 11.375,
+            "p50": 95.338,
+            "p95": 256.698,
+            "p99": 314.711
+          },
+          "successes": 30,
+          "throughput_rps": 43.439
+        },
+        "warmup_per_endpoint": 2
+      },
+      "main": {
+        "base_url": "http://127.0.0.1:18080",
+        "concurrency": 5,
+        "endpoints": {
+          "article": {
+            "errors": 0,
+            "p95_ms": 99.558,
+            "path": "/api/v1/news/mou-university-of-pretoria",
+            "successes": 5
+          },
+          "health": {
+            "errors": 0,
+            "p95_ms": 71.022,
+            "path": "/api/v1/health",
+            "successes": 5
+          },
+          "news": {
+            "errors": 0,
+            "p95_ms": 156.263,
+            "path": "/api/v1/news",
+            "successes": 5
+          },
+          "school": {
+            "errors": 0,
+            "p95_ms": 84.201,
+            "path": "/api/v1/schools/school-of-agriculture-and-natural-resources-management",
+            "successes": 5
+          },
+          "schools": {
+            "errors": 0,
+            "p95_ms": 137.552,
+            "path": "/api/v1/schools",
+            "successes": 5
+          }
+        },
+        "passed": true,
+        "requests": 25,
+        "summary": {
+          "count": 25,
+          "edge_cache": {
+            "hit_ratio": null,
+            "hits": 0,
+            "observations": 0
+          },
+          "error_rate": 0.0,
+          "errors": 0,
+          "latency_ms": {
+            "max": 156.263,
+            "min": 10.436,
+            "p50": 71.022,
+            "p95": 137.552,
+            "p99": 156.263
+          },
+          "successes": 25,
+          "throughput_rps": 62.451
+        },
+        "warmup_per_endpoint": 2
+      },
+      "research": {
+        "base_url": "http://127.0.0.1:18081",
+        "concurrency": 5,
+        "endpoints": {
+          "centers": {
+            "errors": 0,
+            "p95_ms": 212.168,
+            "path": "/api/v1/centers",
+            "successes": 5
+          },
+          "health": {
+            "errors": 0,
+            "p95_ms": 46.053,
+            "path": "/api/v1/health",
+            "successes": 5
+          },
+          "project": {
+            "errors": 0,
+            "p95_ms": 212.432,
+            "path": "/api/v1/projects/climate-smart-agriculture-for-smallholder-food-security",
+            "successes": 5
+          },
+          "projects": {
+            "errors": 0,
+            "p95_ms": 186.468,
+            "path": "/api/v1/projects",
+            "successes": 5
+          },
+          "publications": {
+            "errors": 0,
+            "p95_ms": 191.691,
+            "path": "/api/v1/publications",
+            "successes": 5
+          },
+          "themes": {
+            "errors": 0,
+            "p95_ms": 207.626,
+            "path": "/api/v1/themes",
+            "successes": 5
+          }
+        },
+        "passed": true,
+        "requests": 30,
+        "summary": {
+          "count": 30,
+          "edge_cache": {
+            "hit_ratio": null,
+            "hits": 0,
+            "observations": 0
+          },
+          "error_rate": 0.0,
+          "errors": 0,
+          "latency_ms": {
+            "max": 212.432,
+            "min": 14.017,
+            "p50": 68.398,
+            "p95": 212.168,
+            "p99": 212.432
+          },
+          "successes": 30,
+          "throughput_rps": 54.981
+        },
+        "warmup_per_endpoint": 2
+      }
+    }
+  },
+  "limitations": [
+    "This is seeded local endpoint and serialization evidence, not a production consumer matrix.",
+    "The probe uses a representative health/list/detail route set and does not claim all registered endpoints.",
+    "It does not verify anonymous/authenticated/forbidden/missing cases, mutation invalidation, Redis failover, or deployed cross-service clients.",
+    "The small local dataset and four-process read sample are not production throughput or capacity evidence.",
+    "No production data or external service was modified."
+  ],
+  "redis": {
+    "cache_db": 1,
+    "cache_key_count_after_probe": 23,
+    "edge_cache_header_observations": 0,
+    "edge_cache_hit_ratio": null,
+    "engine": "Redis",
+    "host": "127.0.0.1",
+    "port": 16379,
+    "rate_limit_key_count_after_probe": 16,
+    "version": "8.0.5",
+    "writes_production_data": false
+  }
+}

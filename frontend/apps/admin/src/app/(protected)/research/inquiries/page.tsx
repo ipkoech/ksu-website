@@ -16,11 +16,13 @@ export default function ResearchInquiriesPage() {
 
   return (
     <EditableServiceResourcePage<ResearchGenericRecord, ResearchGenericPayload>
-      title="Research Consultancies"
+      title="Consultancies"
       description="Manage consultancy inquiries, clients, and engagement records."
       backHref="/research"
       queryKey={["research", "consultancies"]}
-      toolbarSlot={<ResearchSectionGuide title="Research Capacity" className="sm:ml-auto" />}
+      resourceKey="consultancies"
+      revalidatePublicService="research"
+      toolbarSlot={<ResearchSectionGuide title="Capacity" className="sm:ml-auto" />}
       tableLayout="compact"
       actionsInMenuOnly
       editorMode="sheet"

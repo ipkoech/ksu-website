@@ -222,10 +222,15 @@ def _serialize_section(section: PageSection, media_groups: dict[str, list[dict[s
         "approved_at": section.approved_at,
         "published_at": section.published_at,
         "display_order": _section_display_order(section),
+        "created_at": section.created_at,
+        "updated_at": section.updated_at,
+        "revision": section.revision or 1,
         "items": [
             {
                 "id": item.id,
                 "page_section_id": item.page_section_id,
+                "created_at": item.created_at,
+                "updated_at": item.updated_at,
                 "item_type": item.item_type,
                 "title": item.title,
                 "subtitle": item.subtitle,
@@ -240,6 +245,7 @@ def _serialize_section(section: PageSection, media_groups: dict[str, list[dict[s
                 "video_url": item.video_url,
                 "video_duration_seconds": item.video_duration_seconds,
                 "display_order": item.display_order,
+                "revision": item.revision or 1,
                 "is_enabled": item.is_enabled,
             }
             for item in public_items
@@ -308,6 +314,8 @@ def _serialize_spotlight(
         "valid_to": spotlight.valid_to,
         "approved_at": spotlight.approved_at,
         "published_at": spotlight.published_at,
+        "created_at": spotlight.created_at,
+        "updated_at": spotlight.updated_at,
         "primary_cta": primary_cta,
         "media": media_groups,
     }

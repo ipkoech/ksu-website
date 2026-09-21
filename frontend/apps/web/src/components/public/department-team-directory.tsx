@@ -381,7 +381,7 @@ export function DepartmentTeamDirectory({
 
   if (!members.length) {
     return (
-      <section className="rounded-lg border border-border bg-white p-6 shadow-sm">
+      <section className="rounded-lg border border-border bg-white p-6 shadow-sm" data-server-data-display="web-department-team">
         <p className="text-sm font-semibold text-foreground">
           No published ICT team records are available yet.
         </p>
@@ -393,6 +393,7 @@ export function DepartmentTeamDirectory({
     <section
       id="ict-team-directory"
       className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm"
+      data-server-data-display="web-department-team"
     >
       <div className="flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">

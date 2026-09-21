@@ -1,6 +1,5 @@
 import type { Event } from "@ksu/api-client";
 import { notFound } from "next/navigation";
-import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
 import {
   LibraryHero,
   LibrarySection,
@@ -16,8 +15,10 @@ import {
   shortText,
   type LibraryUpdateType,
 } from "../../../../lib/library-public-data";
+import { LibraryUpdateContentDisplay } from "./update-content-display";
 
-export const dynamic = "force-dynamic";
+// Published update details can use ISR; missing/upstream failures stay request-only.
+export const revalidate = 300;
 
 const TYPE_LABELS: Record<LibraryUpdateType, string> = {
   news: "News",
@@ -95,23 +96,14 @@ export default async function LibraryUpdateDetailPage({
           title={record.title}
           tone="white"
         >
-          <div className="max-w-[900px]">
-            <RichTextRenderer
-              content={
-                record.rich_text || record.content || record.plain_text || ""
-              }
-              className="prose-lg prose-headings:font-[family-name:var(--font-display)] prose-headings:text-primary prose-a:text-secondary"
-              emptyFallback={
-                <p className="text-base leading-8 text-muted-foreground">
-                  {shortText(
-                    record.summary ?? record.plain_text,
-                    "The full text of this update has not been published yet. Contact the library desk for details.",
-                    600,
-                  )}
-                </p>
-              }
-            />
-          </div>
+          <LibraryUpdateContentDisplay
+            content={record.rich_text || record.content || record.plain_text || ""}
+            fallback={shortText(
+              record.summary ?? record.plain_text,
+              "The full text of this update has not been published yet. Contact the library desk for details.",
+              600,
+            )}
+          />
         </LibrarySection>
       ) : null}
     </LibraryShell>

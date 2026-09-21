@@ -47,6 +47,7 @@ import {
 import { toast } from "@ksu/ui";
 import { useBlog, useCreateBlog, useUpdateBlog } from "@ksu/api-client";
 import type { Blog } from "@ksu/api-client";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const schema = z
   .object({
@@ -279,6 +280,7 @@ export default function BlogEditorPage() {
         }
         toast.success("Story updated successfully");
       }
+      void revalidatePublicContent("main", "blogs");
       router.push("/content/blogs");
     } catch {
       toast.error(isNew ? "Failed to create blog" : "Failed to update blog");

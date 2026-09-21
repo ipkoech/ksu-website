@@ -1,4 +1,17 @@
-import { getResearchApiBaseUrl, researchServiceApi } from "@ksu/api-client";
+import "server-only";
+import {
+  getResearchApiBaseUrl,
+  researchServiceApi,
+} from "@ksu/api-client/server";
+import type {
+  ResearchGenericRecord,
+  ResearchProject,
+} from "@ksu/api-client/server";
+import {
+  markUncacheableIfFailed,
+  uncachedPublicFallback,
+} from "@/lib/public-fetch";
+import { normalizePublicListResponse } from "@/lib/web-response-shapes";
 
 export type ResearchLandingTheme = {
   id: string;
@@ -78,38 +91,44 @@ export async function getResearchLanding(): Promise<ResearchLandingData> {
     }),
   ]);
 
-  const themes =
-    themesResult.status === "fulfilled"
-      ? (themesResult.value.data ?? [])
-          .filter((theme) => theme.is_active !== false)
-          .slice(0, 4)
-          .map((theme) => ({
-            id: theme.id,
-            name: theme.name ?? theme.title ?? "Research theme",
-            slug: theme.slug ?? theme.id,
-            description: plainExcerpt(theme.description, 140),
-          }))
-      : [];
+  // Preserve the partial research band for this request, but never cache an
+  // outage-shaped empty collection as the homepage's healthy representation.
+  markUncacheableIfFailed([themesResult, projectsResult]);
 
-  const featuredProjects =
-    projectsResult.status === "fulfilled"
-      ? (projectsResult.value.data ?? []).map((project) => ({
-          id: project.id,
-          title: project.title ?? "Featured research project",
-          slug: project.slug ?? project.id,
-          summary:
-            plainExcerpt(project.summary, 220) ??
-            plainExcerpt(project.expected_outcomes, 220),
-          status: typeof project.status === "string" ? project.status : null,
-          expectedOutcomes: plainExcerpt(project.expected_outcomes, 180),
-          imageUrl: researchAssetUrl(project.cover_image_url),
-          impact: plainExcerpt(project.impact, 200),
-        }))
-      : [];
+  const themes = settledList<ResearchGenericRecord>(themesResult)
+    .filter((theme) => theme.is_active !== false)
+    .slice(0, 4)
+    .map((theme) => ({
+      id: theme.id,
+      name: theme.name ?? theme.title ?? "Research theme",
+      slug: theme.slug ?? theme.id,
+      description: plainExcerpt(theme.description, 140),
+    }));
+
+  const featuredProjects = settledList<ResearchProject>(projectsResult).map(
+    (project) => ({
+      id: project.id,
+      title: project.title ?? "Featured research project",
+      slug: project.slug ?? project.id,
+      summary:
+        plainExcerpt(project.summary, 220) ??
+        plainExcerpt(project.expected_outcomes, 220),
+      status: typeof project.status === "string" ? project.status : null,
+      expectedOutcomes: plainExcerpt(project.expected_outcomes, 180),
+      imageUrl: researchAssetUrl(project.cover_image_url),
+      impact: plainExcerpt(project.impact, 200),
+    }),
+  );
 
   return {
     themes,
     featuredProjects,
     featuredProject: featuredProjects[0] ?? null,
   };
+}
+
+function settledList<T>(result: PromiseSettledResult<unknown>): T[] {
+  if (result.status !== "fulfilled") return [];
+  const normalized = normalizePublicListResponse<T>(result.value);
+  return normalized ? normalized.data : uncachedPublicFallback([]);
 }

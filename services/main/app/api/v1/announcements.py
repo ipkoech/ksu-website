@@ -9,13 +9,13 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ._scoped import can_access_scoped_record, require_scoped_record
 from ...deps import CurrentUser, DbSession, permissions_for_user
 from ...models import Announcement
-from ...schemas import AnnouncementCreate, AnnouncementUpdate
+from ...schemas import AnnouncementCreate, AnnouncementSnapshot, AnnouncementUpdate
 from ...services import AnnouncementService, ContentWorkflowService
 from .content_workflow import authorize_content_workflow_action
 
@@ -33,7 +33,7 @@ ANNOUNCEMENT_MANAGE_PERMISSIONS = [
 ]
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True, response_model=SuccessResponse[list[AnnouncementSnapshot]])
 @cached_public(timeout=300, vary_on=("page", "per_page", "scope_type", "scope_id", "is_main", "is_published", "search", "fields", "include"))
 async def list_announcements(
     db: DbSession,
@@ -61,7 +61,7 @@ async def list_announcements(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin")
+@router.get("/admin", response_model_exclude_unset=True, response_model=SuccessResponse[list[AnnouncementSnapshot]])
 async def list_admin_announcements(
     db: DbSession,
     user: CurrentUser,
@@ -117,7 +117,7 @@ async def list_admin_announcements(
     return success(data=selector.apply(items), meta=meta)
 
 
-@router.get("/id/{announcement_id}")
+@router.get("/id/{announcement_id}", response_model_exclude_unset=True, response_model=SuccessResponse[AnnouncementSnapshot])
 async def get_announcement_by_id(
     announcement_id: uuid.UUID,
     db: DbSession,
@@ -139,7 +139,7 @@ async def get_announcement_by_id(
     return success(data=selector.apply(item))
 
 
-@router.get("/{slug}")
+@router.get("/{slug}", response_model_exclude_unset=True, response_model=SuccessResponse[AnnouncementSnapshot])
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_announcement(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Announcement, fields)
@@ -149,7 +149,7 @@ async def get_announcement(slug: str, db: DbSession, fields: FieldSelection = Fi
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED, response_model_exclude_unset=True, response_model=SuccessResponse[AnnouncementSnapshot])
 async def create_announcement(data: AnnouncementCreate, db: DbSession, user: CurrentUser):
     await require_scoped_record(
         db,
@@ -169,7 +169,7 @@ async def create_announcement(data: AnnouncementCreate, db: DbSession, user: Cur
     return success(data=item, message="Announcement created")
 
 
-@router.patch("/{announcement_id}")
+@router.patch("/{announcement_id}", response_model_exclude_unset=True, response_model=SuccessResponse[AnnouncementSnapshot])
 async def update_announcement(announcement_id: uuid.UUID, data: AnnouncementUpdate, db: DbSession, user: CurrentUser):
     item = await AnnouncementService.get_by_id(db, announcement_id)
     if item is None:
@@ -215,7 +215,7 @@ async def update_announcement(announcement_id: uuid.UUID, data: AnnouncementUpda
     return success(data=item, message="Announcement updated")
 
 
-@router.post("/{announcement_id}/publish")
+@router.post("/{announcement_id}/publish", response_model_exclude_unset=True, response_model=SuccessResponse[AnnouncementSnapshot])
 async def publish_announcement(announcement_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await AnnouncementService.get_by_id(db, announcement_id)
     if item is None:
@@ -239,7 +239,7 @@ async def publish_announcement(announcement_id: uuid.UUID, db: DbSession, user: 
     return success(data=item, message="Announcement published")
 
 
-@router.post("/{announcement_id}/unpublish")
+@router.post("/{announcement_id}/unpublish", response_model_exclude_unset=True, response_model=SuccessResponse[AnnouncementSnapshot])
 async def unpublish_announcement(announcement_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await AnnouncementService.get_by_id(db, announcement_id)
     if item is None:

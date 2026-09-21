@@ -1,8 +1,12 @@
 """Main service ORM models."""
 
+# Package-level imports register and re-export the service's ORM models.
+# ruff: noqa: F401
+
 from ksu_common.models.base import Base  # noqa: F401
 
 from .audit_log import AuditLog
+from .audit_outbox import audit_outbox  # noqa: F401
 
 # Auth
 from .auth import Session, User
@@ -139,11 +143,15 @@ from .public_page import PublicSitePage
 from .support import ContactDirectory, FAQ, SupportTicket
 from .contact_inquiry import ContactInquiry, ContactInquiryMessage
 from .notification import Notification, NotificationDelivery, NotificationTemplate
+from .school_work_task import SchoolWorkTask
+from .school_evidence import SchoolEvidence
 
 __all__ = [
     # Base
     "Base",
     "AuditLog",
+    "SchoolWorkTask",
+    "SchoolEvidence",
     # Auth
     "User",
     "Session",
@@ -284,3 +292,4 @@ __all__ = [
     "NotificationTemplate",
     "NotificationDelivery",
 ]
+from .integration_job import IntegrationJob

@@ -7,18 +7,23 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ksu_common import cached_public
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import AlumniAssociation, AlumniAssociationMember
 from ...schemas import AlumniAssociationCreate, AlumniAssociationMemberCreate, AlumniAssociationUpdate
+from ...schemas.alumni import AlumniAssociationMemberSnapshot, AlumniAssociationSnapshot
 from ...services import AlumniAssociationService
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=SuccessResponse[list[AlumniAssociationSnapshot]],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("page", "per_page", "association_type", "school_id", "fields", "include"))
 async def list_alumni_associations(
     db: DbSession,
@@ -40,7 +45,11 @@ async def list_alumni_associations(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{slug}")
+@router.get(
+    "/{slug}",
+    response_model=SuccessResponse[AlumniAssociationSnapshot],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_alumni_association(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(AlumniAssociation, fields)
@@ -50,7 +59,11 @@ async def get_alumni_association(slug: str, db: DbSession, fields: FieldSelectio
     return success(data=selector.apply(item))
 
 
-@router.get("/{slug}/members")
+@router.get(
+    "/{slug}/members",
+    response_model=SuccessResponse[list[AlumniAssociationMemberSnapshot]],
+    response_model_exclude_unset=True,
+)
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_alumni_association_members(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     item = await AlumniAssociationService.get_by_slug(db, slug)
@@ -60,13 +73,24 @@ async def get_alumni_association_members(slug: str, db: DbSession, fields: Field
     return success(data=selector.apply(item.members))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("alumni.manage"))])
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[AlumniAssociationSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("alumni.manage"))],
+)
 async def create_alumni_association(data: AlumniAssociationCreate, db: DbSession, _: CurrentUser):
     item = await AlumniAssociationService.create(db, **data.model_dump())
     return success(data=item, message="Alumni association created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("alumni.manage"))])
+@router.patch(
+    "/{item_id}",
+    response_model=SuccessResponse[AlumniAssociationSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("alumni.manage"))],
+)
 async def update_alumni_association(item_id: uuid.UUID, data: AlumniAssociationUpdate, db: DbSession, _: CurrentUser):
     item = await AlumniAssociationService.get_by_id(db, item_id)
     if item is None:
@@ -75,7 +99,13 @@ async def update_alumni_association(item_id: uuid.UUID, data: AlumniAssociationU
     return success(data=item, message="Alumni association updated")
 
 
-@router.post("/{association_id}/members", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("alumni.manage"))])
+@router.post(
+    "/{association_id}/members",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[AlumniAssociationMemberSnapshot],
+    response_model_exclude_unset=True,
+    dependencies=[Depends(require_scope("alumni.manage"))],
+)
 async def add_alumni_association_member(
     association_id: uuid.UUID,
     data: AlumniAssociationMemberCreate,

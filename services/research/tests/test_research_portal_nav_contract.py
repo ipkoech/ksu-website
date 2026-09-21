@@ -10,7 +10,6 @@ hard to spot. This test fails loudly instead.
 from __future__ import annotations
 
 import re
-import sys
 from pathlib import Path
 
 import pytest
@@ -35,7 +34,6 @@ def _registry_nav_keys() -> set[str]:
 
 
 def _server_nav_keys() -> set[str]:
-    module = type(sys)("research_portal_context_navonly")
     source = _CONTEXT.read_text()
     table = source[
         source.index("RESEARCH_PORTAL_NAVIGATION") : source.index("@dataclass")

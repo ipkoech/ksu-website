@@ -9,13 +9,17 @@ from ksu_common.schemas.responses import success
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.database import get_db
-from ...schemas.page_cms_source_contract import PageCmsResearchSourceResolveRequest
+from ...schemas.base import SuccessEnvelope, SuccessEnvelopeWithMeta
+from ...schemas.page_cms_source_contract import PageCmsResearchSourceResolveRequest, PageCmsResearchSourceSummary
 from ...services.page_cms_source_contract import PageCmsResearchSourceService
 
 router = APIRouter(prefix="/page-cms-sources", tags=["Page CMS Sources"])
 
 
-@router.get("/{source_type}")
+@router.get(
+    "/{source_type}",
+    response_model=SuccessEnvelopeWithMeta[list[PageCmsResearchSourceSummary]],
+)
 async def search_page_cms_sources(
     source_type: str,
     page: int = Query(1, ge=1, le=100),
@@ -39,7 +43,10 @@ async def search_page_cms_sources(
     return success(data=[item.model_dump(mode="json") for item in result.items], meta=result.meta)
 
 
-@router.post("/{source_type}/resolve")
+@router.post(
+    "/{source_type}/resolve",
+    response_model=SuccessEnvelope[list[PageCmsResearchSourceSummary]],
+)
 async def resolve_page_cms_sources(
     source_type: str,
     request: PageCmsResearchSourceResolveRequest,

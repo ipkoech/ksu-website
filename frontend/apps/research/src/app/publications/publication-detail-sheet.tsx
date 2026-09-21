@@ -13,7 +13,7 @@ import {
 } from "@ksu/ui/components";
 import { ResearchRichText } from "../../components/research-rich-text";
 import { Badge } from "../../components/research-ui";
-import { compactText, formatDate, formatLabel } from "../../lib/research-public-data";
+import { compactText, formatDate, formatLabel } from "../../lib/research-formatters";
 
 export function PublicationDetailSheet({
   publication,

@@ -19,6 +19,8 @@ export default function LibraryEngagementPage() {
       title="Library Regulations"
       description="Publish and maintain borrowing, access, conduct, and fee regulations."
       backHref="/library"
+      resourceKey="engagement"
+      revalidatePublicService="library"
       queryKey={["library", "regulations"]}
       fields={[
         { name: "title", label: "Title", required: true },

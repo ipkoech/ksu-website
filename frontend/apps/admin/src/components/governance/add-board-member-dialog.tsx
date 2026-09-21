@@ -24,6 +24,7 @@ import {
 import { toast } from "@ksu/ui";
 import { useAddBoardMember } from "@ksu/api-client";
 import { PersonPicker } from "@/components/relationships";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 interface AddBoardMemberDialogProps {
   boardSlug: string;
@@ -88,6 +89,7 @@ export function AddBoardMemberDialog({
           notes: richTextToPlainText(formData.notes) || null,
         },
       });
+      void revalidatePublicContent("main", "governance");
       toast.success("Member added successfully");
       onSuccess();
       onOpenChange(false);

@@ -81,11 +81,10 @@ export function Reveal({
 
   return (
     <Tag
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ref={ref as any}
       id={id}
       className={cn(
-        "transition-[opacity,transform] duration-[450ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+        "transition-[opacity,transform] duration-500 ease-in-out",
         visible ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0",
         className,
       )}

@@ -23,7 +23,7 @@ import type {
   ResearchGrant,
   ResearchProject,
   ResearchPublication,
-} from "@ksu/api-client";
+} from "@ksu/api-client/server";
 import {
   compactText,
   formatDate,
@@ -35,6 +35,7 @@ import { getPartnerLogo } from "../lib/partner-logo";
 import { getResearchSiteContext, type ResearchSiteContext } from "../lib/research-site-context";
 import { Badge, FilledBadge, StatusMessage } from "../components/research-ui";
 import { ResearchRichText } from "../components/research-rich-text";
+import { ResearchHomepageDataDisplay } from "./research-homepage-data-display";
 
 export const revalidate = 300;
 
@@ -128,6 +129,13 @@ export default async function ResearchPage() {
         slides={heroSliders.data}
       />
 
+      <ResearchHomepageDataDisplay
+        featuredWorkCount={featuredWork.length}
+        partnerCount={partnerItems.length}
+        resourceCount={resourceToolItems.length}
+        newsCount={newsItems.length}
+      />
+
       <AmbientPageBackground as="div" variant="academic" intensity="soft">
         {errors.length > 0 && !hasHomepageRecords ? (
           <section className="px-4 pt-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
@@ -169,7 +177,7 @@ function ResearchLandingHero({
     "REIRM coordinates research, extension, innovation, partnerships, and resource mobilization for Kisii University.";
   const heroImage =
     getRecordImage(slide, "desktop_media") ||
-    "/images/research/research-office-operations-hero.webp";
+    "/images/research/verified/multidisciplinary-conference-2026.jpg";
   const slideActionHref = compactText(slide?.external_url);
   const slideActionLabel = compactText(slide?.link_text) || "Explore Research";
   const actions = slideActionHref
@@ -415,7 +423,7 @@ function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
     {
       kind: "Article" as const,
       eyebrow: "Research Articles",
-      title: "Research Articles",
+      title: "Articles",
       href: "/news",
       items: items.filter((item) => item.kind === "Article").slice(0, 3),
     },
@@ -872,7 +880,7 @@ function buildFeaturedWork(
     title: item.title,
     summary: compactText(item.summary ?? item.abstract ?? item.impact),
     href: item.slug ? `/projects/${item.slug}` : "/projects",
-    image: item.cover_image_url || "/images/research/research-projects-hero.webp",
+    image: item.cover_image_url || "/images/research/verified/multidisciplinary-conference-2026.jpg",
     tags: [formatLabel(item.project_type), formatLabel(item.status)].filter(Boolean),
     action: "View project details",
   }));
@@ -882,7 +890,7 @@ function buildFeaturedWork(
     title: item.title,
     summary: compactText(item.abstract ?? item.journal_name),
     href: item.slug ? `/publications/${item.slug}` : "/publications",
-    image: item.cover_image_url || "/images/research/research-demo-imagegen.webp",
+    image: item.cover_image_url || "/images/research/verified/riana-outreach-01.jpeg",
     tags: [formatLabel(item.publication_type), item.year ? String(item.year) : ""].filter(Boolean),
     action: "View publication",
   }));
@@ -892,7 +900,7 @@ function buildFeaturedWork(
     title: item.title,
     summary: compactText(item.summary ?? item.description ?? item.eligibility),
     href: item.slug ? `/funding/${item.slug}` : "/funding",
-    image: "/images/research/sustainability-hero-imagegen.webp",
+    image: "/images/research/verified/environment-03.jpeg",
     tags: [formatLabel(item.category), formatLabel(item.status)].filter(Boolean),
     action: "View grant details",
   }));
@@ -902,7 +910,7 @@ function buildFeaturedWork(
     title: compactText(item.title ?? item.name),
     summary: compactText(item.summary ?? item.description ?? item.about),
     href: item.slug ? `/innovations/${item.slug}` : "/innovations",
-    image: item.cover_image_url || "/images/research/research-innovation-hero.webp",
+    image: item.cover_image_url || "/images/research/verified/innovation-week-03.jpeg",
     tags: [formatLabel(item.innovation_type), formatLabel(item.status)].filter(Boolean),
     action: "View innovation",
   }));
@@ -922,7 +930,7 @@ function buildNewsItems(
     title: compactText(item.title ?? item.name),
     summary: compactText(item.summary ?? item.excerpt ?? item.description ?? item.plain_text ?? item.content),
     href: item.slug ? `/news/${item.slug}` : "/news",
-    image: getRecordImage(item, "featured_media") || "/images/research/research-events-hero.webp",
+    image: getRecordImage(item, "featured_media") || "/images/research/verified/multidisciplinary-conference-2026.jpg",
     date: formatDate(item.published_at ?? item.created_at),
     timestamp: getTimestamp(item.published_at ?? item.created_at),
   }));
@@ -932,7 +940,7 @@ function buildNewsItems(
     title: compactText(item.title ?? item.name),
     summary: compactText(item.summary ?? item.excerpt ?? item.description ?? item.plain_text ?? item.content),
     href: item.slug ? `/news/${item.slug}` : "/news",
-    image: getRecordImage(item, "featured_media") || "/images/research/research-events-hero.webp",
+    image: getRecordImage(item, "featured_media") || "/images/research/verified/multidisciplinary-conference-2026.jpg",
     date: formatDate(item.published_at ?? item.created_at),
     timestamp: getTimestamp(item.published_at ?? item.created_at),
   }));
@@ -942,7 +950,7 @@ function buildNewsItems(
     title: compactText(item.title ?? item.name),
     summary: compactText(item.summary ?? item.description ?? item.plain_text ?? item.content),
     href: item.slug ? `/news/${item.slug}` : "/news",
-    image: getRecordImage(item, "featured_media") || "/images/research/research-events-hero.webp",
+    image: getRecordImage(item, "featured_media") || "/images/research/verified/multidisciplinary-conference-2026.jpg",
     date: formatDate(item.published_at ?? item.valid_from ?? item.created_at),
     timestamp: getTimestamp(item.published_at ?? item.valid_from ?? item.created_at),
   }));
@@ -952,7 +960,7 @@ function buildNewsItems(
     title: compactText(item.title ?? item.name),
     summary: compactText(item.summary ?? item.description ?? item.plain_text ?? item.content),
     href: item.slug ? `/events/${item.slug}` : "/events",
-    image: getRecordImage(item, "featured_media") || "/images/research/research-events-hero.webp",
+    image: getRecordImage(item, "featured_media") || "/images/research/verified/multidisciplinary-conference-2026.jpg",
     date: formatDate(item.event_date ?? item.start_date ?? item.published_at ?? item.created_at),
     timestamp: getTimestamp(item.event_date ?? item.start_date ?? item.published_at ?? item.created_at),
   }));
@@ -981,7 +989,7 @@ function buildFocusItems(services: ResearchGenericRecord[]): FocusItem[] {
   return [
     ...backendItems,
     {
-      title: "Research Support",
+      title: "Support",
       summary: "Grants management, ethical review, research administration, and capacity building.",
       href: "/services",
       icon: Users,

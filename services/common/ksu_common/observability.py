@@ -64,20 +64,31 @@ class CompositeMetricsSink:
 
     def __init__(self, *sinks: MetricsSink) -> None:
         self._sinks = tuple(sinks)
+        self._reported_failures: set[tuple[int, str]] = set()
+
+    def _emit(self, method: str, name: str, value: int | float, tags: dict[str, str]) -> None:
+        for index, sink in enumerate(self._sinks):
+            callback = getattr(sink, method, None)
+            if not callable(callback):
+                continue
+            try:
+                callback(name, value, tags=tags)
+            except Exception as exc:
+                # Telemetry cannot reverse a committed operation. Keep healthy
+                # sinks working and bound outage logging per sink/method.
+                key = (index, method)
+                if key not in self._reported_failures:
+                    self._reported_failures.add(key)
+                    logger.error("metrics sink failed", extra={"exception_type": type(exc).__name__})
 
     def increment(self, name: str, value: int, *, tags: dict[str, str]) -> None:
-        for sink in self._sinks:
-            sink.increment(name, value, tags=tags)
+        self._emit("increment", name, value, tags)
 
     def observe_latency(self, name: str, duration_ms: float, *, tags: dict[str, str]) -> None:
-        for sink in self._sinks:
-            sink.observe_latency(name, duration_ms, tags=tags)
+        self._emit("observe_latency", name, duration_ms, tags)
 
     def gauge(self, name: str, value: float, *, tags: dict[str, str]) -> None:
-        for sink in self._sinks:
-            sink_gauge = getattr(sink, "gauge", None)
-            if callable(sink_gauge):
-                sink_gauge(name, value, tags=tags)
+        self._emit("gauge", name, value, tags)
 
 
 class SpanSink(Protocol):

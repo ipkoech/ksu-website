@@ -12,7 +12,7 @@ import { contentAttachmentRoles } from "@/components/content/content-attachment-
 export default function ResearchNewsPage() {
   return (
     <ResearchContentResourcePage
-      title="Research News"
+      title="News"
       description="Manage news records scoped to research."
       queryKey={["research", "content", "news"]}
       resource={{

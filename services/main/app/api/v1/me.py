@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ._person_media import with_person_photo_urls
-from ...deps import CurrentUser, DbSession, require_scope
+from ...deps import CurrentUser, CurrentToken, DbSession, require_scope
 from ...models import Person, UserPreference
 from ...schemas.access import PortalAccessResponse
-from ...schemas import MyProfileUpdate, PersonRead, UserPreferencesUpdate
+from ...schemas import MyProfileUpdate, PersonRead, UserPreferencesRead, UserPreferencesUpdate
 from ...services.portal_access import get_portal_access
 from ...services import MediaService, PersonService
 
@@ -124,14 +124,22 @@ async def _validate_profile_media(
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
-@router.get("/profile", dependencies=[Depends(require_scope("profile.self_edit"))])
+@router.get(
+    "/profile",
+    response_model=SuccessResponse[PersonRead],
+    dependencies=[Depends(require_scope("profile.self_edit"))],
+)
 async def get_my_profile(db: DbSession, user: CurrentUser):
     """Return the authenticated user's linked public staff profile."""
     person = await _current_profile(db, user)
     return success(data=_profile_data(person))
 
 
-@router.patch("/profile", dependencies=[Depends(require_scope("profile.self_edit"))])
+@router.patch(
+    "/profile",
+    response_model=SuccessResponse[PersonRead],
+    dependencies=[Depends(require_scope("profile.self_edit"))],
+)
 async def update_my_profile(data: MyProfileUpdate, db: DbSession, user: CurrentUser):
     """Update editable fields on the authenticated user's linked public staff profile."""
     person = await _current_profile(db, user)
@@ -141,14 +149,14 @@ async def update_my_profile(data: MyProfileUpdate, db: DbSession, user: CurrentU
     return success(data=_profile_data(person), message="Profile updated")
 
 
-@router.get("/preferences")
+@router.get("/preferences", response_model=SuccessResponse[UserPreferencesRead])
 async def get_my_preferences(db: DbSession, user: CurrentUser):
     """Return generic preferences owned by the authenticated user."""
     preferences = await _load_user_preferences(db, user)
     return success(data={"preferences": [_preference_data(record) for record in preferences]})
 
 
-@router.patch("/preferences")
+@router.patch("/preferences", response_model=SuccessResponse[UserPreferencesRead])
 async def update_my_preferences(data: UserPreferencesUpdate, db: DbSession, user: CurrentUser):
     """Upsert generic preferences owned by the authenticated user."""
     preferences = await _load_user_preferences(db, user)
@@ -181,9 +189,12 @@ async def update_my_preferences(data: UserPreferencesUpdate, db: DbSession, user
     )
 
 
-@router.get("/portal-access")
-async def get_my_portal_access(db: DbSession, user: CurrentUser):
+@router.get("/portal-access", response_model=SuccessResponse[PortalAccessResponse])
+async def get_my_portal_access(db: DbSession, user: CurrentUser, actor: CurrentToken, response: Response):
     """Return backend-authoritative portal access records for the authenticated user."""
     portals = await get_portal_access(db, user)
-    payload = PortalAccessResponse(portals=portals)
+    from ...services.workspace_access import discover_workspaces, preferred_workspace
+    response.headers["Cache-Control"] = "no-store"
+    payload = PortalAccessResponse(portals=portals, workspaces=await discover_workspaces(db, actor),
+                                   preferred_workspace=await preferred_workspace(db, actor))
     return success(data=payload.model_dump(mode="json"))

@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     "Research",
     "Inclusivity and Borderlessness",
   ],
-  manifest: "/site.webmanifest",
+  manifest: "/manifests/web.webmanifest",
   openGraph: {
     title: "Kisii University",
     description:

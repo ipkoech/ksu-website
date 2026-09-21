@@ -20,7 +20,7 @@ def upgrade() -> None:
     tables = [
         table
         for table_name, table in Base.metadata.tables.items()
-        if table_name != "heri.command_idempotency"
+        if table_name not in {"heri.command_idempotency", "heri.audit_relay"}
     ]
     Base.metadata.create_all(bind=op.get_bind(), tables=tables)
 
@@ -29,6 +29,6 @@ def downgrade() -> None:
     tables = [
         table
         for table_name, table in Base.metadata.tables.items()
-        if table_name != "heri.command_idempotency"
+        if table_name not in {"heri.command_idempotency", "heri.audit_relay"}
     ]
     Base.metadata.drop_all(bind=op.get_bind(), tables=tables)

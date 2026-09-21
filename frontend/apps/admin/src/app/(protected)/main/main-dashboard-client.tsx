@@ -63,7 +63,7 @@ function adminStatValue(
 export function MainDashboardClient() {
   const adminStats = useQuery({
     queryKey: ["main", "admin-stats"],
-    queryFn: () => statsApi.admin(),
+    queryFn: ({ signal }) => statsApi.admin({ signal }),
   });
   const news = useNewsList({ ...countParams, is_published: true });
   const schools = useSchools(countParams);
@@ -73,7 +73,7 @@ export function MainDashboardClient() {
   const staff = useStaffAssignments(countParams);
   const media = useQuery({
     queryKey: queryKeys.media.list(countParams),
-    queryFn: () => mediaApi.list(countParams),
+    queryFn: ({ signal }) => mediaApi.list(countParams, { signal }),
   });
   const overview = useReportsOverview({ days: 30 });
   const overviewData = overview.data?.data;

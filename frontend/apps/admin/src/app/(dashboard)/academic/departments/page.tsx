@@ -22,6 +22,7 @@ import { toast } from "@ksu/ui";
 import Link from "next/link";
 import { useState } from "react";
 import { TableSearch } from "@/components/shared/table-search";
+import { revalidatePublicContent } from "@/lib/api/public-revalidation";
 
 const departmentListFields = [
     "id",
@@ -150,6 +151,7 @@ export default function DepartmentsPage() {
     const handleDelete = (id: string) => {
         confirmDelete("department", async () => {
             await deleteDepartment.mutateAsync(id);
+            void revalidatePublicContent("main", "academic-departments");
             toast.success("Department deleted successfully");
         });
     };

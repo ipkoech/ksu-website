@@ -11,7 +11,7 @@ import {
   PopoverTrigger,
 } from "@ksu/ui/components";
 import { cn } from "@ksu/ui/lib/utils";
-import { getMainApiBaseUrl, getStoredAccessToken, refreshStoredAccessToken } from "@ksu/api-client";
+import { ApiClientError, getStoredAccessToken, mainApi } from "@ksu/api-client";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 
 type NotificationItem = {
@@ -33,28 +33,19 @@ function useNotifications() {
   return useQuery({
     queryKey: ["current-user", "notifications", "unread"],
     queryFn: async () => {
-      let token = getStoredAccessToken();
-      if (!token) return { data: [], meta: { total: 0 } };
-      const baseUrl = getMainApiBaseUrl();
-      let response = await fetch(`${baseUrl}/api/v1/notifications?per_page=5&unread_only=true`, {
-        credentials: "include",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.status === 401) {
-        const refreshed = await refreshStoredAccessToken(baseUrl);
-        token = getStoredAccessToken();
-        if (refreshed && token) {
-          response = await fetch(`${baseUrl}/api/v1/notifications?per_page=5&unread_only=true`, {
-            credentials: "include",
-            headers: { Authorization: `Bearer ${token}` },
-          });
-        } else {
+      if (!getStoredAccessToken()) return { data: [], meta: { total: 0 } };
+      try {
+        return await mainApi.get<NotificationsResponse>(
+          "/api/v1/notifications",
+          { per_page: 5, unread_only: true },
+          { auth: "session" },
+        );
+      } catch (error) {
+        if (error instanceof ApiClientError && error.status === 401) {
           window.dispatchEvent(new CustomEvent("ksu:session-expired"));
-          return { data: [], meta: { total: 0 } };
         }
+        return { data: [], meta: { total: 0 } };
       }
-      if (!response.ok) return { data: [], meta: { total: 0 } };
-      return response.json() as Promise<NotificationsResponse>;
     },
     refetchInterval: 30_000,
   });
@@ -64,8 +55,9 @@ function useUnreadCount() {
   return useQuery({
     queryKey: ["current-user", "notifications", "unread-count"],
     queryFn: async () => {
-      const response = await notificationRequest("/api/v1/notifications/unread-count");
-      return (await response.json()) as { data: { count: number } };
+      return notificationRequest<{ data: { count: number } }>(
+        "/api/v1/notifications/unread-count",
+      );
     },
     refetchInterval: 30_000,
   });
@@ -75,10 +67,9 @@ function useNotificationPreferences() {
   return useQuery({
     queryKey: ["current-user", "notifications", "preferences"],
     queryFn: async () => {
-      const response = await notificationRequest("/api/v1/notifications/preferences");
-      return (await response.json()) as {
+      return notificationRequest<{
         data: { in_app: boolean; email: boolean; sms: boolean; push: boolean };
-      };
+      }>("/api/v1/notifications/preferences");
     },
   });
 }
@@ -95,58 +86,40 @@ function formatTime(dateStr: string) {
 }
 
 async function markAsRead(notificationId: string) {
-  let token = getStoredAccessToken();
-  if (!token) return;
-  const baseUrl = getMainApiBaseUrl();
-  let response = await fetch(`${baseUrl}/api/v1/notifications/${notificationId}/read`, {
-    method: "PATCH",
-    credentials: "include",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (response.status === 401) {
-    const refreshed = await refreshStoredAccessToken(baseUrl);
-    token = getStoredAccessToken();
-    if (refreshed && token) {
-      response = await fetch(`${baseUrl}/api/v1/notifications/${notificationId}/read`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-    } else {
+  if (!getStoredAccessToken()) return;
+  try {
+    await mainApi.patch<void>(
+      `/api/v1/notifications/${notificationId}/read`,
+      undefined,
+      undefined,
+      { auth: "session" },
+    );
+  } catch (error) {
+    if (error instanceof ApiClientError && error.status === 401) {
       window.dispatchEvent(new CustomEvent("ksu:session-expired"));
     }
+    throw error;
   }
 }
 
-async function notificationRequest(path: string, init?: RequestInit) {
-  let token = getStoredAccessToken();
-  const baseUrl = getMainApiBaseUrl();
-  let response = await fetch(`${baseUrl}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init?.headers,
-    },
-  });
-  if (response.status === 401) {
-    const refreshed = await refreshStoredAccessToken(baseUrl);
-    token = getStoredAccessToken();
-    if (refreshed && token) {
-      response = await fetch(`${baseUrl}${path}`, {
-        ...init,
-        credentials: "include",
-        headers: {
-          ...(init?.body ? { "Content-Type": "application/json" } : {}),
-          Authorization: `Bearer ${token}`,
-          ...init?.headers,
-        },
-      });
-    }
+async function notificationRequest<T>(path: string, init?: RequestInit) {
+  const method = init?.method?.toUpperCase() ?? "GET";
+  const headers = new Headers(init?.headers);
+  if (init?.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
   }
-  if (!response.ok) throw new Error("Notification request failed");
-  return response;
+  try {
+    return await mainApi.request<T>(method, path, {
+      body: init?.body ? JSON.parse(init.body as string) : undefined,
+      headers: Object.fromEntries(headers.entries()),
+      auth: "session",
+    });
+  } catch (error) {
+    if (error instanceof ApiClientError && error.status === 401) {
+      window.dispatchEvent(new CustomEvent("ksu:session-expired"));
+    }
+    throw error;
+  }
 }
 
 export function NotificationBell() {

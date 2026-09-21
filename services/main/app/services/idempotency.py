@@ -97,6 +97,12 @@ async def acquire_json_command(
         return JSONResponse(status_code=409, content=jsonable_encoder(key_reuse_body))
 
     if claim.kind == "replay":
+        # Successful replays must flow back through FastAPI's declared
+        # response model. Returning a raw 2xx Response here would bypass the
+        # strict response guard and could let a stale stored body escape
+        # validation. Error replays retain their explicit error status/body.
+        if (claim.record.status_code or 200) < 400:
+            return claim
         return JSONResponse(status_code=claim.record.status_code, content=jsonable_encoder(claim.record.response_body))
     if claim.kind == "in_progress":
         return JSONResponse(
@@ -122,11 +128,11 @@ def complete_json_command(
     *,
     status_code: int,
     response_body: dict[str, Any],
-) -> JSONResponse:
-    """Persist and return a JSON terminal success response."""
+) -> dict[str, Any]:
+    """Persist and return a JSON body for FastAPI to validate and serialize."""
     body = jsonable_encoder(response_body)
     complete_command(record, status_code=status_code, response_body=body)
-    return JSONResponse(status_code=status_code, content=body)
+    return body
 
 
 def fail_json_command(

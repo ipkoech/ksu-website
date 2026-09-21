@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 from pydantic import Field
 
-from .base import BaseReadSchema, BaseSchema, SlugStr
+from .base import BaseReadSchema, BaseSchema, SlugStr, optional_snapshot
 
 
 GovernanceDisplayGroup = Literal["chairperson", "member", "secretary"]
@@ -349,3 +349,54 @@ class BoardRead(BaseReadSchema):
     status: str
     display_order: int
     members: list[BoardMemberRead] = Field(default_factory=list)
+
+
+# Governance selectors may omit columns, so preserve a bounded field set while
+# allowing sparse ORM projections at the HTTP boundary.
+BoardSnapshot = optional_snapshot("BoardSnapshot", BoardRead)
+BoardMemberSnapshot = optional_snapshot("BoardMemberSnapshot", BoardMemberRead)
+GovernanceRoleSnapshot = optional_snapshot("GovernanceRoleSnapshot", GovernanceRoleRead)
+CouncilMemberSnapshot = optional_snapshot("CouncilMemberSnapshot", CouncilMemberRead)
+
+
+class PublicCouncilPage(BaseSchema):
+    title: str
+    description: str | None = None
+    hero_image: dict[str, str | None] | None = None
+    breadcrumb: list[str] = Field(default_factory=list)
+
+
+class PublicCouncilMandate(BaseSchema):
+    label: str
+    heading: str
+    description: str | None = None
+    document_cta: dict[str, str | None] = Field(default_factory=dict)
+
+
+class PublicCouncilMember(BaseSchema):
+    id: uuid.UUID
+    person_id: uuid.UUID
+    name: str
+    role: str
+    slug: str | None = None
+    portrait: dict[str, str | None] | None = None
+    display_order: int
+    is_acting: bool
+    profile_summary: str | None = None
+
+
+class PublicCouncilResponse(BaseSchema):
+    page: PublicCouncilPage
+    mandate: PublicCouncilMandate
+    chairperson: PublicCouncilMember | None = None
+    members: list[PublicCouncilMember] = Field(default_factory=list)
+    secretary: PublicCouncilMember | None = None
+
+
+class PublicCouncilProfile(PublicCouncilMember):
+    official_designation: str | None = None
+    represented_institution: str | None = None
+    current_office: str | None = None
+    appointment_category: str | None = None
+    is_ex_officio: bool
+    is_voting_member: bool
