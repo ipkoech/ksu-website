@@ -97,6 +97,8 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Research Admin browser fault injection
+        id: browser
+        continue-on-error: true
         working-directory: frontend/apps/research
         run: pnpm exec playwright test --config=playwright.admin.config.ts
 
@@ -112,15 +114,23 @@ jobs:
           python -m pip install -e "./services/common[test]" -e "./services/contracts" -e "./services/main[test]" -e "./services/research[test]"
 
       - name: Research backend suite
+        id: research_backend
+        continue-on-error: true
         run: python scripts/run_backend_tests.py research
 
       - name: Main backend suite
+        id: main_backend
+        continue-on-error: true
         run: python scripts/run_backend_tests.py main
 
       - name: Shared backend suites
+        id: shared_backend
+        continue-on-error: true
         run: python scripts/run_backend_tests.py common contracts
 
       - name: Research source Ruff
+        id: ruff
+        continue-on-error: true
         run: >
           ruff check
           services/research/app/core/admin_expected_actor.py
@@ -145,3 +155,13 @@ jobs:
           services/research/tests/test_admin_pathway_lock.py
           services/research/tests/test_admin_workspace_policy.py
           services/research/tests/test_admin_workspace_registration.py
+
+      - name: Enforce aggregate verification
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.browser.outcome }}" = "success"
+          test "${{ steps.research_backend.outcome }}" = "success"
+          test "${{ steps.main_backend.outcome }}" = "success"
+          test "${{ steps.shared_backend.outcome }}" = "success"
+          test "${{ steps.ruff.outcome }}" = "success"
