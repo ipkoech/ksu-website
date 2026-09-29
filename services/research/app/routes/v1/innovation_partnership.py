@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.auth import get_current_user, require_scope, require_scoped_record
 from ...core.database import get_db
+from ...services.admin_workspace_revision import lock_workspace_record
 from ...schemas import (
     CompetitionEntryStatusAction,
     CompetitionEntryCreate,
@@ -50,6 +51,7 @@ async def _get_authorized_action_item(
     item = await service.get_by_id(db, item_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Innovation pathway record not found")
+    item = await lock_workspace_record(db, service.model, item)
     center_id = getattr(item, "center_id", None)
     if hasattr(service.model, "center_id") or center_id is not None:
         require_scoped_record(user, write_scope, "research", center_id)

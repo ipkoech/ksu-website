@@ -22,6 +22,7 @@ from ksu_common.runtime import (
     create_service_app,
 )
 from ksu_common.security import decode_key_material
+from ksu_common.runtime import STANDARD_CORS_HEADERS
 
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal, engine
@@ -66,7 +67,7 @@ def create_app() -> FastAPI:
             response_model_missing_baseline=0,
             lifespan=lifespan,
         ),
-        cors=CorsConfig(origins=settings.CORS_ORIGINS),
+        cors=CorsConfig(origins=settings.CORS_ORIGINS, headers=(*STANDARD_CORS_HEADERS, "X-KSU-Expected-Actor", "If-Match")),
         register_routes=register_routers,
         audit=AuditOptions(
             session_factory=AsyncSessionLocal,

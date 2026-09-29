@@ -16,6 +16,10 @@ from .innovation_partnership import router as innovation_partnership_router
 from .internal import router as internal_router
 from .partners import router as partners_router
 from .portal import router as portal_router
+from .admin_workspace import router as admin_workspace_router
+from .admin_workspace_export import router as admin_workspace_export_router
+from .admin_workspace_receipts import router as admin_workspace_receipts_router
+from .admin_workspace_operations import router as admin_workspace_operations_router
 from .workflow import router as workflow_router
 from .page_cms_source_contract import router as page_cms_source_contract_router
 from .projects import router as projects_router
@@ -31,6 +35,10 @@ router = APIRouter()
 router.include_router(health_router)
 router.include_router(internal_router)
 router.include_router(portal_router)
+router.include_router(admin_workspace_router)
+router.include_router(admin_workspace_export_router)
+router.include_router(admin_workspace_receipts_router)
+router.include_router(admin_workspace_operations_router)
 router.include_router(workflow_router)
 router.include_router(audit_router)
 router.include_router(analytics_router)
@@ -51,6 +59,7 @@ router.include_router(partners_router)
 router.include_router(page_cms_source_contract_router)
 router.include_router(donations_router)
 router.include_router(stories_router)
+router.include_router(stories_router, prefix="/research")
 router.include_router(content_router)
 
 # Namespaced aliases under /research so the gateway can route these to the

@@ -1242,3 +1242,12 @@ function dispatchResearchAskAIStreamRecord(
   }
   onEvent({ event, data } as ResearchAskAIStreamEvent);
 }
+
+// Contract-driven Research administrative workspace.
+export * from "./admin-contract";
+export * from "./admin";
+export * from "./admin-support";
+export * from "./admin-journal";
+export * from "./admin-operations";
+export * from "./admin-batch";
+export * from "./admin-auth";

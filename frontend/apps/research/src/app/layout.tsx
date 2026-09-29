@@ -6,6 +6,7 @@ import { Announcements } from "@ksu/ui/components";
 import { announcementsApi } from "@ksu/api-client/server";
 import { unstable_cache } from "next/cache";
 import { ResearchHeader } from "../components/research-header";
+import { ResearchRouteFrame } from "../components/research-route-frame";
 import { getResearchSiteContext } from "../lib/research-site-context";
 import "./globals.css";
 import {
@@ -159,21 +160,30 @@ export default async function RootLayout({
         <AccessibilityInitScript />
         <AccessibilityShell mainContentId="research-main">
           <div className="research-canvas min-h-screen text-foreground">
-            <Announcements
-              announcements={announcements}
-              rotating={announcements.length > 1}
-              intervalMs={6500}
-              background="secondary"
-            />
-            <ResearchHeader />
-            {children}
-            <PublicFooter
-              columns={researchFooterColumns}
-              contactInfo={resolvedContactInfo}
-              socialLinks={institutionSocialLinks}
-              legalLinks={researchLegalLinks}
-              className="bg-[linear-gradient(135deg,hsl(var(--primary))_0%,hsl(var(--primary))_82%,hsl(var(--secondary))_155%)]"
-            />
+            <ResearchRouteFrame
+              before={
+                <>
+                  <Announcements
+                    announcements={announcements}
+                    rotating={announcements.length > 1}
+                    intervalMs={6500}
+                    background="secondary"
+                  />
+                  <ResearchHeader />
+                </>
+              }
+              after={
+                <PublicFooter
+                  columns={researchFooterColumns}
+                  contactInfo={resolvedContactInfo}
+                  socialLinks={institutionSocialLinks}
+                  legalLinks={researchLegalLinks}
+                  className="bg-[linear-gradient(135deg,hsl(var(--primary))_0%,hsl(var(--primary))_82%,hsl(var(--secondary))_155%)]"
+                />
+              }
+            >
+              {children}
+            </ResearchRouteFrame>
           </div>
         </AccessibilityShell>
       </body>
