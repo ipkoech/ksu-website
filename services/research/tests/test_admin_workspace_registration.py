@@ -17,15 +17,28 @@ EXPECTED = {key for group in GROUPS.values() for key in group}
 
 @lru_cache(maxsize=1)
 def route_methods():
-    """Validate the assembled service route table, not import-time router copies."""
+    """Collect methods from the assembled service, including deferred routers."""
     methods = set()
-    app = create_app()
-    for route in app.routes:
-        path = getattr(route, "path", "")
-        if path.startswith("/api/v1"):
-            path = path[len("/api/v1"):] or "/"
-        for method in getattr(route, "methods", None) or ():
-            methods.add((path, method))
+
+    def visit(container, prefix=""):
+        for route in getattr(container, "routes", ()):
+            path = getattr(route, "path", None)
+            if path is not None:
+                normalized = f"{prefix}{path}"
+                if normalized.startswith("/api/v1"):
+                    normalized = normalized[len("/api/v1"):] or "/"
+                for method in getattr(route, "methods", None) or ():
+                    methods.add((normalized, method))
+                continue
+
+            nested = getattr(route, "router", None)
+            if nested is None:
+                nested = getattr(route, "app", None)
+            nested_prefix = getattr(route, "prefix", "") or ""
+            if nested is not None:
+                visit(nested, f"{prefix}{nested_prefix}")
+
+    visit(create_app())
     return methods
 
 
