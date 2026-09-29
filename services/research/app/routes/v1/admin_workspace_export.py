@@ -20,6 +20,9 @@ from .admin_workspace import WorkflowState, matching_query, private_response
 
 router = APIRouter(prefix="/research-portal/export", tags=["Research workspace exports"])
 
+_DB_DEPENDENCY = _DB_DEPENDENCY
+_USER_DEPENDENCY = _USER_DEPENDENCY
+
 
 @router.get("/{resource}", response_class=StreamingResponse, responses={200: {"content": {
     "text/csv": {"schema": {"type": "string", "format": "binary"}},
@@ -32,7 +35,7 @@ async def export_records(
     status: str | None = Query(None, max_length=32), center_id: uuid.UUID | None = None,
     filter_field: str | None = Query(None, max_length=64), filter_value: str | None = Query(None, max_length=255),
     sort: Literal["updated_at", "created_at", "title", "name", "deadline", "display_order"] = "updated_at",
-    order: Literal["asc", "desc"] = "desc", db: AsyncSession = Depends(get_db), user=Depends(get_current_user),
+    order: Literal["asc", "desc"] = "desc", db: AsyncSession = _DB_DEPENDENCY, user=_USER_DEPENDENCY,
 ) -> Response:
     if not authorize_permission(user, "research.manage_reports").allowed:
         raise HTTPException(403, "Research report export authority is required")
