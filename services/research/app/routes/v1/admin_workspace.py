@@ -31,8 +31,8 @@ from ...services.research_workflow import adapter_for
 
 router = APIRouter(prefix="/research-portal/workspace", tags=["Research workspace"])
 
-_DB_DEPENDENCY = _DB_DEPENDENCY
-_USER_DEPENDENCY = _USER_DEPENDENCY
+_DB_DEPENDENCY = Depends(get_db)
+_USER_DEPENDENCY = Depends(get_current_user)
 WorkflowState = Literal["draft", "pending", "published", "rejected"]
 
 
