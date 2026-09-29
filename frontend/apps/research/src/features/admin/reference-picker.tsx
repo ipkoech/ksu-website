@@ -10,21 +10,21 @@ import { useWorkspaceRead } from "./use-workspace";
 import { Problem } from "./problem";
 
 export function ReferencePicker({ resource, disabled, onSelect }: { resource: string; disabled?: boolean; onSelect: (id: string) => void }) {
-  const { modules } = useResearchWorkspace(), module = modules.find(item => item.key === resource);
+  const { modules } = useResearchWorkspace(), resourceModule = modules.find(item => item.key === resource);
   const [open, setOpen] = useState(false);
-  if (!module) return <p className="rw-help">The linked directory is not assigned to you. The service still validates manually entered IDs.</p>;
-  return <><Button type="button" variant="outline" disabled={disabled} onClick={() => setOpen(true)}>Find in {module.label.toLowerCase()}</Button>
-    {open && <PickerDialog module={module} onClose={() => setOpen(false)} onSelect={id => { onSelect(id); setOpen(false); }} />}</>;
+  if (!resourceModule) return <p className="rw-help">The linked directory is not assigned to you. The service still validates manually entered IDs.</p>;
+  return <><Button type="button" variant="outline" disabled={disabled} onClick={() => setOpen(true)}>Find in {resourceModule.label.toLowerCase()}</Button>
+    {open && <PickerDialog resourceModule={resourceModule} onClose={() => setOpen(false)} onSelect={id => { onSelect(id); setOpen(false); }} />}</>;
 }
-function PickerDialog({ module, onClose, onSelect }: { module: RWModule; onClose: () => void; onSelect: (id: string) => void }) {
+function PickerDialog({ resourceModule, onClose, onSelect }: { resourceModule: RWModule; onClose: () => void; onSelect: (id: string) => void }) {
   const dialog = useRef<HTMLDialogElement>(null), titleId = useId(), searchId = useId();
   const [input, setInput] = useState(""), [search, setSearch] = useState(""), [page, setPage] = useState(1);
-  const load = useCallback((signal: AbortSignal) => researchWorkspaceApi.list(module.key, { search: search || undefined, page, per_page: 10 }, signal), [module.key, search, page]);
+  const load = useCallback((signal: AbortSignal) => researchWorkspaceApi.list(resourceModule.key, { search: search || undefined, page, per_page: 10 }, signal), [resourceModule.key, search, page]);
   const { state, reload } = useWorkspaceRead(load);
   useEffect(() => { const element = dialog.current; element?.showModal(); return () => element?.close(); }, []);
   const apply = () => { setSearch(input.trim()); setPage(1); };
   return <dialog ref={dialog} className="rw-dialog" aria-labelledby={titleId} onCancel={onClose}>
-    <h2 id={titleId}>Choose from {module.label.toLowerCase()}</h2><p>Only records in your signed scope are listed. Selection does not save the parent record.</p>
+    <h2 id={titleId}>Choose from {resourceModule.label.toLowerCase()}</h2><p>Only records in your signed scope are listed. Selection does not save the parent record.</p>
     <label htmlFor={searchId}>Search records</label><div className="rw-array-row"><Input id={searchId} value={input} maxLength={255} onChange={event => setInput(event.target.value)}
       onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); event.stopPropagation(); apply(); } }} />
       <Button type="button" onClick={apply}>Search</Button></div>
