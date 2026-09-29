@@ -1,0 +1,55 @@
+name: Research Admin Ruff Autofix
+on:
+  push:
+    branches:
+      - feat/research-admin-product-completion
+    paths:
+      - '.github/workflows/research-admin-ruff-autofix.yml'
+permissions:
+  contents: write
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install ruff
+      - name: Apply safe Ruff fixes
+        run: >
+          ruff check --fix
+          services/research/app/core/admin_expected_actor.py
+          services/research/app/routes/v1/admin_workspace.py
+          services/research/app/routes/v1/admin_workspace_export.py
+          services/research/app/routes/v1/admin_workspace_operations.py
+          services/research/app/routes/v1/admin_workspace_receipts.py
+          services/research/app/services/admin_workspace.py
+          services/research/app/services/admin_workspace_export.py
+          services/research/app/services/admin_workspace_operations.py
+          services/research/app/services/admin_workspace_policy.py
+          services/research/app/services/admin_workspace_query.py
+          services/research/app/services/admin_workspace_receipts.py
+          services/research/app/services/admin_workspace_reconciliation.py
+          services/research/app/services/admin_workspace_registry.py
+          services/research/app/services/admin_workspace_revision.py
+          services/research/app/services/admin_workspace_schema.py
+          services/research/app/services/admin_workspace_write_scope.py
+          services/main/app/core/workspace_actor.py
+          services/main/tests/test_workspace_actor.py
+          services/research/tests/test_admin_native_write_scope.py
+          services/research/tests/test_admin_pathway_lock.py
+          services/research/tests/test_admin_workspace_policy.py
+          services/research/tests/test_admin_workspace_registration.py
+      - name: Commit fixes and remove one-time workflow
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/research-admin-ruff-autofix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Apply safe Ruff fixes to Research Admin"
+          git push origin HEAD:feat/research-admin-product-completion
