@@ -20,6 +20,7 @@ from ksu_common.cache import get_redis
 from ksu_contracts.rbac import AuthorizationScope, authorize_permission, normalize_permission
 
 from .core.config import get_settings
+from .core.workspace_actor import require_workspace_actor
 from .core.database import get_session
 from .models import ApiKey, Person, Role, RolePermission, Session, User, UserRole
 from .security.role_assignments import is_role_assignment_current
@@ -172,6 +173,7 @@ async def get_current_active_user(
     db: Annotated[AsyncSession, Depends(get_db)],
     access_cookie: Annotated[str | None, Cookie(alias="ksu_access")] = None,
     legacy_access_cookie: Annotated[str | None, Cookie(alias="access_token")] = None,
+    expected_actor: Annotated[str | None, Header(alias="X-KSU-Expected-Actor")] = None,
 ) -> User:
     """Resolve the currently authenticated active user."""
     credentials = _credentials_from_request(credentials, access_cookie or legacy_access_cookie)
@@ -203,6 +205,7 @@ async def get_current_active_user(
     user = result.scalar_one_or_none()
     if user is None or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive or missing user")
+    require_workspace_actor(user.id, expected_actor)
     active_session = next((session for session in user.sessions if session.jti == payload.jti), None)
     verified = active_session.mfa_verified_at if active_session is not None else None
     user._auth_assurance = {"mfa_enabled": user.mfa_enabled is True,

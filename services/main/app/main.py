@@ -23,6 +23,7 @@ from ksu_common.runtime import (
     create_service_app,
 )
 from ksu_common.security import decode_key_material
+from ksu_common.runtime import STANDARD_CORS_HEADERS
 from sqlalchemy import select
 
 from .api.v1 import register_routes
@@ -78,7 +79,7 @@ def create_app() -> FastAPI:
             response_model_missing_baseline=0,
             lifespan=lifespan,
         ),
-        cors=CorsConfig(origins=settings.CORS_ORIGINS),
+        cors=CorsConfig(origins=settings.CORS_ORIGINS, headers=(*STANDARD_CORS_HEADERS, "X-KSU-Expected-Actor")),
         register_routes=_register_service_routes,
         audit=AuditOptions(
             session_factory=AsyncSessionLocal,

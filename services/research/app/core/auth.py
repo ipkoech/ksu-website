@@ -17,6 +17,7 @@ from ksu_common.security import decode_key_material, decode_token
 
 from .config import get_settings
 from .idempotency_context import set_authenticated_scope
+from .admin_expected_actor import validate_expected_actor
 
 settings = get_settings()
 public_key = decode_key_material(settings.JWT_PUBLIC_KEY_B64, field_name="JWT_PUBLIC_KEY_B64")
@@ -63,6 +64,7 @@ async def get_current_user(
         raw=payload,
     )
     token_payload = await _validate_identity(token, token_payload)
+    validate_expected_actor(request, token_payload)
     if selected_school := request.headers.get("X-School-ID"):
         token_payload.raw["selected_school"] = selected_school
     set_authenticated_scope(token_payload.sub)

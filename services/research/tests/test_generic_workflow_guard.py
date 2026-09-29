@@ -9,6 +9,7 @@ from ksu_common.auth import TokenPayload
 from pydantic import BaseModel
 
 from app.models import Partner
+import app.routes.v1._crud as crud_routes
 from app.routes.v1._crud import build_crud_router
 from app.services.research_workflow_commands import create_editorial_record
 
@@ -25,7 +26,8 @@ class Patch(BaseModel):
     ("pending", {"name": "Changed"}),
     ("active", {"name": "Changed"}),
 ])
-async def test_generic_patch_cannot_bypass_canonical_workflow(current, changes):
+async def test_generic_patch_cannot_bypass_canonical_workflow(current, changes, monkeypatch):
+    monkeypatch.setattr(crud_routes, "register_resource", lambda **_kwargs: None)
     record = Partner(id=uuid4(), name="Original", partner_type="community", status=current, is_active=current == "active")
     service = SimpleNamespace(model=Partner, get_by_id=AsyncMock(return_value=record), update=AsyncMock())
     router = build_crud_router(prefix="/partners", tag="Partners", service=service,
@@ -34,8 +36,11 @@ async def test_generic_patch_cannot_bypass_canonical_workflow(current, changes):
     user = TokenPayload("actor", "session", raw={"scope_grants": [
         {"scope_type": "global", "permissions": ["farm.manage", "partnerships.manage"]},
     ]})
+    db = AsyncMock()
+    monkeypatch.setattr(crud_routes, "lock_workspace_record", AsyncMock(return_value=record))
+    request = Mock(headers={})
     with pytest.raises(HTTPException) as error:
-        await endpoint(record.id, Patch(**changes), db=AsyncMock(), user=user)
+        await endpoint(record.id, request=request, data=Patch(**changes), db=db, user=user)
     assert error.value.status_code == 409
     service.update.assert_not_awaited()
     assert record.name == "Original"

@@ -17,6 +17,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.auth import get_current_user, require_scope, require_scoped_record
 from ...core.database import get_db
+from ...services.admin_workspace_write_scope import create_scope_targets, mutation_scope_targets
+from ...services.admin_workspace_revision import lock_workspace_record, require_workspace_revision
+from ...services.admin_workspace_registry import register_resource
 from ...schemas.base import JsonObject, SuccessEnvelope, SuccessEnvelopeWithMeta
 from ...services.research_domains import (
     assert_record_in_domain,
@@ -41,6 +44,11 @@ def build_crud_router(
     public_create: bool = False,
     public_create_rate_limit: tuple[int, int] = (5, 60),
 ):
+    register_resource(
+        prefix=prefix, tag=tag, service=service,
+        create_schema=create_schema, update_schema=update_schema,
+        write_scope=write_scope, public_read=public_read, public_create=public_create,
+    )
     router = APIRouter(prefix=prefix, tags=[tag])
     read_dependencies = [] if public_read else [Depends(require_scope(write_scope))]
     model_has_center_scope = hasattr(service.model, "center_id")
@@ -375,8 +383,7 @@ def build_crud_router(
             db: AsyncSession = Depends(get_db),
             access=Depends(require_scope(write_scope)),
         ):
-            center_id = getattr(data, "center_id", None)
-            if access is not None and (model_has_center_scope or center_id is not None):
+            for center_id in create_scope_targets(resource_key, service.model, data):
                 require_scoped_record(access, write_scope, "research", center_id)
             # Reject a payload that files the record outside the caller's
             # domain, then stamp the domain's discriminator so a farm manager
@@ -397,6 +404,7 @@ def build_crud_router(
     )
     async def update_item(
         item_id: uuid.UUID,
+        request: Request,
         data: update_schema = Body(...),
         db: AsyncSession = Depends(get_db),
         user=Depends(get_current_user),
@@ -404,17 +412,13 @@ def build_crud_router(
         item = await service.get_by_id(db, item_id)
         if item is None:
             raise HTTPException(status_code=404, detail=f"{tag.rstrip('s')} not found")
-        current_center_id = getattr(item, "center_id", None)
-        next_center_id = getattr(data, "center_id", None)
-        center_ids = {current_center_id, next_center_id} if next_center_id is not None else {current_center_id}
-        for center_id in center_ids:
-            if center_id is not None:
-                require_scoped_record(user, write_scope, "research", center_id)
-        if model_has_center_scope and current_center_id is None and next_center_id is None:
-            require_scoped_record(user, write_scope, "research", None)
+        item = await lock_workspace_record(db, service.model, item, request)
+        for center_id in mutation_scope_targets(resource_key, service.model, item, data):
+            require_scoped_record(user, write_scope, "research", center_id)
         # The stored record must already belong to the caller's domain, and the
         # patch must not move it out of that domain.
         assert_record_in_domain(user, resource_key, item)
+        require_workspace_revision(item, request)
         assert_record_in_domain(user, resource_key, data)
         adapter = adapter_for(resource_key)
         if adapter is not None:
@@ -438,16 +442,20 @@ def build_crud_router(
     )
     async def delete_item(
         item_id: uuid.UUID,
+        request: Request,
         db: AsyncSession = Depends(get_db),
         user=Depends(get_current_user),
     ):
         item = await service.get_by_id(db, item_id)
         if item is None:
             raise HTTPException(status_code=404, detail=f"{tag.rstrip('s')} not found")
-        center_id = getattr(item, "center_id", None)
-        if model_has_center_scope or center_id is not None:
+        item = await lock_workspace_record(db, service.model, item, request)
+        for center_id in mutation_scope_targets(resource_key, service.model, item):
             require_scoped_record(user, write_scope, "research", center_id)
         assert_record_in_domain(user, resource_key, item)
+        require_workspace_revision(item, request)
+        if adapter_for(resource_key) is not None and workflow_state(resource_key, item) in {"pending", "published"}:
+            raise HTTPException(409, "Withdraw the record before deleting it")
         await service.soft_delete(db, item, actor_id=user.sub)
         return success(
             data={"id": str(item_id), "deleted": True},
