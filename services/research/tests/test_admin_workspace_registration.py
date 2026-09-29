@@ -18,15 +18,38 @@ EXPECTED = {key for group in GROUPS.values() for key in group}
 
 @lru_cache(maxsize=1)
 def route_methods():
-    """Validate the effective assembled service route table."""
-    methods: set[tuple[str, str]] = set()
-    app = create_app()
-    for context in iter_route_contexts(app.routes):
-        path = context.path
-        if path.startswith("/api/v1"):
-            path = path[len("/api/v1"):] or "/"
-        for method in context.methods or ():
-            methods.add((path, method))
+    """Collect methods from the assembled service, including deferred routers."""
+    methods = set()
+
+    def context_prefix(route):
+        context = getattr(route, "include_context", None)
+        if context is None:
+            return ""
+        prefix = getattr(context, "prefix", None)
+        if prefix is None and isinstance(context, dict):
+            prefix = context.get("prefix")
+        return prefix or ""
+
+    def visit(container, prefix=""):
+        for route in getattr(container, "routes", ()):
+            path = getattr(route, "path", None)
+            if path is not None:
+                normalized = f"{prefix}{path}"
+                if normalized.startswith("/api/v1"):
+                    normalized = normalized[len("/api/v1"):] or "/"
+                for method in getattr(route, "methods", None) or ():
+                    methods.add((normalized, method))
+                continue
+
+            nested = (
+                getattr(route, "original_router", None)
+                or getattr(route, "router", None)
+                or getattr(route, "app", None)
+            )
+            if nested is not None:
+                visit(nested, f"{prefix}{context_prefix(route)}")
+
+    visit(create_app())
     return methods
 
 
