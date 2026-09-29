@@ -1,5 +1,5 @@
 name: Research Admin Backend Verification
-# final backend verification after lint cleanup
+# final delivery verification
 
 on:
   push:

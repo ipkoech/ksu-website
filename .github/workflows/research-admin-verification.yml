@@ -1,8 +1,5 @@
-name: Research Admin
-# verification after registration-test fixes Verification
-# final verification run 4 2
-# rerun after lint fixes
-# rerun after type-contract fixes
+name: Research Admin Verification
+# final delivery verification
 
 on:
   push:
