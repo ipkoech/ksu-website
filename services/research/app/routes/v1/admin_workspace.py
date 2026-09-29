@@ -30,6 +30,9 @@ from ...services.research_portal_context import build_research_portal_context
 from ...services.research_workflow import adapter_for
 
 router = APIRouter(prefix="/research-portal/workspace", tags=["Research workspace"])
+
+_DB_DEPENDENCY = _DB_DEPENDENCY
+_USER_DEPENDENCY = _USER_DEPENDENCY
 WorkflowState = Literal["draft", "pending", "published", "rejected"]
 
 
@@ -39,7 +42,7 @@ def private_response(response: Response) -> None:
 
 
 @router.get("/context", response_model=SuccessEnvelope[JsonObject])
-async def workspace_context(response: Response, actor=Depends(get_current_user)):
+async def workspace_context(response: Response, actor=_USER_DEPENDENCY):
     private_response(response)
     context = build_research_portal_context(actor)
     modules = catalog_for(actor)
@@ -52,7 +55,7 @@ async def workspace_context(response: Response, actor=Depends(get_current_user))
 
 
 @router.get("/catalog", response_model=SuccessEnvelope[list[JsonObject]])
-async def catalog(response: Response, actor=Depends(get_current_user)):
+async def catalog(response: Response, actor=_USER_DEPENDENCY):
     private_response(response)
     return success(data=catalog_for(actor))
 
@@ -115,7 +118,7 @@ async def list_records(
     filter_value: str | None = Query(None, max_length=255),
     sort: Literal["updated_at", "created_at", "title", "name", "deadline", "display_order"] = "updated_at",
     order: Literal["asc", "desc"] = "desc",
-    db: AsyncSession = Depends(get_db), actor=Depends(get_current_user),
+    db: AsyncSession = _DB_DEPENDENCY, actor=_USER_DEPENDENCY,
 ):
     private_response(response)
     query, model = matching_query(actor, resource, search=search, state=state, status=status,
@@ -131,7 +134,7 @@ async def list_records(
 
 @router.get("/{resource}/{item_id}", response_model=SuccessEnvelope[JsonObject])
 async def get_record(resource: str, item_id: uuid.UUID, response: Response,
-                     db: AsyncSession = Depends(get_db), actor=Depends(get_current_user)):
+                     db: AsyncSession = _DB_DEPENDENCY, actor=_USER_DEPENDENCY):
     private_response(response)
     spec = resource_spec(resource)
     query = spec.service._apply_filters(spec.service.model.active_query().options(lazyload("*")), read_filters(actor, resource))
