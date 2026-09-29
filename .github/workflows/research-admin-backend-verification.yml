@@ -1,0 +1,93 @@
+name: Research Admin Backend Verification
+
+on:
+  push:
+    branches:
+      - feat/research-admin-product-completion
+    paths:
+      - '.github/workflows/research-admin-backend-verification.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U ci -d ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff
+          python -m pip install -e "./services/common[test]" -e "./services/contracts" -e "./services/main[test]" -e "./services/research[test]"
+      - name: Research backend suite
+        id: research_backend
+        continue-on-error: true
+        run: python scripts/run_backend_tests.py research
+      - name: Main backend suite
+        id: main_backend
+        continue-on-error: true
+        run: python scripts/run_backend_tests.py main
+      - name: Shared backend suites
+        id: shared_backend
+        continue-on-error: true
+        run: python scripts/run_backend_tests.py common contracts
+      - name: Research Admin Ruff
+        id: ruff
+        continue-on-error: true
+        run: >
+          ruff check
+          services/research/app/core/admin_expected_actor.py
+          services/research/app/routes/v1/admin_workspace.py
+          services/research/app/routes/v1/admin_workspace_export.py
+          services/research/app/routes/v1/admin_workspace_operations.py
+          services/research/app/routes/v1/admin_workspace_receipts.py
+          services/research/app/services/admin_workspace.py
+          services/research/app/services/admin_workspace_export.py
+          services/research/app/services/admin_workspace_operations.py
+          services/research/app/services/admin_workspace_policy.py
+          services/research/app/services/admin_workspace_query.py
+          services/research/app/services/admin_workspace_receipts.py
+          services/research/app/services/admin_workspace_reconciliation.py
+          services/research/app/services/admin_workspace_registry.py
+          services/research/app/services/admin_workspace_revision.py
+          services/research/app/services/admin_workspace_schema.py
+          services/research/app/services/admin_workspace_write_scope.py
+          services/main/app/core/workspace_actor.py
+          services/main/tests/test_workspace_actor.py
+          services/research/tests/test_admin_native_write_scope.py
+          services/research/tests/test_admin_pathway_lock.py
+          services/research/tests/test_admin_workspace_policy.py
+          services/research/tests/test_admin_workspace_registration.py
+      - name: Enforce backend verification
+        if: always()
+        run: |
+          test "${{ steps.research_backend.outcome }}" = "success"
+          test "${{ steps.main_backend.outcome }}" = "success"
+          test "${{ steps.shared_backend.outcome }}" = "success"
+          test "${{ steps.ruff.outcome }}" = "success"
