@@ -1,5 +1,5 @@
 """Run with the normal Research service test environment and its real imports."""
-import sys
+from functools import lru_cache
 
 import pytest
 from app.main import create_app
@@ -15,20 +15,17 @@ from app.services.research_workflow import adapter_for
 EXPECTED = {key for group in GROUPS.values() for key in group}
 
 
+@lru_cache(maxsize=1)
 def route_methods():
-    """Collect methods from the concrete imported v1 routers.
-
-    The service test harness imports route modules directly; validating those
-    router objects avoids depending on when the aggregate router copies them.
-    """
+    """Validate the assembled service route table, not import-time router copies."""
     methods = set()
-    for name, module in tuple(sys.modules.items()):
-        if name != "app.routes.v1" and not name.startswith("app.routes.v1."):
-            continue
-        module_router = getattr(module, "router", None)
-        for route in getattr(module_router, "routes", ()):
-            for method in getattr(route, "methods", None) or ():
-                methods.add((route.path, method))
+    app = create_app()
+    for route in app.routes:
+        path = getattr(route, "path", "")
+        if path.startswith("/api/v1"):
+            path = path[len("/api/v1"):] or "/"
+        for method in getattr(route, "methods", None) or ():
+            methods.add((path, method))
     return methods
 
 
