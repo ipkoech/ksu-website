@@ -48,15 +48,9 @@ jobs:
           python -m pip install ruff greenlet
           python -m pip install -e "./services/common[test]" -e "./services/contracts" -e "./services/main[test]" -e "./services/research[test]"
       - name: Diagnose assembled Research CRUD routes
-        run: |
-          cd services/research
-          PYTHONPATH=. python - <<'PY'
-          from app.main import create_app
-          app = create_app()
-          for route in app.routes:
-              if any(token in route.path for token in ("/projects", "/centers", "/startups")):
-                  print(route.path, sorted(getattr(route, "methods", ()) or ()))
-          PY
+        run: >
+          python scripts/ci_environment.py research --
+          python -c "from app.main import create_app; app=create_app(); [print(r.path, sorted(getattr(r, 'methods', ()) or ())) for r in app.routes if any(t in r.path for t in ('/projects','/centers','/startups'))]"
       - name: Research backend suite
         id: research_backend
         continue-on-error: true
