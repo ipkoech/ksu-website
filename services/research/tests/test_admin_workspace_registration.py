@@ -2,7 +2,6 @@
 from functools import lru_cache
 
 import pytest
-from fastapi.routing import iter_route_contexts
 from app.main import create_app
 from app.services.admin_workspace import field_specs, filter_fields_for, native_commands
 from app.services.admin_workspace_registry import (
@@ -12,6 +11,7 @@ from app.services.admin_workspace_registry import (
     RESOURCES,
 )
 from app.services.research_workflow import adapter_for
+from fastapi.routing import iter_route_contexts
 
 EXPECTED = {key for group in GROUPS.values() for key in group}
 
