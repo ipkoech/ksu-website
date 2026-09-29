@@ -1,0 +1,109 @@
+name: Research Admin Product Completion
+
+on:
+  push:
+    branches:
+      - feat/research-admin-product-completion
+    paths:
+      - '.research-admin-bootstrap/**'
+      - '.github/workflows/research-admin-product-completion.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: research-admin-product-completion
+  cancel-in-progress: false
+
+jobs:
+  integrate-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Decode release package
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 --decode .research-admin-bootstrap/payload.b64 > /tmp/research-admin.zip
+          rm -rf /tmp/research-admin-package
+          mkdir -p /tmp/research-admin-package
+          python - <<'PY'
+          import zipfile
+          with zipfile.ZipFile('/tmp/research-admin.zip') as archive:
+              archive.extractall('/tmp/research-admin-package')
+          PY
+          test -f /tmp/research-admin-package/ksu-research-retry-integrity/apply.py
+
+      - name: Apply reviewed Research Admin source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python /tmp/research-admin-package/ksu-research-retry-integrity/apply.py             --repo "$GITHUB_WORKSPACE"             --write             --allow-ref-drift             --patch /tmp/research-admin-review.patch
+
+      - name: Remove bootstrap transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .research-admin-bootstrap
+          rm -f .github/workflows/research-admin-product-completion.yml
+
+      - name: Commit integrated product source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A
+          git diff --cached --check
+          git status --short
+          git commit -m "Build Research Admin portal"
+          git push origin HEAD:feat/research-admin-product-completion
+
+      - name: Enable pinned pnpm
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@9 --activate
+          pnpm --version
+
+      - name: Run full repository release gates
+        id: gates
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          rm -rf /tmp/research-admin-gates
+          python /tmp/research-admin-package/ksu-research-retry-integrity/release-gates.py             --repo "$GITHUB_WORKSPACE"             --output /tmp/research-admin-gates             --install             --all-results
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Print release-gate report
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          if [ -f /tmp/research-admin-gates/release-report.json ]; then
+            cat /tmp/research-admin-gates/release-report.json
+          fi
+          for log in /tmp/research-admin-gates/*.log; do
+            [ -f "$log" ] || continue
+            echo "::group::$log"
+            tail -n 300 "$log"
+            echo "::endgroup::"
+          done
+
+      - name: Enforce release gates
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.gates.outputs.exit_code }}" = "0"
