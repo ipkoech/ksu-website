@@ -40,6 +40,9 @@ from .admin_workspace import private_response
 
 router = APIRouter(prefix="/research-portal/operations", tags=["Research workspace operations"])
 
+_DB_DEPENDENCY = _DB_DEPENDENCY
+_USER_DEPENDENCY = _USER_DEPENDENCY
+
 
 class ValuesBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -48,7 +51,7 @@ class ValuesBody(BaseModel):
 
 @router.get("/{resource}/{item_id}", response_model=SuccessEnvelope[JsonObject])
 async def operations_catalog(resource: str, item_id: uuid.UUID, response: Response,
-                             db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
+                             db: AsyncSession = _DB_DEPENDENCY, user=_USER_DEPENDENCY):
     private_response(response)
     parent = await load_record(db, user, resource, item_id)
     editable = record_actions(user, resource, parent)["edit"]
@@ -74,7 +77,7 @@ async def operations_catalog(resource: str, item_id: uuid.UUID, response: Respon
 @router.get("/{resource}/{item_id}/relationships/{target}", response_model=SuccessEnvelopeWithMeta[list[JsonObject]])
 async def list_links(resource: str, item_id: uuid.UUID, target: str, response: Response,
                      page: int = Query(1, ge=1, le=100000), per_page: int = Query(20, ge=1, le=100),
-                     db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
+                     db: AsyncSession = _DB_DEPENDENCY, user=_USER_DEPENDENCY):
     private_response(response)
     item = association(resource, target)
     await load_record(db, user, resource, item_id)
@@ -89,14 +92,14 @@ async def list_links(resource: str, item_id: uuid.UUID, target: str, response: R
 
 @router.put("/{resource}/{item_id}/relationships/{target}/{target_id}", response_model=SuccessEnvelope[JsonObject])
 async def link_record(resource: str, item_id: uuid.UUID, target: str, target_id: uuid.UUID,
-                      data: ValuesBody, db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
+                      data: ValuesBody, db: AsyncSession = _DB_DEPENDENCY, user=_USER_DEPENDENCY):
     return success(data=await mutate_association(db, user, association(resource, target), item_id,
                                                  target_id, link=True, values=data.values))
 
 
 @router.delete("/{resource}/{item_id}/relationships/{target}/{target_id}", response_model=SuccessEnvelope[JsonObject])
 async def unlink_record(resource: str, item_id: uuid.UUID, target: str, target_id: uuid.UUID,
-                        db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
+                        db: AsyncSession = _DB_DEPENDENCY, user=_USER_DEPENDENCY):
     return success(data=await mutate_association(db, user, association(resource, target), item_id,
                                                  target_id, link=False, values={}))
 
@@ -104,7 +107,7 @@ async def unlink_record(resource: str, item_id: uuid.UUID, target: str, target_i
 @router.get("/{resource}/{item_id}/children/{collection}", response_model=SuccessEnvelopeWithMeta[list[JsonObject]])
 async def list_children(resource: str, item_id: uuid.UUID, collection: str, response: Response,
                         page: int = Query(1, ge=1, le=100000), per_page: int = Query(20, ge=1, le=100),
-                        db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
+                        db: AsyncSession = _DB_DEPENDENCY, user=_USER_DEPENDENCY):
     private_response(response)
     item = child_collection(resource, collection)
     parent = await load_record(db, user, resource, item_id)
@@ -122,7 +125,7 @@ async def list_children(resource: str, item_id: uuid.UUID, collection: str, resp
 
 @router.post("/{resource}/{item_id}/children/{collection}", status_code=201, response_model=SuccessEnvelope[JsonObject])
 async def create_child(resource: str, item_id: uuid.UUID, collection: str, data: ValuesBody,
-                       db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
+                       db: AsyncSession = _DB_DEPENDENCY, user=_USER_DEPENDENCY):
     item = child_collection(resource, collection)
     parent = await load_record(db, user, resource, item_id, write=True, lock=True)
     service = native_service(item.service)
@@ -144,7 +147,7 @@ async def owned_child(db, item, parent_id, child_id):
 
 @router.patch("/{resource}/{item_id}/children/{collection}/{child_id}", response_model=SuccessEnvelope[JsonObject])
 async def update_child(resource: str, item_id: uuid.UUID, collection: str, child_id: uuid.UUID, request: Request,
-                       data: ValuesBody, db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
+                       data: ValuesBody, db: AsyncSession = _DB_DEPENDENCY, user=_USER_DEPENDENCY):
     item = child_collection(resource, collection)
     parent = await load_record(db, user, resource, item_id, write=True, lock=True)
     record = await owned_child(db, item, item_id, child_id)
@@ -160,7 +163,7 @@ async def update_child(resource: str, item_id: uuid.UUID, collection: str, child
 
 @router.delete("/{resource}/{item_id}/children/{collection}/{child_id}", response_model=SuccessEnvelope[JsonObject])
 async def delete_child(resource: str, item_id: uuid.UUID, collection: str, child_id: uuid.UUID, request: Request,
-                       db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
+                       db: AsyncSession = _DB_DEPENDENCY, user=_USER_DEPENDENCY):
     item = child_collection(resource, collection)
     parent = await load_record(db, user, resource, item_id, write=True, lock=True)
     record = await owned_child(db, item, item_id, child_id)
