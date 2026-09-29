@@ -17,28 +17,36 @@ EXPECTED = {key for group in GROUPS.values() for key in group}
 
 @lru_cache(maxsize=1)
 def route_methods():
-    """Collect methods from the assembled service, including deferred routers."""
-    methods = set()
+    """Validate the assembled service route tree, including lazy included routers."""
 
-    def visit(container, prefix=""):
-        for route in getattr(container, "routes", ()):
-            path = getattr(route, "path", None)
-            if path is not None:
-                normalized = f"{prefix}{path}"
-                if normalized.startswith("/api/v1"):
-                    normalized = normalized[len("/api/v1"):] or "/"
-                for method in getattr(route, "methods", None) or ():
-                    methods.add((normalized, method))
-                continue
+    methods: set[tuple[str, str]] = set()
+    seen: set[int] = set()
 
-            nested = getattr(route, "router", None)
-            if nested is None:
-                nested = getattr(route, "app", None)
-            nested_prefix = getattr(route, "prefix", "") or ""
-            if nested is not None:
-                visit(nested, f"{prefix}{nested_prefix}")
+    def walk(node, prefix: str = "") -> None:
+        identity = id(node)
+        if identity in seen:
+            return
+        seen.add(identity)
 
-    visit(create_app())
+        path = getattr(node, "path", None)
+        if path is not None:
+            full_path = f"{prefix}{path}"
+            if full_path.startswith("/api/v1"):
+                full_path = full_path[len("/api/v1"):] or "/"
+            for method in getattr(node, "methods", None) or ():
+                methods.add((full_path, method))
+
+        nested_prefix = f"{prefix}{getattr(node, 'prefix', '') or ''}"
+        child_router = getattr(node, "router", None)
+        if child_router is not None:
+            for child in getattr(child_router, "routes", ()):
+                walk(child, nested_prefix)
+            return
+
+        for child in getattr(node, "routes", ()):
+            walk(child, nested_prefix)
+
+    walk(create_app())
     return methods
 
 
