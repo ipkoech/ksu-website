@@ -9,9 +9,18 @@ from app.services.admin_workspace_registry import (
     RESOURCES,
 )
 from app.services.research_workflow import adapter_for
-from fastapi.routing import APIRoute
 
 EXPECTED = {key for group in GROUPS.values() for key in group}
+
+
+def route_methods():
+    """Read registered routes structurally so custom FastAPI route classes count."""
+    return {
+        (route.path, method)
+        for route in router.routes
+        for method in (getattr(route, "methods", None) or ())
+        if hasattr(route, "path")
+    }
 
 
 def test_all_reviewed_native_areas_are_registered():
@@ -46,7 +55,7 @@ def test_catalog_fields_are_native_stored_columns_with_explicit_readonly_flags(k
 
 @pytest.mark.parametrize('key', sorted(EXPECTED))
 def test_native_write_routes_exist_for_every_catalog_area(key):
-    routes = {(route.path, method) for route in router.routes if isinstance(route, APIRoute) for method in route.methods}
+    routes = route_methods()
     path = f'/research/{key}' if key == 'stories' else f'/{key}'
     assert (path, 'POST') in routes
     assert (f'{path}/id/{{item_id}}', 'PATCH') in routes
