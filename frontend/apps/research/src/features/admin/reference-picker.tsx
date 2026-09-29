@@ -14,9 +14,9 @@ export function ReferencePicker({ resource, disabled, onSelect }: { resource: st
   const [open, setOpen] = useState(false);
   if (!resourceModule) return <p className="rw-help">The linked directory is not assigned to you. The service still validates manually entered IDs.</p>;
   return <><Button type="button" variant="outline" disabled={disabled} onClick={() => setOpen(true)}>Find in {resourceModule.label.toLowerCase()}</Button>
-    {open && <PickerDialog resourceModule={resourceModule} onClose={() => setOpen(false)} onSelect={id => { onSelect(id); setOpen(false); }} />}</>;
+    {open && <PickerDialog module={resourceModule} onClose={() => setOpen(false)} onSelect={id => { onSelect(id); setOpen(false); }} />}</>;
 }
-function PickerDialog({ resourceModule, onClose, onSelect }: { resourceModule: RWModule; onClose: () => void; onSelect: (id: string) => void }) {
+function PickerDialog({ module: resourceModule, onClose, onSelect }: { module: RWModule; onClose: () => void; onSelect: (id: string) => void }) {
   const dialog = useRef<HTMLDialogElement>(null), titleId = useId(), searchId = useId();
   const [input, setInput] = useState(""), [search, setSearch] = useState(""), [page, setPage] = useState(1);
   const load = useCallback((signal: AbortSignal) => researchWorkspaceApi.list(resourceModule.key, { search: search || undefined, page, per_page: 10 }, signal), [resourceModule.key, search, page]);
