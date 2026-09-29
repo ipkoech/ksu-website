@@ -1,6 +1,6 @@
 name: Research Admin Backend Verification
+# final clean backend verification
 # final backend verification 5
-# clean final backend verification
 # final verification run 4 2
 
 on:
@@ -48,20 +48,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install ruff greenlet
           python -m pip install -e "./services/common[test]" -e "./services/contracts" -e "./services/main[test]" -e "./services/research[test]"
-      - name: Inspect deferred Research router wrapper
-        run: |
-          python scripts/ci_environment.py research -- python - <<'PY'
-          from app.main import create_app
-          app = create_app()
-          for route in app.routes:
-              if not hasattr(route, "path"):
-                  print(type(route).__module__, type(route).__name__)
-                  print(sorted(vars(route).keys()))
-                  for key, value in vars(route).items():
-                      if key in {"router", "app", "prefix", "routes", "included_router"}:
-                          print(key, type(value), repr(value)[:1000])
-                  break
-          PY
       - name: Research backend suite
         id: research_backend
         continue-on-error: true
