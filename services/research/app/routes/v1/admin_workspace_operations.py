@@ -40,8 +40,8 @@ from .admin_workspace import private_response
 
 router = APIRouter(prefix="/research-portal/operations", tags=["Research workspace operations"])
 
-_DB_DEPENDENCY = _DB_DEPENDENCY
-_USER_DEPENDENCY = _USER_DEPENDENCY
+_DB_DEPENDENCY = Depends(get_db)
+_USER_DEPENDENCY = Depends(get_current_user)
 
 
 class ValuesBody(BaseModel):
