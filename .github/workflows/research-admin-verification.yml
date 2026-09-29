@@ -1,6 +1,5 @@
 name: Research Admin Verification
-# final release verification
-# final delivery verification
+# final full release verification
 
 on:
   push:
