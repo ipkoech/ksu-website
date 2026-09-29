@@ -121,7 +121,7 @@ async def list_records(
     db: AsyncSession = _DB_DEPENDENCY, actor=_USER_DEPENDENCY,
 ):
     private_response(response)
-    query, model = matching_query(actor, resource, search=search, state=state, status=status,
+    query, _model = matching_query(actor, resource, search=search, state=state, status=status,
                                   center_id=center_id, filter_field=filter_field,
                                   filter_value=filter_value, sort=sort, order=order)
     total = int(await db.scalar(select(func.count()).select_from(query.order_by(None).subquery())) or 0)
