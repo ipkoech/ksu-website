@@ -36,8 +36,11 @@ async def test_generic_patch_cannot_bypass_canonical_workflow(current, changes, 
     user = TokenPayload("actor", "session", raw={"scope_grants": [
         {"scope_type": "global", "permissions": ["farm.manage", "partnerships.manage"]},
     ]})
+    db = AsyncMock()
+    monkeypatch.setattr(crud_routes, "lock_workspace_record", AsyncMock(return_value=record))
+    request = Mock(headers={})
     with pytest.raises(HTTPException) as error:
-        await endpoint(record.id, Patch(**changes), db=AsyncMock(), user=user)
+        await endpoint(record.id, request=request, data=Patch(**changes), db=db, user=user)
     assert error.value.status_code == 409
     service.update.assert_not_awaited()
     assert record.name == "Original"
