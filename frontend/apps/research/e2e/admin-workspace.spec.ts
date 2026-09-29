@@ -75,11 +75,12 @@ for (const status of [0,409,503]) test(`uncertain ${status || "network"} writes 
   await expect(page).toHaveURL(new RegExp(`/admin/projects/${id}$`));
   expect(writes).toHaveLength(2); expect(writes[0].key).toBeTruthy(); expect(writes[0].key).toBe(writes[1].key);
 });
-for (const status of [401,403,503]) test(`bootstrap ${status} never displays protected records`, async ({ page }) => {
-  await fixture(page,{ bootstrapStatus:status }); await page.goto("/admin/projects");
-  await expect(page.getByText("Injected bootstrap failure", { exact: true })).toBeVisible();
-  await expect(page.getByText("Fixture research record",{exact:true})).toHaveCount(0);
-});
+for (const [status, title] of [[401, "Session needs attention"], [403, "Action not permitted"], [503, "Service temporarily unavailable"]] as const)
+  test(`bootstrap ${status} never displays protected records`, async ({ page }) => {
+    await fixture(page,{ bootstrapStatus:status }); await page.goto("/admin/projects");
+    await expect(page.getByText(title, { exact: true })).toBeVisible();
+    await expect(page.getByText("Fixture research record",{exact:true})).toHaveCount(0);
+  });
 test("malformed successful mutation is not shown as saved", async ({ page }) => {
   await fixture(page,{malformedWrite:true}); await page.goto("/admin/projects/new");
   await page.getByLabel(/Title/).fill("My test study"); await page.getByRole("button",{name:"Create project",exact:true}).click();
@@ -124,7 +125,7 @@ test("bootstrap context and catalog are bound before any record is shown", async
 test("catalog account conflict never renders private records", async ({ page }) => {
   const writes = await fixture(page, { catalogStatus: 409 });
   await page.goto("/admin/projects");
-  await expect(page.getByText("The signed-in account changed during bootstrap", { exact: true })).toBeVisible();
+  await expect(page.getByText("Record or command conflict", { exact: true })).toBeVisible();
   await expect(page.getByText("Fixture research record", { exact: true })).toHaveCount(0);
   expect(writes).toHaveLength(0);
 });
