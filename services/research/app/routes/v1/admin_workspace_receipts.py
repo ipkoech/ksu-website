@@ -16,8 +16,8 @@ from .admin_workspace import private_response
 
 router = APIRouter(prefix="/research-portal/receipts", tags=["Research command receipts"])
 
-_DB_DEPENDENCY = _DB_DEPENDENCY
-_USER_DEPENDENCY = _USER_DEPENDENCY
+_DB_DEPENDENCY = Depends(get_db)
+_USER_DEPENDENCY = Depends(get_current_user)
 
 
 @router.get("", response_model=SuccessEnvelopeWithMeta[list[JsonObject]])
