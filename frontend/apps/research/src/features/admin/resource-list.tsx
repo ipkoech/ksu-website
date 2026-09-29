@@ -17,9 +17,9 @@ import { BulkEditorial } from "./bulk-editorial";
 export function ResourceList({ resource, review = false }: { resource: string; review?: boolean }) {
   const { modules } = useResearchWorkspace(), resourceModule = modules.find(item => item.key === resource);
   if (!resourceModule) return <WorkspaceFeedback title="Working area not assigned">This record area is not available to your current assignment.</WorkspaceFeedback>;
-  return <Suspense fallback={<WorkspaceLoading label="Loading filters…" />}><ResourceTable key={`${resourceModule.key}:${review}`} resourceModule={resourceModule} review={review} /></Suspense>;
+  return <Suspense fallback={<WorkspaceLoading label="Loading filters…" />}><ResourceTable key={`${resourceModule.key}:${review}`} module={resourceModule} review={review} /></Suspense>;
 }
-function ResourceTable({ resourceModule, review }: { resourceModule: RWModule; review: boolean }) {
+function ResourceTable({ module: resourceModule, review }: { module: RWModule; review: boolean }) {
   const params = useSearchParams(), router = useRouter(), pathname = usePathname();
   const query = params.toString();
   const filters = useMemo(() => rwListFilters(new URLSearchParams(query), review), [query, review]);
@@ -47,11 +47,11 @@ function ResourceTable({ resourceModule, review }: { resourceModule: RWModule; r
       <div className="rw-actions"><Button type="button" variant="outline" disabled={state.status === "loading"} onClick={reload}><RefreshCw aria-hidden="true" />Refresh</Button>
         {!review && resourceModule.can_create && <Button asChild><Link href={`/admin/${resourceModule.key}/new`}><Plus aria-hidden="true" />Create {resourceModule.singular}</Link></Button>}</div></div>
     <section className="rw-panel">
-      <Filters key={`${resourceModule.key}:${query}`} resourceModule={resourceModule} filters={filters} review={review} onApply={setFilters} />
+      <Filters key={`${resourceModule.key}:${query}`} module={resourceModule} filters={filters} review={review} onApply={setFilters} />
       {state.status === "loading" ? <div className="rw-inset"><WorkspaceLoading label="Loading scope-checked records…" /></div> : state.status === "error" ?
         <div className="rw-inset"><Problem problem={state.error} onRetry={reload} /></div> : <>
         <div className="rw-table-caption"><div><strong>{state.data.meta.total.toLocaleString()} matching records</strong><p className="rw-help">Page {state.data.meta.page} of {Math.max(1, state.data.meta.total_pages)} · constrained by your assignment</p></div>
-          <div className="rw-actions">{context.capabilities["research.manage_reports"] && <ExportMatches resourceModule={resourceModule} filters={filters} />}<Button type="button" variant="outline" disabled={!state.data.data.length} onClick={exportPage}><Download aria-hidden="true" />Export this page</Button></div></div>
+          <div className="rw-actions">{context.capabilities["research.manage_reports"] && <ExportMatches module={resourceModule} filters={filters} />}<Button type="button" variant="outline" disabled={!state.data.data.length} onClick={exportPage}><Download aria-hidden="true" />Export this page</Button></div></div>
         {resourceModule.workflow && state.data.data.length > 0 && <div className="rw-selection-bar"><Button type="button" variant="ghost" onClick={() => setSelected(state.data.data.slice(0, 50).map(row => row.id))}>Select up to 50 on this page</Button><span role="status">{selected.length} selected</span><Button type="button" variant="ghost" disabled={!selected.length} onClick={() => setSelected([])}>Clear selection</Button><Button type="button" disabled={!selected.length} onClick={() => setBatch(state.data.data.filter(row => selected.includes(row.id)))}>Review selected actions</Button></div>}
         {exportError && <p role="alert" className="rw-field-error rw-inset">{exportError}</p>}
         {!state.data.data.length ? <div className="rw-inset"><WorkspaceFeedback title={filters.page && filters.page > 1 ? "This page has no records" : "No records match these filters"}>
@@ -68,10 +68,10 @@ function ResourceTable({ resourceModule, review }: { resourceModule: RWModule; r
             <span>Page {state.data.meta.page}</span><Button type="button" variant="outline" disabled={state.data.meta.page >= state.data.meta.total_pages} onClick={() => setFilters({ ...filters, page: state.data.meta.page + 1 })}>Next</Button></div></div>
       </>}
     </section><p className="rw-help">Page exports contain displayed records only. Authorized matching-record exports apply all current filters. Editorial commands recheck each record’s state and scope on the server.</p>
-    {batch && <BulkEditorial resourceModule={resourceModule} rows={batch} onClose={() => { setBatch(null); setSelected([]); reload(); }} />}
+    {batch && <BulkEditorial module={resourceModule} rows={batch} onClose={() => { setBatch(null); setSelected([]); reload(); }} />}
   </div>;
 }
-function Filters({ resourceModule, filters, review, onApply }: { resourceModule: RWModule; filters: RWFilters; review: boolean; onApply: (filters: RWFilters) => void }) {
+function Filters({ module: resourceModule, filters, review, onApply }: { module: RWModule; filters: RWFilters; review: boolean; onApply: (filters: RWFilters) => void }) {
   const [search, setSearch] = useState(filters.search ?? ""), [state, setState] = useState(filters.state ?? ""), [status, setStatus] = useState(filters.status ?? "");
   const [field, setField] = useState(filters.filter_field ?? ""), [value, setValue] = useState(filters.filter_value ?? "");
   const [order, setOrder] = useState(filters.order ?? "desc");
