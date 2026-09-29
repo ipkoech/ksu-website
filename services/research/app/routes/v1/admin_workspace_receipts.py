@@ -16,11 +16,14 @@ from .admin_workspace import private_response
 
 router = APIRouter(prefix="/research-portal/receipts", tags=["Research command receipts"])
 
+_DB_DEPENDENCY = _DB_DEPENDENCY
+_USER_DEPENDENCY = _USER_DEPENDENCY
+
 
 @router.get("", response_model=SuccessEnvelopeWithMeta[list[JsonObject]])
 async def receipts(response: Response, key: str | None = Query(None, min_length=1, max_length=255),
                    page: int = Query(1, ge=1, le=100000), per_page: int = Query(25, ge=1, le=100),
-                   db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
+                   db: AsyncSession = _DB_DEPENDENCY, user=_USER_DEPENDENCY):
     private_response(response)
     model = CommandIdempotency
     # The subject is verified by the existing identity freshness dependency.
@@ -50,6 +53,6 @@ class ReconcileReceipt(BaseModel):
 
 
 @router.post("/reconcile", response_model=SuccessEnvelope[JsonObject])
-async def reconcile(data: ReconcileReceipt, db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
+async def reconcile(data: ReconcileReceipt, db: AsyncSession = _DB_DEPENDENCY, user=_USER_DEPENDENCY):
     from ...services.admin_workspace_reconciliation import reconcile_command
     return success(data=await reconcile_command(db, user, data.key, data.command))
