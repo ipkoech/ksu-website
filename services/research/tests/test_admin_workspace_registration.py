@@ -70,7 +70,7 @@ def test_filters_are_columns_not_arbitrary_orm_relationships(key):
 
 @pytest.mark.parametrize('key', sorted(PATHWAY_RESOURCES))
 def test_specialized_commands_resolve_real_schemas_and_routes(key):
-    routes = {(route.path, method) for route in router.routes if isinstance(route, APIRoute) for method in route.methods}
+    routes = route_methods()
     commands = native_commands(key)
     assert commands
     for command in commands:
