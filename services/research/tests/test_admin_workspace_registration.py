@@ -1,4 +1,6 @@
 """Run with the normal Research service test environment and its real imports."""
+import sys
+
 import pytest
 from app.routes.v1 import router
 from app.services.admin_workspace import field_specs, filter_fields_for, native_commands
@@ -14,13 +16,20 @@ EXPECTED = {key for group in GROUPS.values() for key in group}
 
 
 def route_methods():
-    """Read registered routes structurally so custom FastAPI route classes count."""
-    return {
-        (route.path, method)
-        for route in router.routes
-        for method in (getattr(route, "methods", None) or ())
-        if hasattr(route, "path")
-    }
+    """Collect methods from the concrete imported v1 routers.
+
+    The service test harness imports route modules directly; validating those
+    router objects avoids depending on when the aggregate router copies them.
+    """
+    methods = set()
+    for name, module in tuple(sys.modules.items()):
+        if name != "app.routes.v1" and not name.startswith("app.routes.v1."):
+            continue
+        module_router = getattr(module, "router", None)
+        for route in getattr(module_router, "routes", ()):
+            for method in getattr(route, "methods", None) or ():
+                methods.add((route.path, method))
+    return methods
 
 
 def test_all_reviewed_native_areas_are_registered():
