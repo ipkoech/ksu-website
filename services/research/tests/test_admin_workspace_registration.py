@@ -2,6 +2,7 @@
 from functools import lru_cache
 
 import pytest
+from fastapi.routing import iter_route_contexts
 from app.main import create_app
 from app.services.admin_workspace import field_specs, filter_fields_for, native_commands
 from app.services.admin_workspace_registry import (
@@ -17,36 +18,15 @@ EXPECTED = {key for group in GROUPS.values() for key in group}
 
 @lru_cache(maxsize=1)
 def route_methods():
-    """Validate the assembled service route tree, including lazy included routers."""
-
+    """Validate the effective assembled service route table."""
     methods: set[tuple[str, str]] = set()
-    seen: set[int] = set()
-
-    def walk(node, prefix: str = "") -> None:
-        identity = id(node)
-        if identity in seen:
-            return
-        seen.add(identity)
-
-        path = getattr(node, "path", None)
-        if path is not None:
-            full_path = f"{prefix}{path}"
-            if full_path.startswith("/api/v1"):
-                full_path = full_path[len("/api/v1"):] or "/"
-            for method in getattr(node, "methods", None) or ():
-                methods.add((full_path, method))
-
-        nested_prefix = f"{prefix}{getattr(node, 'prefix', '') or ''}"
-        child_router = getattr(node, "router", None)
-        if child_router is not None:
-            for child in getattr(child_router, "routes", ()):
-                walk(child, nested_prefix)
-            return
-
-        for child in getattr(node, "routes", ()):
-            walk(child, nested_prefix)
-
-    walk(create_app())
+    app = create_app()
+    for context in iter_route_contexts(app.routes):
+        path = context.path
+        if path.startswith("/api/v1"):
+            path = path[len("/api/v1"):] or "/"
+        for method in context.methods or ():
+            methods.add((path, method))
     return methods
 
 
