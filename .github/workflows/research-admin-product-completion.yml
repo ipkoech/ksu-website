@@ -6,6 +6,8 @@ on:
       - feat/research-admin-product-completion
     paths:
       - '.research-admin-bootstrap/**'
+      - '.research-admin-xz/**'
+      - '.research-admin-payload/**'
       - '.github/workflows/research-admin-product-completion.yml'
 
 permissions:
@@ -54,7 +56,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf .research-admin-bootstrap
+          rm -rf .research-admin-bootstrap .research-admin-xz .research-admin-payload
           rm -f .github/workflows/research-admin-product-completion.yml
 
       - name: Commit integrated product source
