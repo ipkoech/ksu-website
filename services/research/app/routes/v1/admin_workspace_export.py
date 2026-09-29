@@ -8,9 +8,9 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import StreamingResponse
 from ksu_common.response_validation import allow_response_model_exemption
+from ksu_contracts.rbac import authorize_permission
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
-from ksu_contracts.rbac import authorize_permission
 
 from ...core.auth import get_current_user
 from ...core.database import get_db

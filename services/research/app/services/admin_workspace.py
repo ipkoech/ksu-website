@@ -13,9 +13,19 @@ from fastapi.encoders import jsonable_encoder
 from ksu_contracts.rbac import authorize_permission
 
 from ..core.auth import can_access_scoped_record
-from .admin_workspace_policy import direct_read_decisions, editorial_actions, merge_read_filters
-from .admin_workspace_registry import (RESOURCES, NativeResource, EDITORIAL_RESOURCES,
-                                       PATHWAY_RESOURCES, group_for, singular_for)
+from .admin_workspace_policy import (
+    direct_read_decisions,
+    editorial_actions,
+    merge_read_filters,
+)
+from .admin_workspace_registry import (
+    EDITORIAL_RESOURCES,
+    PATHWAY_RESOURCES,
+    RESOURCES,
+    NativeResource,
+    group_for,
+    singular_for,
+)
 from .admin_workspace_revision import record_revision
 from .admin_workspace_schema import descriptors, stored_descriptors
 from .research_actions import can_domain_action, domain_action_filters

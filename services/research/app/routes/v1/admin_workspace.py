@@ -8,15 +8,24 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from ksu_common.schemas.responses import success
 from pydantic import TypeAdapter, ValidationError
 from sqlalchemy import func, select
-from sqlalchemy.orm import lazyload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import lazyload
 
 from ...core.auth import get_current_user
 from ...core.database import get_db
 from ...schemas.base import JsonObject, SuccessEnvelope, SuccessEnvelopeWithMeta
-from ...services.admin_workspace import catalog_for, read_filters, resource_spec, serialize_record, filter_fields_for
+from ...services.admin_workspace import (
+    catalog_for,
+    filter_fields_for,
+    read_filters,
+    resource_spec,
+    serialize_record,
+)
 from ...services.admin_workspace_query import editorial_state_expression
-from ...services.admin_workspace_registry import EDITORIAL_RESOURCES, workspace_navigation
+from ...services.admin_workspace_registry import (
+    EDITORIAL_RESOURCES,
+    workspace_navigation,
+)
 from ...services.research_portal_context import build_research_portal_context
 from ...services.research_workflow import adapter_for
 

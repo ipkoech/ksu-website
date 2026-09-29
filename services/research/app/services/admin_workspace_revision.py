@@ -6,9 +6,9 @@ this token only after authorization. Other clients remain backward compatible.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import hashlib
 import re
+from datetime import datetime, timezone
 
 from fastapi import HTTPException
 from sqlalchemy import select

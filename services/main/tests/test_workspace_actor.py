@@ -2,9 +2,8 @@
 import uuid
 
 import pytest
-from fastapi import HTTPException
-
 from app.core.workspace_actor import require_workspace_actor
+from fastapi import HTTPException
 
 A = uuid.UUID("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
 B = uuid.UUID("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")

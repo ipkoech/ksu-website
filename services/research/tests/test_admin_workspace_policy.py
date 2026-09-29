@@ -1,8 +1,18 @@
 import importlib.util
 from pathlib import Path
 from types import SimpleNamespace
+
 import pytest
-from sqlalchemy import Boolean, Column, Integer, MetaData, String, Table, create_engine, select
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    create_engine,
+    select,
+)
 
 ROOT = Path(__file__).resolve().parents[1] / 'app/services'
 def load(name):

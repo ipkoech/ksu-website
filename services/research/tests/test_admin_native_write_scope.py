@@ -7,8 +7,15 @@ from types import SimpleNamespace
 from uuid import UUID
 
 from app.models import ResearchCenter, ResearchProject
-from app.schemas import ResearchCenterCreate, ResearchProjectCreate, ResearchProjectUpdate
-from app.services.admin_workspace_write_scope import create_scope_targets, mutation_scope_targets
+from app.schemas import (
+    ResearchCenterCreate,
+    ResearchProjectCreate,
+    ResearchProjectUpdate,
+)
+from app.services.admin_workspace_write_scope import (
+    create_scope_targets,
+    mutation_scope_targets,
+)
 
 A = UUID("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
 B = UUID("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")

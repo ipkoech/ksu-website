@@ -1,11 +1,15 @@
 """Run with the normal Research service test environment and its real imports."""
 import pytest
-from fastapi.routing import APIRoute
-
 from app.routes.v1 import router
 from app.services.admin_workspace import field_specs, filter_fields_for, native_commands
-from app.services.admin_workspace_registry import GROUPS, RESOURCES, EDITORIAL_RESOURCES, PATHWAY_RESOURCES
+from app.services.admin_workspace_registry import (
+    EDITORIAL_RESOURCES,
+    GROUPS,
+    PATHWAY_RESOURCES,
+    RESOURCES,
+)
 from app.services.research_workflow import adapter_for
+from fastapi.routing import APIRoute
 
 EXPECTED = {key for group in GROUPS.values() for key in group}
 
@@ -67,7 +71,11 @@ def test_specialized_commands_resolve_real_schemas_and_routes(key):
 
 
 def test_all_association_adapters_resolve_native_tables_and_services():
-    from app.services.admin_workspace_operations import ASSOCIATIONS, relationship_attribute, native_service
+    from app.services.admin_workspace_operations import (
+        ASSOCIATIONS,
+        native_service,
+        relationship_attribute,
+    )
     assert len(ASSOCIATIONS) == 16
     for association in ASSOCIATIONS:
         relationship_attribute(association)
@@ -77,7 +85,11 @@ def test_all_association_adapters_resolve_native_tables_and_services():
 
 
 def test_child_collections_resolve_native_parent_fields():
-    from app.services.admin_workspace_operations import CHILDREN, native_schema, native_service
+    from app.services.admin_workspace_operations import (
+        CHILDREN,
+        native_schema,
+        native_service,
+    )
     assert len(CHILDREN) == 4
     for collection in CHILDREN:
         service = native_service(collection.service)
@@ -87,7 +99,10 @@ def test_child_collections_resolve_native_parent_fields():
 
 
 def test_institutional_handoffs_only_preserve_native_authorized_navigation():
-    from app.services.admin_workspace_registry import INSTITUTIONAL_NAVIGATION, workspace_navigation
+    from app.services.admin_workspace_registry import (
+        INSTITUTIONAL_NAVIGATION,
+        workspace_navigation,
+    )
     from app.services.research_portal_context import RESEARCH_PORTAL_NAVIGATION
     native_keys = {key for key, _ in RESEARCH_PORTAL_NAVIGATION}
     assert INSTITUTIONAL_NAVIGATION <= native_keys

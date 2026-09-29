@@ -7,12 +7,11 @@ import asyncio
 from types import SimpleNamespace
 from uuid import UUID
 
-from fastapi import HTTPException
-from sqlalchemy.dialects import postgresql
 import pytest
-
 from app.routes.v1 import innovation_partnership as routes
 from app.services import StartupVentureService
+from fastapi import HTTPException
+from sqlalchemy.dialects import postgresql
 
 
 def test_pathway_scope_uses_locked_fresh_ownership(monkeypatch):

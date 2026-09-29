@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query, Response
-from pydantic import BaseModel, ConfigDict, Field, field_validator
 from ksu_common.schemas.responses import success
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
