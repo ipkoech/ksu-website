@@ -77,7 +77,7 @@ for (const status of [0,409,503]) test(`uncertain ${status || "network"} writes 
 });
 for (const status of [401,403,503]) test(`bootstrap ${status} never displays protected records`, async ({ page }) => {
   await fixture(page,{ bootstrapStatus:status }); await page.goto("/admin/projects");
-  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByText("Injected bootstrap failure", { exact: true })).toBeVisible();
   await expect(page.getByText("Fixture research record",{exact:true})).toHaveCount(0);
 });
 test("malformed successful mutation is not shown as saved", async ({ page }) => {
@@ -124,7 +124,7 @@ test("bootstrap context and catalog are bound before any record is shown", async
 test("catalog account conflict never renders private records", async ({ page }) => {
   const writes = await fixture(page, { catalogStatus: 409 });
   await page.goto("/admin/projects");
-  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByText("The signed-in account changed during bootstrap", { exact: true })).toBeVisible();
   await expect(page.getByText("Fixture research record", { exact: true })).toHaveCount(0);
   expect(writes).toHaveLength(0);
 });
