@@ -17,10 +17,10 @@ import { useUnsavedGuard, useWorkspaceCommand } from "./use-workspace";
 export function NewRecord({ resource }: { resource: string }) {
   const { modules } = useResearchWorkspace(), resourceModule = modules.find(item => item.key === resource);
   if (!resourceModule?.can_create) return <WorkspaceFeedback title="Creation is not assigned">Your current signed assignment does not permit creation in this working area.</WorkspaceFeedback>;
-  return <RecordForm key={resourceModule.key} resourceModule={resourceModule} />;
+  return <RecordForm key={resourceModule.key} module={resourceModule} />;
 }
-export function RecordForm({ resourceModule, row, onSaved, onCancel, persist, embedded = false }:
-  { resourceModule: RWModule; row?: RWRow; onSaved?: () => void; onCancel?: () => void; persist?: (payload: Record<string, RWValue>, key: string) => Promise<string>; embedded?: boolean }) {
+export function RecordForm({ module: resourceModule, row, onSaved, onCancel, persist, embedded = false }:
+  { module: RWModule; row?: RWRow; onSaved?: () => void; onCancel?: () => void; persist?: (payload: Record<string, RWValue>, key: string) => Promise<string>; embedded?: boolean }) {
   const router = useRouter(), command = useWorkspaceCommand();
   const instance = useId().replace(/[^A-Za-z0-9_-]/g, ""), idPrefix = `rw-${instance}`;
   const Heading = embedded ? "h2" : "h1";
