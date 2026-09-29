@@ -20,8 +20,8 @@ from .admin_workspace import WorkflowState, matching_query, private_response
 
 router = APIRouter(prefix="/research-portal/export", tags=["Research workspace exports"])
 
-_DB_DEPENDENCY = _DB_DEPENDENCY
-_USER_DEPENDENCY = _USER_DEPENDENCY
+_DB_DEPENDENCY = Depends(get_db)
+_USER_DEPENDENCY = Depends(get_current_user)
 
 
 @router.get("/{resource}", response_class=StreamingResponse, responses={200: {"content": {
