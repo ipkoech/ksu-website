@@ -2,7 +2,7 @@
 import sys
 
 import pytest
-from app.routes.v1 import router
+from app.main import create_app
 from app.services.admin_workspace import field_specs, filter_fields_for, native_commands
 from app.services.admin_workspace_registry import (
     EDITORIAL_RESOURCES,
