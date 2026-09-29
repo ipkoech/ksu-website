@@ -9,6 +9,7 @@ from ksu_common.auth import TokenPayload
 from pydantic import BaseModel
 
 from app.models import Partner
+import app.routes.v1._crud as crud_routes
 from app.routes.v1._crud import build_crud_router
 from app.services.research_workflow_commands import create_editorial_record
 
@@ -25,7 +26,8 @@ class Patch(BaseModel):
     ("pending", {"name": "Changed"}),
     ("active", {"name": "Changed"}),
 ])
-async def test_generic_patch_cannot_bypass_canonical_workflow(current, changes):
+async def test_generic_patch_cannot_bypass_canonical_workflow(current, changes, monkeypatch):
+    monkeypatch.setattr(crud_routes, "register_resource", lambda **_kwargs: None)
     record = Partner(id=uuid4(), name="Original", partner_type="community", status=current, is_active=current == "active")
     service = SimpleNamespace(model=Partner, get_by_id=AsyncMock(return_value=record), update=AsyncMock())
     router = build_crud_router(prefix="/partners", tag="Partners", service=service,
