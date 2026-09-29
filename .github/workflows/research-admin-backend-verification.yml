@@ -1,5 +1,5 @@
-name: Research Admin
-# verification after registration-test fixes Backend Verification
+name: Research Admin Backend Verification
+# final backend verification
 # final verification run 4 2
 
 on:
