@@ -24,9 +24,9 @@ const explanations: Record<RWTransition, string> = {
 export function RecordDetail({ resource, id }: { resource: string; id: string }) {
   const { modules } = useResearchWorkspace(), resourceModule = modules.find(item => item.key === resource);
   if (!resourceModule) return <WorkspaceFeedback title="Working area not assigned">No record has been loaded outside your assignment.</WorkspaceFeedback>;
-  return <Detail key={`${resourceModule.key}:${id}`} resourceModule={resourceModule} id={id} />;
+  return <Detail key={`${resourceModule.key}:${id}`} module={resourceModule} id={id} />;
 }
-function Detail({ resourceModule, id }: { resourceModule: RWModule; id: string }) {
+function Detail({ module: resourceModule, id }: { module: RWModule; id: string }) {
   const [editing, setEditing] = useState(false), [action, setAction] = useState<RWTransition | null>(null), [notice, setNotice] = useState("");
   const load = useCallback((signal: AbortSignal) => researchWorkspaceApi.get(resourceModule.key, id, signal), [resourceModule.key, id]);
   const { state, reload } = useWorkspaceRead(load);
@@ -35,7 +35,7 @@ function Detail({ resourceModule, id }: { resourceModule: RWModule; id: string }
   if (state.status === "error") return <Problem problem={state.error} onRetry={reload} />;
   const row = state.data;
   function saved(message: string) { setNotice(message); setEditing(false); setAction(null); setHistoryVersion(value => value + 1); reload(); }
-  if (editing && row.actions.edit) return <RecordForm resourceModule={resourceModule} row={row} onCancel={() => setEditing(false)} onSaved={() => saved("Changes saved. Current service data has been requested.")} />;
+  if (editing && row.actions.edit) return <RecordForm module={resourceModule} row={row} onCancel={() => setEditing(false)} onSaved={() => saved("Changes saved. Current service data has been requested.")} />;
   const sections = [...new Set(resourceModule.fields.map(field => field.section))];
   return <div className="rw-stack"><Link href={`/admin/${resourceModule.key}`} className="rw-text-link"><ArrowLeft size={16} aria-hidden="true" />Back to {resourceModule.label.toLowerCase()}</Link>
     {notice && <WorkspaceFeedback title="Command confirmed" tone="success">{notice}</WorkspaceFeedback>}
@@ -52,15 +52,15 @@ function Detail({ resourceModule, id }: { resourceModule: RWModule; id: string }
           {!(Object.keys(labels) as RWTransition[]).some(key => row.actions[key]) && <p className="rw-help">No editorial transition is currently assigned to you.</p>}</div></> :
           <p>This record uses its native service contract. Available specialized actions are listed below; no generic approval is assumed.</p>}
         <dl className="rw-record-id"><dt>Record ID</dt><dd>{row.id}</dd><dt>Last updated</dt><dd>{rwDisplay(row.record.updated_at)}</dd></dl></section>
-      <RelatedRecords resourceModule={resourceModule} row={row} />
-      <RecordOperations resourceModule={resourceModule} row={row} onConfirmed={() => saved("The service confirmed the action. Current record data is being requested.")} />
-      {row.actions.history && <RecordHistory key={`${row.id}:${historyVersion}`} resourceModule={resourceModule} row={row} />}</aside></div>
-    <RecordConnections key={`${row.id}:${historyVersion}`} resourceModule={resourceModule} row={row} />
-    {action && <TransitionDialog resourceModule={resourceModule} row={row} action={action} onClose={() => setAction(null)} onConfirmed={() => saved(`${labels[action]} completed. The record is being refreshed.`)} />}
+      <RelatedRecords module={resourceModule} row={row} />
+      <RecordOperations module={resourceModule} row={row} onConfirmed={() => saved("The service confirmed the action. Current record data is being requested.")} />
+      {row.actions.history && <RecordHistory key={`${row.id}:${historyVersion}`} module={resourceModule} row={row} />}</aside></div>
+    <RecordConnections key={`${row.id}:${historyVersion}`} module={resourceModule} row={row} />
+    {action && <TransitionDialog module={resourceModule} row={row} action={action} onClose={() => setAction(null)} onConfirmed={() => saved(`${labels[action]} completed. The record is being refreshed.`)} />}
   </div>;
 }
-function TransitionDialog({ resourceModule, row, action, onClose, onConfirmed }:
-  { resourceModule: RWModule; row: RWRow; action: RWTransition; onClose: () => void; onConfirmed: () => void }) {
+function TransitionDialog({ module: resourceModule, row, action, onClose, onConfirmed }:
+  { module: RWModule; row: RWRow; action: RWTransition; onClose: () => void; onConfirmed: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null), command = useWorkspaceCommand(), [note, setNote] = useState("");
   useEffect(() => { const element = dialog.current; element?.showModal(); return () => element?.close(); }, []);
   useUnsavedGuard(command.locked || Boolean(note));
@@ -78,7 +78,7 @@ function TransitionDialog({ resourceModule, row, action, onClose, onConfirmed }:
         <Button type="submit" variant={action === "unpublish" ? "destructive" : "default"} loading={command.pending} disabled={command.locked}>{labels[action]}</Button></div>
     </form></dialog>;
 }
-function RecordHistory({ resourceModule, row }: { resourceModule: RWModule; row: RWRow }) {
+function RecordHistory({ module: resourceModule, row }: { module: RWModule; row: RWRow }) {
   const [page, setPage] = useState(1);
   const load = useCallback((signal: AbortSignal) => researchWorkspaceApi.history(resourceModule.key, row.id, page, signal), [resourceModule.key, row.id, page]);
   const { state, reload } = useWorkspaceRead(load);
