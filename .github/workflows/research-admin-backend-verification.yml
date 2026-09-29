@@ -1,5 +1,5 @@
 name: Research Admin Backend Verification
-# final backend verification 3
+# clean final backend verification
 # final verification run 4 2
 
 on:
@@ -47,10 +47,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install ruff greenlet
           python -m pip install -e "./services/common[test]" -e "./services/contracts" -e "./services/main[test]" -e "./services/research[test]"
-      - name: Diagnose assembled Research CRUD routes
-        run: >
-          python scripts/ci_environment.py research --
-          python -c "from app.main import create_app; app=create_app(); [print(r.path, sorted(getattr(r, 'methods', ()) or ())) for r in app.routes if any(t in r.path for t in ('/projects','/centers','/startups'))]"
       - name: Research backend suite
         id: research_backend
         continue-on-error: true
